@@ -1,0 +1,108 @@
+:root {
+  color: #101828;
+  background: #f5f6f8;
+  font-family: "Noto Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.scaffold-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 32px;
+}
+
+.scaffold-card {
+  width: min(720px, 100%);
+  padding: 40px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgb(16 24 40 / 6%);
+}
+
+.scaffold-eyebrow {
+  margin: 0 0 12px;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 42px);
+  letter-spacing: -0.03em;
+}
+
+.scaffold-copy {
+  max-width: 600px;
+  margin: 18px 0 32px;
+  color: #667085;
+  line-height: 1.8;
+}
+
+.scaffold-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+}
+
+.scaffold-status div {
+  padding: 16px;
+}
+
+.scaffold-status div + div {
+  border-left: 1px solid #e4e7ec;
+}
+
+.scaffold-status dt {
+  color: #667085;
+  font-size: 12px;
+}
+
+.scaffold-status dd {
+  margin: 7px 0 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+@media (max-width: 600px) {
+  .scaffold-shell {
+    padding: 16px;
+  }
+
+  .scaffold-card {
+    padding: 24px;
+  }
+
+  .scaffold-status {
+    grid-template-columns: 1fr;
+  }
+
+  .scaffold-status div + div {
+    border-top: 1px solid #e4e7ec;
+    border-left: 0;
+  }
+}
