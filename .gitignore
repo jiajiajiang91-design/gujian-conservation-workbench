@@ -1,0 +1,32 @@
+# 密钥与本地配置：任何情况下都不进仓库
+.env
+.env.*
+!.env.example
+*.key
+*密钥*
+*secret*
+*apikey*
+*api_key*
+**/local.config.js
+**/*.local.json
+**/*.local.txt
+
+# 本地临时与构建产物
+.tmp/
+.codex_staging/
+.codex_staging*/
+_deploy/
+node_modules/
+dist/
+coverage/
+.vite/
+__pycache__/
+*.pyc
+
+# 历史归档不进入当前活动项目基线
+/归档/
+
+# 系统文件
+Thumbs.db
+desktop.ini
+.DS_Store

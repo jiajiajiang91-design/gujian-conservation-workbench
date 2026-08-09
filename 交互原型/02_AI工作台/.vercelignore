@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+node_modules
+.git
+预览_*.jpg
+界面设计规范.md

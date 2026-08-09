@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="gujian-api-base" content="">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>古建测绘工作台</title>
+<link rel="stylesheet" href="css/app.css?ui=8">
+</head>
+<body>
+
+<div id="app" class="app">
+
+  <!-- ===== 左栏：项目与任务 ===== -->
+  <aside class="col-left" id="colLeft">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-text">古建测绘工作台</span>
+    </div>
+    <div class="left-body" id="leftBody"></div>
+    <div class="left-foot">
+      <button class="btn-ghost" id="btnSettings">服务与数据</button>
+      <button class="btn-ghost" id="btnReset">恢复示例</button>
+    </div>
+  </aside>
+
+  <!-- ===== 中栏：工作区 ===== -->
+  <main class="col-mid">
+    <div class="top-meta-shell">
+      <div class="mode-bar" id="modeBar"></div>
+      <div class="layout-tools" id="layoutTools" aria-label="工作区布局"></div>
+    </div>
+    <div class="tabs-shell">
+      <div class="tabs" id="tabs"></div>
+    </div>
+    <div class="work" id="work"></div>
+  </main>
+
+  <!-- ===== 右栏：AI 助手 ===== -->
+  <aside class="col-right" id="colRight">
+    <div class="status-bar" id="statusBar">
+      <div class="status-title">AI 助手</div>
+      <div class="status-sub">可以开始交代任务</div>
+    </div>
+    <div class="stream" id="stream"></div>
+    <div class="composer">
+      <div class="ref-chip hidden" id="refChip"></div>
+      <textarea id="input" rows="2" placeholder="说明要处理的项目或问题，也可以把照片、草图拖到这里。"></textarea>
+      <div class="composer-foot">
+        <span class="hint" id="modelHint"></span>
+        <button class="btn-send" id="btnSend">发送</button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- 设置弹层 -->
+<div class="modal hidden" id="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="modalTitle">服务与数据</span>
+      <button class="btn-ghost" id="modalClose">关闭</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script src="js/config.js?ui=9"></script>
+<script src="js/provenance.js"></script>
+<script src="js/metrics.js?ui=9"></script>
+<script src="js/data.js"></script>
+<script src="js/store.js?ui=3"></script>
+<script src="js/api.js?ui=9"></script>
+<script src="js/ui.js?ui=3"></script>
+<script src="js/canvas.js"></script>
+<script src="js/datumcheck.js"></script>
+<script src="js/editcheck.js"></script>
+<script src="js/checkrules.js"></script>
+<script src="js/drawgen.js"></script>
+<script src="js/views/start.js"></script>
+<script src="js/views/task.js"></script>
+<script src="js/views/materials.js"></script>
+<script src="js/views/datum.js"></script>
+<script src="js/views/parts.js?ui=2"></script>
+<script src="js/views/condition.js"></script>
+<script src="js/views/style.js"></script>
+<script src="js/views/drawing.js"></script>
+<script src="js/views/delivery.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/workspace.js?ui=2"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/chat.js?ui=7"></script>
+<script src="js/orchestrator.js?ui=9"></script>
+<script src="js/settings.js?ui=9"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

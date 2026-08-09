@@ -1,0 +1,16 @@
+{
+  "name": "gujian-ai-workbench-prototype",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "check": "node --check server.mjs && node --check server/proxy-core.mjs && node --check server/model-registry.mjs && node --check server/providers/openai-chat.mjs && node --check server/cors.mjs && node --check api/status.js && node --check api/ai.js && node --check js/data.js && node --check js/store.js && node --check js/main.js && node --check js/provenance.js && node --check js/metrics.js && node --check js/datumcheck.js && node --check js/orchestrator.js && node --check js/views/start.js && node --check js/views/materials.js && node --check js/views/datum.js && node --check js/views/condition.js && node --check js/views/style.js && node --check js/views/drawing.js && node --check js/views/delivery.js",
+    "test": "node --test server/*.test.mjs",
+    "smoke": "node --env-file=.env scripts/live-smoke.mjs",
+    "smoke:http": "node --env-file=.env scripts/http-smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
