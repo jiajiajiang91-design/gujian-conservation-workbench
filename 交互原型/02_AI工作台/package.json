@@ -6,7 +6,6 @@
     "start": "node server.mjs",
     "dev": "concurrently --kill-others-on-fail \"node server.mjs\" \"vite --host 127.0.0.1 --port 5173\"",
     "dev:test": "vite --host 127.0.0.1 --port 5174 --strictPort",
-    "dev:legacy": "node server.mjs",
     "build": "tsc -b && vite build",
     "check": "npm run check:legacy && npm run typecheck",
     "check:legacy": "node --check server.mjs && node --check server/proxy-core.mjs && node --check server/model-registry.mjs && node --check server/providers/openai-chat.mjs && node --check server/cors.mjs && node --check api/status.js && node --check api/ai.js && node --check js/data.js && node --check js/store.js && node --check js/main.js && node --check js/provenance.js && node --check js/metrics.js && node --check js/datumcheck.js && node --check js/orchestrator.js && node --check js/views/start.js && node --check js/views/materials.js && node --check js/views/datum.js && node --check js/views/condition.js && node --check js/views/style.js && node --check js/views/drawing.js && node --check js/views/delivery.js",

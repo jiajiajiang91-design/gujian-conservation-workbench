@@ -16,6 +16,7 @@ import {
 } from "./server/proxy-core.mjs";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
+const STATIC_ROOT = join(ROOT, "dist");
 loadEnv(join(ROOT, ".env"));
 const PORT = Number.parseInt(process.env.PORT || "8795", 10);
 
@@ -125,20 +126,21 @@ async function handleAI(req, res) {
 }
 
 function serveStatic(req, res, pathname) {
-  const allowed = pathname === "/" || pathname === "/index.html" ||
-    pathname.startsWith("/js/") || pathname.startsWith("/css/") || pathname.startsWith("/assets/") ||
-    (pathname.startsWith("/data/") && pathname.endsWith(".json"));
+  if (!existsSync(STATIC_ROOT)) {
+    return json(res, 503, { error: "尚未构建前端，请先运行 npm run build" });
+  }
+  const allowed = pathname === "/" || pathname === "/index.html" || pathname.startsWith("/assets/");
   if (!allowed) return json(res, 404, { error: "未找到" });
 
   const relative = pathname === "/" ? "index.html" : decodeURIComponent(pathname.slice(1));
-  const filePath = normalize(join(ROOT, relative));
-  if (!filePath.toLowerCase().startsWith(ROOT.toLowerCase()) || !existsSync(filePath) || !statSync(filePath).isFile()) {
+  const filePath = normalize(join(STATIC_ROOT, relative));
+  if (!filePath.toLowerCase().startsWith(STATIC_ROOT.toLowerCase()) || !existsSync(filePath) || !statSync(filePath).isFile()) {
     return json(res, 404, { error: "未找到" });
   }
   const type = MIME[extname(filePath).toLowerCase()] || "application/octet-stream";
   res.writeHead(200, {
     "content-type": type,
-    "cache-control": "no-cache",
+    "cache-control": pathname.startsWith("/assets/") ? "public, max-age=31536000, immutable" : "no-cache",
     "x-content-type-options": "nosniff",
     ...SECURITY_HEADERS
   });

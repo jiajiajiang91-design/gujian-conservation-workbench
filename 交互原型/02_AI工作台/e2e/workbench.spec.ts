@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 async function loadExamples(page: Page) {
-  await page.goto('/app.html')
+  await page.goto('/')
   await page.getByRole('button', { name: '加载两套演示项目' }).click()
   await expect(page.getByRole('button', { name: /高都古建保护归档示例/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /东呈五开间资料不足示例/ })).toBeVisible()
@@ -48,7 +48,7 @@ test('东呈只生成证据草图并保持交付阻断', async ({ page }) => {
 test('1280 与 1440 桌面宽度无横向溢出', async ({ page }) => {
   for (const width of [1280, 1440]) {
     await page.setViewportSize({ width, height: 850 })
-    await page.goto('/app.html')
+    await page.goto('/')
     const sizes = await page.evaluate(() => ({
       clientWidth: document.documentElement.clientWidth,
       scrollWidth: document.documentElement.scrollWidth,
