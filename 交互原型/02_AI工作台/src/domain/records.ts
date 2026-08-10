@@ -186,6 +186,37 @@ export const ProxyDrawingInputSchema = z
   })
   .strict()
 
+export const EvidenceSketchInputSchema = z
+  .object({
+    id: UuidSchema,
+    projectId: UuidSchema,
+    fixtureId: UuidSchema,
+    purpose: z.literal('proxy-evidence-sketch'),
+    photoLabel: z.string().trim().min(1).max(500),
+    boxes: z
+      .array(
+        z
+          .object({
+            entityId: UuidSchema,
+            label: z.string().trim().min(1).max(200),
+            x: z.number().min(0).max(1),
+            y: z.number().min(0).max(1),
+            width: z.number().positive().max(1),
+            height: z.number().positive().max(1),
+          })
+          .strict()
+          .superRefine((box, context) => {
+            if (box.x + box.width > 1 || box.y + box.height > 1) {
+              context.addIssue({ code: 'custom', message: '框选范围超出画布' })
+            }
+          }),
+      )
+      .min(1)
+      .max(100),
+    limitations: z.array(z.string().trim().min(1).max(1_000)).min(1).max(100),
+  })
+  .strict()
+
 export type ExecutionRun = z.infer<typeof ExecutionRunSchema>
 export type RuleRun = z.infer<typeof RuleRunSchema>
 export type Decision = z.infer<typeof DecisionSchema>
@@ -194,3 +225,4 @@ export type Delivery = z.infer<typeof DeliverySchema>
 export type AuditEvent = z.infer<typeof AuditEventSchema>
 export type ElevationGeometry = z.infer<typeof ElevationGeometrySchema>
 export type ProxyDrawingInput = z.infer<typeof ProxyDrawingInputSchema>
+export type EvidenceSketchInput = z.infer<typeof EvidenceSketchInputSchema>

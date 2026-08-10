@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { CandidateValueSchema, IsoDateTimeSchema, Sha256Schema, UuidSchema } from './primitives'
+import { AssetRecordSchema } from './project'
+import { FormalEligibilitySchema } from './provenance'
 
 export const ActorRoleSchema = z.enum([
   'operator',
@@ -184,6 +186,64 @@ export const ProjectCommandSchema = z.discriminatedUnion('type', [
           observationId: UuidSchema,
           value: z.string().trim().min(1).max(4_000),
           reason: z.string().trim().min(1).max(4_000),
+        })
+        .strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...ExistingCommandFields,
+      type: z.literal('ConfirmProxyDelivery'),
+      payload: z.object({ reason: z.string().trim().min(1).max(4_000) }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...ExistingCommandFields,
+      type: z.literal('CommitArtifactGeneration'),
+      payload: z
+        .object({
+          sessionId: UuidSchema,
+          assets: z.array(AssetRecordSchema).min(1).max(100),
+          artifacts: z
+            .array(
+              z
+                .object({
+                  id: UuidSchema,
+                  kind: z.enum([
+                    'elevation-svg',
+                    'elevation-dxf',
+                    'evidence-sketch-svg',
+                    'project-data',
+                    'check-report',
+                    'delivery-manifest',
+                    'audit-log',
+                  ]),
+                  assetId: UuidSchema,
+                  sha256: Sha256Schema,
+                  generatorVersion: z.string().trim().min(1).max(100),
+                })
+                .strict(),
+            )
+            .min(1)
+            .max(100),
+        })
+        .strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...ExistingCommandFields,
+      type: z.literal('CommitDelivery'),
+      payload: z
+        .object({
+          sessionId: UuidSchema,
+          packageAsset: AssetRecordSchema,
+          deliveryId: UuidSchema,
+          artifactIds: z.array(UuidSchema).min(1).max(1_000),
+          manifestAssetId: UuidSchema,
+          eligibility: FormalEligibilitySchema,
+          confirmedByDecisionId: UuidSchema,
         })
         .strict(),
     })

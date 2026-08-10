@@ -1,6 +1,7 @@
 import {
   CandidateSchema,
   DecisionSchema,
+  DeliverySchema,
   ExecutionRunSchema,
   ProjectCommandSchema,
   ProjectSnapshotSchema,
@@ -8,9 +9,11 @@ import {
   evaluateFormalEligibility,
   type Artifact,
   type AuditEvent,
+  type AssetRecord,
   type Candidate,
   type CommandResult,
   type Decision,
+  type Delivery,
   type ExecutionRun,
   type ProjectCommand,
   type ProjectSnapshot,
@@ -33,6 +36,8 @@ interface PreparedCommand {
   ruleRunsToAdd?: RuleRun[]
   decisionsToAdd?: Decision[]
   artifactsToPut?: Artifact[]
+  deliveriesToAdd?: Delivery[]
+  assetsToPromote?: { sessionId: string; records: AssetRecord[] }
 }
 
 interface CommandFailure {
@@ -487,6 +492,111 @@ export class ProjectCommandService {
         invalidatedRefs: invalidated.refs,
         decisionsToAdd: [decision],
         artifactsToPut: invalidated.records,
+      }
+    }
+
+    if (command.type === 'ConfirmProxyDelivery') {
+      const decision = createDecision(
+        command,
+        'confirm-proxy',
+        command.payload.reason,
+        [command.projectId],
+      )
+      return {
+        snapshot: ProjectSnapshotSchema.parse(next),
+        changedRefs: [decision.id],
+        invalidatedRefs: [],
+        decisionsToAdd: [decision],
+      }
+    }
+
+    if (command.type === 'CommitArtifactGeneration') {
+      const assetsById = new Map(command.payload.assets.map((asset) => [asset.id, asset]))
+      if (command.payload.assets.some((asset) => asset.projectId !== command.projectId)) {
+        return fail('ASSET_PROJECT_MISMATCH', '生成资源不属于当前项目')
+      }
+      const artifacts: Artifact[] = []
+      for (const output of command.payload.artifacts) {
+        const asset = assetsById.get(output.assetId)
+        if (!asset || asset.sha256 !== output.sha256) {
+          return fail('ARTIFACT_ASSET_MISMATCH', '成果记录与资源哈希不一致')
+        }
+        artifacts.push({
+          id: output.id,
+          projectId: command.projectId,
+          kind: output.kind,
+          sourceRevisionId: command.expectedRevisionId,
+          generatorVersion: output.generatorVersion,
+          assetId: output.assetId,
+          sha256: output.sha256,
+          status: 'valid',
+          createdAt: command.issuedAt,
+        })
+      }
+      const replacedKinds = new Set(artifacts.map((artifact) => artifact.kind))
+      const superseded = aggregate.transfer.artifacts
+        .filter((artifact) => artifact.status === 'valid' && replacedKinds.has(artifact.kind))
+        .map((artifact) => ({ ...artifact, status: 'superseded' as const }))
+      return {
+        snapshot: ProjectSnapshotSchema.parse(next),
+        changedRefs: artifacts.map((artifact) => artifact.id),
+        invalidatedRefs: superseded.map((artifact) => artifact.id),
+        artifactsToPut: [...superseded, ...artifacts],
+        assetsToPromote: {
+          sessionId: command.payload.sessionId,
+          records: command.payload.assets,
+        },
+      }
+    }
+
+    if (command.type === 'CommitDelivery') {
+      const packageAsset = command.payload.packageAsset
+      if (packageAsset.projectId !== command.projectId || packageAsset.mime !== 'application/zip') {
+        return fail('DELIVERY_ASSET_INVALID', '交付包资源不属于当前项目或类型不正确')
+      }
+      const artifactIds = new Set(
+        aggregate.transfer.artifacts
+          .filter((artifact) => artifact.status === 'valid')
+          .map((artifact) => artifact.id),
+      )
+      if (!command.payload.artifactIds.every((artifactId) => artifactIds.has(artifactId))) {
+        return fail('DELIVERY_ARTIFACT_INVALID', '交付引用了缺失或失效成果')
+      }
+      const manifest = aggregate.transfer.artifacts.find(
+        (artifact) =>
+          artifact.id === command.payload.manifestAssetId ||
+          artifact.assetId === command.payload.manifestAssetId,
+      )
+      if (!manifest || manifest.kind !== 'delivery-manifest' || manifest.status !== 'valid') {
+        return fail('DELIVERY_MANIFEST_INVALID', '交付清单成果缺失或失效')
+      }
+      const decision = aggregate.transfer.decisions.find(
+        (record) => record.id === command.payload.confirmedByDecisionId,
+      )
+      if (!decision || decision.choice !== 'confirm-proxy') {
+        return fail('PROXY_CONFIRMATION_REQUIRED', '代理交付尚未确认')
+      }
+      const delivery = DeliverySchema.parse({
+        id: command.payload.deliveryId,
+        projectId: command.projectId,
+        sourceRevisionId: command.expectedRevisionId,
+        mode: 'proxy',
+        artifactIds: command.payload.artifactIds,
+        manifestAssetId: manifest.assetId,
+        packageAssetId: packageAsset.id,
+        eligibility: command.payload.eligibility,
+        createdAt: command.issuedAt,
+        confirmedByDecisionId: decision.id,
+      })
+      return {
+        snapshot: ProjectSnapshotSchema.parse(next),
+        changedRefs: [delivery.id, packageAsset.id],
+        invalidatedRefs: [],
+        deliveriesToAdd: [delivery],
+        assetsToPromote: {
+          sessionId: command.payload.sessionId,
+          records: [packageAsset],
+        },
       }
     }
 

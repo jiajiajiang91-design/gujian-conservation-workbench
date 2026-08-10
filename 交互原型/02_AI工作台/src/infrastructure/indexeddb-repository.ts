@@ -78,6 +78,7 @@ export interface CommandWriteSet {
   decisionsToAdd?: Decision[]
   artifactsToPut?: Artifact[]
   deliveriesToAdd?: Delivery[]
+  assetsToPromote?: { sessionId: string; records: AssetRecord[] }
 }
 
 export interface RepositoryExport {
@@ -212,6 +213,36 @@ export class IndexedDbProjectRepository {
         importSessionId: sessionId,
       }
       assets.add(persisted)
+    }
+    await done
+  }
+
+  async stageGeneratedAssets(
+    sessionId: string,
+    records: AssetRecord[],
+    contents: ReadonlyMap<string, Blob>,
+  ): Promise<void> {
+    const projectIds = new Set(records.map((record) => record.projectId))
+    if (projectIds.size !== 1 || records.some((record) => !contents.has(record.id))) {
+      throw new Error('生成资源与暂存内容不一致')
+    }
+    const db = await this.database
+    const tx = db.transaction(['assets', 'importSessions'], 'readwrite')
+    const done = transactionDone(tx)
+    tx.objectStore('importSessions').add({
+      id: sessionId,
+      status: 'staging',
+      createdAt: new Date().toISOString(),
+    } satisfies ImportSession)
+    for (const record of records) {
+      tx.objectStore('assets').add({
+        id: record.id,
+        projectId: record.projectId,
+        sha256: record.sha256,
+        record,
+        content: contents.get(record.id),
+        importSessionId: sessionId,
+      } satisfies PersistedAsset)
     }
     await done
   }
@@ -414,6 +445,8 @@ export class IndexedDbProjectRepository {
         'deliveries',
         'auditEvents',
         'commandReceipts',
+        'assets',
+        'importSessions',
       ],
       'readwrite',
     )
@@ -480,6 +513,31 @@ export class IndexedDbProjectRepository {
       this.addRecords(tx, 'decisions', writeSet.decisionsToAdd ?? [])
       for (const artifact of writeSet.artifactsToPut ?? []) tx.objectStore('artifacts').put(artifact)
       this.addRecords(tx, 'deliveries', writeSet.deliveriesToAdd ?? [])
+      if (writeSet.assetsToPromote) {
+        const assets = tx.objectStore('assets')
+        for (const record of writeSet.assetsToPromote.records) {
+          const request = assets.get(record.id)
+          request.onsuccess = () => {
+            const staged = request.result as PersistedAsset | undefined
+            if (
+              !staged ||
+              staged.importSessionId !== writeSet.assetsToPromote?.sessionId ||
+              staged.projectId !== command.projectId
+            ) {
+              tx.abort()
+              return
+            }
+            const promoted: PersistedAsset = { ...staged, record }
+            delete promoted.importSessionId
+            assets.put(promoted)
+          }
+        }
+        tx.objectStore('importSessions').put({
+          id: writeSet.assetsToPromote.sessionId,
+          status: 'committed',
+          createdAt: command.issuedAt,
+        } satisfies ImportSession)
+      }
       tx.objectStore('auditEvents').add(writeSet.auditEvent)
       tx.objectStore('commandReceipts').add({
         id: command.id,
