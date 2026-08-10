@@ -1,3 +1,4 @@
+export * from './commands'
 export * from './eligibility'
 export * from './primitives'
 export * from './project'

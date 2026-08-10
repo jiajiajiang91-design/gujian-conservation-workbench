@@ -42,7 +42,6 @@ export const ProjectTransferSchema = z
   .strict()
   .superRefine((transfer, context) => {
     const projectId = transfer.revision.project.id
-    const revisionId = transfer.revision.revision.id
     const assetIds = new Set(transfer.assets.map((record) => record.id))
     const modelRunIds = new Set(transfer.modelRuns.map((record) => record.id))
     const ruleRunIds = new Set(transfer.ruleRuns.map((record) => record.id))
@@ -62,18 +61,6 @@ export const ProjectTransferSchema = z
         context.addIssue({ code: 'custom', message: `记录不属于当前项目：${record.id}` })
       }
     }
-    for (const record of [
-      ...transfer.modelRuns,
-      ...transfer.ruleRuns,
-      ...transfer.decisions,
-      ...transfer.artifacts,
-      ...transfer.deliveries,
-    ]) {
-      if (record.sourceRevisionId !== revisionId) {
-        context.addIssue({ code: 'custom', message: `记录引用了包外版本：${record.id}` })
-      }
-    }
-
     for (const evidence of transfer.revision.evidence) {
       if (!assetIds.has(evidence.assetId)) {
         context.addIssue({ code: 'custom', message: `证据资源不存在：${evidence.id}` })
