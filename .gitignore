@@ -19,6 +19,9 @@ _deploy/
 node_modules/
 dist/
 coverage/
+test-results/
+playwright-report/
+blob-report/
 .vite/
 __pycache__/
 *.pyc
