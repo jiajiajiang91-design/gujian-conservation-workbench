@@ -17,9 +17,11 @@
     "smoke:http": "node --env-file=.env scripts/http-smoke.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   },
   "dependencies": {
+    "@noble/hashes": "^2.0.0",
+    "fflate": "^0.8.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "zod": "^4.0.17"
@@ -32,6 +34,7 @@
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.2.0",
+    "fake-indexeddb": "^6.2.2",
     "jsdom": "^26.1.0",
     "typescript": "^5.9.2",
     "vite": "^7.1.1",

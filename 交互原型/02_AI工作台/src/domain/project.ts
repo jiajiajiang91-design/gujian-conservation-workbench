@@ -34,15 +34,29 @@ export const AssetRecordSchema = z
   .object({
     id: UuidSchema,
     projectId: UuidSchema,
-    fileName: z.string().trim().min(1).max(255),
+    fileName: z
+      .string()
+      .trim()
+      .min(1)
+      .max(255)
+      .refine(
+        (name) =>
+          !name.includes('/') &&
+          !name.includes('\\') &&
+          !name.includes('\0') &&
+          !/^[a-z][a-z0-9+.-]*:/i.test(name),
+        '资源名称不能包含路径或 URL',
+      ),
     mime: z.enum([
       'image/jpeg',
       'image/png',
+      'image/webp',
       'application/pdf',
       'application/json',
       'image/svg+xml',
       'application/dxf',
       'text/plain',
+      'text/csv',
       'application/zip',
     ]),
     byteSize: z.number().int().nonnegative().max(100 * 1024 * 1024),
