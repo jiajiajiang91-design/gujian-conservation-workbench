@@ -3,11 +3,12 @@
 
 ## 实现状态（2026-08-11）
 
-`floorPlan`、`transverseSection` 和 `longitudinalSection` 已按本合同生成 ViewGeometry。三者均包含真实切面和经过解析遮挡判断的剖后投影，且只接受 `prepare_view_generation_input()` 返回的白名单输入。
+`floorPlan`、`transverseSection`、`longitudinalSection`、`roofPlan`、`southElevation` 和 `axonometric` 已按本合同生成 ViewGeometry。前三者包含真实切面和经过解析遮挡判断的剖后投影；后三者包含同源轮廓边、特征边、构件边界和完整可见线。所有生成器只接受 `prepare_view_generation_input()` 返回的白名单输入。
 
-独立验证报告位于 `t0b-v2-outputs/sections/section-verification.json`。报告复算切面、来源边和遮挡，核对顶层坐标框架、剖面参数、二维与三维坐标绑定、结构线 ID、剖切区域、材料、来源闭包和输出哈希。当前状态为 `passed-section-geometry-only`，不代表图纸完成或 L1 通过。
+独立验证报告位于 `t0b-v2-outputs/sections/section-verification.json` 和 `t0b-v2-outputs/projections/projection-verification.json`。报告分别复算切面、候选边、遮挡、来源闭包、坐标绑定和输出哈希。当前状态为 `passed-section-geometry-only / passed-projection-geometry-only`，不代表图纸完成或 L1 通过。
 
-下一独立任务是屋顶平面、南立面和轴测的同源可见线投影。完成十个视图、成组图面和独立专业复核前，不得恢复 T3，也不得生成“已通过”的图签或交付说明。
+下一独立任务是檐口、承托、柱脚和门窗四张同源详图。完成十个视图、成组图面和独立专业复核前，不得恢复 T3，也不得生成“已通过”的图签或交付说明。
+
 ## 状态
 
 本合同只冻结视图输入和验收答案，不生成二维建筑线。当前状态仍为 `generated-not-qualified`，`L1=false`。
@@ -20,6 +21,15 @@
 - 横剖固定在 `x=-1750 mm`，向东观察。该剖面位于西侧柱架内部，并避开椽、飞椽的网格面和瓦件交界；独立验证器对切面执行 `±0.5 mm` 扰动复算，实体集合和闭合拓扑必须不变。
 - 纵剖固定在 `y=0`，向南观察。基础底标高属于剖后投影参照，不冒充切面。
 - 三个主剖面分别冻结 `depthProjectionTypes`。切面仍对所有相交实体真实求交；剖后投影只保留能说明台基、墙体、门窗、柱架、承托和檩等关系的构件，不把整坡重复瓦件、椽网格或三角内部边投影成图面噪声。
+
+## 可见线投影
+
+- 屋顶平面只选择板瓦、筒瓦和屋脊。屋面下木构不得成为可见线。
+- 南立面和轴测按冻结的外部表达构件集生成，不把基础、地层或室内构件投影到建筑外观。
+- 全局外轮廓记为 `silhouette`，同一构件的高折角记为 `feature`，构件交界、瓦件搭接和门窗分格记为 `componentBoundary`；三角网内部边不得输出。
+- 遮挡按相机到模型的最小深度解析计算。共线重边只保留唯一来源，选择顺序为最近深度、线类和稳定实体 ID。
+- 独立投影验证器重新计算完整候选边和可见区间，同时检查缺线与多线。5 mm 窄遮挡、遗漏屋脊或门窗、透出禁入构件、镜像视图、来源篡改和重边负例均须失败。
+- 六张 300 dpi 预览只用于整图与线类检查，不是图纸输出。
 
 ## 局部详图
 
@@ -45,4 +55,4 @@
 - 独立复算命令：`workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.verify_view_contract --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> --output <report>`。报告固定输入文件哈希、验证器版本与源码哈希。
 - 参考图片和外部 DWG 不进入输入、生成依赖或成果包。
 
-平面、横剖和纵剖的真实求交与剖后投影已经完成。下一提交实现屋顶平面、南立面和轴测的可见线投影，不生成 DXF 或 PDF。
+六个主视图的真实求交与可见线投影已经完成。下一提交生成四张同源局部详图，不生成 DXF 或 PDF。

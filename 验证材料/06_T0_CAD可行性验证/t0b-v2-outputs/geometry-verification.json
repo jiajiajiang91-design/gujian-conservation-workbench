@@ -15,7 +15,7 @@
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "9d9e1866c9c76406b734ea7a0533d4dfaa24c46fdf358d6e775a5a1e9a71051c"
+      "sha256": "45fe564f8afb5d82f3450d502a7f9bd7ecb03a8ffd39beaff195d98fd2fdda93"
     },
     "manifest": {
       "path": "geometry-manifest.json",

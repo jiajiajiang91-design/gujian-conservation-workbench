@@ -136,6 +136,19 @@ class T0BV2ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "direction semantics are ambiguous"):
             validate_fixture(invalid)
 
+    def test_projection_display_boundary_is_frozen(self) -> None:
+        invalid = deepcopy(self.fixture)
+        view = next(item for item in invalid["views"] if item["id"] == "roofPlan")
+        view["projection"]["displayTypes"].append("groundLayer")
+        with self.assertRaisesRegex(ContractError, "projection display types"):
+            validate_fixture(invalid)
+
+    def test_projection_oracle_requires_visible_sources(self) -> None:
+        invalid = deepcopy(self.fixture)
+        invalid["knownAnswers"]["viewOracle"]["views"]["axonometric"]["requiredVisibleEntityIds"] = []
+        with self.assertRaisesRegex(ContractError, "required visible entities"):
+            validate_fixture(invalid)
+
     def test_non_unit_section_normal_is_rejected(self) -> None:
         invalid = deepcopy(self.fixture)
         view = next(item for item in invalid["views"] if item["id"] == "transverseSection")

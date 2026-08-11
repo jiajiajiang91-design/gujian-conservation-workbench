@@ -278,6 +278,36 @@ def verify_view_contract(fixture_path: Path, manifest_path: Path, source_meshes_
                     np.asarray(section_spec["planeOrigin"], dtype=float),
                 )
                 _record(checks, f"{view_id} anchor mesh intersects cut plane", len(cut) > 0, True)
+        if view.get("derivation") == "visibleLineProjection":
+            display_types = set(view.get("projection", {}).get("displayTypes", []))
+            required_visible = expected.get("requiredVisibleEntityIds", [])
+            forbidden_entities = expected.get("mustNotAppearEntityIds", [])
+            _record(checks, f"{view_id} required visible entities exist", all(entity_id in metadata for entity_id in required_visible), True)
+            _record(
+                checks,
+                f"{view_id} required visible types are displayed",
+                all(metadata[entity_id]["componentType"] in display_types for entity_id in required_visible if entity_id in metadata),
+                True,
+            )
+            _record(checks, f"{view_id} forbidden entities exist", all(entity_id in metadata for entity_id in forbidden_entities), True)
+            _record(checks, f"{view_id} forbidden types are not displayed", not (set(expected.get("mustNotAppearTypes", [])) & display_types), True)
+            for chain_name, chain in expected.get("requiredVisibleChains", {}).items():
+                chain_bounds = [np.asarray(metadata[entity_id]["bounds"], dtype=float) for entity_id in chain if entity_id in metadata]
+                connected = len(chain_bounds) == len(chain) and all(
+                    bool(np.all(chain_bounds[index][1] + 0.001 >= chain_bounds[index + 1][0]) and np.all(chain_bounds[index + 1][1] + 0.001 >= chain_bounds[index][0]))
+                    for index in range(len(chain_bounds) - 1)
+                )
+                _record(checks, f"{view_id} {chain_name} source continuity", connected, True)
+            if view_id == "axonometric":
+                frame = view["viewFrame"]
+                origin = np.asarray(frame["origin"], dtype=float)
+                right = np.asarray(frame["right"], dtype=float)
+                up = np.asarray(frame["up"], dtype=float)
+                ridge = np.asarray(expected["anchorModelPointsMm"]["ridgeCenter"], dtype=float) - origin
+                step = np.asarray(expected["anchorModelPointsMm"]["southStepFront"], dtype=float) - origin
+                ridge_2d = np.asarray([ridge @ right, ridge @ up])
+                step_2d = np.asarray([step @ right, step @ up])
+                _record(checks, "axonometric anchor orientation", bool(step_2d[0] > ridge_2d[0] and step_2d[1] < ridge_2d[1]), True)
 
     status = "passed-contract-only" if all(item["passed"] for item in checks) else "failed"
     return {

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "t0b-v2-projection-build-1",
+  "status": "generated-not-qualified",
+  "qualification": "not-drawing-output",
+  "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+  "viewContractRevisionId": "5f7db94c-b414-5566-96a9-5c49354ad515",
+  "inputs": {
+    "fixture": {
+      "path": "t0b-v2-resolved-local-assembly.json",
+      "sha256": "45fe564f8afb5d82f3450d502a7f9bd7ecb03a8ffd39beaff195d98fd2fdda93"
+    },
+    "generationContract": {
+      "sha256": "7e57448af73a33913cc7bc42ee4f0f26ec582cc9a9462cab7aa6296233baf0c9"
+    },
+    "manifest": {
+      "path": "geometry-manifest.json",
+      "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+    },
+    "sourceMeshes": {
+      "path": "source-meshes.ndjson.gz",
+      "sha256": "06a92a7fe76c632fe4c7fddd0f27e53ed3fad46a57a047bfdcd7de08432d4c3c"
+    }
+  },
+  "outputs": [
+    {
+      "viewId": "roofPlan",
+      "path": "roofPlan.view-geometry.json.gz",
+      "sha256": "c3e61fb31d161a904e688a951b353b8f1746bf7a5de7d5e95b483ff8a4e6c171",
+      "viewGeometrySha256": "2ecf4d294a3d3b9d5f97207803c2b689fdd3c7b83ed127730bba3dde2811d386",
+      "statistics": {
+        "selectedSourceCount": 1166,
+        "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+        "projectedSourceCount": 997,
+        "projectedEntitySetSha256": "05411c8e84a111e4ac3eb349f0d7b1e7cd7f078040a4603e5ab9d4d3cd92b636",
+        "projectionTriangleCountDiagnostic": 566268,
+        "visibleProjectionLineCount": 16772,
+        "projectionSourceTypes": [
+          "coverTile",
+          "panTile",
+          "ridgeTile"
+        ]
+      }
+    },
+    {
+      "viewId": "southElevation",
+      "path": "southElevation.view-geometry.json.gz",
+      "sha256": "733e46784d76ff2fed13c6ac86ac9d680287350ea0bd83905ac657c0a9488cd5",
+      "viewGeometrySha256": "e6512f076fa602301e2aa4a3598663c376c81ecdecfeb97e05d94ebf70553699",
+      "statistics": {
+        "selectedSourceCount": 1166,
+        "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+        "projectedSourceCount": 566,
+        "projectedEntitySetSha256": "c01c0bb1fbfa773b283e2e80801b25726cf4e14841c80c260845dfdc65f0fc48",
+        "projectionTriangleCountDiagnostic": 566268,
+        "visibleProjectionLineCount": 13575,
+        "projectionSourceTypes": [
+          "bearingBlock",
+          "bracketArm",
+          "bracketSeat",
+          "column",
+          "columnBase",
+          "coverTile",
+          "doorFrame",
+          "doorLeaf",
+          "eaveBeam",
+          "flyRafter",
+          "latticeWindow",
+          "panTile",
+          "purlin",
+          "ridgeTile",
+          "roofBoard",
+          "step",
+          "terrace",
+          "wall"
+        ]
+      }
+    },
+    {
+      "viewId": "axonometric",
+      "path": "axonometric.view-geometry.json.gz",
+      "sha256": "2ef4eac6dbe5e8d98e8685d8c3ccd0e799476a3ad74b28a92b0f7b5601fb1deb",
+      "viewGeometrySha256": "ff4f35e13218972d68ebfd1fc453633e654b53f6f0a6e8146446317b8b221918",
+      "statistics": {
+        "selectedSourceCount": 1166,
+        "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+        "projectedSourceCount": 798,
+        "projectedEntitySetSha256": "e22ec0435184dfd0ae1604ea3bf02490420ddee2a2b69035de965447dc2a7c12",
+        "projectionTriangleCountDiagnostic": 566268,
+        "visibleProjectionLineCount": 17411,
+        "projectionSourceTypes": [
+          "bearingBlock",
+          "bracketArm",
+          "bracketSeat",
+          "column",
+          "columnBase",
+          "coverTile",
+          "doorFrame",
+          "doorLeaf",
+          "eaveBeam",
+          "flyRafter",
+          "latticeWindow",
+          "panTile",
+          "purlin",
+          "ridgeTile",
+          "roofBoard",
+          "step",
+          "terrace",
+          "wall"
+        ]
+      }
+    }
+  ]
+}

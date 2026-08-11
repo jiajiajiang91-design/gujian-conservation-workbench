@@ -146,6 +146,50 @@ PRIMARY_SECTION_DEPTH_TYPES = {
     },
 }
 
+PROJECTION_DISPLAY_TYPES = {
+    "roofPlan": {"panTile", "coverTile", "ridgeTile"},
+    "southElevation": {
+        "terrace",
+        "step",
+        "columnBase",
+        "column",
+        "eaveBeam",
+        "bracketSeat",
+        "bracketArm",
+        "bearingBlock",
+        "purlin",
+        "flyRafter",
+        "roofBoard",
+        "panTile",
+        "coverTile",
+        "ridgeTile",
+        "wall",
+        "doorFrame",
+        "doorLeaf",
+        "latticeWindow",
+    },
+    "axonometric": {
+        "terrace",
+        "step",
+        "columnBase",
+        "column",
+        "eaveBeam",
+        "bracketSeat",
+        "bracketArm",
+        "bearingBlock",
+        "purlin",
+        "flyRafter",
+        "roofBoard",
+        "panTile",
+        "coverTile",
+        "ridgeTile",
+        "wall",
+        "doorFrame",
+        "doorLeaf",
+        "latticeWindow",
+    },
+}
+
 
 def _require(condition: bool, message: str) -> None:
     if not condition:
@@ -426,6 +470,11 @@ def validate_fixture(fixture: dict) -> dict:
             direction = _vector(view.get("direction"), f"{view['id']}.direction")
             _require(view.get("directionSemantics") == "camera-to-model", f"{view['id']} direction semantics are ambiguous")
             _require(all(_close(a, b) for a, b in zip(direction, depth)), f"{view['id']} direction must match view depth")
+            projection = view.get("projection", {})
+            _require(
+                set(projection.get("displayTypes", [])) == PROJECTION_DISPLAY_TYPES[view["id"]],
+                f"{view['id']} projection display types must match the frozen professional view boundary",
+            )
         else:
             detail = view.get("detail", {})
             _require(detail.get("mode") in {"section-projection", "occlusion-projection"}, f"{view['id']} detail mode is invalid")
@@ -468,6 +517,12 @@ def validate_fixture(fixture: dict) -> dict:
     _require(isinstance(projection_policy.get("featureAngleDeg"), (int, float)) and 0 < projection_policy["featureAngleDeg"] < 90, "feature-edge angle is invalid")
     _require(isinstance(projection_policy.get("visibilityProbeToleranceMm"), (int, float)) and 0 < projection_policy["visibilityProbeToleranceMm"] <= geometry_validation["curveToleranceMm"], "visibility tolerance is too loose")
     _require(isinstance(projection_policy.get("occlusionSplitToleranceMm"), (int, float)) and 0 < projection_policy["occlusionSplitToleranceMm"] <= 5, "occlusion split tolerance is too loose")
+    _require(projection_policy.get("outlineProbeMm") == 5, "outline classification probe must remain frozen at 5 mm")
+    _require(projection_policy.get("continuationDepthToleranceMm") == 50, "outline continuation depth tolerance must remain frozen at 50 mm")
+    _require(
+        projection_policy.get("canonicalOwnerPolicy") == "nearest-depth-then-silhouette-componentBoundary-feature-then-entityId",
+        "coincident projection edges must use the frozen canonical owner policy",
+    )
     _require(set(projection_policy.get("structuralLineClasses", [])) == {"cut", "silhouette", "feature", "componentBoundary"}, "structural line classes are incomplete")
     _require(set(projection_policy.get("visibilityClasses", [])) == {"visible", "hidden"}, "visibility classes are incomplete")
     _require(
@@ -599,6 +654,15 @@ def validate_fixture(fixture: dict) -> dict:
     for view_id in {"eaveDetail", "bracketDetail", "columnBaseDetail", "doorWindowDetail"}:
         _require(oracle_views[view_id].get("anchorEntityId") == view_by_id[view_id]["detail"]["anchorEntityId"], f"{view_id} oracle must use the frozen detail instance")
         _require(set(oracle_views[view_id].get("requiredTypes", [])) == set(view_by_id[view_id]["detail"]["targetTypes"]), f"{view_id} oracle types must match the detail selection")
+    for view_id in {"roofPlan", "southElevation", "axonometric"}:
+        answer = oracle_views[view_id]
+        required_visible = answer.get("requiredVisibleEntityIds", [])
+        _require(required_visible and len(required_visible) == len(set(required_visible)), f"{view_id} required visible entities are incomplete")
+        _require(all(isinstance(entity_id, str) for entity_id in required_visible), f"{view_id} required visible entity ids are invalid")
+        _require(isinstance(answer.get("mustNotAppearEntityIds", []), list), f"{view_id} forbidden entity list is invalid")
+        _require(isinstance(answer.get("mustNotAppearTypes", []), list), f"{view_id} forbidden type list is invalid")
+    _require(bool(oracle_views["roofPlan"].get("requiredVisibleChains")), "roofPlan visible continuity chains are missing")
+    _require(oracle_views["axonometric"].get("anchorOrder") == "southStepFront-right-and-below-ridgeCenter", "axonometric anchor orientation is not frozen")
 
     acceptance = fixture["acceptance"]
     _require(acceptance.get("structuralSourceEntityCoverage") == 1.0, "structural source entity coverage must be 100%")

@@ -5,12 +5,12 @@
   "verifier": {
     "version": "2.0.0",
     "source": "verify_view_contract.py",
-    "sha256": "f43977784baf3f2d0ebb639c3bfedc12be0dcdf07706f006ecfa71b2239c14b9"
+    "sha256": "8d73d33885015c7b8d08a127f30b694c08eb1045b8294b0a16783fd091edc98a"
   },
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "9d9e1866c9c76406b734ea7a0533d4dfaa24c46fdf358d6e775a5a1e9a71051c"
+      "sha256": "45fe564f8afb5d82f3450d502a7f9bd7ecb03a8ffd39beaff195d98fd2fdda93"
     },
     "manifest": {
       "path": "geometry-manifest.json",
@@ -67,14 +67,14 @@
     {
       "name": "view contract signature",
       "passed": true,
-      "actual": "88af27ce8027e0d80215de80e046a701f5bfb28006ce0e15db055aeec39ffa76",
-      "expected": "88af27ce8027e0d80215de80e046a701f5bfb28006ce0e15db055aeec39ffa76"
+      "actual": "af65d11ad53b2b6d98c49c4ea1e3a10e7cbe4d392e60f1ae4f2a85d7da0857f4",
+      "expected": "af65d11ad53b2b6d98c49c4ea1e3a10e7cbe4d392e60f1ae4f2a85d7da0857f4"
     },
     {
       "name": "view contract revision",
       "passed": true,
-      "actual": "19fd061d-7fc7-55fe-a243-3341f7e7e552",
-      "expected": "19fd061d-7fc7-55fe-a243-3341f7e7e552"
+      "actual": "5f7db94c-b414-5566-96a9-5c49354ad515",
+      "expected": "5f7db94c-b414-5566-96a9-5c49354ad515"
     },
     {
       "name": "floorPlan selection set",
@@ -297,6 +297,48 @@
       "expected": 1166
     },
     {
+      "name": "roofPlan required visible entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "roofPlan required visible types are displayed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "roofPlan forbidden entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "roofPlan forbidden types are not displayed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "roofPlan ridge source continuity",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "roofPlan southPanLap source continuity",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "roofPlan southCoverLap source continuity",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
       "name": "southElevation selection set",
       "passed": true,
       "actual": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
@@ -361,6 +403,30 @@
       "passed": true,
       "actual": 1166,
       "expected": 1166
+    },
+    {
+      "name": "southElevation required visible entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "southElevation required visible types are displayed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "southElevation forbidden entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "southElevation forbidden types are not displayed",
+      "passed": true,
+      "actual": true,
+      "expected": true
     },
     {
       "name": "transverseSection selection set",
@@ -883,6 +949,36 @@
       "passed": true,
       "actual": 1166,
       "expected": 1166
+    },
+    {
+      "name": "axonometric required visible entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "axonometric required visible types are displayed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "axonometric forbidden entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "axonometric forbidden types are not displayed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "axonometric anchor orientation",
+      "passed": true,
+      "actual": true,
+      "expected": true
     },
     {
       "name": "eaveDetail selection set",

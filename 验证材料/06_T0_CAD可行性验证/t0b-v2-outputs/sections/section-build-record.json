@@ -3,11 +3,11 @@
   "status": "generated-not-qualified",
   "qualification": "not-drawing-output",
   "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-  "viewContractRevisionId": "19fd061d-7fc7-55fe-a243-3341f7e7e552",
+  "viewContractRevisionId": "5f7db94c-b414-5566-96a9-5c49354ad515",
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "9d9e1866c9c76406b734ea7a0533d4dfaa24c46fdf358d6e775a5a1e9a71051c"
+      "sha256": "45fe564f8afb5d82f3450d502a7f9bd7ecb03a8ffd39beaff195d98fd2fdda93"
     },
     "manifest": {
       "path": "geometry-manifest.json",
@@ -22,8 +22,8 @@
     {
       "viewId": "floorPlan",
       "path": "floorPlan.view-geometry.json.gz",
-      "sha256": "241e297dbcdb16df5502f08826c3e933c58fba7d3da04bc2d099d5b6cd06ce8f",
-      "viewGeometrySha256": "214129f7e0ad62e5e7286253bc2bf04aabe67aeddb49c546f7b775050f0234ce",
+      "sha256": "8b8144b0d34c207688cde278e5d59c8640fa8485d03bb6ad462324073f4cf292",
+      "viewGeometrySha256": "d0c758d07c173c3a98d3b8a14cf842214b1c863dec1303bf50f5946fc46708db",
       "statistics": {
         "selectedSourceCount": 36,
         "cutSourceCount": 11,
@@ -58,8 +58,8 @@
     {
       "viewId": "transverseSection",
       "path": "transverseSection.view-geometry.json.gz",
-      "sha256": "76210423864b85ab0330cff60649b36deb9ab5efad46cc5bd114d0df37a069d1",
-      "viewGeometrySha256": "e2519bbd69acd8ab90d26776639409081f1be1d241561068c9ee301899944ab7",
+      "sha256": "3cf6ff8433e831f2ea07ede97d14aa2a7b712a1cfabf7720474cce87f66b51a7",
+      "viewGeometrySha256": "9a91cea71019426d40d58961b3156156a061c2b4289a2a06a97418e341398fb8",
       "statistics": {
         "selectedSourceCount": 1040,
         "cutSourceCount": 74,
@@ -131,8 +131,8 @@
     {
       "viewId": "longitudinalSection",
       "path": "longitudinalSection.view-geometry.json.gz",
-      "sha256": "667a1ecbd43408314d1c604673f6d3ab506aaf92ba8bb83d789754dd938fc6a9",
-      "viewGeometrySha256": "bc988897d16da7a0ce6f72097f72a884534220753a9ae42e8eca3dcea622ee8b",
+      "sha256": "14d18161f3a4c8d4e4e704e739b2bfc82748f26822b807e6ca80dc21fee868ac",
+      "viewGeometrySha256": "ad9156293d439eeb48770510c4ce763bdec996c4d521092c91d4198437010ad6",
       "statistics": {
         "selectedSourceCount": 634,
         "cutSourceCount": 91,

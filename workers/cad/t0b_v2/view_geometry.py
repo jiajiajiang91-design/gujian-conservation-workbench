@@ -290,6 +290,69 @@ def _occluded_interval(start: np.ndarray, end: np.ndarray, triangle: np.ndarray,
     return (lower, crossing) if lower_difference > 0 else (crossing, upper)
 
 
+def _occluded_intervals(start: np.ndarray, end: np.ndarray, triangles: list[np.ndarray], tolerance: float) -> list[tuple[float, float]]:
+    if not triangles:
+        return []
+    array = np.asarray(triangles, dtype=float)
+    first = array[:, 0]
+    vector_a = array[:, 1, :2] - first[:, :2]
+    vector_b = array[:, 2, :2] - first[:, :2]
+    denominator = vector_a[:, 0] * vector_b[:, 1] - vector_a[:, 1] * vector_b[:, 0]
+    valid = np.abs(denominator) > 1e-9
+    safe_denominator = np.where(valid, denominator, 1.0)
+
+    def barycentric(points: np.ndarray) -> np.ndarray:
+        offset = points[:, :2] - first[:, :2]
+        u = (offset[:, 0] * vector_b[:, 1] - offset[:, 1] * vector_b[:, 0]) / safe_denominator
+        v = (vector_a[:, 0] * offset[:, 1] - vector_a[:, 1] * offset[:, 0]) / safe_denominator
+        return np.column_stack((u, v, 1.0 - u - v))
+
+    start_points = np.broadcast_to(start, first.shape)
+    end_points = np.broadcast_to(end, first.shape)
+    start_weights = barycentric(start_points)
+    end_weights = barycentric(end_points)
+    lower = np.zeros(len(array), dtype=float)
+    upper = np.ones(len(array), dtype=float)
+    for index in range(3):
+        initial = start_weights[:, index]
+        slope = end_weights[:, index] - initial
+        flat = np.abs(slope) <= 1e-12
+        valid &= ~(flat & (initial < -1e-9))
+        crossing = np.divide(-1e-9 - initial, slope, out=np.zeros_like(slope), where=~flat)
+        lower = np.where((~flat) & (slope > 0), np.maximum(lower, crossing), lower)
+        upper = np.where((~flat) & (slope < 0), np.minimum(upper, crossing), upper)
+    valid &= lower < upper
+
+    direction = end - start
+
+    def depth_difference(parameters: np.ndarray) -> np.ndarray:
+        weights = start_weights + (end_weights - start_weights) * parameters[:, None]
+        triangle_depth = (
+            first[:, 2]
+            + weights[:, 0] * (array[:, 1, 2] - first[:, 2])
+            + weights[:, 1] * (array[:, 2, 2] - first[:, 2])
+        )
+        line_depth = start[2] + direction[2] * parameters
+        return line_depth - triangle_depth - tolerance
+
+    lower_difference = depth_difference(lower)
+    upper_difference = depth_difference(upper)
+    hidden = valid & ((lower_difference > 0) | (upper_difference > 0))
+    mixed = hidden & ((lower_difference > 0) != (upper_difference > 0))
+    crossing = lower + np.divide(
+        (upper - lower) * (-lower_difference),
+        upper_difference - lower_difference,
+        out=np.zeros_like(lower),
+        where=np.abs(upper_difference - lower_difference) > 1e-12,
+    )
+    result_lower = np.where(mixed & (lower_difference <= 0), crossing, lower)
+    result_upper = np.where(mixed & (lower_difference > 0), crossing, upper)
+    return [
+        (float(result_lower[index]), float(result_upper[index]))
+        for index in np.flatnonzero(hidden & (result_lower < result_upper))
+    ]
+
+
 def _visible_intervals(
     start: np.ndarray,
     end: np.ndarray,
@@ -300,11 +363,7 @@ def _visible_intervals(
     length = float(np.linalg.norm(end[:2] - start[:2]))
     if length < split_tolerance:
         return []
-    occluded = [
-        interval
-        for triangle in depth_index.segment_candidates(start, end)
-        if (interval := _occluded_interval(start, end, triangle, tolerance)) is not None
-    ]
+    occluded = _occluded_intervals(start, end, depth_index.segment_candidates(start, end), tolerance)
     merged: list[list[float]] = []
     for lower, upper in sorted(occluded):
         lower = max(0.0, lower)
@@ -329,6 +388,32 @@ def _visible_intervals(
         for lower, upper in visible
         if (upper - lower) * length >= split_tolerance
     ]
+
+
+def _projection_line_class(
+    start: np.ndarray,
+    end: np.ndarray,
+    source_class: str,
+    depth_index: DepthIndex,
+    tolerance: float,
+    outline_probe: float,
+    continuation_tolerance: float,
+) -> str:
+    if source_class == "feature":
+        return "feature"
+    direction = end[:2] - start[:2]
+    length = float(np.linalg.norm(direction))
+    if length <= 1e-9:
+        return "componentBoundary"
+    perpendicular = np.asarray([-direction[1], direction[0]], dtype=float) / length
+    midpoint = (start + end) / 2
+    continuation_tolerance = max(continuation_tolerance, tolerance * 4)
+    continuations = 0
+    for sign in (-1.0, 1.0):
+        nearest = depth_index.nearest_depth(midpoint[:2] + perpendicular * outline_probe * sign)
+        if nearest is not None and abs(nearest - midpoint[2]) <= continuation_tolerance:
+            continuations += 1
+    return "silhouette" if continuations == 1 else "componentBoundary"
 
 
 class SectionViewGenerator:
@@ -505,6 +590,155 @@ class SectionViewGenerator:
                 "visibleProjectionLineCount": len(projection_lines),
                 "depthProjectionSourceTypes": sorted({line["sourceComponentType"] for line in projection_lines}),
                 "openOrDangleCount": open_or_dangle,
+            },
+        }
+        canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        payload["viewGeometrySha256"] = sha256(canonical.encode("utf-8")).hexdigest()
+        return payload
+
+
+class ProjectionViewGenerator:
+    def __init__(self, generation_contract: dict, manifest: dict, meshes: dict[str, trimesh.Trimesh]) -> None:
+        allowed = {"geometryRevisionId", "viewContractRevisionId", "views", "drawingSheets", "drawingRequirements"}
+        if set(generation_contract) != allowed:
+            raise ViewGeometryError("projection generator accepts only the sanitized view-generation contract")
+        self.contract = generation_contract
+        self.manifest = manifest
+        self.meshes = meshes
+        self.metadata = {item["entityId"]: item for item in manifest["entities"]}
+
+    def generate(self, view_id: str) -> dict:
+        view = next((item for item in self.contract["views"] if item["id"] == view_id), None)
+        if view is None or view.get("derivation") != "visibleLineProjection":
+            raise ViewGeometryError(f"{view_id} is not a frozen visible-line projection view")
+
+        selected = _selection(view, self.manifest)
+        frame = view["viewFrame"]
+        origin = np.asarray(frame["origin"], dtype=float)
+        right = np.asarray(frame["right"], dtype=float)
+        up = np.asarray(frame["up"], dtype=float)
+        depth = np.asarray(frame["depth"], dtype=float)
+        clip_low = np.asarray([frame["clipRectMm"][0], frame["clipRectMm"][1], frame["clipDepthMm"][0]], dtype=float)
+        clip_high = np.asarray([frame["clipRectMm"][2], frame["clipRectMm"][3], frame["clipDepthMm"][1]], dtype=float)
+        triangles = _depth_triangles(view, selected, self.meshes)
+        depth_index = DepthIndex(triangles, frame["clipRectMm"])
+        requirements = self.contract["drawingRequirements"]["projectionPolicy"]
+        display_types = set(view["projection"]["displayTypes"])
+
+        candidates: list[dict] = []
+        for entity_id in selected:
+            entity = self.metadata[entity_id]
+            if entity["componentType"] not in display_types:
+                continue
+            for model_start, model_end, line_class in _candidate_edges(
+                self.meshes[entity_id],
+                depth,
+                float(requirements["featureAngleDeg"]),
+            ):
+                start = _project(model_start, origin, right, up, depth)
+                end = _project(model_end, origin, right, up, depth)
+                clipped = _clip_segment(start, end, clip_low, clip_high)
+                if clipped is None:
+                    continue
+                for visible_start, visible_end in _visible_intervals(
+                    *clipped,
+                    depth_index,
+                    float(requirements["visibilityProbeToleranceMm"]),
+                    float(requirements["occlusionSplitToleranceMm"]),
+                ):
+                    points, source_points_view = _canonical_segment(visible_start, visible_end)
+                    if points[0] == points[1]:
+                        continue
+                    output_class = _projection_line_class(
+                        visible_start,
+                        visible_end,
+                        line_class,
+                        depth_index,
+                        float(requirements["visibilityProbeToleranceMm"]),
+                        float(requirements["outlineProbeMm"]),
+                        float(requirements["continuationDepthToleranceMm"]),
+                    )
+                    candidates.append(
+                        {
+                            "sourceEntityId": entity_id,
+                            "sourceComponentType": entity["componentType"],
+                            "lineClass": output_class,
+                            "pointsMm": points,
+                            "sourcePointsViewMm": source_points_view,
+                            "meanDepthMm": round(float((visible_start[2] + visible_end[2]) / 2), 3),
+                        }
+                    )
+
+        # Coincident component edges are one visible structural line. Prefer the
+        # closest source, then silhouettes, while retaining a deterministic source.
+        deduplicated: dict[tuple, dict] = {}
+        for candidate in candidates:
+            key = tuple(map(tuple, candidate["pointsMm"]))
+            current = deduplicated.get(key)
+            rank = (
+                candidate["meanDepthMm"],
+                {"silhouette": 0, "componentBoundary": 1, "feature": 2}[candidate["lineClass"]],
+                candidate["sourceEntityId"],
+            )
+            if current is None:
+                deduplicated[key] = candidate
+                continue
+            current_rank = (
+                current["meanDepthMm"],
+                {"silhouette": 0, "componentBoundary": 1, "feature": 2}[current["lineClass"]],
+                current["sourceEntityId"],
+            )
+            if rank < current_rank:
+                deduplicated[key] = candidate
+
+        projection_lines: list[dict] = []
+        for candidate in deduplicated.values():
+            line_id = _line_id(
+                self.contract["viewContractRevisionId"],
+                view_id,
+                candidate["sourceEntityId"],
+                "visibleLineProjection",
+                candidate["lineClass"],
+                candidate["pointsMm"],
+            )
+            projection_lines.append(
+                {
+                    "lineId": line_id,
+                    "viewId": view_id,
+                    "geometryRevisionId": self.contract["geometryRevisionId"],
+                    "viewContractRevisionId": self.contract["viewContractRevisionId"],
+                    "sourceEntityId": candidate["sourceEntityId"],
+                    "sourceComponentType": candidate["sourceComponentType"],
+                    "derivation": "visibleLineProjection",
+                    "derivationTransform": frame["modelToView"],
+                    "lineClass": candidate["lineClass"],
+                    "visibility": "visible",
+                    "closed": False,
+                    "pointsMm": candidate["pointsMm"],
+                    "sourcePointsViewMm": candidate["sourcePointsViewMm"],
+                }
+            )
+        projection_lines.sort(key=lambda item: item["lineId"])
+
+        projected_sources = sorted({line["sourceEntityId"] for line in projection_lines})
+        payload = {
+            "schemaVersion": "t0b-v2-view-geometry-1",
+            "status": "generated-not-qualified",
+            "qualification": "not-drawing-output",
+            "viewId": view_id,
+            "geometryRevisionId": self.contract["geometryRevisionId"],
+            "viewContractRevisionId": self.contract["viewContractRevisionId"],
+            "unit": "mm",
+            "viewFrame": frame,
+            "projectionLines": projection_lines,
+            "statistics": {
+                "selectedSourceCount": len(selected),
+                "selectionEntitySetSha256": sha256("\n".join(selected).encode("utf-8")).hexdigest(),
+                "projectedSourceCount": len(projected_sources),
+                "projectedEntitySetSha256": sha256("\n".join(projected_sources).encode("utf-8")).hexdigest(),
+                "projectionTriangleCountDiagnostic": len(triangles),
+                "visibleProjectionLineCount": len(projection_lines),
+                "projectionSourceTypes": sorted({line["sourceComponentType"] for line in projection_lines}),
             },
         }
         canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
