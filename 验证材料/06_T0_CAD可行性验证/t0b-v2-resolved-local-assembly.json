@@ -3,8 +3,8 @@
   "projectId": "c5237fb2-8197-5d76-9885-f77b75baf522",
   "fixtureId": "5d637929-6d30-5796-a5a1-3fc38f3c1574",
   "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-  "viewContractRevisionId": "8c91c70a-012c-5620-87e5-69e54e107b69",
-  "viewContractSignature": "cf98254545ac32e517606e3760ed45b5c0336eefc4301a063efdb13175c77988",
+  "viewContractRevisionId": "04d00093-0bec-5f2a-bc68-def2a292c932",
+  "viewContractSignature": "afab451f1accaefed40f79103bcd0d5938dff0389ce087b66c4c9319856cadb2",
   "producerType": "demo",
   "unit": "mm",
   "sourceRefs": [
@@ -366,7 +366,7 @@
         "cutTargetTypes": ["coverTile", "panTile", "roofBoard", "flyRafter", "rafter", "purlin", "bearingBlock", "bracketArm", "bracketSeat", "eaveBeam", "column"],
         "depthProjectionTypes": ["coverTile", "panTile", "roofBoard", "flyRafter", "rafter", "purlin", "bearingBlock", "bracketArm", "bracketSeat", "eaveBeam", "column"],
         "materialOverlapPriority": {"field": "materialCode", "order": ["ceramic-demo", "timber-demo"]},
-        "section": {"planeOrigin": [-1750, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5}
+        "section": {"planeOrigin": [-1750, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "cutSourceDepthMm": [-0.5, 0.5], "retainedProjectionDepthMm": [0.5, 760], "allowedPaddingMm": 0.5}
       },
       "hiddenLineMode": "remove",
       "paperPlacement": {"sheet": "T0B-02", "viewportRectMm": [15, 370, 180, 210], "annotationSafeRectMm": [18, 373, 174, 204], "minimumAnnotationMarginMm": 12, "paperScale": 0.066666667, "rotationDeg": 0, "viewToPaper": [[0.066666667, 0, -88.333333333], [0, 0.066666667, 151.666666667], [0, 0, 1]]}
@@ -406,7 +406,7 @@
         "cutTargetTypes": ["column", "columnBase", "terrace", "foundation", "groundLayer"],
         "depthProjectionTypes": ["column", "columnBase", "terrace"],
         "materialOverlapPriority": {"field": "componentType", "order": ["foundation", "groundLayer"]},
-        "section": {"planeOrigin": [-1800, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5}
+        "section": {"planeOrigin": [-1800, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "cutSourceDepthMm": [-0.5, 0.5], "retainedProjectionDepthMm": [0.5, 800], "allowedPaddingMm": 0.5}
       },
       "hiddenLineMode": "remove",
       "paperPlacement": {"sheet": "T0B-02", "viewportRectMm": [215, 65, 150, 270], "annotationSafeRectMm": [218, 68, 144, 264], "minimumAnnotationMarginMm": 12, "paperScale": 0.1, "rotationDeg": 0, "viewToPaper": [[0.1, 0, -10], [0, 0.1, 170], [0, 0, 1]]}
@@ -543,6 +543,8 @@
     },
     "requiredViewIds": ["floorPlan", "roofPlan", "southElevation", "transverseSection", "longitudinalSection", "axonometric", "eaveDetail", "bracketDetail", "columnBaseDetail", "doorWindowDetail"],
     "viewOracle": {
+      "oracleAlgorithmVersion": "t0b-v2-detail-oracle-1",
+      "viewOracleSignature": "c45ecd806c8b49fed6686f3ecf94a0600c157f3c07ad16c2231a584fb344d4fd",
       "hashConvention": "sha256 of LF-delimited sorted entity UUIDs; section segment hashes use sorted 0.001 mm canonical endpoint records",
       "metricUse": "counts are diagnostics for identity and topology only; they are not quality or qualification thresholds",
       "views": {
@@ -647,9 +649,9 @@
           "anchorEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7",
           "requiredTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "coverTile", "eaveBeam", "flyRafter", "panTile", "purlin", "rafter", "roofBoard"],
           "requiredEntityChains": {
-            "rafterToPurlin": [{"fromEntityId": "696e8283-9e59-52bf-9f7c-99dc55df94de", "relation": "supportedBy", "toEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f"}],
-            "purlinToColumnViaXArm": [{"fromEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "relation": "supportedBy", "toEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7"}, {"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708"}, {"fromEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b"}, {"fromEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relation": "supportedBy", "toEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101"}, {"fromEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relation": "supportedBy", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879"}],
-            "bearingToSeatViaYArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a"}, {"fromEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b"}]
+            "rafterToPurlin": [{"fromEntityId": "696e8283-9e59-52bf-9f7c-99dc55df94de", "relation": "supportedBy", "toEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "relationScope": "inView"}],
+            "purlinToColumnViaXArm": [{"fromEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "relation": "supportedBy", "toEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relationScope": "inView"}, {"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relationScope": "inView"}, {"fromEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relationScope": "inView"}, {"fromEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relation": "supportedBy", "toEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relationScope": "inView"}, {"fromEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relation": "supportedBy", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "inView"}],
+            "bearingToSeatViaYArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relationScope": "inView"}, {"fromEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relationScope": "inView"}]
           },
           "materialCodeByType": {"panTile": "ceramic-demo", "coverTile": "ceramic-demo", "roofBoard": "timber-demo", "flyRafter": "timber-demo", "rafter": "timber-demo", "purlin": "timber-demo", "bearingBlock": "timber-demo", "bracketArm": "timber-demo", "bracketSeat": "timber-demo", "eaveBeam": "timber-demo", "column": "timber-demo"},
           "dimensionsMm": {"tileThickness": 18, "tileLap": 100, "purlinDiameter": 260},
@@ -668,9 +670,9 @@
           "anchorEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7",
           "requiredTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "eaveBeam"],
           "requiredEntityChains": {
-            "bearingToColumnViaXArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708"}, {"fromEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b"}, {"fromEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relation": "supportedBy", "toEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101"}, {"fromEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relation": "supportedBy", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879"}],
-            "bearingToSeatViaYArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a"}, {"fromEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b"}],
-            "crossViewPurlinBoundary": [{"fromEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "relation": "supportedBy", "toEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7"}]
+            "bearingToColumnViaXArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relationScope": "inView"}, {"fromEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relationScope": "inView"}, {"fromEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relation": "supportedBy", "toEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relationScope": "inView"}, {"fromEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relation": "supportedBy", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "inView"}],
+            "bearingToSeatViaYArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relationScope": "inView"}, {"fromEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relationScope": "inView"}],
+            "crossViewPurlinBoundary": [{"fromEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "relation": "supportedBy", "toEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relationScope": "crossViewContext", "externalEndpointEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "continuationViewId": "eaveDetail"}]
           },
           "materialCodeByType": {"bearingBlock": "timber-demo", "bracketArm": "timber-demo", "bracketSeat": "timber-demo", "eaveBeam": "timber-demo", "column": "timber-demo"},
           "dimensionsMm": {"bearingBlockWidth": 360, "bracketSeatWidth": 520, "bracketArmLength": 1100},
@@ -698,8 +700,8 @@
           "anchorEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5",
           "requiredTypes": ["column", "columnBase", "foundation", "groundLayer", "terrace"],
           "requiredEntityChains": {
-            "columnToFoundation": [{"fromEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relation": "supportedBy", "toEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5"}, {"fromEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5", "relation": "supportedBy", "toEntityId": "47d7add8-6e24-59d0-a14c-b34b9cafe577"}, {"fromEntityId": "47d7add8-6e24-59d0-a14c-b34b9cafe577", "relation": "supportedBy", "toEntityId": "653ff2f7-101d-593e-818d-ff64f9c34618"}, {"fromEntityId": "653ff2f7-101d-593e-818d-ff64f9c34618", "relation": "supportedBy", "toEntityId": "446cb2ed-10d6-58e1-b3f5-bb181eec79b6"}, {"fromEntityId": "446cb2ed-10d6-58e1-b3f5-bb181eec79b6", "relation": "supportedBy", "toEntityId": "4a64570e-5031-56fc-9f9b-1f77f13686a8"}],
-            "groundToFoundation": [{"fromEntityId": "22444321-22eb-5586-adcf-784b2d2c03cf", "relation": "connectedTo", "toEntityId": "4a64570e-5031-56fc-9f9b-1f77f13686a8"}]
+            "columnToFoundation": [{"fromEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relation": "supportedBy", "toEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5", "relationScope": "inView"}, {"fromEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5", "relation": "supportedBy", "toEntityId": "47d7add8-6e24-59d0-a14c-b34b9cafe577", "relationScope": "inView"}, {"fromEntityId": "47d7add8-6e24-59d0-a14c-b34b9cafe577", "relation": "supportedBy", "toEntityId": "653ff2f7-101d-593e-818d-ff64f9c34618", "relationScope": "inView"}, {"fromEntityId": "653ff2f7-101d-593e-818d-ff64f9c34618", "relation": "supportedBy", "toEntityId": "446cb2ed-10d6-58e1-b3f5-bb181eec79b6", "relationScope": "inView"}, {"fromEntityId": "446cb2ed-10d6-58e1-b3f5-bb181eec79b6", "relation": "supportedBy", "toEntityId": "4a64570e-5031-56fc-9f9b-1f77f13686a8", "relationScope": "inView"}],
+            "groundToFoundation": [{"fromEntityId": "22444321-22eb-5586-adcf-784b2d2c03cf", "relation": "connectedTo", "toEntityId": "4a64570e-5031-56fc-9f9b-1f77f13686a8", "relationScope": "inView"}]
           },
           "materialCodeByType": {"column": "timber-demo", "columnBase": "stone-demo", "terrace": "stone-demo", "foundation": "earth-demo", "groundLayer": "earth-demo"},
           "dimensionsMm": {"lowerDiameter": 560, "upperDiameter": 400, "columnBaseHeight": 240, "foundationDepth": 800},
@@ -718,11 +720,11 @@
           "anchorEntityId": "e70cb175-0002-536f-81d6-07cc45c05031",
           "requiredTypes": ["doorFrame", "doorLeaf", "latticeWindow", "wall"],
           "requiredEntityChains": {
-            "leftLeafContainedByFrame": [{"fromEntityId": "0047e6a9-aa4a-5306-89fc-9ce42d378e2d", "relation": "containedBy", "toEntityId": "e70cb175-0002-536f-81d6-07cc45c05031"}],
-            "rightLeafContainedByFrame": [{"fromEntityId": "8bd4ad31-83a5-557b-9b3a-dc301eb6a971", "relation": "containedBy", "toEntityId": "e70cb175-0002-536f-81d6-07cc45c05031"}],
-            "frameConnectedToWestColumn": [{"fromEntityId": "e70cb175-0002-536f-81d6-07cc45c05031", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879"}],
-            "leftWindowConnectedToWestColumn": [{"fromEntityId": "4580694e-6dce-54a3-9634-ca4a96dbe5bc", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879"}],
-            "rightWindowConnectedToWestColumn": [{"fromEntityId": "41c9ff7d-67a9-5add-92f6-48886e9ed5d4", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879"}]
+            "leftLeafContainedByFrame": [{"fromEntityId": "0047e6a9-aa4a-5306-89fc-9ce42d378e2d", "relation": "containedBy", "toEntityId": "e70cb175-0002-536f-81d6-07cc45c05031", "relationScope": "inView"}],
+            "rightLeafContainedByFrame": [{"fromEntityId": "8bd4ad31-83a5-557b-9b3a-dc301eb6a971", "relation": "containedBy", "toEntityId": "e70cb175-0002-536f-81d6-07cc45c05031", "relationScope": "inView"}],
+            "frameConnectedToWestColumn": [{"fromEntityId": "e70cb175-0002-536f-81d6-07cc45c05031", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "crossViewContext", "externalEndpointEntityId": "094027ab-3397-5117-bad8-81c07d961879", "continuationViewId": "southElevation"}],
+            "leftWindowConnectedToWestColumn": [{"fromEntityId": "4580694e-6dce-54a3-9634-ca4a96dbe5bc", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "crossViewContext", "externalEndpointEntityId": "094027ab-3397-5117-bad8-81c07d961879", "continuationViewId": "southElevation"}],
+            "rightWindowConnectedToWestColumn": [{"fromEntityId": "41c9ff7d-67a9-5add-92f6-48886e9ed5d4", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "crossViewContext", "externalEndpointEntityId": "094027ab-3397-5117-bad8-81c07d961879", "continuationViewId": "southElevation"}]
           },
           "materialCodeByType": {"wall": "earth-demo", "doorFrame": "timber-demo", "doorLeaf": "timber-demo", "latticeWindow": "timber-demo"},
           "topologyCounts": {"doorLeaves": 2, "doorPanels": 8, "latticeWindows": 2, "latticeCells": 24},

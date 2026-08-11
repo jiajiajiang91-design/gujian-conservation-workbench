@@ -7,7 +7,7 @@
 
 独立验证报告位于 `t0b-v2-outputs/sections/section-verification.json` 和 `t0b-v2-outputs/projections/projection-verification.json`。报告分别复算切面、候选边、遮挡、来源闭包、坐标绑定和输出哈希。当前状态为 `passed-section-geometry-only / passed-projection-geometry-only`，不代表图纸完成或 L1 通过。
 
-下一独立任务是檐口、承托、柱脚和门窗四张同源详图。完成十个视图、成组图面和独立专业复核前，不得恢复 T3，也不得生成“已通过”的图签或交付说明。
+檐口、承托、柱脚和门窗四张同源详图已经生成并通过独立几何验证。完成 DXF、SVG、PDF、标注、成组图面和独立专业复核前，不得恢复 T3，也不得生成“已通过”的图签或交付说明。
 
 ## 状态
 
@@ -46,7 +46,7 @@
 - 承托与门窗冻结完整可见投影类型和精确实体集合。承托图止于承块，檩—承块关系由檐口图核对；门窗图同时冻结两扇门、八块门板、两樘格窗和二十四个格心单元。
 - 檐口材料按陶瓦优先于木构处理；柱脚按基础优先于地层处理。材料区必须互斥，重叠面积为零。
 - 每张详图冻结完整可见线集合、必显与禁显实体、支承或包含关系、材料区、二维范围、关键尺寸和标高。独立 oracle 只读源网格与 manifest，生成器不能读取这些答案。
-- 本次只完成详图合同和独立验收答案。四张详图 ViewGeometry 尚未生成，状态仍为 `passed-contract-only / not-view-output`。
+- 四张详图 ViewGeometry 已生成，独立验收为 `passed-detail-geometry-only`。该状态只证明来源、剖切、遮挡、材料区和拓扑闭合，不代表图纸完成。
 
 ## 图纸与验收
 
@@ -61,4 +61,4 @@
 - 独立复算命令：`workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.verify_view_contract --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> --output <report>`。报告固定输入文件哈希、验证器版本与源码哈希。
 - 参考图片和外部 DWG 不进入输入、生成依赖或成果包。
 
-六个主视图的真实求交与可见线投影已经按新视图合同同步重生成。下一提交生成四张同源局部详图，不生成 DXF 或 PDF。
+十张 ViewGeometry 已绑定同一几何版本和视图合同版本。下一独立任务生成原生 DXF、SVG、PDF、标注和双 A1 布局。

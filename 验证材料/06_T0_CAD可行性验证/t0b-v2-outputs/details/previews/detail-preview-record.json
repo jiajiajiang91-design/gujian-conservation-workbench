@@ -1,0 +1,317 @@
+{
+  "schemaVersion": "t0b-v2-detail-preview-1",
+  "status": "review-evidence-only",
+  "qualification": "not-drawing-output",
+  "L1": false,
+  "renderer": {
+    "source": "render_debug_details.py",
+    "sha256": "964dedf92e082965762be7b857ceb43e86f41036fd6b372c3fb5fd8942719f80"
+  },
+  "reviewStatus": "reviewed-with-nonblocking-findings",
+  "visualReview": {
+    "reviewedAt": "2026-08-11T13:21:16.4052534+01:00",
+    "reviewerRole": "independent-cad-model-quality-reviewer",
+    "p0Count": 0,
+    "findings": [
+      {
+        "priority": "P1",
+        "viewId": "eaveDetail",
+        "finding": "The source-resolved roof, tile laps, purlins and bearing chain are legible, but cropped members and the isolated upper purlin need break marks and relationship annotations in drawing output."
+      },
+      {
+        "priority": "P1",
+        "viewId": "bracketDetail",
+        "finding": "The support chain is traceable, but the current team-demo bracket geometry remains schematic and cropped beam ends need professional break notation before L1 drawing review."
+      },
+      {
+        "priority": "P1",
+        "viewId": "columnBaseDetail",
+        "finding": "The column, base, terrace and foundation layers are readable, but material hatches, level dimensions and construction annotations remain drawing-stage work."
+      },
+      {
+        "priority": "P1",
+        "viewId": "doorWindowDetail",
+        "finding": "Two leaves, eight panels, two windows and twenty-four lattice cells are visually countable; joinery dimensions and annotation remain drawing-stage work."
+      }
+    ],
+    "qualificationBoundary": "Review evidence only; generated-not-qualified; not-drawing-output; L1=false."
+  },
+  "previews": [
+    {
+      "viewId": "eaveDetail",
+      "mode": "clean",
+      "path": "t0b-v2-eaveDetail-clean.png",
+      "sha256": "de22a6e949174b982cac0c62a7bc969f9029a6479c94a69f384d0cddb690326f",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "eaveDetail.view-geometry.json.gz",
+        "sha256": "de57abaa516fb9f2fb9560cd01d0b856c3f795480bde7f9c1ca5a71ac0de6c97",
+        "viewGeometrySha256": "5b38675fd5188d245d4982b120e2afde9518ef1d9157076966f3c3d51e559cf7"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "eaveDetail",
+      "mode": "lineClass",
+      "path": "t0b-v2-eaveDetail-lineClass.png",
+      "sha256": "2cc5c61724aa6e59ca074a0c208b42eea06a3a17f34709edff39bc235472ca1f",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "eaveDetail.view-geometry.json.gz",
+        "sha256": "de57abaa516fb9f2fb9560cd01d0b856c3f795480bde7f9c1ca5a71ac0de6c97",
+        "viewGeometrySha256": "5b38675fd5188d245d4982b120e2afde9518ef1d9157076966f3c3d51e559cf7"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "eaveDetail",
+      "mode": "material-source",
+      "path": "t0b-v2-eaveDetail-material-source.png",
+      "sha256": "60dc650d1df0cca8979d450412824b11ef497cd01f6e71d73ff4e5f0d56052c7",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "eaveDetail.view-geometry.json.gz",
+        "sha256": "de57abaa516fb9f2fb9560cd01d0b856c3f795480bde7f9c1ca5a71ac0de6c97",
+        "viewGeometrySha256": "5b38675fd5188d245d4982b120e2afde9518ef1d9157076966f3c3d51e559cf7"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "bracketDetail",
+      "mode": "clean",
+      "path": "t0b-v2-bracketDetail-clean.png",
+      "sha256": "c8a782a297c41cc6eab8165ff091629172a3d96f8011de43cf1965e23d1eee54",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "bracketDetail.view-geometry.json.gz",
+        "sha256": "0f73221834967d752f039c81e30ec30d4a702c9f4a806548b0577067d7b48da7",
+        "viewGeometrySha256": "cf820a3404998987e034a09eecd9b699b95569dea9785892fdb9c60484251384"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "bracketDetail",
+      "mode": "lineClass",
+      "path": "t0b-v2-bracketDetail-lineClass.png",
+      "sha256": "c5a20eb1002b648069dd025e793176a3841cf3875552acdb5491dacf4c64abc9",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "bracketDetail.view-geometry.json.gz",
+        "sha256": "0f73221834967d752f039c81e30ec30d4a702c9f4a806548b0577067d7b48da7",
+        "viewGeometrySha256": "cf820a3404998987e034a09eecd9b699b95569dea9785892fdb9c60484251384"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "bracketDetail",
+      "mode": "material-source",
+      "path": "t0b-v2-bracketDetail-material-source.png",
+      "sha256": "1528ce889cb99d2afc6a7b972a4baf5d88014eae81a164cb7f3416c2728df9f4",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "bracketDetail.view-geometry.json.gz",
+        "sha256": "0f73221834967d752f039c81e30ec30d4a702c9f4a806548b0577067d7b48da7",
+        "viewGeometrySha256": "cf820a3404998987e034a09eecd9b699b95569dea9785892fdb9c60484251384"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "columnBaseDetail",
+      "mode": "clean",
+      "path": "t0b-v2-columnBaseDetail-clean.png",
+      "sha256": "21d06131de7e751566b67942b573de8e7eb718ce0f47c21cbd0106afb5e97e7e",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "columnBaseDetail.view-geometry.json.gz",
+        "sha256": "9e8543fe1258178718c2a5be39a0b435617058480b033cfece1de138fc13cdcb",
+        "viewGeometrySha256": "e335406f265b5a9a2c4c25ee21c1082beee8787b23b7aa372270ef0685c08514"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "columnBaseDetail",
+      "mode": "lineClass",
+      "path": "t0b-v2-columnBaseDetail-lineClass.png",
+      "sha256": "e9e209349b63735d6373ad9423a11015eed1b258adfc6dd2dccdceca45b75d31",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "columnBaseDetail.view-geometry.json.gz",
+        "sha256": "9e8543fe1258178718c2a5be39a0b435617058480b033cfece1de138fc13cdcb",
+        "viewGeometrySha256": "e335406f265b5a9a2c4c25ee21c1082beee8787b23b7aa372270ef0685c08514"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "columnBaseDetail",
+      "mode": "material-source",
+      "path": "t0b-v2-columnBaseDetail-material-source.png",
+      "sha256": "f122a83edc5dfa2224ee6de8ba132a0177c1f661562af59533f11a491e331e22",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "columnBaseDetail.view-geometry.json.gz",
+        "sha256": "9e8543fe1258178718c2a5be39a0b435617058480b033cfece1de138fc13cdcb",
+        "viewGeometrySha256": "e335406f265b5a9a2c4c25ee21c1082beee8787b23b7aa372270ef0685c08514"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "doorWindowDetail",
+      "mode": "clean",
+      "path": "t0b-v2-doorWindowDetail-clean.png",
+      "sha256": "4f118f6f0b16afc46459ae01ebe96af92ad0f8a81b67fab67968c22bc2c8f02b",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "doorWindowDetail.view-geometry.json.gz",
+        "sha256": "82dd706aa7465fd48b4ba04af1828ffdf2974aaa34fdb3f44f98fc5469716915",
+        "viewGeometrySha256": "f724b843ae4e66df0ab25b23902257c09e0ee561815efa9469b2eaf1726ca0c7"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "doorWindowDetail",
+      "mode": "lineClass",
+      "path": "t0b-v2-doorWindowDetail-lineClass.png",
+      "sha256": "9d66c4b2d40740d101773ad4d8a0fc2715c98ca2e043d5658914c920fc084886",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "doorWindowDetail.view-geometry.json.gz",
+        "sha256": "82dd706aa7465fd48b4ba04af1828ffdf2974aaa34fdb3f44f98fc5469716915",
+        "viewGeometrySha256": "f724b843ae4e66df0ab25b23902257c09e0ee561815efa9469b2eaf1726ca0c7"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    },
+    {
+      "viewId": "doorWindowDetail",
+      "mode": "material-source",
+      "path": "t0b-v2-doorWindowDetail-material-source.png",
+      "sha256": "54f3222d64c3a83f3c80ddaea7b51ff18aaa4c1a7f87e0789d1eee4a69c94533",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "doorWindowDetail.view-geometry.json.gz",
+        "sha256": "82dd706aa7465fd48b4ba04af1828ffdf2974aaa34fdb3f44f98fc5469716915",
+        "viewGeometrySha256": "f724b843ae4e66df0ab25b23902257c09e0ee561815efa9469b2eaf1726ca0c7"
+      },
+      "manifest": {
+        "path": "geometry-manifest.json",
+        "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+      }
+    }
+  ]
+}

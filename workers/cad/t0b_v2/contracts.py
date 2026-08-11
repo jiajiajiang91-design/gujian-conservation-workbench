@@ -15,6 +15,7 @@ class ContractError(ValueError):
 
 GEOMETRY_REVISION_NAMESPACE = UUID("1f321b7d-38a4-5b48-8a82-353bc6298225")
 VIEW_CONTRACT_REVISION_NAMESPACE = UUID("7f53de29-8c75-5f46-a7bf-75c69cc967a0")
+DETAIL_ORACLE_ALGORITHM_VERSION = "t0b-v2-detail-oracle-1"
 
 
 REQUIRED_COMPONENT_TYPES = {
@@ -257,6 +258,16 @@ def _view_contract_signature(fixture: dict) -> str:
         "views": fixture.get("views"),
         "drawingSheets": fixture.get("drawingSheets"),
         "drawingRequirements": fixture.get("drawingRequirements"),
+    }
+    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _view_oracle_signature(view_oracle: dict) -> str:
+    payload = {
+        key: value
+        for key, value in view_oracle.items()
+        if key != "viewOracleSignature"
     }
     canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return sha256(canonical.encode("utf-8")).hexdigest()
@@ -520,6 +531,18 @@ def validate_fixture(fixture: dict) -> dict:
                 _require(all(_close(a, b) for a, b in zip(retained, depth)), f"{view['id']} detail retained direction must match view depth")
                 _require(_close(_dot([anchor_point[index] - detail_plane_origin[index] for index in range(3)], plane_normal), 0.0, 1e-6), f"{view['id']} section anchor point must lie on its cut plane")
                 _require(section.get("stabilityProbeMm") == 0.5, f"{view['id']} must freeze a 0.5 mm section stability probe")
+                _require(
+                    section.get("cutSourceDepthMm") == [-0.5, 0.5],
+                    f"{view['id']} cut source depth must be frozen to the section tolerance",
+                )
+                _require(
+                    section.get("retainedProjectionDepthMm") == [0.5, clip_depth[1]],
+                    f"{view['id']} retained projection depth must start after the cut and end at the clip maximum",
+                )
+                _require(
+                    section.get("allowedPaddingMm") == 0.5,
+                    f"{view['id']} section depth padding must be frozen",
+                )
             else:
                 _require(set(detail.get("visibleProjectionTypes", [])) == DETAIL_PROJECTION_TYPES[view["id"]], f"{view['id']} visible projection types must match the frozen detail boundary")
                 _require(detail.get("anchorComponentType") in detail["visibleProjectionTypes"], f"{view['id']} anchor type must be visible in the detail")
@@ -672,6 +695,15 @@ def validate_fixture(fixture: dict) -> dict:
         _require(isinstance(bounds, list) and len(bounds) == 2 and all(isinstance(point, list) and len(point) == 3 for point in bounds), f"{field} must be 3D bounds")
     _require(set(known.get("requiredViewIds", [])) == REQUIRED_VIEWS, "known answer view matrix is incomplete")
     view_oracle = known.get("viewOracle", {})
+    _require(
+        view_oracle.get("oracleAlgorithmVersion") == DETAIL_ORACLE_ALGORITHM_VERSION,
+        "view oracle algorithm version is not frozen",
+    )
+    _require_sha256(view_oracle.get("viewOracleSignature"), "viewOracleSignature")
+    _require(
+        view_oracle.get("viewOracleSignature") == _view_oracle_signature(view_oracle),
+        "view oracle signature must match its canonical payload",
+    )
     _require(view_oracle.get("hashConvention") == "sha256 of LF-delimited sorted entity UUIDs; section segment hashes use sorted 0.001 mm canonical endpoint records", "view oracle hash convention is not frozen")
     _require("not quality or qualification thresholds" in str(view_oracle.get("metricUse")), "diagnostic counts must not become quality gates")
     oracle_views = view_oracle.get("views", {})
@@ -712,14 +744,53 @@ def validate_fixture(fixture: dict) -> dict:
         _require(isinstance(answer.get("viewBounds2dMm"), list) and len(answer["viewBounds2dMm"]) == 4, f"{view_id} 2D bounds are missing")
         chains = answer.get("requiredEntityChains")
         _require(isinstance(chains, dict) and chains and all(isinstance(items, list) and items for items in chains.values()), f"{view_id} relationship chains are missing")
+        required_visible = set(answer["requiredVisibleEntityIds"])
         for chain_name, relations in chains.items():
             for relation in relations:
                 _require(
                     isinstance(relation, dict)
-                    and set(relation) == {"fromEntityId", "relation", "toEntityId"}
-                    and relation["relation"] in {"supportedBy", "connectedTo", "containedBy"},
+                    and relation.get("relation") in {"supportedBy", "connectedTo", "containedBy"},
                     f"{view_id}.{chain_name} relationship is invalid",
                 )
+                _require_uuid(relation.get("fromEntityId"), f"{view_id}.{chain_name}.fromEntityId")
+                _require_uuid(relation.get("toEntityId"), f"{view_id}.{chain_name}.toEntityId")
+                relation_scope = relation.get("relationScope")
+                _require(relation_scope in {"inView", "crossViewContext"}, f"{view_id}.{chain_name} relationship scope is invalid")
+                endpoints = {relation["fromEntityId"], relation["toEntityId"]}
+                if relation_scope == "inView":
+                    _require(
+                        set(relation) == {"fromEntityId", "relation", "toEntityId", "relationScope"},
+                        f"{view_id}.{chain_name} in-view relationship fields are invalid",
+                    )
+                    _require(endpoints <= required_visible, f"{view_id}.{chain_name} in-view relationship endpoints must both be visible")
+                else:
+                    _require(
+                        set(relation)
+                        == {
+                            "fromEntityId",
+                            "relation",
+                            "toEntityId",
+                            "relationScope",
+                            "externalEndpointEntityId",
+                            "continuationViewId",
+                        },
+                        f"{view_id}.{chain_name} cross-view relationship fields are invalid",
+                    )
+                    external_endpoint = relation.get("externalEndpointEntityId")
+                    _require_uuid(external_endpoint, f"{view_id}.{chain_name}.externalEndpointEntityId")
+                    _require(
+                        endpoints - required_visible == {external_endpoint}
+                        and len(endpoints & required_visible) == 1,
+                        f"{view_id}.{chain_name} cross-view relationship must identify one external endpoint",
+                    )
+                    expected_continuation = {
+                        "bracketDetail": "eaveDetail",
+                        "doorWindowDetail": "southElevation",
+                    }.get(view_id)
+                    _require(
+                        relation.get("continuationViewId") == expected_continuation,
+                        f"{view_id}.{chain_name} continuation view is invalid",
+                    )
         materials = answer.get("materialCodeByType")
         _require(isinstance(materials, dict) and set(materials) == expected_types and all(isinstance(value, str) and value.endswith("-demo") for value in materials.values()), f"{view_id} material source mapping is incomplete")
     for view_id in {"eaveDetail", "columnBaseDetail"}:

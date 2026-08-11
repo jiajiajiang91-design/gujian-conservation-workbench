@@ -3,14 +3,14 @@
   "status": "generated-not-qualified",
   "qualification": "not-drawing-output",
   "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-  "viewContractRevisionId": "8c91c70a-012c-5620-87e5-69e54e107b69",
+  "viewContractRevisionId": "04d00093-0bec-5f2a-bc68-def2a292c932",
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "34beabd18dfdf90fa6812d69dcc424cff151d2c1c398459771b90ef3b22b7847"
+      "sha256": "926e88609f7ec2053af27e94fd8545a3c53ac28e8eef2a5af71209e17351c0c6"
     },
     "generationContract": {
-      "sha256": "26fb9457fde9e98630b69e44965d0d3a16256be208d93d626deb36adeb999691"
+      "sha256": "fd46e897b6cacea64aa994143f452afb1b021ebe04eed87befd2465f00a8c258"
     },
     "manifest": {
       "path": "geometry-manifest.json",
@@ -25,8 +25,8 @@
     {
       "viewId": "roofPlan",
       "path": "roofPlan.view-geometry.json.gz",
-      "sha256": "a9c4693480f37ab702e6be8e0b2f66ca5ddf6ac8e2a23a6adcd279919cbe9b4e",
-      "viewGeometrySha256": "3aeab871083058a183da6594692a138e4c85acf3a3c6cd0183f899dc6b134c0c",
+      "sha256": "a9668d2d825aca1eada7bfc67619546b7093777d74980f778cfe274c79e047db",
+      "viewGeometrySha256": "ce6bf233adae39a8d6e047b08f60d908d8d629c55ae703ae41eb25b3344bf9ae",
       "statistics": {
         "selectedSourceCount": 1166,
         "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
@@ -44,8 +44,8 @@
     {
       "viewId": "southElevation",
       "path": "southElevation.view-geometry.json.gz",
-      "sha256": "d19bfc0f77e378255aba1329116d8b0907fb66f89c4cdd0cba5406f3ee9c2f9d",
-      "viewGeometrySha256": "91fbee5ff7c48060fc7ea60028e4dd167c78165d72b2427c7e4750c26f690682",
+      "sha256": "554f08656cd909c68b780d01174a109d7a4db8af0d12286775074b859536565d",
+      "viewGeometrySha256": "e9c7d4dae2450d3acdc0f9058a4409d7cbcced15f499431e2f3f91189fb7ad24",
       "statistics": {
         "selectedSourceCount": 1166,
         "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
@@ -78,8 +78,8 @@
     {
       "viewId": "axonometric",
       "path": "axonometric.view-geometry.json.gz",
-      "sha256": "9350e53eb369404f5049990830ee2de9d8141f80ba051acd0ea61592c1649564",
-      "viewGeometrySha256": "f3c30b964258201a053668bedbfc6c2651850a579ebc1dfb4884866e1593aa6e",
+      "sha256": "1bc017ceadd734b47ba5167574c380e7614c536b5ff938ad264e8eaf57fd5b57",
+      "viewGeometrySha256": "8553cbbeded3637e847c79a800ec16fe0afca49828062b5c3d13548fd333ab38",
       "statistics": {
         "selectedSourceCount": 1166,
         "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",

@@ -10,7 +10,7 @@
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "34beabd18dfdf90fa6812d69dcc424cff151d2c1c398459771b90ef3b22b7847"
+      "sha256": "926e88609f7ec2053af27e94fd8545a3c53ac28e8eef2a5af71209e17351c0c6"
     },
     "manifest": {
       "path": "geometry-manifest.json",
@@ -24,17 +24,17 @@
       {
         "viewId": "floorPlan",
         "path": "floorPlan.view-geometry.json.gz",
-        "sha256": "7deed6a0e4a589cdb7d4f2155007387639baa04e23b04dbe61be1fdbc9cd2383"
+        "sha256": "73cd3487c6b56b21dc6c9c069db6a4be6499ac88e6e171b91521ad308ce9979a"
       },
       {
         "viewId": "transverseSection",
         "path": "transverseSection.view-geometry.json.gz",
-        "sha256": "4a34203f630e3ebe0d926ff14a6ee25c3f99dff8a5c7b7081a7d793d3b47b0c9"
+        "sha256": "0ff097293ad90940f2ba009d2b777a3d5fe38158800f04fc18914d92bcc1556a"
       },
       {
         "viewId": "longitudinalSection",
         "path": "longitudinalSection.view-geometry.json.gz",
-        "sha256": "624e69fcea6a34e017eb403048c6d3106c84306a115e93be1b3449abcdb69b55"
+        "sha256": "1452f5945b90078ccefdd6ab07e2c8fe37de3b3e287fac0cd61d191079818952"
       }
     ]
   },
@@ -60,8 +60,8 @@
     {
       "name": "floorPlan view contract revision",
       "passed": true,
-      "actual": "8c91c70a-012c-5620-87e5-69e54e107b69",
-      "expected": "8c91c70a-012c-5620-87e5-69e54e107b69"
+      "actual": "04d00093-0bec-5f2a-bc68-def2a292c932",
+      "expected": "04d00093-0bec-5f2a-bc68-def2a292c932"
     },
     {
       "name": "floorPlan qualification",
@@ -260,8 +260,8 @@
     {
       "name": "floorPlan view geometry hash",
       "passed": true,
-      "actual": "6b33b18473a52377427198777a72aa5a6c7e7d86ad5ee7e0b6d554ec7e98b244",
-      "expected": "6b33b18473a52377427198777a72aa5a6c7e7d86ad5ee7e0b6d554ec7e98b244"
+      "actual": "e494c156e7ed2b2837940319c00a951b9f028cc8f29bdb27aa3f68edfdfee4e9",
+      "expected": "e494c156e7ed2b2837940319c00a951b9f028cc8f29bdb27aa3f68edfdfee4e9"
     },
     {
       "name": "floorPlan unique structural line ids",
@@ -410,8 +410,8 @@
     {
       "name": "transverseSection view contract revision",
       "passed": true,
-      "actual": "8c91c70a-012c-5620-87e5-69e54e107b69",
-      "expected": "8c91c70a-012c-5620-87e5-69e54e107b69"
+      "actual": "04d00093-0bec-5f2a-bc68-def2a292c932",
+      "expected": "04d00093-0bec-5f2a-bc68-def2a292c932"
     },
     {
       "name": "transverseSection qualification",
@@ -636,8 +636,8 @@
     {
       "name": "transverseSection view geometry hash",
       "passed": true,
-      "actual": "62605d90d57feb436187297c21faf6f4f2f6afc86e5238068f7093c7d002b32e",
-      "expected": "62605d90d57feb436187297c21faf6f4f2f6afc86e5238068f7093c7d002b32e"
+      "actual": "abccd14cd82fae3cb2cb094e396ab95136ca00d2b4aa04e87919335bad20d713",
+      "expected": "abccd14cd82fae3cb2cb094e396ab95136ca00d2b4aa04e87919335bad20d713"
     },
     {
       "name": "transverseSection unique structural line ids",
@@ -838,8 +838,8 @@
     {
       "name": "longitudinalSection view contract revision",
       "passed": true,
-      "actual": "8c91c70a-012c-5620-87e5-69e54e107b69",
-      "expected": "8c91c70a-012c-5620-87e5-69e54e107b69"
+      "actual": "04d00093-0bec-5f2a-bc68-def2a292c932",
+      "expected": "04d00093-0bec-5f2a-bc68-def2a292c932"
     },
     {
       "name": "longitudinalSection qualification",
@@ -1064,8 +1064,8 @@
     {
       "name": "longitudinalSection view geometry hash",
       "passed": true,
-      "actual": "b0900eef2932c2b770eeca8aae145acbcefa4958c316118f36fa611e3d9c3937",
-      "expected": "b0900eef2932c2b770eeca8aae145acbcefa4958c316118f36fa611e3d9c3937"
+      "actual": "4b8c40776306b2ebc46bc92a1ff7b8363c32b9e6eec4848d9ccb762bba9a180e",
+      "expected": "4b8c40776306b2ebc46bc92a1ff7b8363c32b9e6eec4848d9ccb762bba9a180e"
     },
     {
       "name": "longitudinalSection unique structural line ids",

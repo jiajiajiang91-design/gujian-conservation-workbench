@@ -11,12 +11,17 @@ ROOT = HERE.parents[2]
 FIXTURE = ROOT / "验证材料" / "06_T0_CAD可行性验证" / "t0b-v2-resolved-local-assembly.json"
 sys.path.insert(0, str(HERE))
 
-from contracts import ContractError, load_fixture, prepare_view_generation_input, validate_fixture
+from contracts import ContractError, _view_oracle_signature, load_fixture, prepare_view_generation_input, validate_fixture
 
 
 class T0BV2ContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.fixture = load_fixture(FIXTURE)
+
+    @staticmethod
+    def _resign_view_oracle(fixture: dict) -> None:
+        oracle = fixture["knownAnswers"]["viewOracle"]
+        oracle["viewOracleSignature"] = _view_oracle_signature(oracle)
 
     def test_frozen_fixture_is_complete(self) -> None:
         self.assertEqual(self.fixture["scope"], "resolved-local-assembly")
@@ -129,6 +134,10 @@ class T0BV2ContractTests(unittest.TestCase):
             self.assertTrue(view["detail"]["cutTargetTypes"])
             self.assertTrue(view["detail"]["depthProjectionTypes"])
             self.assertIn(view["detail"]["materialOverlapPriority"]["field"], {"componentType", "materialCode"})
+            section = view["detail"]["section"]
+            self.assertEqual(section["cutSourceDepthMm"], [-0.5, 0.5])
+            self.assertEqual(section["retainedProjectionDepthMm"], [0.5, view["viewFrame"]["clipDepthMm"][1]])
+            self.assertEqual(section["allowedPaddingMm"], 0.5)
 
         invalid = deepcopy(self.fixture)
         view = next(item for item in invalid["views"] if item["id"] == "eaveDetail")
@@ -142,6 +151,24 @@ class T0BV2ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "material overlap priority"):
             validate_fixture(invalid)
 
+        invalid = deepcopy(self.fixture)
+        view = next(item for item in invalid["views"] if item["id"] == "eaveDetail")
+        del view["detail"]["section"]["cutSourceDepthMm"]
+        with self.assertRaisesRegex(ContractError, "cut source depth"):
+            validate_fixture(invalid)
+
+        invalid = deepcopy(self.fixture)
+        view = next(item for item in invalid["views"] if item["id"] == "columnBaseDetail")
+        view["detail"]["section"]["retainedProjectionDepthMm"][-1] = 799
+        with self.assertRaisesRegex(ContractError, "retained projection depth"):
+            validate_fixture(invalid)
+
+        invalid = deepcopy(self.fixture)
+        view = next(item for item in invalid["views"] if item["id"] == "columnBaseDetail")
+        view["detail"]["section"]["allowedPaddingMm"] = 1
+        with self.assertRaisesRegex(ContractError, "section depth padding"):
+            validate_fixture(invalid)
+
     def test_detail_oracle_freezes_full_lines_materials_and_relationships(self) -> None:
         for view_id in ("eaveDetail", "bracketDetail", "columnBaseDetail", "doorWindowDetail"):
             answer = self.fixture["knownAnswers"]["viewOracle"]["views"][view_id]
@@ -152,11 +179,13 @@ class T0BV2ContractTests(unittest.TestCase):
 
         invalid = deepcopy(self.fixture)
         invalid["knownAnswers"]["viewOracle"]["views"]["bracketDetail"]["requiredEntityChains"] = {}
+        self._resign_view_oracle(invalid)
         with self.assertRaisesRegex(ContractError, "relationship chains"):
             validate_fixture(invalid)
 
         invalid = deepcopy(self.fixture)
         invalid["knownAnswers"]["viewOracle"]["views"]["doorWindowDetail"]["topologyCounts"]["latticeCells"] = 12
+        self._resign_view_oracle(invalid)
         with self.assertRaisesRegex(ContractError, "panel and lattice topology"):
             validate_fixture(invalid)
 
@@ -166,9 +195,64 @@ class T0BV2ContractTests(unittest.TestCase):
         view = next(item for item in self.fixture["views"] if item["id"] == "bracketDetail")
         self.assertEqual(view["detail"]["scopeBoundary"], "ends-at-bearingBlock; purlin-to-bearingBlock continuity is verified in eaveDetail")
 
+    def test_detail_relationship_scope_is_explicit_and_auditable(self) -> None:
+        oracle_views = self.fixture["knownAnswers"]["viewOracle"]["views"]
+        for view_id in ("eaveDetail", "bracketDetail", "columnBaseDetail", "doorWindowDetail"):
+            required_visible = set(oracle_views[view_id]["requiredVisibleEntityIds"])
+            for relations in oracle_views[view_id]["requiredEntityChains"].values():
+                for relation in relations:
+                    endpoints = {relation["fromEntityId"], relation["toEntityId"]}
+                    if relation["relationScope"] == "inView":
+                        self.assertLessEqual(endpoints, required_visible)
+                    else:
+                        self.assertEqual(endpoints - required_visible, {relation["externalEndpointEntityId"]})
+
+        bracket_cross_view = oracle_views["bracketDetail"]["requiredEntityChains"]["crossViewPurlinBoundary"][0]
+        self.assertEqual(bracket_cross_view["continuationViewId"], "eaveDetail")
+        door_cross_view = oracle_views["doorWindowDetail"]["requiredEntityChains"]["frameConnectedToWestColumn"][0]
+        self.assertEqual(door_cross_view["continuationViewId"], "southElevation")
+
+        invalid = deepcopy(self.fixture)
+        relation = invalid["knownAnswers"]["viewOracle"]["views"]["eaveDetail"]["requiredEntityChains"]["rafterToPurlin"][0]
+        relation["fromEntityId"] = "00000000-0000-0000-0000-000000000001"
+        self._resign_view_oracle(invalid)
+        with self.assertRaisesRegex(ContractError, "endpoints must both be visible"):
+            validate_fixture(invalid)
+
+        invalid = deepcopy(self.fixture)
+        relation = invalid["knownAnswers"]["viewOracle"]["views"]["bracketDetail"]["requiredEntityChains"]["crossViewPurlinBoundary"][0]
+        del relation["externalEndpointEntityId"]
+        self._resign_view_oracle(invalid)
+        with self.assertRaisesRegex(ContractError, "cross-view relationship fields"):
+            validate_fixture(invalid)
+
+        invalid = deepcopy(self.fixture)
+        relation = invalid["knownAnswers"]["viewOracle"]["views"]["doorWindowDetail"]["requiredEntityChains"]["frameConnectedToWestColumn"][0]
+        relation["continuationViewId"] = "eaveDetail"
+        self._resign_view_oracle(invalid)
+        with self.assertRaisesRegex(ContractError, "continuation view"):
+            validate_fixture(invalid)
+
+    def test_view_oracle_version_and_signature_are_frozen(self) -> None:
+        oracle = self.fixture["knownAnswers"]["viewOracle"]
+        self.assertEqual(oracle["oracleAlgorithmVersion"], "t0b-v2-detail-oracle-1")
+        self.assertEqual(oracle["viewOracleSignature"], _view_oracle_signature(oracle))
+
+        invalid = deepcopy(self.fixture)
+        invalid["knownAnswers"]["viewOracle"]["oracleAlgorithmVersion"] = "t0b-v2-detail-oracle-2"
+        self._resign_view_oracle(invalid)
+        with self.assertRaisesRegex(ContractError, "algorithm version"):
+            validate_fixture(invalid)
+
+        invalid = deepcopy(self.fixture)
+        invalid["knownAnswers"]["viewOracle"]["viewOracleSignature"] = "0" * 64
+        with self.assertRaisesRegex(ContractError, "canonical payload"):
+            validate_fixture(invalid)
+
     def test_missing_view_oracle_is_rejected(self) -> None:
         invalid = deepcopy(self.fixture)
         del invalid["knownAnswers"]["viewOracle"]["views"]["roofPlan"]
+        self._resign_view_oracle(invalid)
         with self.assertRaisesRegex(ContractError, "oracle matrix is incomplete"):
             validate_fixture(invalid)
 
@@ -189,6 +273,7 @@ class T0BV2ContractTests(unittest.TestCase):
     def test_projection_oracle_requires_visible_sources(self) -> None:
         invalid = deepcopy(self.fixture)
         invalid["knownAnswers"]["viewOracle"]["views"]["axonometric"]["requiredVisibleEntityIds"] = []
+        self._resign_view_oracle(invalid)
         with self.assertRaisesRegex(ContractError, "required visible entities"):
             validate_fixture(invalid)
 
@@ -202,6 +287,7 @@ class T0BV2ContractTests(unittest.TestCase):
     def test_view_generation_input_cannot_read_oracle_answers(self) -> None:
         generation_input = prepare_view_generation_input(self.fixture)
         self.assertNotIn("knownAnswers", generation_input)
+        self.assertNotIn("oracle", str(generation_input).lower())
         self.assertEqual(
             set(generation_input),
             {"geometryRevisionId", "viewContractRevisionId", "views", "drawingSheets", "drawingRequirements"},

@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
+from copy import deepcopy
 import gzip
 from hashlib import sha256
 import itertools
 import json
 import math
 from pathlib import Path
+import re
 from uuid import UUID, uuid5
 
 import numpy as np
-from shapely.geometry import LineString
+from shapely.geometry import GeometryCollection, LineString, MultiLineString, MultiPolygon, Polygon, box
 from shapely.ops import polygonize_full, unary_union
 import trimesh
 
@@ -21,6 +23,38 @@ REGION_NAMESPACE = UUID("2db3c952-3453-5d69-9efe-e7fda07997d8")
 
 class ViewGeometryError(ValueError):
     pass
+
+
+def _guard_detail_generation_contract(generation_contract: dict) -> None:
+    allowed = {"geometryRevisionId", "viewContractRevisionId", "views", "drawingSheets", "drawingRequirements"}
+    if set(generation_contract) != allowed:
+        raise ViewGeometryError("detail generator accepts only the sanitized view-generation contract")
+
+    def inspect(value: object, field: str = "root") -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                lowered = str(key).lower()
+                if lowered in {"knownanswers", "vieworacle", "geometryoracle"}:
+                    raise ViewGeometryError(f"forbidden oracle dependency at {field}.{key}")
+                inspect(item, f"{field}.{key}")
+            return
+        if isinstance(value, list):
+            for index, item in enumerate(value):
+                inspect(item, f"{field}[{index}]")
+            return
+        if not isinstance(value, str):
+            return
+        normalized = value.replace("\\", "/").lower()
+        if re.fullmatch(r"[0-9a-f]{64}", value, re.IGNORECASE):
+            raise ViewGeometryError(f"dependency hash is forbidden at {field}")
+        if normalized.endswith(".dwg") or "/downloads/" in normalized:
+            raise ViewGeometryError(f"external CAD dependency is forbidden at {field}")
+        if re.match(r"^[a-z][a-z0-9+.-]*:", value, re.IGNORECASE):
+            raise ViewGeometryError(f"URI-scheme dependency is forbidden at {field}")
+        if Path(value).is_absolute() or re.match(r"^[a-z]:[/\\]", value, re.IGNORECASE):
+            raise ViewGeometryError(f"absolute-path dependency is forbidden at {field}")
+
+    inspect(generation_contract)
 
 
 def load_source_meshes(path: Path) -> tuple[dict, dict[str, trimesh.Trimesh]]:
@@ -740,6 +774,333 @@ class ProjectionViewGenerator:
                 "visibleProjectionLineCount": len(projection_lines),
                 "projectionSourceTypes": sorted({line["sourceComponentType"] for line in projection_lines}),
             },
+        }
+        canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        payload["viewGeometrySha256"] = sha256(canonical.encode("utf-8")).hexdigest()
+        return payload
+
+
+def _line_parts(geometry) -> list[LineString]:
+    if geometry.is_empty:
+        return []
+    if isinstance(geometry, LineString):
+        return [geometry]
+    if isinstance(geometry, (MultiLineString, GeometryCollection)):
+        result: list[LineString] = []
+        for part in geometry.geoms:
+            result.extend(_line_parts(part))
+        return result
+    return []
+
+
+def _polygon_parts(geometry) -> list[Polygon]:
+    if geometry.is_empty:
+        return []
+    if isinstance(geometry, Polygon):
+        return [geometry]
+    if isinstance(geometry, (MultiPolygon, GeometryCollection)):
+        result: list[Polygon] = []
+        for part in geometry.geoms:
+            result.extend(_polygon_parts(part))
+        return result
+    return []
+
+
+def _canonical_ring(points) -> list[list[float]]:
+    values = [[round(float(value), 9) for value in point] for point in points]
+    if values and values[0] == values[-1]:
+        values.pop()
+    if not values:
+        return []
+    rotations: list[list[list[float]]] = []
+    for sequence in (values, list(reversed(values))):
+        for index in range(len(sequence)):
+            rotations.append(sequence[index:] + sequence[:index])
+    result = min(rotations)
+    return result + [result[0]]
+
+
+class DetailViewGenerator:
+    """Generate traceable detail geometry without consulting frozen answers."""
+
+    MATERIAL_HATCH = {
+        "stone-demo": "stone",
+        "timber-demo": "timber",
+        "earth-demo": "earth",
+        "ceramic-demo": "ceramic",
+    }
+
+    def __init__(self, generation_contract: dict, manifest: dict, meshes: dict[str, trimesh.Trimesh]) -> None:
+        _guard_detail_generation_contract(generation_contract)
+        self.contract = generation_contract
+        self.manifest = manifest
+        self.meshes = meshes
+        self.metadata = {item["entityId"]: item for item in manifest["entities"]}
+
+    def _selected(self, view: dict) -> list[str]:
+        detail = view["detail"]
+        allowed = (
+            set(detail["cutTargetTypes"]) | set(detail["depthProjectionTypes"])
+            if detail["mode"] == "section-projection"
+            else set(detail["visibleProjectionTypes"])
+        )
+        filtered = {
+            **self.manifest,
+            "entities": [entity for entity in self.manifest["entities"] if entity["componentType"] in allowed],
+        }
+        return _selection(view, filtered)
+
+    def _projection_lines(self, view: dict, selected: list[str]) -> list[dict]:
+        detail = view["detail"]
+        display_types = detail.get("visibleProjectionTypes", detail.get("depthProjectionTypes", []))
+        projection_view = deepcopy(view)
+        projection_view["derivation"] = "visibleLineProjection"
+        projection_view["projection"] = {"displayTypes": display_types}
+        filtered_manifest = {
+            **self.manifest,
+            "entities": [entity for entity in self.manifest["entities"] if entity["entityId"] in set(selected)],
+        }
+        projection_contract = {**self.contract, "views": [projection_view]}
+        generated = ProjectionViewGenerator(projection_contract, filtered_manifest, self.meshes).generate(view["id"])
+        cut_tolerance = float(detail.get("section", {}).get("cutToleranceMm", 0.0))
+        result: list[dict] = []
+        for line in generated["projectionLines"]:
+            if detail["mode"] == "section-projection":
+                retained_low, retained_high = map(float, detail["section"]["retainedProjectionDepthMm"])
+                allowed_padding = float(detail["section"]["allowedPaddingMm"])
+                depths = [point[2] for point in line["sourcePointsViewMm"]]
+                if max(depths) <= max(cut_tolerance, retained_low):
+                    continue
+                if min(depths) > retained_high + allowed_padding:
+                    continue
+            derivation = "detail.depthProjection" if detail["mode"] == "section-projection" else "detail.visibleLineProjection"
+            line_id = _line_id(
+                self.contract["viewContractRevisionId"],
+                view["id"],
+                line["sourceEntityId"],
+                derivation,
+                line["lineClass"],
+                line["pointsMm"],
+            )
+            result.append({**line, "lineId": line_id, "derivation": derivation})
+        return sorted(result, key=lambda item: item["lineId"])
+
+    def _section_geometry(self, view: dict, selected: list[str]) -> dict:
+        detail = view["detail"]
+        section = detail["section"]
+        frame = view["viewFrame"]
+        origin = np.asarray(section["planeOrigin"], dtype=float)
+        normal = np.asarray(section["planeNormal"], dtype=float)
+        right = np.asarray(frame["right"], dtype=float)
+        up = np.asarray(frame["up"], dtype=float)
+        crop = box(*frame["clipRectMm"])
+        cut_types = set(detail["cutTargetTypes"])
+        raw_regions: list[dict] = []
+        raw_segments: list[tuple[str, str, list[float], list[float]]] = []
+        open_or_dangle = 0
+
+        for entity_id in selected:
+            entity = self.metadata[entity_id]
+            if entity["componentType"] not in cut_types:
+                continue
+            intersections = trimesh.intersections.mesh_plane(self.meshes[entity_id], normal, origin)
+            full_lines: list[LineString] = []
+            for segment in intersections:
+                first = np.asarray([np.dot(segment[0] - origin, right), np.dot(segment[0] - origin, up)], dtype=float)
+                second = np.asarray([np.dot(segment[1] - origin, right), np.dot(segment[1] - origin, up)], dtype=float)
+                points = _canonical_pair(first, second)
+                if points[0] == points[1]:
+                    continue
+                line = LineString(points)
+                full_lines.append(line)
+                for clipped in _line_parts(line.intersection(crop)):
+                    clipped_points = _canonical_pair(np.asarray(clipped.coords[0]), np.asarray(clipped.coords[-1]))
+                    if clipped_points[0] != clipped_points[1]:
+                        raw_segments.append((entity_id, entity["componentType"], clipped_points[0], clipped_points[1]))
+            if not full_lines:
+                continue
+            polygons, cuts, dangles, invalid = polygonize_full(unary_union(full_lines))
+            open_or_dangle += len(cuts.geoms) + len(dangles.geoms) + len(invalid.geoms)
+            for polygon in polygons.geoms:
+                for clipped_polygon in _polygon_parts(polygon.intersection(crop)):
+                    if clipped_polygon.area <= 0.001:
+                        continue
+                    raw_regions.append(
+                        {
+                            "sourceEntityId": entity_id,
+                            "sourceComponentType": entity["componentType"],
+                            "materialId": entity["materialId"],
+                            "materialCode": entity["materialCode"],
+                            "materialHatch": self.MATERIAL_HATCH.get(entity["materialCode"]),
+                            "geometry": clipped_polygon,
+                        }
+                    )
+
+        priority = detail["materialOverlapPriority"]
+        priority_field = {"componentType": "sourceComponentType", "materialCode": "materialCode"}[priority["field"]]
+        higher_priority = Polygon()
+        resolved: dict[int, object] = {}
+        for value in priority["order"]:
+            matching = [region for region in raw_regions if region[priority_field] == value]
+            for region in matching:
+                resolved[id(region)] = region["geometry"].difference(higher_priority)
+            if matching:
+                higher_priority = unary_union([higher_priority, *(region["geometry"] for region in matching)])
+
+        regions: list[dict] = []
+        region_geometries: list[tuple[dict, Polygon]] = []
+        for region in raw_regions:
+            for part in _polygon_parts(resolved.get(id(region), region["geometry"])):
+                if part.area <= 0.001:
+                    continue
+                outer = _canonical_ring(part.exterior.coords)
+                holes = [_canonical_ring(ring.coords) for ring in part.interiors]
+                region_id = _region_id(
+                    self.contract["viewContractRevisionId"],
+                    view["id"],
+                    region["sourceEntityId"],
+                    outer,
+                    holes,
+                )
+                regions.append(
+                    {
+                        "regionId": region_id,
+                        "viewId": view["id"],
+                        "geometryRevisionId": self.contract["geometryRevisionId"],
+                        "viewContractRevisionId": self.contract["viewContractRevisionId"],
+                        **{key: value for key, value in region.items() if key != "geometry"},
+                        "outerMm": outer,
+                        "holesMm": holes,
+                        "areaMm2": round(float(part.area), 3),
+                    }
+                )
+                region_geometries.append((region, part))
+
+        cut_lines: list[dict] = []
+        line_occurrences: Counter[tuple] = Counter()
+        for entity_id, component_type, first, last in sorted(raw_segments):
+            points = [first, last]
+            line_key = (entity_id, component_type, tuple(first), tuple(last))
+            occurrence = line_occurrences[line_key]
+            line_occurrences[line_key] += 1
+            id_derivation = "planeIntersection.cut" if occurrence == 0 else f"planeIntersection.cut#{occurrence}"
+            line_id = _line_id(
+                self.contract["viewContractRevisionId"], view["id"], entity_id, id_derivation, "cut", points
+            )
+            cut_lines.append(
+                {
+                    "lineId": line_id,
+                    "viewId": view["id"],
+                    "geometryRevisionId": self.contract["geometryRevisionId"],
+                    "viewContractRevisionId": self.contract["viewContractRevisionId"],
+                    "sourceEntityId": entity_id,
+                    "sourceComponentType": component_type,
+                    "derivation": "planeIntersection.cut",
+                    "derivationTransform": frame["modelToView"],
+                    "lineClass": "cut",
+                    "visibility": "visible",
+                    "closed": False,
+                    "pointsMm": points,
+                }
+            )
+
+        crop_limit_lines: list[dict] = []
+        for region, geometry in region_geometries:
+            for part in _line_parts(geometry.boundary.intersection(crop.boundary)):
+                points = _canonical_pair(np.asarray(part.coords[0]), np.asarray(part.coords[-1]))
+                if points[0] == points[1]:
+                    continue
+                line_id = _line_id(
+                    self.contract["viewContractRevisionId"], view["id"], region["sourceEntityId"], "detail.cropLimit", "cropLimit", points
+                )
+                crop_limit_lines.append(
+                    {
+                        "lineId": line_id,
+                        "viewId": view["id"],
+                        "geometryRevisionId": self.contract["geometryRevisionId"],
+                        "viewContractRevisionId": self.contract["viewContractRevisionId"],
+                        "sourceEntityId": region["sourceEntityId"],
+                        "sourceComponentType": region["sourceComponentType"],
+                        "derivation": "detail.cropLimit",
+                        "derivationTransform": frame["modelToView"],
+                        "lineClass": "cropLimit",
+                        "structural": False,
+                        "visibility": "visible",
+                        "closed": False,
+                        "pointsMm": points,
+                    }
+                )
+
+        material_geometries = {
+            code: unary_union([geometry for region, geometry in region_geometries if region["materialCode"] == code])
+            for code in sorted({region["materialCode"] for region, _geometry in region_geometries})
+        }
+        maximum_overlap = 0.0
+        material_items = list(material_geometries.items())
+        for index, (_first_code, first_geometry) in enumerate(material_items):
+            for _second_code, second_geometry in material_items[index + 1 :]:
+                maximum_overlap = max(maximum_overlap, float(first_geometry.intersection(second_geometry).area))
+        counts_by_type = Counter(region["sourceComponentType"] for region, _geometry in region_geometries)
+        counts_by_material = {code: len(_polygon_parts(geometry)) for code, geometry in material_geometries.items()}
+        cut_sources = sorted({region["sourceEntityId"] for region, _geometry in region_geometries})
+        return {
+            "cutLines": sorted(cut_lines, key=lambda item: item["lineId"]),
+            "materialRegions": sorted(regions, key=lambda item: item["regionId"]),
+            "cropLimitLines": sorted(crop_limit_lines, key=lambda item: item["lineId"]),
+            "statistics": {
+                "cutSourceCount": len(cut_sources),
+                "cutEntitySetSha256": sha256("\n".join(cut_sources).encode("utf-8")).hexdigest(),
+                "cutRegionCount": len(regions),
+                "cutRegionCountByType": dict(sorted(counts_by_type.items())),
+                "materialRegionCountByCode": dict(sorted(counts_by_material.items())),
+                "maximumMaterialOverlapAreaMm2": round(maximum_overlap, 6),
+                "cutLineCount": len(cut_lines),
+                "cropLimitLineCount": len(crop_limit_lines),
+                "openOrDangleCount": open_or_dangle,
+            },
+        }
+
+    def generate(self, view_id: str) -> dict:
+        view = next((item for item in self.contract["views"] if item["id"] == view_id), None)
+        if view is None or view.get("derivation") != "controlledDetailProjection":
+            raise ViewGeometryError(f"{view_id} is not a frozen controlled detail view")
+        selected = self._selected(view)
+        if not selected:
+            raise ViewGeometryError(f"{view_id} selects no source entities")
+        projection_lines = self._projection_lines(view, selected)
+        section_geometry = (
+            self._section_geometry(view, selected)
+            if view["detail"]["mode"] == "section-projection"
+            else {"cutLines": [], "materialRegions": [], "cropLimitLines": [], "statistics": {}}
+        )
+        structural_lines = [*section_geometry["cutLines"], *projection_lines]
+        source_ids = sorted({line["sourceEntityId"] for line in structural_lines})
+        statistics = {
+            "selectedSourceCount": len(selected),
+            "selectionEntitySetSha256": sha256("\n".join(selected).encode("utf-8")).hexdigest(),
+            "structuralLineCount": len(structural_lines),
+            "structuralSourceCount": len(source_ids),
+            "structuralSourceEntitySetSha256": sha256("\n".join(source_ids).encode("utf-8")).hexdigest(),
+            "visibleProjectionLineCount": len(projection_lines),
+            "structuralSourceTypes": sorted({line["sourceComponentType"] for line in structural_lines}),
+            **section_geometry["statistics"],
+        }
+        payload = {
+            "schemaVersion": "t0b-v2-detail-view-geometry-1",
+            "status": "generated-not-qualified",
+            "qualification": "not-drawing-output",
+            "L1": False,
+            "viewId": view_id,
+            "geometryRevisionId": self.contract["geometryRevisionId"],
+            "viewContractRevisionId": self.contract["viewContractRevisionId"],
+            "unit": "mm",
+            "viewFrame": view["viewFrame"],
+            "detail": view["detail"],
+            "cutLines": section_geometry["cutLines"],
+            "projectionLines": projection_lines,
+            "materialRegions": section_geometry["materialRegions"],
+            "cropLimitLines": section_geometry["cropLimitLines"],
+            "statistics": statistics,
         }
         canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         payload["viewGeometrySha256"] = sha256(canonical.encode("utf-8")).hexdigest()

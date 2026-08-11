@@ -10,7 +10,7 @@
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "34beabd18dfdf90fa6812d69dcc424cff151d2c1c398459771b90ef3b22b7847"
+      "sha256": "926e88609f7ec2053af27e94fd8545a3c53ac28e8eef2a5af71209e17351c0c6"
     },
     "manifest": {
       "path": "geometry-manifest.json",
@@ -67,14 +67,14 @@
     {
       "name": "view contract signature",
       "passed": true,
-      "actual": "cf98254545ac32e517606e3760ed45b5c0336eefc4301a063efdb13175c77988",
-      "expected": "cf98254545ac32e517606e3760ed45b5c0336eefc4301a063efdb13175c77988"
+      "actual": "afab451f1accaefed40f79103bcd0d5938dff0389ce087b66c4c9319856cadb2",
+      "expected": "afab451f1accaefed40f79103bcd0d5938dff0389ce087b66c4c9319856cadb2"
     },
     {
       "name": "view contract revision",
       "passed": true,
-      "actual": "8c91c70a-012c-5620-87e5-69e54e107b69",
-      "expected": "8c91c70a-012c-5620-87e5-69e54e107b69"
+      "actual": "04d00093-0bec-5f2a-bc68-def2a292c932",
+      "expected": "04d00093-0bec-5f2a-bc68-def2a292c932"
     },
     {
       "name": "floorPlan selection set",
@@ -1352,14 +1352,12 @@
       "name": "eaveDetail negative section stability",
       "passed": true,
       "actual": {
-        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+        "cutClosedRegionCount": 21,
         "maximumMaterialOverlapAreaMm2": 0.0,
         "materialRegionsByCode": {
           "ceramic-demo": 1,
           "timber-demo": 3
         },
-        "cutClosedRegionCount": 21,
-        "cutOpenOrDangleCount": 0,
         "cutClosedRegionsByType": {
           "bearingBlock": 1,
           "bracketArm": 2,
@@ -1371,17 +1369,17 @@
           "purlin": 2,
           "rafter": 3,
           "roofBoard": 1
-        }
+        },
+        "cutOpenOrDangleCount": 0,
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
       },
       "expected": {
-        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+        "cutClosedRegionCount": 21,
         "maximumMaterialOverlapAreaMm2": 0.0,
         "materialRegionsByCode": {
           "ceramic-demo": 1,
           "timber-demo": 3
         },
-        "cutClosedRegionCount": 21,
-        "cutOpenOrDangleCount": 0,
         "cutClosedRegionsByType": {
           "bearingBlock": 1,
           "bracketArm": 2,
@@ -1393,21 +1391,21 @@
           "purlin": 2,
           "rafter": 3,
           "roofBoard": 1
-        }
+        },
+        "cutOpenOrDangleCount": 0,
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
       }
     },
     {
       "name": "eaveDetail positive section stability",
       "passed": true,
       "actual": {
-        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+        "cutClosedRegionCount": 21,
         "maximumMaterialOverlapAreaMm2": 0.0,
         "materialRegionsByCode": {
           "ceramic-demo": 1,
           "timber-demo": 3
         },
-        "cutClosedRegionCount": 21,
-        "cutOpenOrDangleCount": 0,
         "cutClosedRegionsByType": {
           "bearingBlock": 1,
           "bracketArm": 2,
@@ -1419,17 +1417,17 @@
           "purlin": 2,
           "rafter": 3,
           "roofBoard": 1
-        }
+        },
+        "cutOpenOrDangleCount": 0,
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
       },
       "expected": {
-        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+        "cutClosedRegionCount": 21,
         "maximumMaterialOverlapAreaMm2": 0.0,
         "materialRegionsByCode": {
           "ceramic-demo": 1,
           "timber-demo": 3
         },
-        "cutClosedRegionCount": 21,
-        "cutOpenOrDangleCount": 0,
         "cutClosedRegionsByType": {
           "bearingBlock": 1,
           "bracketArm": 2,
@@ -1441,7 +1439,9 @@
           "purlin": 2,
           "rafter": 3,
           "roofBoard": 1
-        }
+        },
+        "cutOpenOrDangleCount": 0,
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
       }
     },
     {
@@ -1958,80 +1958,80 @@
       "name": "columnBaseDetail negative section stability",
       "passed": true,
       "actual": {
-        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+        "cutClosedRegionCount": 15,
         "maximumMaterialOverlapAreaMm2": 0.0,
         "materialRegionsByCode": {
           "earth-demo": 1,
           "stone-demo": 1,
           "timber-demo": 1
         },
-        "cutClosedRegionCount": 15,
-        "cutOpenOrDangleCount": 0,
         "cutClosedRegionsByType": {
           "column": 1,
           "columnBase": 4,
           "foundation": 3,
           "groundLayer": 4,
           "terrace": 3
-        }
+        },
+        "cutOpenOrDangleCount": 0,
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
       },
       "expected": {
-        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+        "cutClosedRegionCount": 15,
         "maximumMaterialOverlapAreaMm2": 0.0,
         "materialRegionsByCode": {
           "earth-demo": 1,
           "stone-demo": 1,
           "timber-demo": 1
         },
-        "cutClosedRegionCount": 15,
-        "cutOpenOrDangleCount": 0,
         "cutClosedRegionsByType": {
           "column": 1,
           "columnBase": 4,
           "foundation": 3,
           "groundLayer": 4,
           "terrace": 3
-        }
+        },
+        "cutOpenOrDangleCount": 0,
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
       }
     },
     {
       "name": "columnBaseDetail positive section stability",
       "passed": true,
       "actual": {
-        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+        "cutClosedRegionCount": 15,
         "maximumMaterialOverlapAreaMm2": 0.0,
         "materialRegionsByCode": {
           "earth-demo": 1,
           "stone-demo": 1,
           "timber-demo": 1
         },
-        "cutClosedRegionCount": 15,
-        "cutOpenOrDangleCount": 0,
         "cutClosedRegionsByType": {
           "column": 1,
           "columnBase": 4,
           "foundation": 3,
           "groundLayer": 4,
           "terrace": 3
-        }
+        },
+        "cutOpenOrDangleCount": 0,
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
       },
       "expected": {
-        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+        "cutClosedRegionCount": 15,
         "maximumMaterialOverlapAreaMm2": 0.0,
         "materialRegionsByCode": {
           "earth-demo": 1,
           "stone-demo": 1,
           "timber-demo": 1
         },
-        "cutClosedRegionCount": 15,
-        "cutOpenOrDangleCount": 0,
         "cutClosedRegionsByType": {
           "column": 1,
           "columnBase": 4,
           "foundation": 3,
           "groundLayer": 4,
           "terrace": 3
-        }
+        },
+        "cutOpenOrDangleCount": 0,
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
       }
     },
     {
