@@ -38,6 +38,18 @@ class T0BV2ViewContractVerifierTests(unittest.TestCase):
         failed = {item["name"] for item in report["checks"] if not item["passed"]}
         self.assertIn("transverseSection cutSegmentSha256", failed)
 
+    def test_changed_detail_line_oracle_fails(self) -> None:
+        fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        invalid = deepcopy(fixture)
+        invalid["knownAnswers"]["viewOracle"]["views"]["eaveDetail"]["visibleLineSetSha256"] = "0" * 64
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fixture.json"
+            path.write_text(json.dumps(invalid, ensure_ascii=False), encoding="utf-8")
+            report = verify_view_contract(path, MANIFEST, SOURCE_MESHES)
+        self.assertEqual(report["status"], "failed")
+        failed = {item["name"] for item in report["checks"] if not item["passed"]}
+        self.assertIn("eaveDetail visibleLineSetSha256", failed)
+
     def test_section_plane_on_mesh_boundary_fails_stability_probe(self) -> None:
         fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
         invalid = deepcopy(fixture)

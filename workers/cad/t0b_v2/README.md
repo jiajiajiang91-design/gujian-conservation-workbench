@@ -17,7 +17,7 @@
 
 独立验证器不读取生成器答案。剖面验证器重新计算切面边界、构件集合、闭合区域、来源边和遮挡；投影验证器重新建立完整候选边和可见区间，检查应见线、禁入线、来源、坐标绑定、镜像和重边。篡改顶点、面方向、构件类型、关系、来源、二维坐标、视图框架、剖面材料或投影线均会失败。
 
-当前结果为 `passed-section-geometry-only` 和 `passed-projection-geometry-only`，仍是 `generated-not-qualified / not-drawing-output / L1=false`。各视图线数只记录冻结结果，不是质量指标。四张详图、DXF、SVG、PDF、尺寸、标高和专业复核尚未完成。
+当前结果为 `passed-section-geometry-only` 和 `passed-projection-geometry-only`，仍是 `generated-not-qualified / not-drawing-output / L1=false`。各视图线数只记录冻结结果，不是质量指标。四张详图的合同与独立 oracle 已冻结，但 ViewGeometry、DXF、SVG、PDF、尺寸、标高和专业复核尚未完成。
 
 ```powershell
 workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.build_sections `
@@ -55,7 +55,7 @@ workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.verify_projections `
 
 当前目录已完成第 1、2 步、视图合同，以及平面、屋顶平面、南立面、横剖、纵剖和轴测的中间 ViewGeometry。生成记录固定为 `generated-not-qualified`，十个视图、成组图纸和专业复核全部通过前不得申请 L1。
 
-视图合同补齐十个视图的坐标框架、观察方向、裁切范围、标注安全区、纸面变换和逐视图金标准。横剖面固定在稳定的 `x=-1750 mm`，穿过同一榀的柱、柱础、基础、承托、檩和屋面，并通过 `±0.5 mm` 扰动复算。四个详图均绑定一个稳定构件实例和局部范围。现有生成器只能读取剥离 oracle 后的白名单输入。合同说明见 `VIEW_CONTRACT.md`。
+视图合同补齐十个视图的坐标框架、观察方向、裁切范围、标注安全区、纸面变换和逐视图金标准。横剖面固定在稳定的 `x=-1750 mm`，穿过同一榀的柱、柱础、基础、承托、檩和屋面，并通过 `±0.5 mm` 扰动复算。四个详图均绑定稳定构件实例、局部范围、切面或投影类型、精确来源集合、材料优先级和完整可见线答案。真实切面在完整网格上求交后再裁切，裁切边不得冒充构件线。现有生成器只能读取剥离 oracle 后的白名单输入。合同说明见 `VIEW_CONTRACT.md`。
 
 主剖面的真实切面不筛构件；剖后投影按冻结的语义类型集合处理，排除重复瓦件、椽网格和三角内部边。CAD 图层先按几何线类确定，隐藏状态只作覆盖，避免可见线覆盖外轮廓与内部特征的基础线宽。
 

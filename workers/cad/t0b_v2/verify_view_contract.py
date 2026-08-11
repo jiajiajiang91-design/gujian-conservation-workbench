@@ -15,8 +15,15 @@ from shapely.geometry import LineString, box
 from shapely.ops import polygonize_full, unary_union
 import trimesh
 
+try:
+    from .detail_oracle import detail_oracle, detail_target_types
+    from .verify_sections import _load_sources, _verify_source_closure
+except ImportError:  # pragma: no cover - direct verifier execution
+    from workers.cad.t0b_v2.detail_oracle import detail_oracle, detail_target_types
+    from workers.cad.t0b_v2.verify_sections import _load_sources, _verify_source_closure
 
-VERIFIER_VERSION = "2.0.0"
+
+VERIFIER_VERSION = "3.0.0"
 VIEW_CONTRACT_REVISION_NAMESPACE = UUID("7f53de29-8c75-5f46-a7bf-75c69cc967a0")
 
 
@@ -56,7 +63,7 @@ def _selection(view: dict, manifest: dict) -> tuple[list[str], list[str]]:
     depth = np.asarray(frame["depth"], dtype=float)
     clip = frame["clipRectMm"]
     depth_range = frame["clipDepthMm"]
-    target_types = set(view.get("detail", {}).get("targetTypes", [])) or None
+    target_types = detail_target_types(view) if view.get("detail") else None
     selected: list[str] = []
     selected_types: set[str] = set()
     for entity in manifest["entities"]:
@@ -87,7 +94,7 @@ def _section_spec(view: dict) -> tuple[dict, set[str] | None, bool] | None:
         return view["section"], None, False
     detail = view.get("detail", {})
     if detail.get("mode") == "section-projection":
-        return detail["section"], set(detail["targetTypes"]), True
+        return detail["section"], set(detail["cutTargetTypes"]), True
     return None
 
 
@@ -213,6 +220,8 @@ def verify_view_contract(fixture_path: Path, manifest_path: Path, source_meshes_
     if _file_hash(source_meshes_path) != fixture["knownAnswers"]["sourceMeshBundleSha256"]:
         raise ValueError("source mesh bundle differs from the frozen oriented topology hash")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    source_header, meshes = _load_sources(source_meshes_path)
+    _verify_source_closure(fixture, manifest, source_header, meshes)
     checks: list[dict] = []
     _record(checks, "geometry revision", manifest.get("geometryRevisionId"), fixture.get("geometryRevisionId"))
     _record(checks, "geometry signature", manifest.get("geometrySignature"), fixture["knownAnswers"].get("geometrySignature"))
@@ -225,7 +234,6 @@ def verify_view_contract(fixture_path: Path, manifest_path: Path, source_meshes_
 
     answers = fixture["knownAnswers"]["viewOracle"]["views"]
     metadata = {item["entityId"]: item for item in manifest["entities"]}
-    meshes: dict[str, trimesh.Trimesh] | None = None
     for view in fixture["views"]:
         view_id = view["id"]
         expected = answers[view_id]
@@ -256,10 +264,46 @@ def verify_view_contract(fixture_path: Path, manifest_path: Path, source_meshes_
                     round(float((relative @ np.asarray(frame["up"], dtype=float)).max()), 6),
                 ]
                 _record(checks, f"{view_id} crop projects to clip rectangle", projected, [round(float(value), 6) for value in frame["clipRectMm"]])
-                _record(checks, f"{view_id} target types match oracle", sorted(detail["targetTypes"]), sorted(expected["requiredTypes"]))
-        if _section_spec(view) is not None:
-            if meshes is None:
-                meshes = _load_source_meshes(source_meshes_path)
+                _record(checks, f"{view_id} target types match oracle", sorted(detail_target_types(view)), sorted(expected["requiredTypes"]))
+            actual_detail = detail_oracle(view, manifest, meshes, fixture["drawingRequirements"]["projectionPolicy"])
+            for field, actual in actual_detail.items():
+                _record(checks, f"{view_id} {field}", actual, expected[field])
+            actual_sources = set(actual_detail["requiredVisibleEntityIds"])
+            _record(checks, f"{view_id} forbidden entities exist", all(entity_id in metadata for entity_id in expected["mustNotAppearEntityIds"]), True)
+            _record(checks, f"{view_id} forbidden entities absent", not (actual_sources & set(expected["mustNotAppearEntityIds"])), True)
+            _record(
+                checks,
+                f"{view_id} forbidden types absent",
+                not ({metadata[entity_id]["componentType"] for entity_id in actual_sources} & set(expected["mustNotAppearTypes"])),
+                True,
+            )
+            selected_materials_match = all(
+                metadata[entity_id]["materialCode"] == expected["materialCodeByType"][metadata[entity_id]["componentType"]]
+                for entity_id in selected
+            )
+            _record(checks, f"{view_id} source material mapping", selected_materials_match, True)
+            manifest_relations = {
+                (relation["fromEntityId"], relation["relation"], relation["toEntityId"])
+                for relation in manifest["relations"]
+            }
+            for chain_name, relations in expected["requiredEntityChains"].items():
+                actual_relations = {
+                    (relation["fromEntityId"], relation["relation"], relation["toEntityId"])
+                    for relation in relations
+                }
+                _record(checks, f"{view_id} {chain_name} relations", actual_relations <= manifest_relations, True)
+            if view_id == "doorWindowDetail":
+                templates = fixture["componentTemplates"]
+                selected_type_counts = Counter(metadata[entity_id]["componentType"] for entity_id in selected)
+                topology = {
+                    "doorLeaves": selected_type_counts["doorLeaf"],
+                    "doorPanels": selected_type_counts["doorLeaf"] * templates["doorLeaf"]["parameters"]["panels"],
+                    "latticeWindows": selected_type_counts["latticeWindow"],
+                    "latticeCells": selected_type_counts["latticeWindow"] * templates["latticeWindow"]["parameters"]["rows"] * templates["latticeWindow"]["parameters"]["columns"],
+                }
+                _record(checks, f"{view_id} panel and lattice topology", topology, expected["topologyCounts"])
+
+        if view.get("derivation") == "planeIntersection":
             actual_section = _section_oracle(view, manifest, meshes)
             for field, actual in actual_section.items():
                 _record(checks, f"{view_id} {field}", actual, expected[field])
@@ -270,14 +314,26 @@ def verify_view_contract(fixture_path: Path, manifest_path: Path, source_meshes_
             center_stability = _stable_section_fields(actual_section)
             _record(checks, f"{view_id} negative section stability", _stable_section_fields(before), center_stability)
             _record(checks, f"{view_id} positive section stability", _stable_section_fields(after), center_stability)
-            if view.get("detail") and metadata.get(view["detail"]["anchorEntityId"]):
-                anchor_mesh = meshes[view["detail"]["anchorEntityId"]]
+        elif view.get("detail", {}).get("mode") == "section-projection":
+            section_spec = view["detail"]["section"]
+            probe = float(section_spec["stabilityProbeMm"])
+            center = detail_oracle(view, manifest, meshes, fixture["drawingRequirements"]["projectionPolicy"])
+            before = detail_oracle(_shift_section(view, -probe), manifest, meshes, fixture["drawingRequirements"]["projectionPolicy"])
+            after = detail_oracle(_shift_section(view, probe), manifest, meshes, fixture["drawingRequirements"]["projectionPolicy"])
+            stable_fields = {"cutEntitySetSha256", "cutClosedRegionCount", "cutClosedRegionsByType", "cutOpenOrDangleCount", "materialRegionsByCode", "maximumMaterialOverlapAreaMm2"}
+            center_stability = {field: center[field] for field in stable_fields}
+            _record(checks, f"{view_id} negative section stability", {field: before[field] for field in stable_fields}, center_stability)
+            _record(checks, f"{view_id} positive section stability", {field: after[field] for field in stable_fields}, center_stability)
+            anchor_id = view["detail"]["anchorEntityId"]
+            if anchor_id in meshes:
                 cut = trimesh.intersections.mesh_plane(
-                    anchor_mesh,
+                    meshes[anchor_id],
                     np.asarray(section_spec["planeNormal"], dtype=float),
                     np.asarray(section_spec["planeOrigin"], dtype=float),
                 )
                 _record(checks, f"{view_id} anchor mesh intersects cut plane", len(cut) > 0, True)
+            else:
+                _record(checks, f"{view_id} anchor mesh intersects cut plane", False, True)
         if view.get("derivation") == "visibleLineProjection":
             display_types = set(view.get("projection", {}).get("displayTypes", []))
             required_visible = expected.get("requiredVisibleEntityIds", [])

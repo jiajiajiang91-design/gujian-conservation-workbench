@@ -3,14 +3,14 @@
   "status": "passed-contract-only",
   "qualification": "not-view-output",
   "verifier": {
-    "version": "2.0.0",
+    "version": "3.0.0",
     "source": "verify_view_contract.py",
-    "sha256": "8d73d33885015c7b8d08a127f30b694c08eb1045b8294b0a16783fd091edc98a"
+    "sha256": "7c33eff0097506a378512727fe634340d9376fb3a84ae38baf24d94a0ba68eeb"
   },
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "45fe564f8afb5d82f3450d502a7f9bd7ecb03a8ffd39beaff195d98fd2fdda93"
+      "sha256": "34beabd18dfdf90fa6812d69dcc424cff151d2c1c398459771b90ef3b22b7847"
     },
     "manifest": {
       "path": "geometry-manifest.json",
@@ -67,14 +67,14 @@
     {
       "name": "view contract signature",
       "passed": true,
-      "actual": "af65d11ad53b2b6d98c49c4ea1e3a10e7cbe4d392e60f1ae4f2a85d7da0857f4",
-      "expected": "af65d11ad53b2b6d98c49c4ea1e3a10e7cbe4d392e60f1ae4f2a85d7da0857f4"
+      "actual": "cf98254545ac32e517606e3760ed45b5c0336eefc4301a063efdb13175c77988",
+      "expected": "cf98254545ac32e517606e3760ed45b5c0336eefc4301a063efdb13175c77988"
     },
     {
       "name": "view contract revision",
       "passed": true,
-      "actual": "5f7db94c-b414-5566-96a9-5c49354ad515",
-      "expected": "5f7db94c-b414-5566-96a9-5c49354ad515"
+      "actual": "8c91c70a-012c-5620-87e5-69e54e107b69",
+      "expected": "8c91c70a-012c-5620-87e5-69e54e107b69"
     },
     {
       "name": "floorPlan selection set",
@@ -1099,6 +1099,132 @@
       ]
     },
     {
+      "name": "eaveDetail selectionCountDiagnostic",
+      "passed": true,
+      "actual": 59,
+      "expected": 59
+    },
+    {
+      "name": "eaveDetail selectionEntitySetSha256",
+      "passed": true,
+      "actual": "7392af5a396900a1f19ccebd241e4ff057c66ea5992fad43589602a603b44e22",
+      "expected": "7392af5a396900a1f19ccebd241e4ff057c66ea5992fad43589602a603b44e22"
+    },
+    {
+      "name": "eaveDetail selectionTypes",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "coverTile",
+        "eaveBeam",
+        "flyRafter",
+        "panTile",
+        "purlin",
+        "rafter",
+        "roofBoard"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "coverTile",
+        "eaveBeam",
+        "flyRafter",
+        "panTile",
+        "purlin",
+        "rafter",
+        "roofBoard"
+      ]
+    },
+    {
+      "name": "eaveDetail visibleLineSetSha256",
+      "passed": true,
+      "actual": "002ea4f27e2865c44a9aecbd7daf8712fb22ca9a4f8e56c53c898a725fd31c9e",
+      "expected": "002ea4f27e2865c44a9aecbd7daf8712fb22ca9a4f8e56c53c898a725fd31c9e"
+    },
+    {
+      "name": "eaveDetail requiredVisibleEntityIds",
+      "passed": true,
+      "actual": [
+        "060068a1-e546-5aed-89f4-c1a0b9703d66",
+        "094027ab-3397-5117-bad8-81c07d961879",
+        "0a387381-1480-549e-b7a2-0b039b478294",
+        "15419753-aeb1-5cb0-ad0a-75b49b8d0101",
+        "1b3ecc93-72a1-5506-abe3-dfab0a3f61c9",
+        "1e3b2317-9b3d-557e-a283-567bea427d5a",
+        "1f078a08-7faf-51d8-988a-d29417fd82c8",
+        "2756f220-3f0d-5395-adf9-2cddbf7d46bb",
+        "2f615b6c-d3f6-5537-9179-4dca3040e20e",
+        "337c804a-8e29-5cc8-8deb-05c4fd064fb7",
+        "440f30ad-2a2e-5b85-9d51-8f4b43fc599f",
+        "445aa899-bec7-5e73-b26d-9c8b38057498",
+        "50c2b1c7-b84b-58e9-a4a0-79ce902ed028",
+        "51ef2127-edc0-5461-825c-9f44a719b59f",
+        "696e8283-9e59-52bf-9f7c-99dc55df94de",
+        "a6171b1b-a941-59a8-8191-3f770b505a78",
+        "c6942d13-d788-5e51-8178-0df6a65c0708",
+        "c8382de1-abd3-50fa-be75-d4a1f80c4b5b",
+        "cd0f2076-7e40-5162-b53b-ea99138debb9",
+        "cfbedf2a-2181-56f0-8d29-79a46125f6c7",
+        "e37fe806-67f1-59ef-a7e9-79ef39dd23cf",
+        "e4fea827-e966-53c9-8b39-ae669b1c79c1",
+        "f87fc86e-d5f6-5f03-9f53-56c85fbdf115",
+        "fc535626-eceb-5dcc-8737-e0dc4047920a"
+      ],
+      "expected": [
+        "060068a1-e546-5aed-89f4-c1a0b9703d66",
+        "094027ab-3397-5117-bad8-81c07d961879",
+        "0a387381-1480-549e-b7a2-0b039b478294",
+        "15419753-aeb1-5cb0-ad0a-75b49b8d0101",
+        "1b3ecc93-72a1-5506-abe3-dfab0a3f61c9",
+        "1e3b2317-9b3d-557e-a283-567bea427d5a",
+        "1f078a08-7faf-51d8-988a-d29417fd82c8",
+        "2756f220-3f0d-5395-adf9-2cddbf7d46bb",
+        "2f615b6c-d3f6-5537-9179-4dca3040e20e",
+        "337c804a-8e29-5cc8-8deb-05c4fd064fb7",
+        "440f30ad-2a2e-5b85-9d51-8f4b43fc599f",
+        "445aa899-bec7-5e73-b26d-9c8b38057498",
+        "50c2b1c7-b84b-58e9-a4a0-79ce902ed028",
+        "51ef2127-edc0-5461-825c-9f44a719b59f",
+        "696e8283-9e59-52bf-9f7c-99dc55df94de",
+        "a6171b1b-a941-59a8-8191-3f770b505a78",
+        "c6942d13-d788-5e51-8178-0df6a65c0708",
+        "c8382de1-abd3-50fa-be75-d4a1f80c4b5b",
+        "cd0f2076-7e40-5162-b53b-ea99138debb9",
+        "cfbedf2a-2181-56f0-8d29-79a46125f6c7",
+        "e37fe806-67f1-59ef-a7e9-79ef39dd23cf",
+        "e4fea827-e966-53c9-8b39-ae669b1c79c1",
+        "f87fc86e-d5f6-5f03-9f53-56c85fbdf115",
+        "fc535626-eceb-5dcc-8737-e0dc4047920a"
+      ]
+    },
+    {
+      "name": "eaveDetail viewBounds2dMm",
+      "passed": true,
+      "actual": [
+        1990.202,
+        3500.0,
+        3760.873,
+        6200.0
+      ],
+      "expected": [
+        1990.202,
+        3500,
+        3760.873,
+        6200
+      ]
+    },
+    {
+      "name": "eaveDetail visibleLineCountDiagnostic",
+      "passed": true,
+      "actual": 1134,
+      "expected": 1134
+    },
+    {
       "name": "eaveDetail cutEntitySetSha256",
       "passed": true,
       "actual": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
@@ -1107,27 +1233,215 @@
     {
       "name": "eaveDetail cutSegmentSha256",
       "passed": true,
-      "actual": "b2f1d87d0e4c9bc2c4ecb555667adc12d6537928dcddb64d7a555c757d78a077",
-      "expected": "b2f1d87d0e4c9bc2c4ecb555667adc12d6537928dcddb64d7a555c757d78a077"
+      "actual": "222c8d05f63affba122d8ef47199ece8b67f4dbd1b457194278ce11548b34ae9",
+      "expected": "222c8d05f63affba122d8ef47199ece8b67f4dbd1b457194278ce11548b34ae9"
+    },
+    {
+      "name": "eaveDetail cropLimitSegmentSha256",
+      "passed": true,
+      "actual": "1e6d83d4abdb466da9051f1759c3968bd548b01777e41a527f88d2ea791217b2",
+      "expected": "1e6d83d4abdb466da9051f1759c3968bd548b01777e41a527f88d2ea791217b2"
+    },
+    {
+      "name": "eaveDetail cropLimitSegmentCount",
+      "passed": true,
+      "actual": 4,
+      "expected": 4
+    },
+    {
+      "name": "eaveDetail cutClosedRegionCount",
+      "passed": true,
+      "actual": 21,
+      "expected": 21
+    },
+    {
+      "name": "eaveDetail cutClosedRegionsByType",
+      "passed": true,
+      "actual": {
+        "bearingBlock": 1,
+        "bracketArm": 2,
+        "bracketSeat": 1,
+        "column": 1,
+        "eaveBeam": 1,
+        "flyRafter": 3,
+        "panTile": 6,
+        "purlin": 2,
+        "rafter": 3,
+        "roofBoard": 1
+      },
+      "expected": {
+        "bearingBlock": 1,
+        "bracketArm": 2,
+        "bracketSeat": 1,
+        "column": 1,
+        "eaveBeam": 1,
+        "flyRafter": 3,
+        "panTile": 6,
+        "purlin": 2,
+        "rafter": 3,
+        "roofBoard": 1
+      }
+    },
+    {
+      "name": "eaveDetail cutOpenOrDangleCount",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "eaveDetail materialRegionsByCode",
+      "passed": true,
+      "actual": {
+        "ceramic-demo": 1,
+        "timber-demo": 3
+      },
+      "expected": {
+        "ceramic-demo": 1,
+        "timber-demo": 3
+      }
+    },
+    {
+      "name": "eaveDetail maximumMaterialOverlapAreaMm2",
+      "passed": true,
+      "actual": 0.0,
+      "expected": 0
+    },
+    {
+      "name": "eaveDetail forbidden entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail forbidden entities absent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail forbidden types absent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail source material mapping",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail rafterToPurlin relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail purlinToColumnViaXArm relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail bearingToSeatViaYArm relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
     },
     {
       "name": "eaveDetail negative section stability",
       "passed": true,
       "actual": {
-        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+        "maximumMaterialOverlapAreaMm2": 0.0,
+        "materialRegionsByCode": {
+          "ceramic-demo": 1,
+          "timber-demo": 3
+        },
+        "cutClosedRegionCount": 21,
+        "cutOpenOrDangleCount": 0,
+        "cutClosedRegionsByType": {
+          "bearingBlock": 1,
+          "bracketArm": 2,
+          "bracketSeat": 1,
+          "column": 1,
+          "eaveBeam": 1,
+          "flyRafter": 3,
+          "panTile": 6,
+          "purlin": 2,
+          "rafter": 3,
+          "roofBoard": 1
+        }
       },
       "expected": {
-        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+        "maximumMaterialOverlapAreaMm2": 0.0,
+        "materialRegionsByCode": {
+          "ceramic-demo": 1,
+          "timber-demo": 3
+        },
+        "cutClosedRegionCount": 21,
+        "cutOpenOrDangleCount": 0,
+        "cutClosedRegionsByType": {
+          "bearingBlock": 1,
+          "bracketArm": 2,
+          "bracketSeat": 1,
+          "column": 1,
+          "eaveBeam": 1,
+          "flyRafter": 3,
+          "panTile": 6,
+          "purlin": 2,
+          "rafter": 3,
+          "roofBoard": 1
+        }
       }
     },
     {
       "name": "eaveDetail positive section stability",
       "passed": true,
       "actual": {
-        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+        "maximumMaterialOverlapAreaMm2": 0.0,
+        "materialRegionsByCode": {
+          "ceramic-demo": 1,
+          "timber-demo": 3
+        },
+        "cutClosedRegionCount": 21,
+        "cutOpenOrDangleCount": 0,
+        "cutClosedRegionsByType": {
+          "bearingBlock": 1,
+          "bracketArm": 2,
+          "bracketSeat": 1,
+          "column": 1,
+          "eaveBeam": 1,
+          "flyRafter": 3,
+          "panTile": 6,
+          "purlin": 2,
+          "rafter": 3,
+          "roofBoard": 1
+        }
       },
       "expected": {
-        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+        "maximumMaterialOverlapAreaMm2": 0.0,
+        "materialRegionsByCode": {
+          "ceramic-demo": 1,
+          "timber-demo": 3
+        },
+        "cutClosedRegionCount": 21,
+        "cutOpenOrDangleCount": 0,
+        "cutClosedRegionsByType": {
+          "bearingBlock": 1,
+          "bracketArm": 2,
+          "bracketSeat": 1,
+          "column": 1,
+          "eaveBeam": 1,
+          "flyRafter": 3,
+          "panTile": 6,
+          "purlin": 2,
+          "rafter": 3,
+          "roofBoard": 1
+        }
       }
     },
     {
@@ -1201,15 +1515,15 @@
       "passed": true,
       "actual": [
         -2500.0,
-        4000.0,
+        3600.0,
         -1100.0,
-        5500.0
+        5400.0
       ],
       "expected": [
         -2500.0,
-        4000.0,
+        3600.0,
         -1100.0,
-        5500.0
+        5400.0
       ]
     },
     {
@@ -1229,6 +1543,126 @@
         "column",
         "eaveBeam"
       ]
+    },
+    {
+      "name": "bracketDetail selectionCountDiagnostic",
+      "passed": true,
+      "actual": 6,
+      "expected": 6
+    },
+    {
+      "name": "bracketDetail selectionEntitySetSha256",
+      "passed": true,
+      "actual": "dc6d0d84ca59b8adfd9df2812be897df61c5773ca61938f32654300ab3026912",
+      "expected": "dc6d0d84ca59b8adfd9df2812be897df61c5773ca61938f32654300ab3026912"
+    },
+    {
+      "name": "bracketDetail selectionTypes",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "eaveBeam"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "eaveBeam"
+      ]
+    },
+    {
+      "name": "bracketDetail visibleLineSetSha256",
+      "passed": true,
+      "actual": "ef87716dd0d37314f9781aa1f9de07db8c16a1eded62c46c3b6ac7ce35d0af38",
+      "expected": "ef87716dd0d37314f9781aa1f9de07db8c16a1eded62c46c3b6ac7ce35d0af38"
+    },
+    {
+      "name": "bracketDetail requiredVisibleEntityIds",
+      "passed": true,
+      "actual": [
+        "094027ab-3397-5117-bad8-81c07d961879",
+        "15419753-aeb1-5cb0-ad0a-75b49b8d0101",
+        "337c804a-8e29-5cc8-8deb-05c4fd064fb7",
+        "c6942d13-d788-5e51-8178-0df6a65c0708",
+        "c8382de1-abd3-50fa-be75-d4a1f80c4b5b",
+        "fc535626-eceb-5dcc-8737-e0dc4047920a"
+      ],
+      "expected": [
+        "094027ab-3397-5117-bad8-81c07d961879",
+        "15419753-aeb1-5cb0-ad0a-75b49b8d0101",
+        "337c804a-8e29-5cc8-8deb-05c4fd064fb7",
+        "c6942d13-d788-5e51-8178-0df6a65c0708",
+        "c8382de1-abd3-50fa-be75-d4a1f80c4b5b",
+        "fc535626-eceb-5dcc-8737-e0dc4047920a"
+      ]
+    },
+    {
+      "name": "bracketDetail viewBounds2dMm",
+      "passed": true,
+      "actual": [
+        -2350.0,
+        3600.0,
+        -1100.0,
+        5188.565
+      ],
+      "expected": [
+        -2350,
+        3600,
+        -1100,
+        5188.565
+      ]
+    },
+    {
+      "name": "bracketDetail visibleLineCountDiagnostic",
+      "passed": true,
+      "actual": 43,
+      "expected": 43
+    },
+    {
+      "name": "bracketDetail forbidden entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail forbidden entities absent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail forbidden types absent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail source material mapping",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail bearingToColumnViaXArm relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail bearingToSeatViaYArm relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail crossViewPurlinBoundary relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
     },
     {
       "name": "columnBaseDetail selection set",
@@ -1325,6 +1759,92 @@
       ]
     },
     {
+      "name": "columnBaseDetail selectionCountDiagnostic",
+      "passed": true,
+      "actual": 10,
+      "expected": 10
+    },
+    {
+      "name": "columnBaseDetail selectionEntitySetSha256",
+      "passed": true,
+      "actual": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+      "expected": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+    },
+    {
+      "name": "columnBaseDetail selectionTypes",
+      "passed": true,
+      "actual": [
+        "column",
+        "columnBase",
+        "foundation",
+        "groundLayer",
+        "terrace"
+      ],
+      "expected": [
+        "column",
+        "columnBase",
+        "foundation",
+        "groundLayer",
+        "terrace"
+      ]
+    },
+    {
+      "name": "columnBaseDetail visibleLineSetSha256",
+      "passed": true,
+      "actual": "ce79215584bf0997232434517fa442a5528329fa967a9bccf7fd4f28edf04fe3",
+      "expected": "ce79215584bf0997232434517fa442a5528329fa967a9bccf7fd4f28edf04fe3"
+    },
+    {
+      "name": "columnBaseDetail requiredVisibleEntityIds",
+      "passed": true,
+      "actual": [
+        "094027ab-3397-5117-bad8-81c07d961879",
+        "22444321-22eb-5586-adcf-784b2d2c03cf",
+        "35d871fe-5966-5fd8-b12e-5ae0e4bb3151",
+        "446cb2ed-10d6-58e1-b3f5-bb181eec79b6",
+        "47d7add8-6e24-59d0-a14c-b34b9cafe577",
+        "4a64570e-5031-56fc-9f9b-1f77f13686a8",
+        "597a36cd-63a6-5fa9-957c-f25389adfec5",
+        "5c1e51f8-0061-5a9a-aac3-8cc7f9ad2795",
+        "653ff2f7-101d-593e-818d-ff64f9c34618",
+        "ccdf48ce-2e1f-58e0-965b-bdfeb8865001"
+      ],
+      "expected": [
+        "094027ab-3397-5117-bad8-81c07d961879",
+        "22444321-22eb-5586-adcf-784b2d2c03cf",
+        "35d871fe-5966-5fd8-b12e-5ae0e4bb3151",
+        "446cb2ed-10d6-58e1-b3f5-bb181eec79b6",
+        "47d7add8-6e24-59d0-a14c-b34b9cafe577",
+        "4a64570e-5031-56fc-9f9b-1f77f13686a8",
+        "597a36cd-63a6-5fa9-957c-f25389adfec5",
+        "5c1e51f8-0061-5a9a-aac3-8cc7f9ad2795",
+        "653ff2f7-101d-593e-818d-ff64f9c34618",
+        "ccdf48ce-2e1f-58e0-965b-bdfeb8865001"
+      ]
+    },
+    {
+      "name": "columnBaseDetail viewBounds2dMm",
+      "passed": true,
+      "actual": [
+        2400.0,
+        -800.0,
+        3600.0,
+        1500.0
+      ],
+      "expected": [
+        2400,
+        -800,
+        3600,
+        1500
+      ]
+    },
+    {
+      "name": "columnBaseDetail visibleLineCountDiagnostic",
+      "passed": true,
+      "actual": 141,
+      "expected": 141
+    },
+    {
       "name": "columnBaseDetail cutEntitySetSha256",
       "passed": true,
       "actual": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
@@ -1333,27 +1853,185 @@
     {
       "name": "columnBaseDetail cutSegmentSha256",
       "passed": true,
-      "actual": "94645953b84de4428194b952d3d03d0f52cc7c90bf869c2b7ed12a1af121582b",
-      "expected": "94645953b84de4428194b952d3d03d0f52cc7c90bf869c2b7ed12a1af121582b"
+      "actual": "8d956ff371c865cd99fc78fde8018a4a22ad78a6dc753034500b4e73a40ec628",
+      "expected": "8d956ff371c865cd99fc78fde8018a4a22ad78a6dc753034500b4e73a40ec628"
+    },
+    {
+      "name": "columnBaseDetail cropLimitSegmentSha256",
+      "passed": true,
+      "actual": "6c79325221798935341cb3533e1945c04b63708ed7c1555433b7146582810a3f",
+      "expected": "6c79325221798935341cb3533e1945c04b63708ed7c1555433b7146582810a3f"
+    },
+    {
+      "name": "columnBaseDetail cropLimitSegmentCount",
+      "passed": true,
+      "actual": 11,
+      "expected": 11
+    },
+    {
+      "name": "columnBaseDetail cutClosedRegionCount",
+      "passed": true,
+      "actual": 15,
+      "expected": 15
+    },
+    {
+      "name": "columnBaseDetail cutClosedRegionsByType",
+      "passed": true,
+      "actual": {
+        "column": 1,
+        "columnBase": 4,
+        "foundation": 3,
+        "groundLayer": 4,
+        "terrace": 3
+      },
+      "expected": {
+        "column": 1,
+        "columnBase": 4,
+        "foundation": 3,
+        "groundLayer": 4,
+        "terrace": 3
+      }
+    },
+    {
+      "name": "columnBaseDetail cutOpenOrDangleCount",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "columnBaseDetail materialRegionsByCode",
+      "passed": true,
+      "actual": {
+        "earth-demo": 1,
+        "stone-demo": 1,
+        "timber-demo": 1
+      },
+      "expected": {
+        "earth-demo": 1,
+        "stone-demo": 1,
+        "timber-demo": 1
+      }
+    },
+    {
+      "name": "columnBaseDetail maximumMaterialOverlapAreaMm2",
+      "passed": true,
+      "actual": 0.0,
+      "expected": 0
+    },
+    {
+      "name": "columnBaseDetail forbidden entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail forbidden entities absent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail forbidden types absent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail source material mapping",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail columnToFoundation relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail groundToFoundation relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
     },
     {
       "name": "columnBaseDetail negative section stability",
       "passed": true,
       "actual": {
-        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+        "maximumMaterialOverlapAreaMm2": 0.0,
+        "materialRegionsByCode": {
+          "earth-demo": 1,
+          "stone-demo": 1,
+          "timber-demo": 1
+        },
+        "cutClosedRegionCount": 15,
+        "cutOpenOrDangleCount": 0,
+        "cutClosedRegionsByType": {
+          "column": 1,
+          "columnBase": 4,
+          "foundation": 3,
+          "groundLayer": 4,
+          "terrace": 3
+        }
       },
       "expected": {
-        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+        "maximumMaterialOverlapAreaMm2": 0.0,
+        "materialRegionsByCode": {
+          "earth-demo": 1,
+          "stone-demo": 1,
+          "timber-demo": 1
+        },
+        "cutClosedRegionCount": 15,
+        "cutOpenOrDangleCount": 0,
+        "cutClosedRegionsByType": {
+          "column": 1,
+          "columnBase": 4,
+          "foundation": 3,
+          "groundLayer": 4,
+          "terrace": 3
+        }
       }
     },
     {
       "name": "columnBaseDetail positive section stability",
       "passed": true,
       "actual": {
-        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+        "maximumMaterialOverlapAreaMm2": 0.0,
+        "materialRegionsByCode": {
+          "earth-demo": 1,
+          "stone-demo": 1,
+          "timber-demo": 1
+        },
+        "cutClosedRegionCount": 15,
+        "cutOpenOrDangleCount": 0,
+        "cutClosedRegionsByType": {
+          "column": 1,
+          "columnBase": 4,
+          "foundation": 3,
+          "groundLayer": 4,
+          "terrace": 3
+        }
       },
       "expected": {
-        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+        "maximumMaterialOverlapAreaMm2": 0.0,
+        "materialRegionsByCode": {
+          "earth-demo": 1,
+          "stone-demo": 1,
+          "timber-demo": 1
+        },
+        "cutClosedRegionCount": 15,
+        "cutOpenOrDangleCount": 0,
+        "cutClosedRegionsByType": {
+          "column": 1,
+          "columnBase": 4,
+          "foundation": 3,
+          "groundLayer": 4,
+          "terrace": 3
+        }
       }
     },
     {
@@ -1451,6 +2129,154 @@
         "latticeWindow",
         "wall"
       ]
+    },
+    {
+      "name": "doorWindowDetail selectionCountDiagnostic",
+      "passed": true,
+      "actual": 7,
+      "expected": 7
+    },
+    {
+      "name": "doorWindowDetail selectionEntitySetSha256",
+      "passed": true,
+      "actual": "24b4c9df20713cf8aa4f2b2b1fccfdb1d64f7551f49b124f8f55d01e06d388b3",
+      "expected": "24b4c9df20713cf8aa4f2b2b1fccfdb1d64f7551f49b124f8f55d01e06d388b3"
+    },
+    {
+      "name": "doorWindowDetail selectionTypes",
+      "passed": true,
+      "actual": [
+        "doorFrame",
+        "doorLeaf",
+        "latticeWindow",
+        "wall"
+      ],
+      "expected": [
+        "doorFrame",
+        "doorLeaf",
+        "latticeWindow",
+        "wall"
+      ]
+    },
+    {
+      "name": "doorWindowDetail visibleLineSetSha256",
+      "passed": true,
+      "actual": "85a6ded063f437310f5cab8de08105a885647db87049c2df8fab328a95a304c3",
+      "expected": "85a6ded063f437310f5cab8de08105a885647db87049c2df8fab328a95a304c3"
+    },
+    {
+      "name": "doorWindowDetail requiredVisibleEntityIds",
+      "passed": true,
+      "actual": [
+        "0047e6a9-aa4a-5306-89fc-9ce42d378e2d",
+        "41c9ff7d-67a9-5add-92f6-48886e9ed5d4",
+        "4580694e-6dce-54a3-9634-ca4a96dbe5bc",
+        "68ff754d-c202-5782-98b3-f0b659a3ca1d",
+        "8bd4ad31-83a5-557b-9b3a-dc301eb6a971",
+        "93c7605b-7f06-5e62-9686-419773eda540",
+        "e70cb175-0002-536f-81d6-07cc45c05031"
+      ],
+      "expected": [
+        "0047e6a9-aa4a-5306-89fc-9ce42d378e2d",
+        "41c9ff7d-67a9-5add-92f6-48886e9ed5d4",
+        "4580694e-6dce-54a3-9634-ca4a96dbe5bc",
+        "68ff754d-c202-5782-98b3-f0b659a3ca1d",
+        "8bd4ad31-83a5-557b-9b3a-dc301eb6a971",
+        "93c7605b-7f06-5e62-9686-419773eda540",
+        "e70cb175-0002-536f-81d6-07cc45c05031"
+      ]
+    },
+    {
+      "name": "doorWindowDetail viewBounds2dMm",
+      "passed": true,
+      "actual": [
+        -1800.0,
+        540.0,
+        1800.0,
+        3460.0
+      ],
+      "expected": [
+        -1800,
+        540,
+        1800,
+        3460
+      ]
+    },
+    {
+      "name": "doorWindowDetail visibleLineCountDiagnostic",
+      "passed": true,
+      "actual": 184,
+      "expected": 184
+    },
+    {
+      "name": "doorWindowDetail forbidden entities exist",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail forbidden entities absent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail forbidden types absent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail source material mapping",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail leftLeafContainedByFrame relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail rightLeafContainedByFrame relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail frameConnectedToWestColumn relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail leftWindowConnectedToWestColumn relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail rightWindowConnectedToWestColumn relations",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail panel and lattice topology",
+      "passed": true,
+      "actual": {
+        "doorLeaves": 2,
+        "doorPanels": 8,
+        "latticeWindows": 2,
+        "latticeCells": 24
+      },
+      "expected": {
+        "doorLeaves": 2,
+        "doorPanels": 8,
+        "latticeWindows": 2,
+        "latticeCells": 24
+      }
     }
   ]
 }

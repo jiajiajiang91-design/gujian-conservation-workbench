@@ -190,6 +190,22 @@ PROJECTION_DISPLAY_TYPES = {
     },
 }
 
+DETAIL_SECTION_TYPES = {
+    "eaveDetail": {
+        "cut": {"coverTile", "panTile", "roofBoard", "flyRafter", "rafter", "purlin", "bearingBlock", "bracketArm", "bracketSeat", "eaveBeam", "column"},
+        "projection": {"coverTile", "panTile", "roofBoard", "flyRafter", "rafter", "purlin", "bearingBlock", "bracketArm", "bracketSeat", "eaveBeam", "column"},
+    },
+    "columnBaseDetail": {
+        "cut": {"column", "columnBase", "terrace", "foundation", "groundLayer"},
+        "projection": {"column", "columnBase", "terrace"},
+    },
+}
+
+DETAIL_PROJECTION_TYPES = {
+    "bracketDetail": {"bearingBlock", "bracketArm", "bracketSeat", "eaveBeam", "column"},
+    "doorWindowDetail": {"wall", "doorFrame", "doorLeaf", "latticeWindow"},
+}
+
 
 def _require(condition: bool, message: str) -> None:
     if not condition:
@@ -484,11 +500,18 @@ def validate_fixture(fixture: dict) -> dict:
             _require(isinstance(bounds, list) and len(bounds) == 2 and all(isinstance(point, list) and len(point) == 3 for point in bounds), f"{view['id']} detail crop must be a 3D box")
             _require(all(bounds[0][index] < bounds[1][index] for index in range(3)), f"{view['id']} detail crop is invalid")
             _require(all(bounds[0][index] <= anchor_point[index] <= bounds[1][index] for index in range(3)), f"{view['id']} anchor must be inside its detail crop")
-            _require(set(detail.get("targetTypes", [])) <= required_types and detail.get("targetTypes"), f"{view['id']} detail types are invalid")
-            _require(detail.get("anchorComponentType") in detail["targetTypes"], f"{view['id']} anchor type must be selected by the detail")
             anchor_centroid = _vector(detail.get("anchorCentroid"), f"{view['id']}.anchorCentroid")
             _require(all(bounds[0][index] <= anchor_centroid[index] <= bounds[1][index] for index in range(3)), f"{view['id']} anchor centroid must be inside its detail crop")
             if detail["mode"] == "section-projection":
+                expected_types = DETAIL_SECTION_TYPES[view["id"]]
+                _require(set(detail.get("cutTargetTypes", [])) == expected_types["cut"], f"{view['id']} cut target types must match the frozen detail boundary")
+                _require(set(detail.get("depthProjectionTypes", [])) == expected_types["projection"], f"{view['id']} depth projection types must match the frozen detail boundary")
+                expected_priority = {
+                    "eaveDetail": {"field": "materialCode", "order": ["ceramic-demo", "timber-demo"]},
+                    "columnBaseDetail": {"field": "componentType", "order": ["foundation", "groundLayer"]},
+                }[view["id"]]
+                _require(detail.get("materialOverlapPriority") == expected_priority, f"{view['id']} material overlap priority must be explicit")
+                _require(detail.get("anchorComponentType") in detail["cutTargetTypes"], f"{view['id']} anchor type must be cut by the detail")
                 section = detail.get("section", {})
                 detail_plane_origin = _vector(section.get("planeOrigin"), f"{view['id']}.section.planeOrigin")
                 plane_normal = _vector(section.get("planeNormal"), f"{view['id']}.section.planeNormal")
@@ -498,6 +521,13 @@ def validate_fixture(fixture: dict) -> dict:
                 _require(_close(_dot([anchor_point[index] - detail_plane_origin[index] for index in range(3)], plane_normal), 0.0, 1e-6), f"{view['id']} section anchor point must lie on its cut plane")
                 _require(section.get("stabilityProbeMm") == 0.5, f"{view['id']} must freeze a 0.5 mm section stability probe")
             else:
+                _require(set(detail.get("visibleProjectionTypes", [])) == DETAIL_PROJECTION_TYPES[view["id"]], f"{view['id']} visible projection types must match the frozen detail boundary")
+                _require(detail.get("anchorComponentType") in detail["visibleProjectionTypes"], f"{view['id']} anchor type must be visible in the detail")
+                if view["id"] == "bracketDetail":
+                    _require(
+                        detail.get("scopeBoundary") == "ends-at-bearingBlock; purlin-to-bearingBlock continuity is verified in eaveDetail",
+                        "bracketDetail must freeze its cross-view purlin boundary",
+                    )
                 direction = _vector(view.get("direction"), f"{view['id']}.direction")
                 _require(view.get("directionSemantics") == "camera-to-model" and all(_close(a, b) for a, b in zip(direction, depth)), f"{view['id']} detail direction is ambiguous")
 
@@ -550,6 +580,17 @@ def validate_fixture(fixture: dict) -> dict:
         "view scale policy is incomplete",
     )
     _require(requirements.get("detailTracePolicy") == {"sourceEntityCoverage": 1.0, "geometryRevisionRequired": True, "derivationTransformRequired": True}, "detail trace policy is incomplete")
+    _require(
+        requirements.get("detailMaterialPolicy")
+        == {
+            "deriveClosedRegionsBeforeCrop": True,
+            "cropBoundaryClass": "cropLimit",
+            "cropBoundaryIsStructural": False,
+            "maximumMaterialOverlapAreaMm2": 0,
+            "overlapPriorityMustBeExplicit": True,
+        },
+        "detail material and crop policy is incomplete",
+    )
     _require(set(requirements.get("nativeCadEntities", [])) == REQUIRED_NATIVE_CAD_ENTITIES, "native CAD entity requirements are incomplete")
     _require(set(requirements.get("requiredLayers", [])) == REQUIRED_CAD_LAYERS, "professional CAD layer requirements are incomplete")
     _require(requirements.get("pageQuality") == {"missingGlyphs": 0, "fontSubstitutions": 0, "questionMarkPlaceholders": 0, "clippedElements": 0, "overlaps": 0}, "page quality gates are incomplete")
@@ -653,7 +694,48 @@ def validate_fixture(fixture: dict) -> dict:
         _require(isinstance(answer.get("cutBounds2dMm"), list) and len(answer["cutBounds2dMm"]) == 4, f"{view_id} cut bounds are missing")
     for view_id in {"eaveDetail", "bracketDetail", "columnBaseDetail", "doorWindowDetail"}:
         _require(oracle_views[view_id].get("anchorEntityId") == view_by_id[view_id]["detail"]["anchorEntityId"], f"{view_id} oracle must use the frozen detail instance")
-        _require(set(oracle_views[view_id].get("requiredTypes", [])) == set(view_by_id[view_id]["detail"]["targetTypes"]), f"{view_id} oracle types must match the detail selection")
+        detail = view_by_id[view_id]["detail"]
+        expected_types = (
+            set(detail["cutTargetTypes"]) | set(detail["depthProjectionTypes"])
+            if detail["mode"] == "section-projection"
+            else set(detail["visibleProjectionTypes"])
+        )
+        answer = oracle_views[view_id]
+        _require(set(answer.get("requiredTypes", [])) == expected_types, f"{view_id} oracle types must match the detail selection")
+        _require_sha256(answer.get("visibleLineSetSha256"), f"{view_id}.visibleLineSetSha256")
+        _require(isinstance(answer.get("visibleLineCountDiagnostic"), int) and answer["visibleLineCountDiagnostic"] > 0, f"{view_id} visible line diagnostic is invalid")
+        _require(isinstance(answer.get("requiredVisibleEntityIds"), list) and answer["requiredVisibleEntityIds"], f"{view_id} required visible entities are missing")
+        _require(len(answer["requiredVisibleEntityIds"]) == len(set(answer["requiredVisibleEntityIds"])), f"{view_id} required visible entities must be unique")
+        _require(isinstance(answer.get("mustNotAppearEntityIds"), list) and isinstance(answer.get("mustNotAppearTypes"), list), f"{view_id} forbidden detail content is missing")
+        _require(len(answer["mustNotAppearEntityIds"]) == len(set(answer["mustNotAppearEntityIds"])), f"{view_id} forbidden detail entities must be unique")
+        _require(not (set(answer["requiredVisibleEntityIds"]) & set(answer["mustNotAppearEntityIds"])), f"{view_id} required and forbidden detail entities must not overlap")
+        _require(isinstance(answer.get("viewBounds2dMm"), list) and len(answer["viewBounds2dMm"]) == 4, f"{view_id} 2D bounds are missing")
+        chains = answer.get("requiredEntityChains")
+        _require(isinstance(chains, dict) and chains and all(isinstance(items, list) and items for items in chains.values()), f"{view_id} relationship chains are missing")
+        for chain_name, relations in chains.items():
+            for relation in relations:
+                _require(
+                    isinstance(relation, dict)
+                    and set(relation) == {"fromEntityId", "relation", "toEntityId"}
+                    and relation["relation"] in {"supportedBy", "connectedTo", "containedBy"},
+                    f"{view_id}.{chain_name} relationship is invalid",
+                )
+        materials = answer.get("materialCodeByType")
+        _require(isinstance(materials, dict) and set(materials) == expected_types and all(isinstance(value, str) and value.endswith("-demo") for value in materials.values()), f"{view_id} material source mapping is incomplete")
+    for view_id in {"eaveDetail", "columnBaseDetail"}:
+        answer = oracle_views[view_id]
+        _require(isinstance(answer.get("cutClosedRegionCount"), int) and answer["cutClosedRegionCount"] > 0, f"{view_id} cut topology is missing")
+        _require(answer.get("cutOpenOrDangleCount") == 0, f"{view_id} cut topology must be closed")
+        _require(isinstance(answer.get("cutClosedRegionsByType"), dict) and answer["cutClosedRegionsByType"], f"{view_id} cut type topology is missing")
+        _require_sha256(answer.get("cropLimitSegmentSha256"), f"{view_id}.cropLimitSegmentSha256")
+        _require(isinstance(answer.get("cropLimitSegmentCount"), int) and answer["cropLimitSegmentCount"] > 0, f"{view_id} crop limit topology is missing")
+        _require(isinstance(answer.get("materialRegionsByCode"), dict) and answer["materialRegionsByCode"], f"{view_id} material region oracle is missing")
+        _require(answer.get("maximumMaterialOverlapAreaMm2") == 0, f"{view_id} material regions must not overlap")
+    _require(
+        oracle_views["doorWindowDetail"].get("topologyCounts")
+        == {"doorLeaves": 2, "doorPanels": 8, "latticeWindows": 2, "latticeCells": 24},
+        "doorWindowDetail panel and lattice topology must be frozen",
+    )
     for view_id in {"roofPlan", "southElevation", "axonometric"}:
         answer = oracle_views[view_id]
         required_visible = answer.get("requiredVisibleEntityIds", [])

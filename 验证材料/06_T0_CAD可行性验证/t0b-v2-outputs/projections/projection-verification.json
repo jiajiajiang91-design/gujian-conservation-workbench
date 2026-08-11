@@ -10,7 +10,7 @@
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "45fe564f8afb5d82f3450d502a7f9bd7ecb03a8ffd39beaff195d98fd2fdda93"
+      "sha256": "34beabd18dfdf90fa6812d69dcc424cff151d2c1c398459771b90ef3b22b7847"
     },
     "manifest": {
       "path": "geometry-manifest.json",
@@ -24,17 +24,17 @@
       {
         "viewId": "roofPlan",
         "path": "roofPlan.view-geometry.json.gz",
-        "sha256": "c3e61fb31d161a904e688a951b353b8f1746bf7a5de7d5e95b483ff8a4e6c171"
+        "sha256": "a9c4693480f37ab702e6be8e0b2f66ca5ddf6ac8e2a23a6adcd279919cbe9b4e"
       },
       {
         "viewId": "southElevation",
         "path": "southElevation.view-geometry.json.gz",
-        "sha256": "733e46784d76ff2fed13c6ac86ac9d680287350ea0bd83905ac657c0a9488cd5"
+        "sha256": "d19bfc0f77e378255aba1329116d8b0907fb66f89c4cdd0cba5406f3ee9c2f9d"
       },
       {
         "viewId": "axonometric",
         "path": "axonometric.view-geometry.json.gz",
-        "sha256": "2ef4eac6dbe5e8d98e8685d8c3ccd0e799476a3ad74b28a92b0f7b5601fb1deb"
+        "sha256": "9350e53eb369404f5049990830ee2de9d8141f80ba051acd0ea61592c1649564"
       }
     ]
   },
@@ -48,7 +48,7 @@
         "qualification": "not-drawing-output",
         "viewId": "roofPlan",
         "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-        "viewContractRevisionId": "5f7db94c-b414-5566-96a9-5c49354ad515",
+        "viewContractRevisionId": "8c91c70a-012c-5620-87e5-69e54e107b69",
         "unit": "mm",
         "viewFrame": {
           "clipDepthMm": [
@@ -115,7 +115,7 @@
         "qualification": "not-drawing-output",
         "viewId": "roofPlan",
         "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-        "viewContractRevisionId": "5f7db94c-b414-5566-96a9-5c49354ad515",
+        "viewContractRevisionId": "8c91c70a-012c-5620-87e5-69e54e107b69",
         "unit": "mm",
         "viewFrame": {
           "origin": [
@@ -180,8 +180,8 @@
     {
       "name": "roofPlan output hash",
       "passed": true,
-      "actual": "2ecf4d294a3d3b9d5f97207803c2b689fdd3c7b83ed127730bba3dde2811d386",
-      "expected": "2ecf4d294a3d3b9d5f97207803c2b689fdd3c7b83ed127730bba3dde2811d386"
+      "actual": "3aeab871083058a183da6594692a138e4c85acf3a3c6cd0183f899dc6b134c0c",
+      "expected": "3aeab871083058a183da6594692a138e4c85acf3a3c6cd0183f899dc6b134c0c"
     },
     {
       "name": "roofPlan unique line ids",
@@ -264,7 +264,7 @@
         "qualification": "not-drawing-output",
         "viewId": "southElevation",
         "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-        "viewContractRevisionId": "5f7db94c-b414-5566-96a9-5c49354ad515",
+        "viewContractRevisionId": "8c91c70a-012c-5620-87e5-69e54e107b69",
         "unit": "mm",
         "viewFrame": {
           "clipDepthMm": [
@@ -331,7 +331,7 @@
         "qualification": "not-drawing-output",
         "viewId": "southElevation",
         "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-        "viewContractRevisionId": "5f7db94c-b414-5566-96a9-5c49354ad515",
+        "viewContractRevisionId": "8c91c70a-012c-5620-87e5-69e54e107b69",
         "unit": "mm",
         "viewFrame": {
           "origin": [
@@ -396,8 +396,8 @@
     {
       "name": "southElevation output hash",
       "passed": true,
-      "actual": "e6512f076fa602301e2aa4a3598663c376c81ecdecfeb97e05d94ebf70553699",
-      "expected": "e6512f076fa602301e2aa4a3598663c376c81ecdecfeb97e05d94ebf70553699"
+      "actual": "91fbee5ff7c48060fc7ea60028e4dd167c78165d72b2427c7e4750c26f690682",
+      "expected": "91fbee5ff7c48060fc7ea60028e4dd167c78165d72b2427c7e4750c26f690682"
     },
     {
       "name": "southElevation unique line ids",
@@ -462,7 +462,7 @@
         "qualification": "not-drawing-output",
         "viewId": "axonometric",
         "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-        "viewContractRevisionId": "5f7db94c-b414-5566-96a9-5c49354ad515",
+        "viewContractRevisionId": "8c91c70a-012c-5620-87e5-69e54e107b69",
         "unit": "mm",
         "viewFrame": {
           "clipDepthMm": [
@@ -529,7 +529,7 @@
         "qualification": "not-drawing-output",
         "viewId": "axonometric",
         "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-        "viewContractRevisionId": "5f7db94c-b414-5566-96a9-5c49354ad515",
+        "viewContractRevisionId": "8c91c70a-012c-5620-87e5-69e54e107b69",
         "unit": "mm",
         "viewFrame": {
           "origin": [
@@ -594,8 +594,8 @@
     {
       "name": "axonometric output hash",
       "passed": true,
-      "actual": "ff4f35e13218972d68ebfd1fc453633e654b53f6f0a6e8146446317b8b221918",
-      "expected": "ff4f35e13218972d68ebfd1fc453633e654b53f6f0a6e8146446317b8b221918"
+      "actual": "f3c30b964258201a053668bedbfc6c2651850a579ebc1dfb4884866e1593aa6e",
+      "expected": "f3c30b964258201a053668bedbfc6c2651850a579ebc1dfb4884866e1593aa6e"
     },
     {
       "name": "axonometric unique line ids",

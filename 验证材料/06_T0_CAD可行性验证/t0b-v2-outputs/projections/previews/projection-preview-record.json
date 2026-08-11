@@ -18,8 +18,8 @@
       ],
       "source": {
         "path": "roofPlan.view-geometry.json.gz",
-        "sha256": "c3e61fb31d161a904e688a951b353b8f1746bf7a5de7d5e95b483ff8a4e6c171",
-        "viewGeometrySha256": "2ecf4d294a3d3b9d5f97207803c2b689fdd3c7b83ed127730bba3dde2811d386"
+        "sha256": "a9c4693480f37ab702e6be8e0b2f66ca5ddf6ac8e2a23a6adcd279919cbe9b4e",
+        "viewGeometrySha256": "3aeab871083058a183da6594692a138e4c85acf3a3c6cd0183f899dc6b134c0c"
       }
     },
     {
@@ -37,8 +37,8 @@
       ],
       "source": {
         "path": "roofPlan.view-geometry.json.gz",
-        "sha256": "c3e61fb31d161a904e688a951b353b8f1746bf7a5de7d5e95b483ff8a4e6c171",
-        "viewGeometrySha256": "2ecf4d294a3d3b9d5f97207803c2b689fdd3c7b83ed127730bba3dde2811d386"
+        "sha256": "a9c4693480f37ab702e6be8e0b2f66ca5ddf6ac8e2a23a6adcd279919cbe9b4e",
+        "viewGeometrySha256": "3aeab871083058a183da6594692a138e4c85acf3a3c6cd0183f899dc6b134c0c"
       }
     },
     {
@@ -56,8 +56,8 @@
       ],
       "source": {
         "path": "southElevation.view-geometry.json.gz",
-        "sha256": "733e46784d76ff2fed13c6ac86ac9d680287350ea0bd83905ac657c0a9488cd5",
-        "viewGeometrySha256": "e6512f076fa602301e2aa4a3598663c376c81ecdecfeb97e05d94ebf70553699"
+        "sha256": "d19bfc0f77e378255aba1329116d8b0907fb66f89c4cdd0cba5406f3ee9c2f9d",
+        "viewGeometrySha256": "91fbee5ff7c48060fc7ea60028e4dd167c78165d72b2427c7e4750c26f690682"
       }
     },
     {
@@ -75,8 +75,8 @@
       ],
       "source": {
         "path": "southElevation.view-geometry.json.gz",
-        "sha256": "733e46784d76ff2fed13c6ac86ac9d680287350ea0bd83905ac657c0a9488cd5",
-        "viewGeometrySha256": "e6512f076fa602301e2aa4a3598663c376c81ecdecfeb97e05d94ebf70553699"
+        "sha256": "d19bfc0f77e378255aba1329116d8b0907fb66f89c4cdd0cba5406f3ee9c2f9d",
+        "viewGeometrySha256": "91fbee5ff7c48060fc7ea60028e4dd167c78165d72b2427c7e4750c26f690682"
       }
     },
     {
@@ -94,8 +94,8 @@
       ],
       "source": {
         "path": "axonometric.view-geometry.json.gz",
-        "sha256": "2ef4eac6dbe5e8d98e8685d8c3ccd0e799476a3ad74b28a92b0f7b5601fb1deb",
-        "viewGeometrySha256": "ff4f35e13218972d68ebfd1fc453633e654b53f6f0a6e8146446317b8b221918"
+        "sha256": "9350e53eb369404f5049990830ee2de9d8141f80ba051acd0ea61592c1649564",
+        "viewGeometrySha256": "f3c30b964258201a053668bedbfc6c2651850a579ebc1dfb4884866e1593aa6e"
       }
     },
     {
@@ -113,8 +113,8 @@
       ],
       "source": {
         "path": "axonometric.view-geometry.json.gz",
-        "sha256": "2ef4eac6dbe5e8d98e8685d8c3ccd0e799476a3ad74b28a92b0f7b5601fb1deb",
-        "viewGeometrySha256": "ff4f35e13218972d68ebfd1fc453633e654b53f6f0a6e8146446317b8b221918"
+        "sha256": "9350e53eb369404f5049990830ee2de9d8141f80ba051acd0ea61592c1649564",
+        "viewGeometrySha256": "f3c30b964258201a053668bedbfc6c2651850a579ebc1dfb4884866e1593aa6e"
       }
     }
   ]

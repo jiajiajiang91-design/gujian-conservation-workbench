@@ -123,6 +123,49 @@ class T0BV2ContractTests(unittest.TestCase):
             self.assertEqual(len(view["detail"]["cropBoundsModelMm"]), 2)
             self.assertIn(view["detail"]["mode"], {"section-projection", "occlusion-projection"})
 
+    def test_section_details_freeze_cut_projection_and_material_priority(self) -> None:
+        for view_id in ("eaveDetail", "columnBaseDetail"):
+            view = next(item for item in self.fixture["views"] if item["id"] == view_id)
+            self.assertTrue(view["detail"]["cutTargetTypes"])
+            self.assertTrue(view["detail"]["depthProjectionTypes"])
+            self.assertIn(view["detail"]["materialOverlapPriority"]["field"], {"componentType", "materialCode"})
+
+        invalid = deepcopy(self.fixture)
+        view = next(item for item in invalid["views"] if item["id"] == "eaveDetail")
+        del view["detail"]["depthProjectionTypes"]
+        with self.assertRaisesRegex(ContractError, "depth projection types"):
+            validate_fixture(invalid)
+
+        invalid = deepcopy(self.fixture)
+        view = next(item for item in invalid["views"] if item["id"] == "columnBaseDetail")
+        del view["detail"]["materialOverlapPriority"]
+        with self.assertRaisesRegex(ContractError, "material overlap priority"):
+            validate_fixture(invalid)
+
+    def test_detail_oracle_freezes_full_lines_materials_and_relationships(self) -> None:
+        for view_id in ("eaveDetail", "bracketDetail", "columnBaseDetail", "doorWindowDetail"):
+            answer = self.fixture["knownAnswers"]["viewOracle"]["views"][view_id]
+            self.assertEqual(len(answer["visibleLineSetSha256"]), 64)
+            self.assertTrue(answer["requiredVisibleEntityIds"])
+            self.assertTrue(answer["requiredEntityChains"])
+            self.assertEqual(set(answer["materialCodeByType"]), set(answer["requiredTypes"]))
+
+        invalid = deepcopy(self.fixture)
+        invalid["knownAnswers"]["viewOracle"]["views"]["bracketDetail"]["requiredEntityChains"] = {}
+        with self.assertRaisesRegex(ContractError, "relationship chains"):
+            validate_fixture(invalid)
+
+        invalid = deepcopy(self.fixture)
+        invalid["knownAnswers"]["viewOracle"]["views"]["doorWindowDetail"]["topologyCounts"]["latticeCells"] = 12
+        with self.assertRaisesRegex(ContractError, "panel and lattice topology"):
+            validate_fixture(invalid)
+
+    def test_bracket_detail_includes_the_selected_column(self) -> None:
+        answer = self.fixture["knownAnswers"]["viewOracle"]["views"]["bracketDetail"]
+        self.assertIn("094027ab-3397-5117-bad8-81c07d961879", answer["requiredVisibleEntityIds"])
+        view = next(item for item in self.fixture["views"] if item["id"] == "bracketDetail")
+        self.assertEqual(view["detail"]["scopeBoundary"], "ends-at-bearingBlock; purlin-to-bearingBlock continuity is verified in eaveDetail")
+
     def test_missing_view_oracle_is_rejected(self) -> None:
         invalid = deepcopy(self.fixture)
         del invalid["knownAnswers"]["viewOracle"]["views"]["roofPlan"]

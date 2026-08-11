@@ -2,7 +2,7 @@
   "schemaVersion": "t0b-v2-geometry-build-1",
   "status": "generated-not-qualified",
   "fixturePath": "验证材料/06_T0_CAD可行性验证/t0b-v2-resolved-local-assembly.json",
-  "fixtureSha256": "45fe564f8afb5d82f3450d502a7f9bd7ecb03a8ffd39beaff195d98fd2fdda93",
+  "fixtureSha256": "34beabd18dfdf90fa6812d69dcc424cff151d2c1c398459771b90ef3b22b7847",
   "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
   "geometrySignature": "55954253257e1ac8834ea6a27ec01352605b36120a3c698f5cac38de9f008de3",
   "verificationStatus": "passed-geometry-only",
@@ -21,7 +21,7 @@
     },
     {
       "path": "geometry-verification.json",
-      "sha256": "e94072780f490649d23f470a787bd5479e7e9f94a5f14e3686d65b19977cbcf2"
+      "sha256": "49596e6ce1c4c994dc57fa163799522331d66c1cb395218320ca14901098beb9"
     }
   ]
 }
