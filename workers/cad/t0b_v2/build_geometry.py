@@ -90,6 +90,8 @@ def build_outputs(fixture_path: Path, output_dir: Path) -> dict:
     glb_path = output_dir / "resolved-local-assembly.glb"
     verification_path = output_dir / "geometry-verification.json"
     _write_source_meshes(model, source_meshes_path)
+    if _file_hash(source_meshes_path) != fixture["knownAnswers"]["sourceMeshBundleSha256"]:
+        raise ValueError("source mesh bundle differs from the frozen oriented topology hash")
     export_glb(model, glb_path)
     _attach_export_hashes(manifest, glb_path)
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

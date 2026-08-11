@@ -92,6 +92,8 @@ def _load_inputs(
     glb_path: Path,
 ) -> tuple[dict, dict, dict[str, trimesh.Trimesh], dict[str, trimesh.Trimesh]]:
     fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+    if _file_hash(source_meshes_path) != fixture["knownAnswers"]["sourceMeshBundleSha256"]:
+        raise VerificationError("source mesh bundle differs from the frozen oriented topology hash")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     source_meshes = _load_source_meshes(source_meshes_path, fixture)
     scene = trimesh.load(glb_path, force="scene")

@@ -210,6 +210,8 @@ def _record(checks: list[dict], name: str, actual, expected) -> None:
 
 def verify_view_contract(fixture_path: Path, manifest_path: Path, source_meshes_path: Path) -> dict:
     fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+    if _file_hash(source_meshes_path) != fixture["knownAnswers"]["sourceMeshBundleSha256"]:
+        raise ValueError("source mesh bundle differs from the frozen oriented topology hash")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     checks: list[dict] = []
     _record(checks, "geometry revision", manifest.get("geometryRevisionId"), fixture.get("geometryRevisionId"))

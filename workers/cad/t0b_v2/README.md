@@ -1,5 +1,29 @@
 # T0-B v2
 
+
+## 当前实现：剖面 ViewGeometry
+
+平面、横剖和纵剖已从同一套三维网格生成中间视图数据：
+
+- 平面在 `z=1800 mm` 真剖，并投影切面以下的台基、台阶和地层。
+- 横剖在 `x=-1750 mm` 真剖，穿过一榀柱架、承托、檩、椽、屋面、柱础和基础。
+- 纵剖在 `y=0` 真剖，基础底标高只作剖后参照，不冒充切面。
+- 遮挡通过线段与投影三角面的覆盖区间及深度差解析计算，不依赖固定间距采样。
+- 每条结构线保留来源构件、几何版本、视图合同版本、生成方式和坐标变换。
+- 源网格包使用固定 SHA-256 绑定顶点、面索引和面方向；构件类型、来源或关系变化也会阻断生成。
+
+独立验证器不读取生成器答案。它重新计算切面边界、构件集合、闭合区域、来源边和遮挡，并核对输出哈希、坐标框架、材料及边界引用。篡改顶点、面方向、构件类型、关系、来源、二维坐标、视图框架或剖面材料均会失败。
+
+当前结果为 `passed-section-geometry-only`，仍是 `generated-not-qualified / not-drawing-output / L1=false`。399、683 和 493 条投影线只记录本次冻结结果，不是质量指标。屋顶平面、南立面、轴测、四张详图、DXF、SVG、PDF、尺寸、标高和专业复核尚未完成。
+
+```powershell
+workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.build_sections `
+  --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> --output-dir <sections>
+
+workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.verify_sections `
+  --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> `
+  --sections-dir <sections> --output <report>
+```
 本目录重建 T0-B，不扩展旧 `t0b_generate.py`。
 
 ## 原则
@@ -18,9 +42,9 @@
 4. 制图模块生成 DXF、SVG 和 PDF，并附图纸要求覆盖矩阵。
 5. 独立验证器重算剖切和尺寸；专业人员完成成组预览复核。
 
-当前目录已完成第 1、2 步，并冻结了第 3 步的实施合同；尚未生成任何二维视图。生成记录固定为 `generated-not-qualified`，第 3 至 5 步通过前不得申请 L1。
+当前目录已完成第 1、2 步、视图合同，以及平面、横剖、纵剖的中间 ViewGeometry。生成记录固定为 `generated-not-qualified`，十个视图、成组图纸和专业复核全部通过前不得申请 L1。
 
-视图合同补齐十个视图的坐标框架、观察方向、裁切范围、标注安全区、纸面变换和逐视图金标准。横剖面固定在稳定的 `x=-1750 mm`，穿过同一榀的柱、柱础、基础、承托、檩和屋面，并通过 `±0.5 mm` 扰动复算。四个详图均绑定一个稳定构件实例和局部范围。未来生成器只能读取剥离 oracle 后的白名单输入。合同说明见 `VIEW_CONTRACT.md`。
+视图合同补齐十个视图的坐标框架、观察方向、裁切范围、标注安全区、纸面变换和逐视图金标准。横剖面固定在稳定的 `x=-1750 mm`，穿过同一榀的柱、柱础、基础、承托、檩和屋面，并通过 `±0.5 mm` 扰动复算。四个详图均绑定一个稳定构件实例和局部范围。现有生成器只能读取剥离 oracle 后的白名单输入。合同说明见 `VIEW_CONTRACT.md`。
 
 主剖面的真实切面不筛构件；剖后投影按冻结的语义类型集合处理，排除重复瓦件、椽网格和三角内部边。CAD 图层先按几何线类确定，隐藏状态只作覆盖，避免可见线覆盖外轮廓与内部特征的基础线宽。
 
@@ -45,4 +69,4 @@ workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.build_geometry `
 
 三张 Blender 预览分别检查整体、双坡正交侧视和瓦作搭接近景。每张预览的 JSON 侧车文件记录 GLB 哈希、Blender 版本、脚本哈希、相机和输出哈希。预览通过不等于专业资格通过。
 
-受控局部样本可以使用 `trimesh.section()`、Shapely 和 ezdxf 完成真实剖切与制图。立面、平面和屋顶平面仍需单独实现轮廓边、特征边、构件边界、遮挡和隐藏线处理。T10 / L2 继续保留 IfcOpenShell / OpenCascade HLR 路线。
+受控局部样本使用 trimesh 和 Shapely 完成真实剖切与剖后投影。屋顶平面、南立面和轴测仍需实现同源轮廓边、特征边、构件边界和遮挡处理；ezdxf 制图尚未开始。T10 / L2 继续保留 IfcOpenShell / OpenCascade HLR 路线。

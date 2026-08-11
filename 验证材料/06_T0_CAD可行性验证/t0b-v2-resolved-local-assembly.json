@@ -516,6 +516,7 @@
     "eave": 5200,
     "ridge": 8200,
     "geometrySignature": "55954253257e1ac8834ea6a27ec01352605b36120a3c698f5cac38de9f008de3",
+    "sourceMeshBundleSha256": "06a92a7fe76c632fe4c7fddd0f27e53ed3fad46a57a047bfdcd7de08432d4c3c",
     "geometryOracle": {
       "overallBounds": [[-3600, -5180, -800], [3600, 4800, 8451.388544]],
       "stepBounds": [[-900, -5180, 0], [900, -2940, 600]],

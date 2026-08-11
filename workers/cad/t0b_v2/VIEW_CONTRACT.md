@@ -1,5 +1,13 @@
 # T0-B v2 视图合同
 
+
+## 实现状态（2026-08-11）
+
+`floorPlan`、`transverseSection` 和 `longitudinalSection` 已按本合同生成 ViewGeometry。三者均包含真实切面和经过解析遮挡判断的剖后投影，且只接受 `prepare_view_generation_input()` 返回的白名单输入。
+
+独立验证报告位于 `t0b-v2-outputs/sections/section-verification.json`。报告复算切面、来源边和遮挡，核对顶层坐标框架、剖面参数、二维与三维坐标绑定、结构线 ID、剖切区域、材料、来源闭包和输出哈希。当前状态为 `passed-section-geometry-only`，不代表图纸完成或 L1 通过。
+
+下一独立任务是屋顶平面、南立面和轴测的同源可见线投影。完成十个视图、成组图面和独立专业复核前，不得恢复 T3，也不得生成“已通过”的图签或交付说明。
 ## 状态
 
 本合同只冻结视图输入和验收答案，不生成二维建筑线。当前状态仍为 `generated-not-qualified`，`L1=false`。
@@ -33,8 +41,8 @@
 - 三类主剖切保存独立计算得到的源构件集合哈希、切线哈希、闭合区域拓扑和二维边界。
 - 每个视图保存源构件选择集合、关键点、尺寸、标高和前后遮挡要求。
 - 数量只用于确认同一冻结集合或拓扑，不作为质量或资格指标。
-- 未来视图生成器只能读取 `prepare_view_generation_input()` 返回的白名单字段，不能读取 `knownAnswers.viewOracle`。独立验证器直接读取源网格和 manifest，重新计算选择集、剖切、稳定性和锚点关系。
+- 视图生成器只能读取 `prepare_view_generation_input()` 返回的白名单字段，不能读取 `knownAnswers.viewOracle`。独立验证器直接读取源网格和 manifest，重新计算选择集、剖切、稳定性和锚点关系。
 - 独立复算命令：`workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.verify_view_contract --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> --output <report>`。报告固定输入文件哈希、验证器版本与源码哈希。
 - 参考图片和外部 DWG 不进入输入、生成依赖或成果包。
 
-下一提交只实现平面、横剖和纵剖的真实求交与剖后投影，不生成 DXF 或 PDF。
+平面、横剖和纵剖的真实求交与剖后投影已经完成。下一提交实现屋顶平面、南立面和轴测的可见线投影，不生成 DXF 或 PDF。

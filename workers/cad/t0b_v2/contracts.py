@@ -567,6 +567,7 @@ def validate_fixture(fixture: dict) -> dict:
     _require(known.get("roofWidth") == fixture["assembly"]["roofWidth"], "known roof width must match the assembly")
     _require(known.get("geometryRevisionId") == fixture["geometryRevisionId"], "known answer must bind the geometry revision")
     _require(isinstance(known.get("geometrySignature"), str) and len(known["geometrySignature"]) == 64, "known geometry signature must be a sha256 value")
+    _require(isinstance(known.get("sourceMeshBundleSha256"), str) and len(known["sourceMeshBundleSha256"]) == 64, "known source mesh bundle hash must be a sha256 value")
     expected_revision = str(uuid5(GEOMETRY_REVISION_NAMESPACE, known["geometrySignature"]))
     _require(fixture["geometryRevisionId"] == expected_revision, "geometry revision must be derived from the frozen geometry signature")
     oracle = known.get("geometryOracle", {})

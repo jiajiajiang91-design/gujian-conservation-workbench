@@ -8,14 +8,14 @@
   "verifier": {
     "name": "t0b-v2-standalone-geometry-verifier",
     "version": "2.0.0",
-    "implementationSha256": "439b7f48d5ffa9ceb25eff8ea0ea32626f2a49aaed543817fcfbeb8605c09f5c",
+    "implementationSha256": "41c1d19e390501f8b5f0e7e299b348188fd89e38c7c6bb6dbf17eef7d0e47e2b",
     "implementation": "standalone; does not import GeometryBuilder or geometry helpers",
     "command": "python -m workers.cad.t0b_v2.verify_geometry --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> --glb <glb> --report <report>"
   },
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "c0f78ae17bbf0d27cf105f82990102654a17431d3080c11ff66dd640d62e96d1"
+      "sha256": "9d9e1866c9c76406b734ea7a0533d4dfaa24c46fdf358d6e775a5a1e9a71051c"
     },
     "manifest": {
       "path": "geometry-manifest.json",
