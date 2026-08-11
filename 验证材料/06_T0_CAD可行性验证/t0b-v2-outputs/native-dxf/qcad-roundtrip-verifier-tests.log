@@ -1,0 +1,14 @@
+test_accepts_only_a_semantically_unchanged_roundtrip (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_accepts_only_a_semantically_unchanged_roundtrip) ... ok
+test_rejects_dimension_style_and_geometry_rebuild (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_rejects_dimension_style_and_geometry_rebuild) ... ok
+test_rejects_hatch_geometry_or_pattern_change (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_rejects_hatch_geometry_or_pattern_change) ... ok
+test_rejects_layout_or_viewport_geometry_change (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_rejects_layout_or_viewport_geometry_change) ... ok
+test_rejects_structural_coordinate_change (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_rejects_structural_coordinate_change) ... ok
+test_rejects_text_or_unit_change (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_rejects_text_or_unit_change) ... ok
+test_rejects_viewport_lock_loss (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_rejects_viewport_lock_loss) ... ok
+test_rejects_xdata_handle_or_sidecar_break (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_rejects_xdata_handle_or_sidecar_break) ... ok
+test_verifier_has_no_generator_or_contract_import (workers.cad.t0b_v2.test_qcad_roundtrip_verifier.QCADRoundtripThresholdTests.test_verifier_has_no_generator_or_contract_import) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.005s
+
+OK

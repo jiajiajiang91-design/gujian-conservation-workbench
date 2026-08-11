@@ -1,0 +1,10 @@
+schema=t0b-v2-qcad-roundtrip-summary-1
+status=unsupported-second-cad-roundtrip
+sourceDxfSha256=d35e39b9ced71527f292cf296553df3d34db9e1fcfa09981ed4122c23224b876
+roundtripDxfSha256=e11d9605da910b3288bba879031433085ecb58b191ae517fac1c5a774dfb3640
+checks=11
+failed=2
+P0=2
+P1=4
+decision=reject-second-cad-compatibility
+rawLogsRetained=false
