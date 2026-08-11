@@ -1,0 +1,1360 @@
+{
+  "schemaVersion": "t0b-v2-view-contract-verification-1",
+  "status": "passed-contract-only",
+  "qualification": "not-view-output",
+  "verifier": {
+    "version": "2.0.0",
+    "source": "verify_view_contract.py",
+    "sha256": "b8d61fd7d6017bea0123836b62eb8bef4321640decced0e9274134f307e1250b"
+  },
+  "inputs": {
+    "fixture": {
+      "path": "t0b-v2-resolved-local-assembly.json",
+      "sha256": "65ae75a97730d1da3c6923e261a27ca24889e972903e7e63320031af22e7a407"
+    },
+    "manifest": {
+      "path": "geometry-manifest.json",
+      "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+    },
+    "sourceMeshes": {
+      "path": "source-meshes.ndjson.gz",
+      "sha256": "06a92a7fe76c632fe4c7fddd0f27e53ed3fad46a57a047bfdcd7de08432d4c3c"
+    }
+  },
+  "checks": [
+    {
+      "name": "geometry revision",
+      "passed": true,
+      "actual": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "expected": "3788f4e4-339c-568d-aa58-f74b36b23c5a"
+    },
+    {
+      "name": "geometry signature",
+      "passed": true,
+      "actual": "55954253257e1ac8834ea6a27ec01352605b36120a3c698f5cac38de9f008de3",
+      "expected": "55954253257e1ac8834ea6a27ec01352605b36120a3c698f5cac38de9f008de3"
+    },
+    {
+      "name": "fixture source isolation",
+      "passed": true,
+      "actual": {
+        "fixtureOnly": true,
+        "allowedSourceSchemes": [
+          "demo"
+        ],
+        "externalAssetsAllowed": false
+      },
+      "expected": {
+        "fixtureOnly": true,
+        "allowedSourceSchemes": [
+          "demo"
+        ],
+        "externalAssetsAllowed": false
+      }
+    },
+    {
+      "name": "manifest producer",
+      "passed": true,
+      "actual": "demo",
+      "expected": "demo"
+    },
+    {
+      "name": "manifest sources",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "view contract signature",
+      "passed": true,
+      "actual": "e33b8aa1ee55f1960ccc50f6ed17fe5c39649141873c6af5b5f98d716714bf8e",
+      "expected": "e33b8aa1ee55f1960ccc50f6ed17fe5c39649141873c6af5b5f98d716714bf8e"
+    },
+    {
+      "name": "view contract revision",
+      "passed": true,
+      "actual": "cb7190dc-74d8-5ce5-9719-4ecd493acc60",
+      "expected": "cb7190dc-74d8-5ce5-9719-4ecd493acc60"
+    },
+    {
+      "name": "floorPlan selection set",
+      "passed": true,
+      "actual": "b170da610db0c65004a911948378b853a2d011f76cfc0fa228ad5d0f82a5b04b",
+      "expected": "b170da610db0c65004a911948378b853a2d011f76cfc0fa228ad5d0f82a5b04b"
+    },
+    {
+      "name": "floorPlan selection types",
+      "passed": true,
+      "actual": [
+        "column",
+        "columnBase",
+        "doorFrame",
+        "doorLeaf",
+        "foundation",
+        "groundLayer",
+        "latticeWindow",
+        "step",
+        "terrace",
+        "wall"
+      ],
+      "expected": [
+        "column",
+        "columnBase",
+        "doorFrame",
+        "doorLeaf",
+        "foundation",
+        "groundLayer",
+        "latticeWindow",
+        "step",
+        "terrace",
+        "wall"
+      ]
+    },
+    {
+      "name": "floorPlan selection diagnostic",
+      "passed": true,
+      "actual": 36,
+      "expected": 36
+    },
+    {
+      "name": "floorPlan cutEntitySetSha256",
+      "passed": true,
+      "actual": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+      "expected": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e"
+    },
+    {
+      "name": "floorPlan cutSegmentSha256",
+      "passed": true,
+      "actual": "dda7e0077b378dc95ea5a789804ec372136d769bb4e685372d605efdc9b35d59",
+      "expected": "dda7e0077b378dc95ea5a789804ec372136d769bb4e685372d605efdc9b35d59"
+    },
+    {
+      "name": "floorPlan cutClosedRegionCount",
+      "passed": true,
+      "actual": 26,
+      "expected": 26
+    },
+    {
+      "name": "floorPlan cutClosedRegionsByType",
+      "passed": true,
+      "actual": {
+        "column": 4,
+        "doorFrame": 2,
+        "doorLeaf": 6,
+        "latticeWindow": 8,
+        "wall": 6
+      },
+      "expected": {
+        "column": 4,
+        "doorFrame": 2,
+        "doorLeaf": 6,
+        "latticeWindow": 8,
+        "wall": 6
+      }
+    },
+    {
+      "name": "floorPlan cutOpenOrDangleCount",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "floorPlan cutBounds2dMm",
+      "passed": true,
+      "actual": [
+        -1985.714,
+        -3185.714,
+        1985.714,
+        3185.714
+      ],
+      "expected": [
+        -1985.714,
+        -3185.714,
+        1985.714,
+        3185.714
+      ]
+    },
+    {
+      "name": "floorPlan negative section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+        "cutClosedRegionCount": 26,
+        "cutClosedRegionsByType": {
+          "column": 4,
+          "doorFrame": 2,
+          "doorLeaf": 6,
+          "latticeWindow": 8,
+          "wall": 6
+        },
+        "cutOpenOrDangleCount": 0
+      },
+      "expected": {
+        "cutEntitySetSha256": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+        "cutClosedRegionCount": 26,
+        "cutClosedRegionsByType": {
+          "column": 4,
+          "doorFrame": 2,
+          "doorLeaf": 6,
+          "latticeWindow": 8,
+          "wall": 6
+        },
+        "cutOpenOrDangleCount": 0
+      }
+    },
+    {
+      "name": "floorPlan positive section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+        "cutClosedRegionCount": 26,
+        "cutClosedRegionsByType": {
+          "column": 4,
+          "doorFrame": 2,
+          "doorLeaf": 6,
+          "latticeWindow": 8,
+          "wall": 6
+        },
+        "cutOpenOrDangleCount": 0
+      },
+      "expected": {
+        "cutEntitySetSha256": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+        "cutClosedRegionCount": 26,
+        "cutClosedRegionsByType": {
+          "column": 4,
+          "doorFrame": 2,
+          "doorLeaf": 6,
+          "latticeWindow": 8,
+          "wall": 6
+        },
+        "cutOpenOrDangleCount": 0
+      }
+    },
+    {
+      "name": "roofPlan selection set",
+      "passed": true,
+      "actual": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+      "expected": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0"
+    },
+    {
+      "name": "roofPlan selection types",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ]
+    },
+    {
+      "name": "roofPlan selection diagnostic",
+      "passed": true,
+      "actual": 1166,
+      "expected": 1166
+    },
+    {
+      "name": "southElevation selection set",
+      "passed": true,
+      "actual": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+      "expected": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0"
+    },
+    {
+      "name": "southElevation selection types",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ]
+    },
+    {
+      "name": "southElevation selection diagnostic",
+      "passed": true,
+      "actual": 1166,
+      "expected": 1166
+    },
+    {
+      "name": "transverseSection selection set",
+      "passed": true,
+      "actual": "5107f565b2a2552f1677935ed9646c4b231ece42c1fbe4507ea955fa6f99d3ec",
+      "expected": "5107f565b2a2552f1677935ed9646c4b231ece42c1fbe4507ea955fa6f99d3ec"
+    },
+    {
+      "name": "transverseSection selection types",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ]
+    },
+    {
+      "name": "transverseSection selection diagnostic",
+      "passed": true,
+      "actual": 1040,
+      "expected": 1040
+    },
+    {
+      "name": "transverseSection cutEntitySetSha256",
+      "passed": true,
+      "actual": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+      "expected": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab"
+    },
+    {
+      "name": "transverseSection cutSegmentSha256",
+      "passed": true,
+      "actual": "18ffcf4e57db86962995f9f579fc899b011a242fc5d82ce985e455c0e316ce5e",
+      "expected": "18ffcf4e57db86962995f9f579fc899b011a242fc5d82ce985e455c0e316ce5e"
+    },
+    {
+      "name": "transverseSection cutClosedRegionCount",
+      "passed": true,
+      "actual": 94,
+      "expected": 94
+    },
+    {
+      "name": "transverseSection cutClosedRegionsByType",
+      "passed": true,
+      "actual": {
+        "bearingBlock": 2,
+        "bracketArm": 4,
+        "bracketSeat": 2,
+        "column": 2,
+        "columnBase": 8,
+        "eaveBeam": 2,
+        "flyRafter": 6,
+        "foundation": 6,
+        "groundLayer": 2,
+        "interiorPost": 5,
+        "panTile": 28,
+        "purlin": 7,
+        "rafter": 6,
+        "ridgeTile": 5,
+        "roofBoard": 2,
+        "terrace": 3,
+        "tieBeam": 1,
+        "wall": 3
+      },
+      "expected": {
+        "bearingBlock": 2,
+        "bracketArm": 4,
+        "bracketSeat": 2,
+        "column": 2,
+        "columnBase": 8,
+        "eaveBeam": 2,
+        "flyRafter": 6,
+        "foundation": 6,
+        "groundLayer": 2,
+        "interiorPost": 5,
+        "panTile": 28,
+        "purlin": 7,
+        "rafter": 6,
+        "ridgeTile": 5,
+        "roofBoard": 2,
+        "terrace": 3,
+        "tieBeam": 1,
+        "wall": 3
+      }
+    },
+    {
+      "name": "transverseSection cutOpenOrDangleCount",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "transverseSection cutBounds2dMm",
+      "passed": true,
+      "actual": [
+        -4800.0,
+        -800.0,
+        4800.0,
+        8451.389
+      ],
+      "expected": [
+        -4800,
+        -800,
+        4800,
+        8451.389
+      ]
+    },
+    {
+      "name": "transverseSection negative section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+        "cutClosedRegionCount": 94,
+        "cutClosedRegionsByType": {
+          "bearingBlock": 2,
+          "bracketArm": 4,
+          "bracketSeat": 2,
+          "column": 2,
+          "columnBase": 8,
+          "eaveBeam": 2,
+          "flyRafter": 6,
+          "foundation": 6,
+          "groundLayer": 2,
+          "interiorPost": 5,
+          "panTile": 28,
+          "purlin": 7,
+          "rafter": 6,
+          "ridgeTile": 5,
+          "roofBoard": 2,
+          "terrace": 3,
+          "tieBeam": 1,
+          "wall": 3
+        },
+        "cutOpenOrDangleCount": 0
+      },
+      "expected": {
+        "cutEntitySetSha256": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+        "cutClosedRegionCount": 94,
+        "cutClosedRegionsByType": {
+          "bearingBlock": 2,
+          "bracketArm": 4,
+          "bracketSeat": 2,
+          "column": 2,
+          "columnBase": 8,
+          "eaveBeam": 2,
+          "flyRafter": 6,
+          "foundation": 6,
+          "groundLayer": 2,
+          "interiorPost": 5,
+          "panTile": 28,
+          "purlin": 7,
+          "rafter": 6,
+          "ridgeTile": 5,
+          "roofBoard": 2,
+          "terrace": 3,
+          "tieBeam": 1,
+          "wall": 3
+        },
+        "cutOpenOrDangleCount": 0
+      }
+    },
+    {
+      "name": "transverseSection positive section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+        "cutClosedRegionCount": 94,
+        "cutClosedRegionsByType": {
+          "bearingBlock": 2,
+          "bracketArm": 4,
+          "bracketSeat": 2,
+          "column": 2,
+          "columnBase": 8,
+          "eaveBeam": 2,
+          "flyRafter": 6,
+          "foundation": 6,
+          "groundLayer": 2,
+          "interiorPost": 5,
+          "panTile": 28,
+          "purlin": 7,
+          "rafter": 6,
+          "ridgeTile": 5,
+          "roofBoard": 2,
+          "terrace": 3,
+          "tieBeam": 1,
+          "wall": 3
+        },
+        "cutOpenOrDangleCount": 0
+      },
+      "expected": {
+        "cutEntitySetSha256": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+        "cutClosedRegionCount": 94,
+        "cutClosedRegionsByType": {
+          "bearingBlock": 2,
+          "bracketArm": 4,
+          "bracketSeat": 2,
+          "column": 2,
+          "columnBase": 8,
+          "eaveBeam": 2,
+          "flyRafter": 6,
+          "foundation": 6,
+          "groundLayer": 2,
+          "interiorPost": 5,
+          "panTile": 28,
+          "purlin": 7,
+          "rafter": 6,
+          "ridgeTile": 5,
+          "roofBoard": 2,
+          "terrace": 3,
+          "tieBeam": 1,
+          "wall": 3
+        },
+        "cutOpenOrDangleCount": 0
+      }
+    },
+    {
+      "name": "longitudinalSection selection set",
+      "passed": true,
+      "actual": "10b36dca8a8815d7f68141aa352980f7498845c9cbc9192c5310ae188a88939a",
+      "expected": "10b36dca8a8815d7f68141aa352980f7498845c9cbc9192c5310ae188a88939a"
+    },
+    {
+      "name": "longitudinalSection selection types",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ]
+    },
+    {
+      "name": "longitudinalSection selection diagnostic",
+      "passed": true,
+      "actual": 634,
+      "expected": 634
+    },
+    {
+      "name": "longitudinalSection cutEntitySetSha256",
+      "passed": true,
+      "actual": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+      "expected": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e"
+    },
+    {
+      "name": "longitudinalSection cutSegmentSha256",
+      "passed": true,
+      "actual": "7883cb405d6e0ad774bbe92df6b1138311de6d6a615e9e2a90f676524d4cbfc8",
+      "expected": "7883cb405d6e0ad774bbe92df6b1138311de6d6a615e9e2a90f676524d4cbfc8"
+    },
+    {
+      "name": "longitudinalSection cutClosedRegionCount",
+      "passed": true,
+      "actual": 159,
+      "expected": 159
+    },
+    {
+      "name": "longitudinalSection cutClosedRegionsByType",
+      "passed": true,
+      "actual": {
+        "groundLayer": 2,
+        "interiorPost": 2,
+        "purlin": 1,
+        "rafter": 32,
+        "ridgeTile": 85,
+        "roofBoard": 32,
+        "terrace": 3,
+        "tieBeam": 2
+      },
+      "expected": {
+        "groundLayer": 2,
+        "interiorPost": 2,
+        "purlin": 1,
+        "rafter": 32,
+        "ridgeTile": 85,
+        "roofBoard": 32,
+        "terrace": 3,
+        "tieBeam": 2
+      }
+    },
+    {
+      "name": "longitudinalSection cutOpenOrDangleCount",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "longitudinalSection cutBounds2dMm",
+      "passed": true,
+      "actual": [
+        -3600.0,
+        -300.0,
+        3600.0,
+        8451.389
+      ],
+      "expected": [
+        -3600,
+        -300,
+        3600,
+        8451.389
+      ]
+    },
+    {
+      "name": "longitudinalSection negative section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+        "cutClosedRegionCount": 159,
+        "cutClosedRegionsByType": {
+          "groundLayer": 2,
+          "interiorPost": 2,
+          "purlin": 1,
+          "rafter": 32,
+          "ridgeTile": 85,
+          "roofBoard": 32,
+          "terrace": 3,
+          "tieBeam": 2
+        },
+        "cutOpenOrDangleCount": 0
+      },
+      "expected": {
+        "cutEntitySetSha256": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+        "cutClosedRegionCount": 159,
+        "cutClosedRegionsByType": {
+          "groundLayer": 2,
+          "interiorPost": 2,
+          "purlin": 1,
+          "rafter": 32,
+          "ridgeTile": 85,
+          "roofBoard": 32,
+          "terrace": 3,
+          "tieBeam": 2
+        },
+        "cutOpenOrDangleCount": 0
+      }
+    },
+    {
+      "name": "longitudinalSection positive section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+        "cutClosedRegionCount": 159,
+        "cutClosedRegionsByType": {
+          "groundLayer": 2,
+          "interiorPost": 2,
+          "purlin": 1,
+          "rafter": 32,
+          "ridgeTile": 85,
+          "roofBoard": 32,
+          "terrace": 3,
+          "tieBeam": 2
+        },
+        "cutOpenOrDangleCount": 0
+      },
+      "expected": {
+        "cutEntitySetSha256": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+        "cutClosedRegionCount": 159,
+        "cutClosedRegionsByType": {
+          "groundLayer": 2,
+          "interiorPost": 2,
+          "purlin": 1,
+          "rafter": 32,
+          "ridgeTile": 85,
+          "roofBoard": 32,
+          "terrace": 3,
+          "tieBeam": 2
+        },
+        "cutOpenOrDangleCount": 0
+      }
+    },
+    {
+      "name": "axonometric selection set",
+      "passed": true,
+      "actual": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+      "expected": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0"
+    },
+    {
+      "name": "axonometric selection types",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "coverTile",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "flyRafter",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "panTile",
+        "purlin",
+        "rafter",
+        "ridgeTile",
+        "roofBoard",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall"
+      ]
+    },
+    {
+      "name": "axonometric selection diagnostic",
+      "passed": true,
+      "actual": 1166,
+      "expected": 1166
+    },
+    {
+      "name": "eaveDetail selection set",
+      "passed": true,
+      "actual": "7392af5a396900a1f19ccebd241e4ff057c66ea5992fad43589602a603b44e22",
+      "expected": "7392af5a396900a1f19ccebd241e4ff057c66ea5992fad43589602a603b44e22"
+    },
+    {
+      "name": "eaveDetail selection types",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "coverTile",
+        "eaveBeam",
+        "flyRafter",
+        "panTile",
+        "purlin",
+        "rafter",
+        "roofBoard"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "coverTile",
+        "eaveBeam",
+        "flyRafter",
+        "panTile",
+        "purlin",
+        "rafter",
+        "roofBoard"
+      ]
+    },
+    {
+      "name": "eaveDetail selection diagnostic",
+      "passed": true,
+      "actual": 59,
+      "expected": 59
+    },
+    {
+      "name": "eaveDetail anchor exists",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail anchor type",
+      "passed": true,
+      "actual": "bearingBlock",
+      "expected": "bearingBlock"
+    },
+    {
+      "name": "eaveDetail anchor centroid tolerance",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail anchor point inside entity bounds",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail anchor bounds intersect crop",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "eaveDetail crop projects to clip rectangle",
+      "passed": true,
+      "actual": [
+        1800.0,
+        3500.0,
+        4000.0,
+        6200.0
+      ],
+      "expected": [
+        1800.0,
+        3500.0,
+        4000.0,
+        6200.0
+      ]
+    },
+    {
+      "name": "eaveDetail target types match oracle",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "coverTile",
+        "eaveBeam",
+        "flyRafter",
+        "panTile",
+        "purlin",
+        "rafter",
+        "roofBoard"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "coverTile",
+        "eaveBeam",
+        "flyRafter",
+        "panTile",
+        "purlin",
+        "rafter",
+        "roofBoard"
+      ]
+    },
+    {
+      "name": "eaveDetail cutEntitySetSha256",
+      "passed": true,
+      "actual": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+      "expected": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+    },
+    {
+      "name": "eaveDetail cutSegmentSha256",
+      "passed": true,
+      "actual": "b2f1d87d0e4c9bc2c4ecb555667adc12d6537928dcddb64d7a555c757d78a077",
+      "expected": "b2f1d87d0e4c9bc2c4ecb555667adc12d6537928dcddb64d7a555c757d78a077"
+    },
+    {
+      "name": "eaveDetail negative section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+      },
+      "expected": {
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+      }
+    },
+    {
+      "name": "eaveDetail positive section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+      },
+      "expected": {
+        "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671"
+      }
+    },
+    {
+      "name": "eaveDetail anchor mesh intersects cut plane",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail selection set",
+      "passed": true,
+      "actual": "dc6d0d84ca59b8adfd9df2812be897df61c5773ca61938f32654300ab3026912",
+      "expected": "dc6d0d84ca59b8adfd9df2812be897df61c5773ca61938f32654300ab3026912"
+    },
+    {
+      "name": "bracketDetail selection types",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "eaveBeam"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "eaveBeam"
+      ]
+    },
+    {
+      "name": "bracketDetail selection diagnostic",
+      "passed": true,
+      "actual": 6,
+      "expected": 6
+    },
+    {
+      "name": "bracketDetail anchor exists",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail anchor type",
+      "passed": true,
+      "actual": "bearingBlock",
+      "expected": "bearingBlock"
+    },
+    {
+      "name": "bracketDetail anchor centroid tolerance",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail anchor point inside entity bounds",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail anchor bounds intersect crop",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "bracketDetail crop projects to clip rectangle",
+      "passed": true,
+      "actual": [
+        -2500.0,
+        4000.0,
+        -1100.0,
+        5500.0
+      ],
+      "expected": [
+        -2500.0,
+        4000.0,
+        -1100.0,
+        5500.0
+      ]
+    },
+    {
+      "name": "bracketDetail target types match oracle",
+      "passed": true,
+      "actual": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "eaveBeam"
+      ],
+      "expected": [
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "eaveBeam"
+      ]
+    },
+    {
+      "name": "columnBaseDetail selection set",
+      "passed": true,
+      "actual": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+      "expected": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+    },
+    {
+      "name": "columnBaseDetail selection types",
+      "passed": true,
+      "actual": [
+        "column",
+        "columnBase",
+        "foundation",
+        "groundLayer",
+        "terrace"
+      ],
+      "expected": [
+        "column",
+        "columnBase",
+        "foundation",
+        "groundLayer",
+        "terrace"
+      ]
+    },
+    {
+      "name": "columnBaseDetail selection diagnostic",
+      "passed": true,
+      "actual": 10,
+      "expected": 10
+    },
+    {
+      "name": "columnBaseDetail anchor exists",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail anchor type",
+      "passed": true,
+      "actual": "columnBase",
+      "expected": "columnBase"
+    },
+    {
+      "name": "columnBaseDetail anchor centroid tolerance",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail anchor point inside entity bounds",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail anchor bounds intersect crop",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "columnBaseDetail crop projects to clip rectangle",
+      "passed": true,
+      "actual": [
+        2400.0,
+        -900.0,
+        3600.0,
+        1500.0
+      ],
+      "expected": [
+        2400.0,
+        -900.0,
+        3600.0,
+        1500.0
+      ]
+    },
+    {
+      "name": "columnBaseDetail target types match oracle",
+      "passed": true,
+      "actual": [
+        "column",
+        "columnBase",
+        "foundation",
+        "groundLayer",
+        "terrace"
+      ],
+      "expected": [
+        "column",
+        "columnBase",
+        "foundation",
+        "groundLayer",
+        "terrace"
+      ]
+    },
+    {
+      "name": "columnBaseDetail cutEntitySetSha256",
+      "passed": true,
+      "actual": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+      "expected": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+    },
+    {
+      "name": "columnBaseDetail cutSegmentSha256",
+      "passed": true,
+      "actual": "94645953b84de4428194b952d3d03d0f52cc7c90bf869c2b7ed12a1af121582b",
+      "expected": "94645953b84de4428194b952d3d03d0f52cc7c90bf869c2b7ed12a1af121582b"
+    },
+    {
+      "name": "columnBaseDetail negative section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+      },
+      "expected": {
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+      }
+    },
+    {
+      "name": "columnBaseDetail positive section stability",
+      "passed": true,
+      "actual": {
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+      },
+      "expected": {
+        "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0"
+      }
+    },
+    {
+      "name": "columnBaseDetail anchor mesh intersects cut plane",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail selection set",
+      "passed": true,
+      "actual": "24b4c9df20713cf8aa4f2b2b1fccfdb1d64f7551f49b124f8f55d01e06d388b3",
+      "expected": "24b4c9df20713cf8aa4f2b2b1fccfdb1d64f7551f49b124f8f55d01e06d388b3"
+    },
+    {
+      "name": "doorWindowDetail selection types",
+      "passed": true,
+      "actual": [
+        "doorFrame",
+        "doorLeaf",
+        "latticeWindow",
+        "wall"
+      ],
+      "expected": [
+        "doorFrame",
+        "doorLeaf",
+        "latticeWindow",
+        "wall"
+      ]
+    },
+    {
+      "name": "doorWindowDetail selection diagnostic",
+      "passed": true,
+      "actual": 7,
+      "expected": 7
+    },
+    {
+      "name": "doorWindowDetail anchor exists",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail anchor type",
+      "passed": true,
+      "actual": "doorFrame",
+      "expected": "doorFrame"
+    },
+    {
+      "name": "doorWindowDetail anchor centroid tolerance",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail anchor point inside entity bounds",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail anchor bounds intersect crop",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "doorWindowDetail crop projects to clip rectangle",
+      "passed": true,
+      "actual": [
+        -2400.0,
+        400.0,
+        2400.0,
+        3700.0
+      ],
+      "expected": [
+        -2400.0,
+        400.0,
+        2400.0,
+        3700.0
+      ]
+    },
+    {
+      "name": "doorWindowDetail target types match oracle",
+      "passed": true,
+      "actual": [
+        "doorFrame",
+        "doorLeaf",
+        "latticeWindow",
+        "wall"
+      ],
+      "expected": [
+        "doorFrame",
+        "doorLeaf",
+        "latticeWindow",
+        "wall"
+      ]
+    }
+  ]
+}
