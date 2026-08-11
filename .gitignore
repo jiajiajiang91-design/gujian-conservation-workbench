@@ -18,6 +18,7 @@ tmp/
 .codex_staging*/
 _deploy/
 node_modules/
+.pnpm-store/
 .venv/
 dist/
 coverage/
