@@ -1,0 +1,7 @@
+ifcopenshell==0.8.5
+ezdxf==1.4.4
+trimesh==4.12.2
+reportlab==4.5.1
+scipy==1.17.1
+numpy==2.5.2
+pillow==12.3.0

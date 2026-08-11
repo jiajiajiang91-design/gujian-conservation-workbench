@@ -13,10 +13,12 @@
 
 # 本地临时与构建产物
 .tmp/
+tmp/
 .codex_staging/
 .codex_staging*/
 _deploy/
 node_modules/
+.venv/
 dist/
 coverage/
 test-results/

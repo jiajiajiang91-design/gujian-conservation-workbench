@@ -1,0 +1,36 @@
+# Python 3.12 / Windows x86-64. Generated for T0 on 2026-08-11.
+# Install with: python -m pip install --require-hashes -r requirements.lock
+--only-binary :all:
+
+charset-normalizer==3.4.9 \
+    --hash=sha256:4b3dac63058cc36820b0dd072f89898604e2d39686fe05321729d00d8ac185a0
+ezdxf==1.4.4 \
+    --hash=sha256:3e518d9ed4dcbe525d57f14c25c5e592f82660a690fdec39b03b092e6cdc4771
+fonttools==4.63.0 \
+    --hash=sha256:59ac449f8cca9b4ffa08d2e7bbadad87ce710d69d1eda5c3c1ce579baa987272
+ifcopenshell==0.8.5 \
+    --hash=sha256:7927921dbfd18024f44780880c37e48460bbca7476da3b0c2607e044b31521d5
+isodate==0.7.2 \
+    --hash=sha256:28009937d8031054830160fce6d409ed342816b543597cece116d966c6d99e15
+lark==1.3.1 \
+    --hash=sha256:c629b661023a014c37da873b4ff58a817398d12635d3bbb2c5a03be7fe5d1e12
+numpy==2.5.2 \
+    --hash=sha256:28ac63476ec7651484215ee7fa15a1f78b57c14621f01e392afe17b9a1390ce4
+pillow==12.3.0 \
+    --hash=sha256:a2b55dd6b2a4c4b7d87ffa56bdb33fdc5fdb9a462173861a7bc097f17d91cb09
+pyparsing==3.3.2 \
+    --hash=sha256:850ba148bd908d7e2411587e247a1e4f0327839c40e2e5e6d05a007ecc69911d
+python-dateutil==2.9.0.post0 \
+    --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
+reportlab==4.5.1 \
+    --hash=sha256:06fce8cb56c83307cfa4909cdf4e6a2ddbb44e5d6ef4d2edca896d7e9769f091
+scipy==1.17.1 \
+    --hash=sha256:41b71f4a3a4cab9d366cd9065b288efc4d4f3c0b37a91a8e0947fb5bd7f31d87
+shapely==2.1.2 \
+    --hash=sha256:743044b4cfb34f9a67205cee9279feaf60ba7d02e69febc2afc609047cb49179
+six==1.17.0 \
+    --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274
+trimesh==4.12.2 \
+    --hash=sha256:b5b5afa63c5272345f2858f7676bc8c217dc8a89f4fadf6193fe10a81b5ff2aa
+typing_extensions==4.16.0 \
+    --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8

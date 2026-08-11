@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "t0b-professional-spec-1",
+  "projectId": "59330d29-b313-5f0f-bbe1-89ab8911b432",
+  "name": "三开间歇山木构专业样板",
+  "fixtureId": "team-professional-hall-v1",
+  "producerType": "demo",
+  "unit": "mm",
+  "sourceRefs": [
+    "demo:team-professional-hall-v1"
+  ],
+  "baySpans": [
+    3600,
+    4800,
+    3600
+  ],
+  "depthSpans": [
+    4200,
+    4200
+  ],
+  "terrace": {
+    "height": 900,
+    "projection": 900,
+    "stepWidth": 2400,
+    "stepCount": 3
+  },
+  "timber": {
+    "columnHeight": 4200,
+    "columnDiameter": 420,
+    "beamDepth": 520,
+    "beamWidth": 300,
+    "purlinDiameter": 300,
+    "rafterWidth": 90,
+    "rafterDepth": 140,
+    "rafterSpacing": 400
+  },
+  "roof": {
+    "eaveHeight": 5400,
+    "ridgeHeight": 9000,
+    "overhangX": 1400,
+    "overhangY": 1400,
+    "cornerUplift": 650,
+    "profileExponent": 1.55,
+    "surfaceThickness": 180,
+    "tileSpacing": 300,
+    "tileRadius": 48,
+    "ridgeRadius": 170
+  },
+  "openings": {
+    "doorHeight": 3000,
+    "sillHeight": 900,
+    "latticeRows": 4,
+    "latticeColumns": 6
+  },
+  "foundation": {
+    "depth": 1200,
+    "footingWidth": 1100
+  },
+  "conditionNote": {
+    "code": "D-COL-01",
+    "text": "前檐中柱柱脚表面劣化；演示记录，仅用于验证病害引线与来源关系",
+    "producerType": "demo"
+  }
+}

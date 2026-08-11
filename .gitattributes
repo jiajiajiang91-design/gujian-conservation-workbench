@@ -1,0 +1,5 @@
+*.dxf whitespace=-blank-at-eol,-blank-at-eof
+*.log whitespace=-blank-at-eol,-blank-at-eof
+*.glb -diff
+*.pdf -diff
+*.png -diff
