@@ -174,7 +174,9 @@ def verify(source: Path, roundtrip: Path, pdf: Path, render: Path, autocad_log: 
         "schemaVersion": "t0b-qcad-verification-1",
         "status": "passed",
         "gate": "T0-B",
-        "qualityLevel": "L1",
+        "gateStatus": "failed",
+        "scope": "external-compatibility-only",
+        "qualityLevel": "L0+",
         "tool": {
             "name": "QCAD Professional Trial",
             "version": "3.32.9",
@@ -182,10 +184,10 @@ def verify(source: Path, roundtrip: Path, pdf: Path, render: Path, autocad_log: 
             "productionDependency": False,
         },
         "limitations": [
-            "This validates L1 import, edit, export, printing, Unicode and CAD semantics; it is not an L2 professional deliverable review.",
+            "This validates L0+ import, edit, export, printing, Unicode and CAD semantics; it does not validate L1 professional quality.",
             "The trial binary is not committed and is not licensed as a production runtime dependency.",
             "QCAD omits cached DXF dimension graphics on save. QCAD and AutoCAD regenerate them, but the QCAD-saved copy is validation evidence, not a canonical delivery artifact.",
-            "AutoCAD substitutes QCAD auxiliary text styles in the validation copy. The canonical generator DXF remains the delivery candidate and passes AutoCAD without font substitution.",
+            "AutoCAD substitutes QCAD auxiliary text styles in the validation copy. The generator DXF remains the technical reference artifact and passes AutoCAD without font substitution; it is not a professional delivery candidate.",
         ],
         "summary": {
             "checks": len(checks.items),

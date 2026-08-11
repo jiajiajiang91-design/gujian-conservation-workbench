@@ -23,7 +23,7 @@ import trimesh
 from t0_model import canonical_json, spec_hash, stable_uuid
 
 
-GENERATOR_VERSION = "t0b-professional-1"
+GENERATOR_VERSION = "t0b-technical-2"
 FONT_PATH = Path(r"C:\Windows\Fonts\simhei.ttf")
 LAYER_COLOURS = {
     "A-AXIS": 8,
@@ -580,7 +580,7 @@ def write_dxf(path: Path, spec: dict, views: dict[str, list[dict]]) -> dict:
     layout.add_viewport(center=(575, 430), size=(330, 250), view_center_point=(22000, 4200), view_height=12500, status=3)
     layout.add_viewport(center=(190, 165), size=(350, 220), view_center_point=(0, -17000), view_height=12500, status=4)
     layout.add_viewport(center=(500, 165), size=(230, 220), view_center_point=(39000, 3200), view_height=7200, status=5)
-    layout.add_mtext("T0-B 古建局部专业样板 / L1 / DEMO ONLY", dxfattribs={"layer": "A-TEXT", "style": "GUJIAN_CN", "char_height": 4}).set_location((650, 70))
+    layout.add_mtext("T0-B 古建语义技术样例 / L0+ / NOT FOR DELIVERY", dxfattribs={"layer": "A-TEXT", "style": "GUJIAN_CN", "char_height": 4}).set_location((650, 70))
     doc.saveas(path)
     auditor = doc.audit()
     if auditor.errors:
@@ -669,7 +669,7 @@ VIEW_LAYOUT = {
 def write_pdf(path: Path, spec: dict, views: dict[str, list[dict]]) -> None:
     pdfmetrics.registerFont(TTFont("GUJIAN_CN", str(FONT_PATH)))
     pdf = canvas.Canvas(str(path), pagesize=landscape(A1), pageCompression=1)
-    pdf.setTitle(f"{spec['name']} - T0-B L1")
+    pdf.setTitle(f"{spec['name']} - T0-B L0+ TECHNICAL SAMPLE")
     pdf.setAuthor("古建保护成果工作台")
     pdf.rect(10 * mm, 10 * mm, 821 * mm, 574 * mm, stroke=1, fill=0)
     for name, primitives in views.items():
@@ -681,9 +681,9 @@ def write_pdf(path: Path, spec: dict, views: dict[str, list[dict]]) -> None:
     pdf.setLineWidth(0.35 * mm)
     pdf.rect(610 * mm, 30 * mm, 211 * mm, 220 * mm, stroke=1, fill=0)
     rows = [
-        (235, "T0-B 古建局部专业样板"), (215, spec["name"]), (195, "质量等级：L1   来源：DEMO"),
+        (235, "T0-B 古建语义技术样例"), (215, spec["name"]), (195, "质量等级：L0+   来源：DEMO"),
         (175, "图号：T0B-01   图幅：A1"), (155, "单位：mm   比例：见图名"),
-        (130, "同源：三维 / 立面 / 剖面 / 详图 / CAD"), (105, "状态：不得用于正式设计、施工或保护工程"),
+        (130, "状态：二维与三维分别构造，未通过同源剖切"), (105, "不得用于交付、设计、施工或保护工程"),
         (70, "检查：对象、曲面屋面、瓦作、木构、标注、来源"), (45, "2026-08-11"),
     ]
     pdf.setFont("GUJIAN_CN", 8)
@@ -730,7 +730,7 @@ def _svg_primitive(parts, primitive, bbox, origin, scale):
 
 
 def write_svg(path: Path, spec: dict, views: dict[str, list[dict]]) -> None:
-    parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="841mm" height="594mm" viewBox="0 0 841 594" role="img" aria-label="T0-B professional heritage drawing">', '<defs><pattern id="hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3" stroke="#777" stroke-width="0.12"/></pattern></defs>', '<rect x="10" y="10" width="821" height="574" fill="white" stroke="#111" stroke-width="0.5"/>']
+    parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="841mm" height="594mm" viewBox="0 0 841 594" role="img" aria-label="T0-B L0 plus technical heritage sample">', '<defs><pattern id="hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3" stroke="#777" stroke-width="0.12"/></pattern></defs>', '<rect x="10" y="10" width="821" height="574" fill="white" stroke="#111" stroke-width="0.5"/>']
     for name, primitives in views.items():
         layout = VIEW_LAYOUT[name]
         for primitive in primitives:
@@ -738,7 +738,7 @@ def write_svg(path: Path, spec: dict, views: dict[str, list[dict]]) -> None:
         top = layout["origin"][1] + (layout["bbox"][3] - layout["bbox"][1]) / layout["scale"] + 3
         parts.append(f'<text x="{layout["origin"][0]}" y="{594-top}" font-family="SimHei, sans-serif" font-size="3.5">{layout["title"]}</text>')
     parts.append('<rect x="610" y="344" width="211" height="220" fill="none" stroke="#111" stroke-width="0.35"/>')
-    for index, value in enumerate(("T0-B 古建局部专业样板", spec["name"], "质量等级：L1 / DEMO ONLY", "同源三维、立面、剖面、详图与 CAD", "不得用于正式设计、施工或保护工程")):
+    for index, value in enumerate(("T0-B 古建语义技术样例", spec["name"], "质量等级：L0+ / DEMO", "二维与三维分别构造，未通过同源剖切", "NOT FOR DELIVERY")):
         parts.append(f'<text x="620" y="{365 + index * 18}" font-family="SimHei, sans-serif" font-size="3.2">{html.escape(value)}</text>')
     parts.append("</svg>")
     path.write_text("\n".join(parts) + "\n", encoding="utf-8")
@@ -774,21 +774,25 @@ def generate(spec_path: Path, output: Path) -> dict:
         objects = build_model(spec)
         views = build_views(spec)
         geometry = {
-            "schemaVersion": "t0b-geometry-1", "gate": "T0-B", "qualityLevel": "L1",
+            "schemaVersion": "t0b-geometry-2", "gate": "T0-B", "qualityLevel": "L0+",
+            "geometryDerivation": "independent-3d-and-2d",
+            "limitations": ["views are not derived from the 3D geometry", "not eligible for L1"],
             "projectId": spec["projectId"], "fixtureId": spec["fixtureId"], "producerType": "demo",
             "specHash": spec_hash(spec), "sourceRefs": spec["sourceRefs"],
             "objects": [{"key": item.key, "entityId": item.entity_id, "category": item.category, "name": item.name, "producerType": "demo", "sourceRefs": spec["sourceRefs"]} for item in objects],
             "views": views,
         }
         (stage / "geometry.json").write_text(json.dumps(geometry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        glb_stats = write_glb(stage / "t0b-professional-hall.glb", objects)
-        dxf_stats = write_dxf(stage / "t0b-professional-sheet.dxf", spec, views)
-        write_svg(stage / "t0b-professional-sheet.svg", spec, views)
-        write_pdf(stage / "t0b-professional-sheet.pdf", spec, views)
+        glb_stats = write_glb(stage / "t0b-l0plus-demo-hall.glb", objects)
+        dxf_stats = write_dxf(stage / "t0b-l0plus-demo-sheet.dxf", spec, views)
+        write_svg(stage / "t0b-l0plus-demo-sheet.svg", spec, views)
+        write_pdf(stage / "t0b-l0plus-demo-sheet.pdf", spec, views)
         artifacts = [{"path": item.name, "bytes": item.stat().st_size, "sha256": _hash_file(item)} for item in sorted(stage.iterdir()) if item.is_file()]
         manifest = {
-            "schemaVersion": "t0b-manifest-1", "generatorVersion": GENERATOR_VERSION,
-            "gate": "T0-B", "qualityLevel": "L1", "localProfessionalSampleEligible": True,
+            "schemaVersion": "t0b-manifest-2", "generatorVersion": GENERATOR_VERSION,
+            "gate": "T0-B", "qualityLevel": "L0+", "localProfessionalSampleEligible": False,
+            "t0GateEligible": False, "geometryDerivation": "independent-3d-and-2d",
+            "qualificationBlockers": ["VIEWS_NOT_DERIVED_FROM_GEOMETRY", "L1_COMPONENT_DEPTH_MISSING", "L1_DRAWING_COVERAGE_MISSING"],
             "professionalDeliverableEligible": False,
             "formalEligibility": False, "producerType": "demo", "projectId": spec["projectId"],
             "fixtureId": spec["fixtureId"], "specHash": spec_hash(spec), "sourceRefs": spec["sourceRefs"],
@@ -807,7 +811,7 @@ def generate(spec_path: Path, output: Path) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate the T0-B professional heritage sample")
+    parser = argparse.ArgumentParser(description="Generate the revoked T0-B L0+ technical heritage sample")
     parser.add_argument("--spec", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()

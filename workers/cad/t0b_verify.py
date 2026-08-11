@@ -23,8 +23,8 @@ REQUIRED_LAYERS = {
     "A-EXIST", "A-DAMAGE", "A-REPAIR", "A-ROOF", "A-TIMBER", "A-OPEN",
 }
 REQUIRED_FILES = {
-    "geometry.json", "t0b-professional-hall.glb", "t0b-professional-sheet.dxf",
-    "t0b-professional-sheet.svg", "t0b-professional-sheet.pdf",
+    "geometry.json", "t0b-l0plus-demo-hall.glb", "t0b-l0plus-demo-sheet.dxf",
+    "t0b-l0plus-demo-sheet.svg", "t0b-l0plus-demo-sheet.pdf",
 }
 
 
@@ -54,10 +54,12 @@ def verify(spec_path: Path, output: Path, compare_manifest: Path | None = None) 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     checks.require("spec hash matches", manifest["specHash"] == spec_hash(spec), manifest["specHash"])
     checks.require(
-        "T0-B L1 classification retained",
+        "revoked T0-B classification retained",
         manifest.get("gate") == "T0-B"
-        and manifest.get("qualityLevel") == "L1"
-        and manifest.get("localProfessionalSampleEligible") is True
+        and manifest.get("qualityLevel") == "L0+"
+        and manifest.get("localProfessionalSampleEligible") is False
+        and manifest.get("t0GateEligible") is False
+        and manifest.get("geometryDerivation") == "independent-3d-and-2d"
         and manifest.get("professionalDeliverableEligible") is False
         and manifest.get("formalEligibility") is False,
         {
@@ -66,15 +68,16 @@ def verify(spec_path: Path, output: Path, compare_manifest: Path | None = None) 
                 "gate",
                 "qualityLevel",
                 "localProfessionalSampleEligible",
+                "t0GateEligible",
+                "geometryDerivation",
                 "professionalDeliverableEligible",
                 "formalEligibility",
             )
         },
     )
     checks.require("demo provenance retained", manifest["producerType"] == "demo", manifest["producerType"])
-    checks.require("minimum semantic object count", manifest["objectCount"] >= 80, manifest["objectCount"])
     categories = set(manifest["glb"]["categories"])
-    checks.require("required component categories", REQUIRED_CATEGORIES <= categories, sorted(categories))
+    checks.require("declared technical categories present", REQUIRED_CATEGORIES <= categories, sorted(categories))
     checks.require("all artifacts exist", all((output / name).is_file() for name in REQUIRED_FILES), sorted(REQUIRED_FILES))
 
     for artifact in manifest["artifacts"]:
@@ -86,9 +89,9 @@ def verify(spec_path: Path, output: Path, compare_manifest: Path | None = None) 
     checks.require("geometry object count", len(geometry["objects"]) == manifest["objectCount"], len(geometry["objects"]))
     checks.require("stable entity IDs unique", len({item["entityId"] for item in geometry["objects"]}) == len(geometry["objects"]), len(geometry["objects"]))
     checks.require("all geometry objects cite source", all(item["sourceRefs"] == spec["sourceRefs"] for item in geometry["objects"]), spec["sourceRefs"])
-    checks.require("four drawing views from one geometry output", set(geometry["views"]) == {"frontElevation", "transverseSection", "eaveDetail", "roofPlan"}, sorted(geometry["views"]))
+    checks.require("four technical views are present", set(geometry["views"]) == {"frontElevation", "transverseSection", "eaveDetail", "roofPlan"}, sorted(geometry["views"]))
     view_counts = {name: len(items) for name, items in geometry["views"].items()}
-    checks.require("professional vector density", view_counts["frontElevation"] >= 250 and view_counts["transverseSection"] >= 90 and view_counts["eaveDetail"] >= 20, view_counts)
+    checks.require("independent view derivation is disclosed", geometry.get("geometryDerivation") == "independent-3d-and-2d", geometry.get("geometryDerivation"))
 
     roof = spec["roof"]
     roof_half_y = sum(float(v) for v in spec["depthSpans"]) / 2 + float(roof["overhangY"])
@@ -98,49 +101,48 @@ def verify(spec_path: Path, output: Path, compare_manifest: Path | None = None) 
     curvature = middle - (ridge + eave) / 2
     checks.require("roof profile is curved, not two flat planes", curvature > 400, {"ridge": ridge, "middle": middle, "eave": eave, "deviation": curvature})
 
-    scene = trimesh.load(output / "t0b-professional-hall.glb", force="scene")
+    scene = trimesh.load(output / "t0b-l0plus-demo-hall.glb", force="scene")
     bounds = np.array(scene.bounds, dtype=float)
     extents = bounds[1] - bounds[0]
     checks.require("GLB semantic mesh count", len(scene.geometry) == manifest["objectCount"], len(scene.geometry))
     checks.require("GLB finite geometry", bool(np.isfinite(bounds).all()), bounds.tolist())
     checks.require("GLB Y-up height and building extents", extents[1] > 9 and extents[0] > 14 and extents[2] > 10, extents.tolist())
 
-    dxf = ezdxf.readfile(output / "t0b-professional-sheet.dxf")
+    dxf = ezdxf.readfile(output / "t0b-l0plus-demo-sheet.dxf")
     auditor = dxf.audit()
     checks.require("DXF audit clean", not auditor.errors, [str(error) for error in auditor.errors])
     layers = {layer.dxf.name for layer in dxf.layers}
-    checks.require("professional layer set", REQUIRED_LAYERS <= layers, sorted(layers))
+    checks.require("technical layer set", REQUIRED_LAYERS <= layers, sorted(layers))
     msp = dxf.modelspace()
     dimensions = len(msp.query("DIMENSION"))
     hatches = len(msp.query("HATCH"))
     inserts = [item for item in msp.query("INSERT") if not item.dxf.name.startswith("*")]
     text_count = len(msp.query("TEXT MTEXT"))
-    polylines = len(msp.query("LWPOLYLINE"))
     checks.require("editable CAD dimensions", dimensions >= 9, dimensions)
     checks.require("editable CAD hatches", hatches >= 4, hatches)
     checks.require("reusable CAD blocks", len(inserts) >= 10 and "BRACKET" in dxf.blocks, {"inserts": len(inserts), "blocks": [block.name for block in dxf.blocks]})
     checks.require("CAD notes and labels", text_count >= 20, text_count)
-    checks.require("CAD vector detail density", polylines >= 40, polylines)
     checks.require("A1 paper-space layout", "A1-T0B" in dxf.layouts.names() and len(dxf.layouts.get("A1-T0B").query("VIEWPORT")) >= 5, dxf.layouts.names())
     source_entities = [entity for entity in msp if entity.has_xdata("GUJIAN_SOURCE")]
     checks.require("CAD source references", len(source_entities) >= 20, len(source_entities))
 
-    svg = (output / "t0b-professional-sheet.svg").read_text(encoding="utf-8")
-    checks.require("SVG professional labels", all(value in svg for value in ("古建局部专业样板", "横剖面", "檐口构造详图", "DEMO ONLY")), len(svg))
-    pdf = (output / "t0b-professional-sheet.pdf").read_bytes()
+    svg = (output / "t0b-l0plus-demo-sheet.svg").read_text(encoding="utf-8")
+    checks.require("SVG revoked-quality labels", all(value in svg for value in ("古建语义技术样例", "横剖面", "L0+", "NOT FOR DELIVERY")), len(svg))
+    pdf = (output / "t0b-l0plus-demo-sheet.pdf").read_bytes()
     checks.require("PDF structure", pdf.startswith(b"%PDF-") and pdf.rstrip().endswith(b"%%EOF"), len(pdf))
-    checks.require("PDF nontrivial professional sheet", len(pdf) > 45_000, len(pdf))
 
     if compare_manifest:
         comparison = json.loads(compare_manifest.read_text(encoding="utf-8"))
         checks.require("stable entity map across runs", comparison["entityMap"] == manifest["entityMap"], len(manifest["entityMap"]))
 
     return {
-        "schemaVersion": "t0b-verification-1",
-        "status": "passed",
+        "schemaVersion": "t0b-verification-2",
+        "status": "verified",
+        "gateStatus": "failed",
         "gate": "T0-B",
-        "qualityLevel": "L1",
-        "localProfessionalSampleEligible": True,
+        "qualityLevel": "L0+",
+        "localProfessionalSampleEligible": False,
+        "t0GateEligible": False,
         "professionalDeliverableEligible": False,
         "formalEligibility": False,
         "summary": {
@@ -153,7 +155,7 @@ def verify(spec_path: Path, output: Path, compare_manifest: Path | None = None) 
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Verify the T0-B professional heritage sample")
+    parser = argparse.ArgumentParser(description="Verify the revoked T0-B L0+ technical heritage sample")
     parser.add_argument("--spec", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--compare-manifest", type=Path)
@@ -163,7 +165,7 @@ def main() -> int:
         result = verify(args.spec.resolve(), args.output.resolve(), args.compare_manifest.resolve() if args.compare_manifest else None)
         if args.report:
             args.report.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(json.dumps({"status": result["status"], **result["summary"]}, ensure_ascii=False))
+        print(json.dumps({"status": result["status"], "gateStatus": result["gateStatus"], **result["summary"]}, ensure_ascii=False))
         return 0
     except Exception as exc:
         print(json.dumps({"status": "failed", "type": exc.__class__.__name__, "reason": str(exc)}, ensure_ascii=False), file=sys.stderr)

@@ -1,12 +1,12 @@
 {
-  "schemaVersion": "t0b-professional-spec-1",
+  "schemaVersion": "t0b-technical-spec-2",
   "projectId": "59330d29-b313-5f0f-bbe1-89ab8911b432",
-  "name": "三开间歇山木构专业样板",
-  "fixtureId": "team-professional-hall-v1",
+  "name": "三开间歇山木构技术样例（L0+）",
+  "fixtureId": "team-technical-hall-v2",
   "producerType": "demo",
   "unit": "mm",
   "sourceRefs": [
-    "demo:team-professional-hall-v1"
+    "demo:team-technical-hall-v2"
   ],
   "baySpans": [
     3600,

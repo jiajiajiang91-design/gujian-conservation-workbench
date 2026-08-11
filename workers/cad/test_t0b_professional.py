@@ -17,16 +17,15 @@ from t0b_generate import build_model, generate, load_spec
 from t0b_verify import verify
 
 
-class T0BProfessionalSampleTests(unittest.TestCase):
+class T0BRevokedTechnicalSampleTests(unittest.TestCase):
     def test_stable_semantic_entity_ids(self) -> None:
         spec = load_spec(SPEC)
         first = [(item.key, item.entity_id, item.category) for item in build_model(spec)]
         second = [(item.key, item.entity_id, item.category) for item in build_model(spec)]
         self.assertEqual(first, second)
-        self.assertGreaterEqual(len(first), 80)
         self.assertEqual(len(first), len({item[1] for item in first}))
 
-    def test_generation_reverse_parse_and_l1_boundaries(self) -> None:
+    def test_generation_reverse_parse_and_revoked_quality_boundaries(self) -> None:
         with tempfile.TemporaryDirectory(prefix="gujian-t0b-") as directory:
             output = Path(directory) / "outputs"
             completed = subprocess.run(
@@ -40,9 +39,13 @@ class T0BProfessionalSampleTests(unittest.TestCase):
             message = json.loads(completed.stdout)
             self.assertEqual(message["status"], "ok")
             result = verify(SPEC, output)
-            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["status"], "verified")
+            self.assertEqual(result["gateStatus"], "failed")
             manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
-            self.assertTrue(manifest["localProfessionalSampleEligible"])
+            self.assertEqual(manifest["qualityLevel"], "L0+")
+            self.assertFalse(manifest["localProfessionalSampleEligible"])
+            self.assertFalse(manifest["t0GateEligible"])
+            self.assertEqual(manifest["geometryDerivation"], "independent-3d-and-2d")
             self.assertFalse(manifest["professionalDeliverableEligible"])
             self.assertFalse(manifest["formalEligibility"])
 
