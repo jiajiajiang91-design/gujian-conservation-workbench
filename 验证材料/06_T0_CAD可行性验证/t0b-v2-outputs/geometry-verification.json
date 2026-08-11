@@ -1,0 +1,470 @@
+{
+  "schemaVersion": "t0b-v2-geometry-verification-3",
+  "status": "passed-geometry-only",
+  "qualification": {
+    "localProfessionalSampleEligible": false,
+    "reason": "visible-line projection, drawing generation and independent professional review are pending"
+  },
+  "verifier": {
+    "name": "t0b-v2-standalone-geometry-verifier",
+    "version": "2.0.0",
+    "implementationSha256": "439b7f48d5ffa9ceb25eff8ea0ea32626f2a49aaed543817fcfbeb8605c09f5c",
+    "implementation": "standalone; does not import GeometryBuilder or geometry helpers",
+    "command": "python -m workers.cad.t0b_v2.verify_geometry --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> --glb <glb> --report <report>"
+  },
+  "inputs": {
+    "fixture": {
+      "path": "t0b-v2-resolved-local-assembly.json",
+      "sha256": "909815c202ef1c9a7fa7cba41d421b886b97462efd50f8840cee47bde627df3e"
+    },
+    "manifest": {
+      "path": "geometry-manifest.json",
+      "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+    },
+    "sourceMeshes": {
+      "path": "source-meshes.ndjson.gz",
+      "sha256": "06a92a7fe76c632fe4c7fddd0f27e53ed3fad46a57a047bfdcd7de08432d4c3c"
+    },
+    "glb": {
+      "path": "resolved-local-assembly.glb",
+      "sha256": "48b1b3da1641fb116ce48ae3adcfcf52e31d50fdf2ba4c9b7d712310fdfbe431"
+    }
+  },
+  "checks": [
+    {
+      "name": "canonicalMeshClosure",
+      "actual": {
+        "entities": 1166,
+        "sourceMeshHashes": 1166,
+        "directSourceToGlbMatches": 1166,
+        "maximumCoordinateDeltaMm": 0.000476712
+      },
+      "expected": {
+        "entities": 1166,
+        "sourceMeshHashes": 1166,
+        "directSourceToGlbMatches": 1166
+      },
+      "tolerance": {
+        "sourceToGlbCoordinateMm": 0.001
+      },
+      "passed": true
+    },
+    {
+      "name": "entityLevelSourceIsolation",
+      "actual": {
+        "producerType": "demo",
+        "isolatedEntities": 1166
+      },
+      "expected": {
+        "producerType": "demo",
+        "isolatedEntities": 1166
+      },
+      "tolerance": 0,
+      "passed": true
+    },
+    {
+      "name": "pairedRoofCurveWithRidgeBreak",
+      "actual": {
+        "maximumProfileErrorMm": 0.000299,
+        "maxChordErrorMm": 0.158848,
+        "leftRidgeSlope": 0.5,
+        "rightRidgeSlope": -0.5,
+        "ridgeSlopeJump": 1.0,
+        "edgeTangentMagnitudes": [
+          0.277778,
+          0.277778
+        ]
+      },
+      "expected": {
+        "family": "pairedCubicC0",
+        "leftRidgeSlope": 0.5,
+        "rightRidgeSlope": -0.5,
+        "ridgeSlopeJump": 1.0,
+        "maxChordErrorMm": 1.0,
+        "edgeTangentLimit": 0.3
+      },
+      "tolerance": {
+        "profileMm": 0.5,
+        "chordErrorMm": 1.0
+      },
+      "passed": true
+    },
+    {
+      "name": "roofCeramicFirstHitCoverage",
+      "actual": {
+        "samples": 1925,
+        "ceramicFirstHits": 1925,
+        "exposedStructureSamples": 0,
+        "misses": 0
+      },
+      "expected": {
+        "ceramicFirstHits": 1925,
+        "maximumUncoveredSamples": 0
+      },
+      "tolerance": {
+        "sampleSpacingXmm": 130,
+        "sampleSpacingYmm": 130,
+        "edgeMarginXmm": 150,
+        "edgeMarginYmm": 40
+      },
+      "passed": true
+    },
+    {
+      "name": "resolvedFeatureGeometry",
+      "actual": {
+        "panQuadraticRange": [
+          0.003251091,
+          0.003251408
+        ],
+        "coverQuadraticRange": [
+          -0.010370952,
+          -0.010369713
+        ],
+        "minimumRidgeStackParts": 3,
+        "minimumWallLayers": 3,
+        "minimumDoorFrameMembers": 4,
+        "minimumRafterBodies": 2
+      },
+      "expected": {
+        "panSign": "positive",
+        "coverSign": "negative",
+        "ridgeStackParts": 3,
+        "wallLayers": 3,
+        "doorFrameMembers": 4,
+        "rafterBodies": 2
+      },
+      "tolerance": 0,
+      "passed": true
+    },
+    {
+      "name": "tileLapIntegrity",
+      "actual": {
+        "panTile": {
+          "lapPairs": 468,
+          "sampledSections": 1404,
+          "declaredOverlapMm": 100.0,
+          "maximumSolidOverlapMm": 0.11462,
+          "maximumInterfaceGapMm": 0.09888,
+          "minimumTopStepMm": 17.885118
+        },
+        "coverTile": {
+          "lapPairs": 442,
+          "sampledSections": 1326,
+          "declaredOverlapMm": 100.0,
+          "maximumSolidOverlapMm": 0.10965,
+          "maximumInterfaceGapMm": 0.094331,
+          "minimumTopStepMm": 17.890142
+        }
+      },
+      "expected": {
+        "solidOverlapMm": 0,
+        "interfaceGapMm": 0,
+        "minimumVisibleStepMm": 17.0
+      },
+      "tolerance": {
+        "interfaceMm": 1.0,
+        "samplesPerOverlap": 3
+      },
+      "passed": true
+    },
+    {
+      "name": "supportRelationshipAndExactContacts",
+      "actual": {
+        "supportedRelations": 1225,
+        "relationshipBounds": {
+          "bearingBlock:bracketArm": {
+            "count": 8,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          },
+          "bracketArm:bracketSeat": {
+            "count": 8,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 55.000305
+          },
+          "bracketSeat:eaveBeam": {
+            "count": 4,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          },
+          "column:columnBase": {
+            "count": 4,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          },
+          "columnBase:terrace": {
+            "count": 4,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          },
+          "coverTile:roofBoard": {
+            "count": 476,
+            "maxGapMm": 0.086815,
+            "maxPenetrationMm": 0.100273
+          },
+          "eaveBeam:column": {
+            "count": 4,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 479.999781
+          },
+          "interiorPost:tieBeam": {
+            "count": 10,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          },
+          "panTile:roofBoard": {
+            "count": 504,
+            "maxGapMm": 0.086815,
+            "maxPenetrationMm": 0.100273
+          },
+          "purlin:bearingBlock": {
+            "count": 4,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 45.000076
+          },
+          "purlin:interiorPost": {
+            "count": 10,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 35.000324
+          },
+          "rafter:purlin": {
+            "count": 128,
+            "maxGapMm": 1.536118,
+            "maxPenetrationMm": 0.0
+          },
+          "ridgeTile:roofBoard": {
+            "count": 17,
+            "maxGapMm": 0.097275,
+            "maxPenetrationMm": 0.0
+          },
+          "roofBoard:rafter": {
+            "count": 32,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          },
+          "terrace:foundation": {
+            "count": 4,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          },
+          "terrace:terrace": {
+            "count": 2,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          },
+          "tieBeam:column": {
+            "count": 4,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 419.999838
+          },
+          "wall:terrace": {
+            "count": 2,
+            "maxGapMm": 0.0,
+            "maxPenetrationMm": 0.0
+          }
+        },
+        "exactContactPairs": {
+          "bearingBlock:bracketArm": {
+            "count": 8,
+            "minimumBearingAreaMm2": 35059.434377
+          },
+          "purlin:bearingBlock": {
+            "count": 4,
+            "minimumContactVertices": 18.0,
+            "maximumProfileErrorMm": 0.275646,
+            "maximumLateralOffsetMm": 7.8e-05
+          },
+          "purlin:interiorPost": {
+            "count": 10,
+            "minimumContactVertices": 18.0,
+            "maximumProfileErrorMm": 0.249396,
+            "maximumLateralOffsetMm": 8e-06
+          }
+        }
+      },
+      "expected": {
+        "maxSurfaceGapMm": 2.0,
+        "upwardSourceDirection": true,
+        "jointAllowancesMm": {
+          "purlin:bearingBlock": 45,
+          "purlin:interiorPost": 35,
+          "bracketArm:bracketSeat": 55,
+          "eaveBeam:column": 480,
+          "tieBeam:column": 420
+        },
+        "minimumGrooveContactVertices": 8,
+        "minimumBearingAreaMm2": 25000
+      },
+      "tolerance": {
+        "surfaceGapMm": 2.0,
+        "directionMm": 0.01,
+        "lateralOffsetMm": 1.0
+      },
+      "passed": true
+    },
+    {
+      "name": "numericGeometryOracle",
+      "actual": {
+        "overallBounds": [
+          [
+            -3599.999905,
+            -5179.999828,
+            -800.000012
+          ],
+          [
+            3599.999905,
+            4800.000191,
+            8451.388359
+          ]
+        ],
+        "stepBounds": [
+          [
+            -899.999976,
+            -5179.999828,
+            0.0
+          ],
+          [
+            899.999976,
+            -2940.000057,
+            600.000024
+          ]
+        ],
+        "doorLeafBounds": [
+          [
+            -899.999976,
+            -3132.499933,
+            550.000012
+          ],
+          [
+            899.999976,
+            -3077.500105,
+            3349.999905
+          ]
+        ],
+        "ridgeBounds": [
+          [
+            -2400.000095,
+            -140.000001,
+            8217.888832
+          ],
+          [
+            2440.000057,
+            140.000001,
+            8451.388359
+          ]
+        ]
+      },
+      "expected": {
+        "overallBounds": [
+          [
+            -3600,
+            -5180,
+            -800
+          ],
+          [
+            3600,
+            4800,
+            8451.388544
+          ]
+        ],
+        "stepBounds": [
+          [
+            -900,
+            -5180,
+            0
+          ],
+          [
+            900,
+            -2940,
+            600
+          ]
+        ],
+        "doorLeafBounds": [
+          [
+            -900,
+            -3132.5,
+            550
+          ],
+          [
+            900,
+            -3077.5,
+            3350
+          ]
+        ],
+        "ridgeBounds": [
+          [
+            -2400,
+            -140,
+            8217.888544
+          ],
+          [
+            2440,
+            140,
+            8451.388544
+          ]
+        ]
+      },
+      "tolerance": {
+        "boundsMm": 0.01
+      },
+      "passed": true
+    }
+  ],
+  "negativeCases": [
+    {
+      "name": "internalVertexExportMutation",
+      "passed": true,
+      "detected": "entity 0007b762-d31f-5962-b5a8-07582965e5ee changed source coordinates during GLB export by 0.249997 mm"
+    },
+    {
+      "name": "externalEntitySource",
+      "passed": true,
+      "detected": "entity 0007b762-d31f-5962-b5a8-07582965e5ee has an external or mismatched source"
+    },
+    {
+      "name": "panCoverTypeSwap",
+      "passed": true,
+      "detected": "actual pan and cover tile meshes do not retain opposite curvature"
+    },
+    {
+      "name": "coplanarAdjacentTileLap",
+      "passed": true,
+      "detected": "adjacent panTile rows overlap solid volume by 17.891 mm"
+    },
+    {
+      "name": "bearingSupportDisplacement",
+      "passed": true,
+      "detected": "support gap 100.000 mm exceeds tolerance for bearingBlock:bracketArm"
+    },
+    {
+      "name": "bearingSupportPenetration",
+      "passed": true,
+      "detected": "support penetration 100.000 mm exceeds allowance for bearingBlock:bracketArm"
+    },
+    {
+      "name": "bearingLateralMisalignment",
+      "passed": true,
+      "detected": "bearing contact area 17059.434 mm2 is below the minimum for bearingBlock:bracketArm"
+    },
+    {
+      "name": "grooveLateralMisalignment",
+      "passed": true,
+      "detected": "groove contact has only 2 verified vertices for purlin:interiorPost"
+    },
+    {
+      "name": "ridgeBoxReplacement",
+      "passed": true,
+      "detected": "ridge tile is not a stacked family"
+    },
+    {
+      "name": "roofCurveDisplacement",
+      "passed": true,
+      "detected": "roof-board mesh differs from the declared paired curve by 20.000299 mm"
+    },
+    {
+      "name": "missingTileCoverage",
+      "passed": true,
+      "detected": "roof ceramic first-hit coverage failed at 2 samples: [{'x': -40.0, 'y': -960.0, 'firstHit': 'roofBoard', 'entityId': '52557f16-cf43-5a32-b726-abead3b9df5f'}, {'x': 90.0, 'y': -960.0, 'firstHit': 'roofBoard', 'entityId': '65461733-e4cd-59a1-97e6-fcb1b418f8bc'}]"
+    }
+  ]
+}

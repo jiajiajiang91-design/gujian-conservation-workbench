@@ -57,6 +57,32 @@ class T0BV2ContractTests(unittest.TestCase):
         self.assertTrue(policy["hiddenLineRemoval"])
         self.assertEqual(policy["triangleInteriorEdges"], "forbidden")
 
+    def test_external_source_scheme_is_rejected(self) -> None:
+        invalid = deepcopy(self.fixture)
+        invalid["sourceRefs"] = ["file:external-reference"]
+        with self.assertRaisesRegex(ContractError, "demo scheme"):
+            validate_fixture(invalid)
+
+    def test_geometry_feature_gate_cannot_be_omitted(self) -> None:
+        invalid = deepcopy(self.fixture)
+        invalid["geometryValidation"]["requiredFeatureAssertions"].remove("oppositeTileCurvature")
+        with self.assertRaisesRegex(ContractError, "feature assertions are incomplete"):
+            validate_fixture(invalid)
+
+    def test_frozen_revision_cannot_point_to_a_second_geometry_signature(self) -> None:
+        invalid = deepcopy(self.fixture)
+        invalid["knownAnswers"]["geometrySignature"] = "0" * 64
+        with self.assertRaisesRegex(ContractError, "revision must be derived"):
+            validate_fixture(invalid)
+
+    def test_roof_requires_a_non_zero_ridge_break_and_declared_tile_lap(self) -> None:
+        self.assertEqual(self.fixture["assembly"]["roofCurve"]["family"], "pairedCubicC0")
+        self.assertGreater(self.fixture["assembly"]["roofCurve"]["ridgeSlopeJump"], 0)
+        self.assertEqual(
+            self.fixture["componentTemplates"]["panTile"]["parameters"]["lapTailDepth"],
+            self.fixture["componentTemplates"]["panTile"]["parameters"]["thickness"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
