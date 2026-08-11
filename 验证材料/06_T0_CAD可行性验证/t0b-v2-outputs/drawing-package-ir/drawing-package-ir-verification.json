@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "t0b-v2-drawing-package-ir-verification-1",
+  "status": "passed-contract-and-ir-only",
+  "L1": false,
+  "qualification": "not-drawing-output",
+  "verifier": {
+    "version": "1.0.0",
+    "path": "verify_drawing_ir.py",
+    "sha256": "b8c671ac463cef859af928029518af2a1729acb33ee3319827ef483b318af456",
+    "independent": true,
+    "forbiddenImports": [
+      "drawing_contract",
+      "drawing_ir",
+      "view_geometry",
+      "generator",
+      "detail_oracle"
+    ]
+  },
+  "source": {
+    "contract": {
+      "path": "t0b-v2-drawing-package-contract.json",
+      "sha256": "5c021d066c5bfb9ba4b4326f901c258284b18abc104a53cb9a45b9eed5568753",
+      "contractRevisionId": "176ee4f0-9cbd-51ba-939e-aa2cad36a307"
+    },
+    "ir": {
+      "path": "drawing-package.ir.json.gz",
+      "sha256": "b9cb575dd421082b45b6e335c590b00b3dd6c3b8da4eeafa9a9369c94c402021",
+      "drawingPackageIrSha256": "7e688805caac842cc6ce652e2196378a580acce20b3b75478732527b42637769"
+    }
+  },
+  "summary": {
+    "checks": 5,
+    "failed": 0,
+    "annotationRequirementCount": 48,
+    "cropLimitLineCount": 15,
+    "layoutCount": 2,
+    "materialRegionCount": 315,
+    "provenanceSidecarRowCount": 51492,
+    "structuralLineCount": 51114,
+    "viewCount": 10
+  },
+  "checks": [
+    {
+      "id": "DIR-001",
+      "name": "DrawingPackageContract schema, signature, revision and twelve P0 mappings",
+      "passed": true,
+      "evidence": {
+        "contractSignature": "8b3f2570c8dddab4ca006362bda2a850660620047bb0ccb5d42695134a1bbcc3",
+        "contractRevisionId": "176ee4f0-9cbd-51ba-939e-aa2cad36a307",
+        "annotationRequirements": 48,
+        "p0Mappings": 12
+      }
+    },
+    {
+      "id": "DIR-002",
+      "name": "Manifest and ten compressed/internal ViewGeometry bindings",
+      "passed": true,
+      "evidence": {
+        "views": 10,
+        "structuralLines": 51114,
+        "cropLimitLines": 15,
+        "cutRegions": 279,
+        "materialRegions": 36,
+        "manifestEntities": 1166
+      }
+    },
+    {
+      "id": "DIR-003",
+      "name": "Independent line, material, crop, annotation and 51k provenance derivation",
+      "passed": true,
+      "evidence": {
+        "viewCount": 10,
+        "layoutCount": 2,
+        "structuralLineCount": 51114,
+        "cropLimitLineCount": 15,
+        "materialRegionCount": 315,
+        "annotationRequirementCount": 48,
+        "provenanceSidecarRowCount": 51492
+      }
+    },
+    {
+      "id": "DIR-004",
+      "name": "Material hatch and crop execution closure",
+      "passed": true,
+      "evidence": {
+        "materialRegions": 315,
+        "resolvedTargetHatches": 315,
+        "unresolvedMaterialHatches": 0,
+        "ceramicRegions": 124,
+        "sourceMaterialHatchNullPreserved": 118,
+        "cropLimitLines": 15
+      }
+    },
+    {
+      "id": "DIR-005",
+      "name": "IR hash, build record, no-output boundary and double-build determinism",
+      "passed": true,
+      "evidence": {
+        "drawingPackageIrSha256": "7e688805caac842cc6ce652e2196378a580acce20b3b75478732527b42637769",
+        "gzipSha256": "b9cb575dd421082b45b6e335c590b00b3dd6c3b8da4eeafa9a9369c94c402021",
+        "doubleBuildByteIdentical": true,
+        "outputsNotGenerated": [
+          "DXF",
+          "SVG",
+          "PDF",
+          "PNG"
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "P0": [],
+    "P1": [],
+    "P2": []
+  },
+  "outputsNotGenerated": [
+    "DXF",
+    "SVG",
+    "PDF",
+    "PNG"
+  ],
+  "submissionDecision": "accept-contract-and-ir-task-only",
+  "qualificationBoundary": {
+    "status": "generated-not-qualified",
+    "L1": false,
+    "useBoundary": [
+      "demo-only",
+      "not-for-formal-signoff"
+    ]
+  }
+}

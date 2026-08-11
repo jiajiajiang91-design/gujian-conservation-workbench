@@ -21,6 +21,8 @@
 
 当前结果为 `passed-section-geometry-only`、`passed-projection-geometry-only` 和 `passed-detail-geometry-only`，仍是 `generated-not-qualified / not-drawing-output / L1=false`。各视图线数只记录冻结结果，不是质量指标。DXF、SVG、PDF、原生尺寸、标高、材料填充、图签、断开符号和成组专业复核尚未完成。
 
+独立 `DrawingPackageContract` 已绑定几何版本、视图合同版本、十份 ViewGeometry、双 A1 布局和十二项制图门槛。`DrawingPackageIR` 只复制已验证的结构线与材料区，保存可逆 staging 变换、标注要求和来源 sidecar，不补画或重算建筑几何。独立验收状态为 `passed-contract-and-ir-only`。当前仍没有 DXF、SVG、PDF 或整图 PNG；许可字体未绑定，承托详图仍是简化团队样板，两项继续阻断 L1。
+
 ```powershell
 workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.build_sections `
   --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> --output-dir <sections>
@@ -63,7 +65,7 @@ workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.verify_details `
 4. 制图模块生成 DXF、SVG 和 PDF，并附图纸要求覆盖矩阵。
 5. 独立验证器重算剖切和尺寸；专业人员完成成组预览复核。
 
-当前目录已完成第 1、2 步、视图合同和十张中间 ViewGeometry。生成记录固定为 `generated-not-qualified`；DXF、SVG、PDF、标注、成组图纸和专业复核全部通过前不得申请 L1。
+当前目录已完成第 1、2 步、视图合同、十张中间 ViewGeometry、制图包合同和中间 IR。生成记录固定为 `generated-not-qualified`；DXF、SVG、PDF、标注、成组图纸和专业复核全部通过前不得申请 L1。
 
 视图合同补齐十个视图的坐标框架、观察方向、裁切范围、标注安全区、纸面变换和逐视图金标准。横剖面固定在稳定的 `x=-1750 mm`，穿过同一榀的柱、柱础、基础、承托、檩和屋面，并通过 `±0.5 mm` 扰动复算。四个详图均绑定稳定构件实例、局部范围、切面或投影类型、精确来源集合、材料优先级和完整可见线答案。真实切面在完整网格上求交后再裁切，裁切边不得冒充构件线。现有生成器只能读取剥离 oracle 后的白名单输入。合同说明见 `VIEW_CONTRACT.md`。
 
@@ -90,4 +92,4 @@ workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.build_geometry `
 
 三张 Blender 预览分别检查整体、双坡正交侧视和瓦作搭接近景。每张预览的 JSON 侧车文件记录 GLB 哈希、Blender 版本、脚本哈希、相机和输出哈希。预览通过不等于专业资格通过。
 
-受控局部样本使用 trimesh 和 Shapely 完成真实剖切、剖后投影，以及同源轮廓边、特征边、构件边界和解析遮挡。下一步进入 ezdxf 制图、标注、图签和 A1 成组复核。T10 / L2 继续保留 IfcOpenShell / OpenCascade HLR 路线。
+受控局部样本使用 trimesh 和 Shapely 完成真实剖切、剖后投影，以及同源轮廓边、特征边、构件边界和解析遮挡。下一步由同一 IR 生成 ezdxf、SVG、PDF、标注、图签和 A1 成组复核。T10 / L2 继续保留 IfcOpenShell / OpenCascade HLR 路线。
