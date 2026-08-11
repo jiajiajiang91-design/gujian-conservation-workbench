@@ -61,4 +61,4 @@
 - 独立复算命令：`workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.verify_view_contract --fixture <fixture> --manifest <manifest> --source-meshes <source-meshes> --output <report>`。报告固定输入文件哈希、验证器版本与源码哈希。
 - 参考图片和外部 DWG 不进入输入、生成依赖或成果包。
 
-十张 ViewGeometry 已绑定同一几何版本和视图合同版本。独立 DrawingPackageContract 与中间 IR 已冻结并通过来源、逆变换、材料、标注和外部依赖审查；它们不属于图纸输出。下一独立任务由该 IR 生成原生 DXF、SVG、PDF、标注和双 A1 布局。
+十张 ViewGeometry 已绑定同一几何版本和视图合同版本。独立 DrawingPackageContract 与中间 IR 已冻结并通过来源、逆变换、材料、标注和外部依赖审查。原生 DXF 已生成并通过反向解析及 AutoCAD 2024 AUDIT；当前仍不是完整图纸包。下一独立任务绑定许可字体，并由同一 IR 生成 SVG、PDF 和双 A1 整图。

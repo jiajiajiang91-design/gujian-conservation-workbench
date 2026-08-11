@@ -1,0 +1,103 @@
+{
+  "L1": false,
+  "autocadCompatibility": {
+    "defaultPaperViewportLayer": "0",
+    "earthPatternId": "GJ_EARTH_V1",
+    "earthPatternLineOffsetsMm": [
+      [
+        0,
+        24
+      ],
+      [
+        24,
+        0
+      ]
+    ],
+    "parallelPatternOffsetRejected": true,
+    "userViewportLayer": "GJ-FRAME"
+  },
+  "generatedAt": "2000-01-01T00:00:00Z",
+  "inputs": {
+    "contract": {
+      "name": "t0b-v2-drawing-package-contract.json",
+      "revisionId": "176ee4f0-9cbd-51ba-939e-aa2cad36a307",
+      "sha256": "5c021d066c5bfb9ba4b4326f901c258284b18abc104a53cb9a45b9eed5568753",
+      "signature": "8b3f2570c8dddab4ca006362bda2a850660620047bb0ccb5d42695134a1bbcc3"
+    },
+    "drawingPackageIr": {
+      "drawingPackageIrSha256": "7e688805caac842cc6ce652e2196378a580acce20b3b75478732527b42637769",
+      "name": "drawing-package.ir.json.gz",
+      "sha256": "b9cb575dd421082b45b6e335c590b00b3dd6c3b8da4eeafa9a9369c94c402021"
+    },
+    "logicalFont": {
+      "assetStatus": "unbound",
+      "embeddingAttempted": false,
+      "family": "Noto Sans SC",
+      "fontFilePath": null,
+      "name": "logical_font_config.json",
+      "qualificationBlocker": "FONT_ASSET_NOT_BOUND",
+      "releaseAssetIncluded": false,
+      "schemaVersion": "t0b-v2-logical-font-config-1",
+      "sha256": "063f64aed5fb1ff4e41afb1012952b79c6efc94990ba631896ef2592cd60ec40",
+      "source": "logical-declaration-only",
+      "styleName": "GJ-NOTO-SANS-SC"
+    },
+    "manifest": {
+      "name": "geometry-manifest.json",
+      "producerType": "demo",
+      "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+    }
+  },
+  "outputs": {
+    "dxf": {
+      "dxfVersion": "AC1032",
+      "insunits": 4,
+      "modelSpaceScale": "1:1",
+      "name": "T0B.dxf",
+      "sha256": "d35e39b9ced71527f292cf296553df3d34db9e1fcfa09981ed4122c23224b876"
+    },
+    "provenanceSidecar": {
+      "name": "T0B-source-map.ndjson",
+      "rowCount": 51636,
+      "sha256": "ae1fcbf274142516ebef99060e343c61d9dd0af1948c0b8fd075889778071329"
+    }
+  },
+  "outputsNotGenerated": [
+    "SVG",
+    "PDF",
+    "PNG"
+  ],
+  "qualification": {
+    "fontAssetStatus": "unbound",
+    "generatorMaySetEligible": false,
+    "requiredBlockers": [
+      "BRACKET_DETAIL_SIMPLIFIED_GEOMETRY",
+      "FONT_ASSET_NOT_BOUND",
+      "DRAWING_OUTPUTS_NOT_BUILT",
+      "COMPATIBILITY_NOT_VERIFIED",
+      "PROFESSIONAL_REVIEW_PENDING"
+    ]
+  },
+  "readback": {
+    "defaultViewportLayerZeroCount": 2,
+    "ezdxfAuditErrors": 0,
+    "layoutCount": 2,
+    "lockedUserViewportCount": 10,
+    "materialHatchCount": 315,
+    "modelSpaceTypeCounts": {
+      "DIMENSION": 33,
+      "HATCH": 315,
+      "INSERT": 70,
+      "LINE": 50835,
+      "LWPOLYLINE": 279,
+      "MTEXT": 21
+    },
+    "structuralXdataCoverage": 1.0
+  },
+  "schemaVersion": "t0b-v2-native-dxf-build-1",
+  "status": "generated-not-qualified",
+  "useBoundary": [
+    "demo-only",
+    "not-for-formal-signoff"
+  ]
+}

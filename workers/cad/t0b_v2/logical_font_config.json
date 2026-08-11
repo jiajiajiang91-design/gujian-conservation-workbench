@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "t0b-v2-logical-font-config-1",
+  "family": "Noto Sans SC",
+  "styleName": "GJ-NOTO-SANS-SC",
+  "assetStatus": "unbound",
+  "fontFilePath": null,
+  "releaseAssetIncluded": false,
+  "embeddingAttempted": false,
+  "source": "logical-declaration-only",
+  "qualificationBlocker": "FONT_ASSET_NOT_BOUND"
+}
