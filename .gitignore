@@ -16,6 +16,8 @@
 tmp/
 .codex_staging/
 .codex_staging*/
+.autocad-reference-profile/
+/plot.log
 _deploy/
 node_modules/
 .pnpm-store/
