@@ -57,6 +57,19 @@ class T0BV2ContractTests(unittest.TestCase):
         self.assertTrue(policy["hiddenLineRemoval"])
         self.assertEqual(policy["triangleInteriorEdges"], "forbidden")
 
+    def test_section_depth_projection_uses_frozen_semantic_types(self) -> None:
+        for view_id in ("floorPlan", "transverseSection", "longitudinalSection"):
+            view = next(item for item in self.fixture["views"] if item["id"] == view_id)
+            self.assertTrue(view["section"]["depthProjectionTypes"])
+            self.assertNotIn("panTile", view["section"]["depthProjectionTypes"])
+            self.assertNotIn("coverTile", view["section"]["depthProjectionTypes"])
+
+    def test_cad_layer_mapping_separates_base_class_and_visibility(self) -> None:
+        requirements = self.fixture["drawingRequirements"]
+        self.assertEqual(requirements["baseClassLayerMap"]["feature"], "GJ-PROJECTION")
+        self.assertIsNone(requirements["visibilityLayerOverride"]["visible"])
+        self.assertEqual(requirements["visibilityLayerOverride"]["hidden"], "GJ-HIDDEN")
+
     def test_external_source_scheme_is_rejected(self) -> None:
         invalid = deepcopy(self.fixture)
         invalid["sourceRefs"] = ["file:external-reference"]

@@ -3,8 +3,8 @@
   "projectId": "c5237fb2-8197-5d76-9885-f77b75baf522",
   "fixtureId": "5d637929-6d30-5796-a5a1-3fc38f3c1574",
   "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
-  "viewContractRevisionId": "cb7190dc-74d8-5ce5-9719-4ecd493acc60",
-  "viewContractSignature": "e33b8aa1ee55f1960ccc50f6ed17fe5c39649141873c6af5b5f98d716714bf8e",
+  "viewContractRevisionId": "19fd061d-7fc7-55fe-a243-3341f7e7e552",
+  "viewContractSignature": "88af27ce8027e0d80215de80e046a701f5bfb28006ce0e15db055aeec39ffa76",
   "producerType": "demo",
   "unit": "mm",
   "sourceRefs": [
@@ -276,7 +276,7 @@
         "modelToView": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, -1, 1800], [0, 0, 0, 1]],
         "clipRectMm": [-3800, -5400, 3800, 5000], "clipDepthMm": [0, 2600]
       },
-      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [0, 0, 1800], "planeNormal": [0, 0, 1], "retainedDirection": [0, 0, -1], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5},
+      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [0, 0, 1800], "planeNormal": [0, 0, 1], "retainedDirection": [0, 0, -1], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "depthProjectionTypes": ["columnBase", "foundation", "groundLayer", "step", "terrace"]},
       "hiddenLineMode": "remove",
       "paperPlacement": {"sheet": "T0B-01", "viewportRectMm": [15, 335, 222, 245], "annotationSafeRectMm": [18, 338, 216, 239], "minimumAnnotationMarginMm": 12, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 126], [0, 0.02, 461.5], [0, 0, 1]]}
     },
@@ -316,7 +316,7 @@
         "modelToView": [[0, -1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1750], [0, 0, 0, 1]],
         "clipRectMm": [-5000, -1000, 5400, 8700], "clipDepthMm": [0, 5360]
       },
-      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [-1750, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "anchorEntityId": "094027ab-3397-5117-bad8-81c07d961879"},
+      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [-1750, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "anchorEntityId": "094027ab-3397-5117-bad8-81c07d961879", "depthProjectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "doorFrame", "doorLeaf", "eaveBeam", "foundation", "groundLayer", "interiorPost", "latticeWindow", "purlin", "step", "terrace", "tieBeam", "wall"]},
       "hiddenLineMode": "remove",
       "paperPlacement": {"sheet": "T0B-01", "viewportRectMm": [252, 65, 238, 245], "annotationSafeRectMm": [255, 68, 232, 239], "minimumAnnotationMarginMm": 12, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 367], [0, 0.02, 110.5], [0, 0, 1]]}
     },
@@ -330,7 +330,7 @@
         "modelToView": [[-1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]],
         "clipRectMm": [-3800, -1000, 3800, 8700], "clipDepthMm": [0, 5180]
       },
-      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [0, 0, 0], "planeNormal": [0, 1, 0], "retainedDirection": [0, -1, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "foundationLevelMode": "projected-reference-not-cut"},
+      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [0, 0, 0], "planeNormal": [0, 1, 0], "retainedDirection": [0, -1, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "foundationLevelMode": "projected-reference-not-cut", "depthProjectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "doorFrame", "doorLeaf", "eaveBeam", "foundation", "groundLayer", "interiorPost", "latticeWindow", "purlin", "step", "terrace", "tieBeam", "wall"]},
       "hiddenLineMode": "remove",
       "paperPlacement": {"sheet": "T0B-02", "viewportRectMm": [15, 65, 185, 225], "annotationSafeRectMm": [18, 68, 179, 219], "minimumAnnotationMarginMm": 12, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 107.5], [0, 0.02, 100.5], [0, 0, 1]]}
     },
@@ -445,18 +445,18 @@
       "structuralLineClasses": ["cut", "silhouette", "feature", "componentBoundary"],
       "visibilityClasses": ["visible", "hidden"]
     },
-    "lineClassLayerMap": {
+    "baseClassLayerMap": {
       "cut": "GJ-CUT",
       "silhouette": "GJ-OUTLINE",
-      "feature": "GJ-OUTLINE",
+      "feature": "GJ-PROJECTION",
       "componentBoundary": "GJ-PROJECTION",
-      "visible": "GJ-PROJECTION",
-      "hidden": "GJ-HIDDEN",
       "axis": "GJ-AXIS",
       "dimension": "GJ-DIMENSION",
       "annotation": "GJ-TEXT",
       "hatch": "GJ-HATCH"
     },
+    "visibilityLayerOverride": {"visible": null, "hidden": "GJ-HIDDEN"},
+    "scalePolicy": {"primary": ["1:50"], "detail": ["1:10", "1:15"], "detail15Use": "team demo layout only; drawing review must confirm printed readability"},
     "detailTracePolicy": {"sourceEntityCoverage": 1.0, "geometryRevisionRequired": true, "derivationTransformRequired": true},
     "nativeCadEntities": ["DIMENSION", "TEXT", "MTEXT", "HATCH", "INSERT", "LAYOUT", "VIEWPORT"],
     "outputMatrix": {

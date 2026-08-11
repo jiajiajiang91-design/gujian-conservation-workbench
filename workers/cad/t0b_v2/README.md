@@ -22,6 +22,8 @@
 
 视图合同补齐十个视图的坐标框架、观察方向、裁切范围、标注安全区、纸面变换和逐视图金标准。横剖面固定在稳定的 `x=-1750 mm`，穿过同一榀的柱、柱础、基础、承托、檩和屋面，并通过 `±0.5 mm` 扰动复算。四个详图均绑定一个稳定构件实例和局部范围。未来生成器只能读取剥离 oracle 后的白名单输入。合同说明见 `VIEW_CONTRACT.md`。
 
+主剖面的真实切面不筛构件；剖后投影按冻结的语义类型集合处理，排除重复瓦件、椽网格和三角内部边。CAD 图层先按几何线类确定，隐藏状态只作覆盖，避免可见线覆盖外轮廓与内部特征的基础线宽。
+
 ```powershell
 workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.build_geometry `
   --fixture 验证材料\06_T0_CAD可行性验证\t0b-v2-resolved-local-assembly.json `

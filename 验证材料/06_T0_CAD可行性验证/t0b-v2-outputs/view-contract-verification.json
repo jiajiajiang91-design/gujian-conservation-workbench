@@ -10,7 +10,7 @@
   "inputs": {
     "fixture": {
       "path": "t0b-v2-resolved-local-assembly.json",
-      "sha256": "65ae75a97730d1da3c6923e261a27ca24889e972903e7e63320031af22e7a407"
+      "sha256": "c0f78ae17bbf0d27cf105f82990102654a17431d3080c11ff66dd640d62e96d1"
     },
     "manifest": {
       "path": "geometry-manifest.json",
@@ -67,14 +67,14 @@
     {
       "name": "view contract signature",
       "passed": true,
-      "actual": "e33b8aa1ee55f1960ccc50f6ed17fe5c39649141873c6af5b5f98d716714bf8e",
-      "expected": "e33b8aa1ee55f1960ccc50f6ed17fe5c39649141873c6af5b5f98d716714bf8e"
+      "actual": "88af27ce8027e0d80215de80e046a701f5bfb28006ce0e15db055aeec39ffa76",
+      "expected": "88af27ce8027e0d80215de80e046a701f5bfb28006ce0e15db055aeec39ffa76"
     },
     {
       "name": "view contract revision",
       "passed": true,
-      "actual": "cb7190dc-74d8-5ce5-9719-4ecd493acc60",
-      "expected": "cb7190dc-74d8-5ce5-9719-4ecd493acc60"
+      "actual": "19fd061d-7fc7-55fe-a243-3341f7e7e552",
+      "expected": "19fd061d-7fc7-55fe-a243-3341f7e7e552"
     },
     {
       "name": "floorPlan selection set",

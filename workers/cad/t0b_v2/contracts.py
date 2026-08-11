@@ -104,6 +104,48 @@ REQUIRED_CAD_LAYERS = {
     "GJ-CONDITION",
 }
 
+PRIMARY_SECTION_DEPTH_TYPES = {
+    "floorPlan": {"columnBase", "foundation", "groundLayer", "step", "terrace"},
+    "transverseSection": {
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "purlin",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall",
+    },
+    "longitudinalSection": {
+        "bearingBlock",
+        "bracketArm",
+        "bracketSeat",
+        "column",
+        "columnBase",
+        "doorFrame",
+        "doorLeaf",
+        "eaveBeam",
+        "foundation",
+        "groundLayer",
+        "interiorPost",
+        "latticeWindow",
+        "purlin",
+        "step",
+        "terrace",
+        "tieBeam",
+        "wall",
+    },
+}
+
 
 def _require(condition: bool, message: str) -> None:
     if not condition:
@@ -379,6 +421,7 @@ def validate_fixture(fixture: dict) -> dict:
             _require(all(_close(a, b) for a, b in zip(retained, depth)), f"{view['id']} section retained direction must match view depth")
             _require(0 < section.get("cutToleranceMm", 0) <= geometry_validation["curveToleranceMm"], f"{view['id']} section tolerance is too loose")
             _require(section.get("stabilityProbeMm") == 0.5, f"{view['id']} must freeze a 0.5 mm section stability probe")
+            _require(set(section.get("depthProjectionTypes", [])) == PRIMARY_SECTION_DEPTH_TYPES[view["id"]], f"{view['id']} depth projection types must match the frozen semantic set")
         elif view["derivation"] == "visibleLineProjection":
             direction = _vector(view.get("direction"), f"{view['id']}.direction")
             _require(view.get("directionSemantics") == "camera-to-model", f"{view['id']} direction semantics are ambiguous")
@@ -428,20 +471,28 @@ def validate_fixture(fixture: dict) -> dict:
     _require(set(projection_policy.get("structuralLineClasses", [])) == {"cut", "silhouette", "feature", "componentBoundary"}, "structural line classes are incomplete")
     _require(set(projection_policy.get("visibilityClasses", [])) == {"visible", "hidden"}, "visibility classes are incomplete")
     _require(
-        requirements.get("lineClassLayerMap")
+        requirements.get("baseClassLayerMap")
         == {
             "cut": "GJ-CUT",
             "silhouette": "GJ-OUTLINE",
-            "feature": "GJ-OUTLINE",
+            "feature": "GJ-PROJECTION",
             "componentBoundary": "GJ-PROJECTION",
-            "visible": "GJ-PROJECTION",
-            "hidden": "GJ-HIDDEN",
             "axis": "GJ-AXIS",
             "dimension": "GJ-DIMENSION",
             "annotation": "GJ-TEXT",
             "hatch": "GJ-HATCH",
         },
-        "line classes must map to the frozen CAD layers",
+        "base line classes must map to the frozen CAD layers",
+    )
+    _require(requirements.get("visibilityLayerOverride") == {"visible": None, "hidden": "GJ-HIDDEN"}, "hidden visibility must override the base CAD layer without remapping visible lines")
+    _require(
+        requirements.get("scalePolicy")
+        == {
+            "primary": ["1:50"],
+            "detail": ["1:10", "1:15"],
+            "detail15Use": "team demo layout only; drawing review must confirm printed readability",
+        },
+        "view scale policy is incomplete",
     )
     _require(requirements.get("detailTracePolicy") == {"sourceEntityCoverage": 1.0, "geometryRevisionRequired": True, "derivationTransformRequired": True}, "detail trace policy is incomplete")
     _require(set(requirements.get("nativeCadEntities", [])) == REQUIRED_NATIVE_CAD_ENTITIES, "native CAD entity requirements are incomplete")
