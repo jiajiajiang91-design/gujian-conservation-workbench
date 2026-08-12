@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+node_modules/
+.npm-cache/
+dist/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.vite/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini

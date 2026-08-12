@@ -1,0 +1,42 @@
+{
+  "name": "gujian-conservation-workbench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "concurrently --kill-others-on-fail \"node server.mjs\" \"vite --host 127.0.0.1 --port 5173\"",
+    "dev:test": "vite --host 127.0.0.1 --port 5174 --strictPort",
+    "build": "tsc -b && vite build",
+    "check": "npm run typecheck && npm run test",
+    "typecheck": "tsc -b --pretty false",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run",
+    "test:e2e": "node scripts/run-e2e.mjs"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.0.0",
+    "fflate": "^0.8.2",
+    "lucide-react": "^0.539.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.2.1",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.0",
+    "fake-indexeddb": "^6.2.2",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1",
+    "vitest": "^3.2.4"
+  }
+}

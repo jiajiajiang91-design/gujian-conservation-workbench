@@ -1,0 +1,100 @@
+{
+  "packageVersion": 1,
+  "revision": {
+    "schemaVersion": 2,
+    "revision": {
+      "id": "11000000-0000-4000-8000-000000000002",
+      "previousRevisionId": null,
+      "number": 1,
+      "createdAt": "2026-08-10T00:00:00.000Z",
+      "createdByActorId": "11000000-0000-4000-8000-000000000003"
+    },
+    "project": {
+      "id": "11000000-0000-4000-8000-000000000001",
+      "name": "高都古建保护归档示例",
+      "code": "DEMO-GAODU",
+      "status": "active",
+      "createdAt": "2026-08-10T00:00:00.000Z",
+      "updatedAt": "2026-08-10T00:00:00.000Z"
+    },
+    "buildings": [
+      {
+        "id": "11000000-0000-4000-8000-000000000010",
+        "projectId": "11000000-0000-4000-8000-000000000001",
+        "name": "正房",
+        "location": "高都镇"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "11000000-0000-4000-8000-000000000020",
+        "projectId": "11000000-0000-4000-8000-000000000001",
+        "title": "现状立面成果归档代理验证",
+        "requirements": [],
+        "standardRefs": ["项目任务书中的成果要求"],
+        "roleAssignments": [],
+        "scopeConfirmedAt": "2026-08-10T00:00:00.000Z"
+      }
+    ],
+    "evidence": [],
+    "entities": [
+      {
+        "id": "11000000-0000-4000-8000-000000000030",
+        "buildingId": "11000000-0000-4000-8000-000000000010",
+        "parentId": null,
+        "kind": "building-facade",
+        "name": "正立面"
+      },
+      {
+        "id": "11000000-0000-4000-8000-000000000031",
+        "buildingId": "11000000-0000-4000-8000-000000000010",
+        "parentId": "11000000-0000-4000-8000-000000000030",
+        "kind": "bay",
+        "name": "左次间"
+      },
+      {
+        "id": "11000000-0000-4000-8000-000000000032",
+        "buildingId": "11000000-0000-4000-8000-000000000010",
+        "parentId": "11000000-0000-4000-8000-000000000030",
+        "kind": "bay",
+        "name": "明间"
+      },
+      {
+        "id": "11000000-0000-4000-8000-000000000033",
+        "buildingId": "11000000-0000-4000-8000-000000000010",
+        "parentId": "11000000-0000-4000-8000-000000000030",
+        "kind": "bay",
+        "name": "右次间"
+      }
+    ],
+    "observations": [],
+    "candidates": [],
+    "issues": [
+      {
+        "id": "11000000-0000-4000-8000-000000000040",
+        "projectId": "11000000-0000-4000-8000-000000000001",
+        "type": "rule-conflict",
+        "severity": "high",
+        "subjectRefs": ["11000000-0000-4000-8000-000000000030"],
+        "blockerCodes": ["DIMENSION_CONFLICT_4400"],
+        "status": "open"
+      },
+      {
+        "id": "11000000-0000-4000-8000-000000000041",
+        "projectId": "11000000-0000-4000-8000-000000000001",
+        "type": "evidence-gap",
+        "severity": "high",
+        "subjectRefs": ["11000000-0000-4000-8000-000000000030"],
+        "blockerCodes": ["MEASUREMENT_RECORD_MISSING", "ROOF_RISE_MISSING"],
+        "status": "open"
+      }
+    ]
+  },
+  "assets": [],
+  "modelRuns": [],
+  "ruleRuns": [],
+  "decisions": [],
+  "artifacts": [],
+  "deliveries": [],
+  "audit": { "included": false, "headHash": null }
+}

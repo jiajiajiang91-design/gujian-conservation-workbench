@@ -1,0 +1,23 @@
+{
+  "id": "11000000-0000-4000-8000-000000000050",
+  "projectId": "11000000-0000-4000-8000-000000000001",
+  "fixtureId": "11000000-0000-4000-8000-000000000051",
+  "purpose": "proxy-artifact-generation",
+  "geometry": {
+    "baySpans": [
+      { "entityId": "11000000-0000-4000-8000-000000000031", "width": { "value": 3600, "unit": "mm" } },
+      { "entityId": "11000000-0000-4000-8000-000000000032", "width": { "value": 4200, "unit": "mm" } },
+      { "entityId": "11000000-0000-4000-8000-000000000033", "width": { "value": 3600, "unit": "mm" } }
+    ],
+    "baseHeight": { "value": 300, "unit": "mm" },
+    "columnHeight": { "value": 3800, "unit": "mm" },
+    "roofRise": { "value": 2300, "unit": "mm" },
+    "eaveProjection": { "value": 900, "unit": "mm" }
+  },
+  "limitations": [
+    "本输入是独立演示 fixture，不是现场实测记录。",
+    "现有资料记载通面阔 15800 mm，三开间合计 11400 mm，保留 4400 mm 差异。",
+    "屋面举高来自演示输入，不能补写为项目事实。",
+    "成果仅用于代理流程验证，不可用于正式签发。"
+  ]
+}
