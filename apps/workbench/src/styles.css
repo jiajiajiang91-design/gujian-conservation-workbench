@@ -116,6 +116,16 @@ h1 { font: 600 25px/1.32 "Microsoft YaHei", sans-serif; letter-spacing: -.04em; 
 .package-grid article strong { font-size: 14px; }
 .package-grid article p { min-height: 52px; color: #6d756e; font-size: 11px; line-height: 1.7; }
 .package-grid article button { margin-top: auto; padding: 8px 11px; border: 1px solid #173f35; background: #fff; color: #173f35; font-size: 10px; }
+.roundtrip-check { margin-top: 14px; padding: 16px; border: 1px solid #bfcfc6; background: #f1f6f3; }
+.roundtrip-check > div:first-child { display: flex; align-items: flex-start; gap: 10px; color: #2f6855; }
+.roundtrip-check > div:first-child span { display: grid; gap: 4px; }
+.roundtrip-check strong { color: #2e3932; font-size: 12px; }
+.roundtrip-check small { color: #6d786f; font-size: 10px; line-height: 1.6; }
+.roundtrip-check > button { margin-top: 12px; padding: 8px 11px; border: 0; background: #173f35; color: #fff; font-size: 10px; }
+.roundtrip-check dl { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin: 14px 0 0; border-top: 1px solid #cfdbd4; }
+.roundtrip-check dl div { min-width: 0; padding: 10px 8px 0 0; display: grid; gap: 4px; }
+.roundtrip-check dt { color: #7a837c; font-size: 9px; }
+.roundtrip-check dd { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; color: #31463c; font: 9px Consolas, monospace; }
 .issue-count { padding: 5px 8px; border: 1px solid #d6c3a9; background: #faf5ec; color: #6c4e28; font-size: 10px; }
 .provenance-legend { display: flex; gap: 7px; margin: 16px 0; padding-bottom: 14px; border-bottom: 1px solid #e0e4e1; }
 .task-setup { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px 18px; padding: 18px; border: 1px solid #bfcfc6; background: #f1f6f3; }

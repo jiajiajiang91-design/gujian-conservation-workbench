@@ -28,6 +28,17 @@ interface ServerStatus {
   modelConfigured: boolean;
 }
 
+interface RoundTripReceipt {
+  packageSha256: string;
+  packageBytes: number;
+  projectId: string;
+  sourceRevisionId: string;
+  importedRevisionId: string;
+  evidenceCount: number;
+  ruleRunCount: number;
+  decisionCount: number;
+}
+
 export function App() {
   const [projects, setProjects] = useState<readonly ProjectSummary[]>([]);
   const [selected, setSelected] = useState<ProjectHead | null>(null);
@@ -42,13 +53,13 @@ export function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [modelProgress, setModelProgress] = useState<ModelRunProgress | null>(null);
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
+  const [roundTripReceipt, setRoundTripReceipt] = useState<RoundTripReceipt | null>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const evidenceInput = useRef<HTMLInputElement>(null);
 
   const refresh = async () => setProjects(await listLocalProjects());
   const loadProject = async (projectId: string) => {
-    const storedHead = await projectRepository.getProjectHead(projectId);
-    const head = storedHead ? await workflow.evaluate(storedHead, localActorId()) : null;
+    const head = await projectRepository.getProjectHead(projectId);
     const [runs, rules, decisions] = await Promise.all([
       projectRepository.getProjectModelRuns(projectId),
       projectRepository.getProjectRuleRuns(projectId),
@@ -145,6 +156,65 @@ export function App() {
     setProjectDecisions([]);
     await refresh();
     setNotice("本地项目库已清空，可以验证空库回导");
+  };
+
+  const verifyEmptyLibraryRoundTrip = async () => {
+    if (!selected) return;
+    setError(null);
+    setRoundTripReceipt(null);
+    const expected = {
+      projectId: selected.projectId,
+      revisionId: selected.revisionId,
+      evidenceIds: selected.snapshot.evidences.map((item) => item.id).sort(),
+      assetIds: selected.snapshot.evidences.map((item) => item.assetId).sort(),
+    };
+    try {
+      const bytes = await projectPackages.exportZip(selected.projectId);
+      const digestInput = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+      const packageSha256 = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", digestInput)))
+        .map((value) => value.toString(16).padStart(2, "0"))
+        .join("");
+      await projectRepository.clearAllData();
+      setSelected(null);
+      setProjectModelRuns([]);
+      setProjectRuleRuns([]);
+      setProjectDecisions([]);
+
+      const importedProjectId = await projectPackages.import(bytes, "roundtrip.gujian.zip", localActorId());
+      const importedHead = await projectRepository.getProjectHead(importedProjectId);
+      if (!importedHead) throw new Error("ROUNDTRIP_PROJECT_MISSING");
+      const importedEvidenceIds = importedHead.snapshot.evidences.map((item) => item.id).sort();
+      const importedAssetIds = importedHead.snapshot.evidences.map((item) => item.assetId).sort();
+      if (
+        importedHead.projectId !== expected.projectId
+        || !importedHead.snapshot.adoptedRecordRefs.includes(`revision:${expected.revisionId}`)
+        || JSON.stringify(importedEvidenceIds) !== JSON.stringify(expected.evidenceIds)
+        || JSON.stringify(importedAssetIds) !== JSON.stringify(expected.assetIds)
+      ) {
+        throw new Error("ROUNDTRIP_IDENTITY_MISMATCH");
+      }
+      const [rules, decisions] = await Promise.all([
+        projectRepository.getProjectRuleRuns(importedProjectId),
+        projectRepository.getProjectDecisions(importedProjectId),
+      ]);
+      await refresh();
+      await loadProject(importedProjectId);
+      setActiveStage("package");
+      setRoundTripReceipt({
+        packageSha256,
+        packageBytes: bytes.byteLength,
+        projectId: importedProjectId,
+        sourceRevisionId: expected.revisionId,
+        importedRevisionId: importedHead.revisionId,
+        evidenceCount: importedHead.snapshot.evidences.length,
+        ruleRunCount: rules.length,
+        decisionCount: decisions.length,
+      });
+      setNotice("已用当前项目 ZIP 清空本地库并完成回导校验");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "空库回导校验失败");
+      await refresh();
+    }
   };
 
   const uploadEvidence = async (file: File) => {
@@ -426,6 +496,24 @@ export function App() {
                   <article><FileJson /><strong>project.json</strong><p>适合检查结构化记录，不包含二进制文件本体。</p><button type="button" onClick={() => void downloadProject("json")}>导出 JSON</button></article>
                   <article><PackageOpen /><strong>project.gujian.zip</strong><p>包含资料、模型与规则运行、人工决定和审计事件，可用于空库回导。</p><button type="button" onClick={() => void downloadProject("zip")}>导出 ZIP</button></article>
                 </div>
+                <section className="roundtrip-check">
+                  <div>
+                    <ShieldCheck size={17} />
+                    <span><strong>空库回导验证</strong><small>以当前项目、当前版本实时生成 ZIP，清空 IndexedDB v3 后重新导入；不使用预置项目。</small></span>
+                  </div>
+                  <button type="button" onClick={() => void verifyEmptyLibraryRoundTrip()}>导出 ZIP 并验证空库回导</button>
+                  {roundTripReceipt && (
+                    <dl aria-label="空库回导结果">
+                      <div><dt>项目</dt><dd>{roundTripReceipt.projectId.slice(0, 8).toUpperCase()}</dd></div>
+                      <div><dt>来源版本</dt><dd>{roundTripReceipt.sourceRevisionId.slice(0, 8)}</dd></div>
+                      <div><dt>回导版本</dt><dd>{roundTripReceipt.importedRevisionId.slice(0, 8)}</dd></div>
+                      <div><dt>资料</dt><dd>{roundTripReceipt.evidenceCount}</dd></div>
+                      <div><dt>规则</dt><dd>{roundTripReceipt.ruleRunCount}</dd></div>
+                      <div><dt>人工决定</dt><dd>{roundTripReceipt.decisionCount}</dd></div>
+                      <div><dt>ZIP SHA-256</dt><dd>{roundTripReceipt.packageSha256.slice(0, 12)}…</dd></div>
+                    </dl>
+                  )}
+                </section>
               </section>
             )}
           </div>

@@ -21,5 +21,8 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "问题队列与必要人工节点" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "确认一次任务设置" }));
     expect(await screen.findByText("人工节点 01 已完成")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /项目包/ }));
+    expect(screen.getByRole("button", { name: "导出 ZIP 并验证空库回导" })).toBeInTheDocument();
   });
 });
