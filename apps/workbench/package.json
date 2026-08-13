@@ -10,6 +10,9 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@gujian/application": "workspace:*",
+    "@gujian/domain": "workspace:*",
+    "@gujian/infrastructure": "workspace:*",
     "lucide-react": "0.539.0",
     "react": "19.1.1",
     "react-dom": "19.1.1"
@@ -20,6 +23,7 @@
     "@types/react": "19.1.10",
     "@types/react-dom": "19.1.7",
     "@vitejs/plugin-react": "4.7.0",
+    "fake-indexeddb": "6.2.5",
     "jsdom": "26.1.0",
     "typescript": "5.9.2",
     "vite": "7.1.1",

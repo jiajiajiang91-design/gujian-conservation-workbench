@@ -9,6 +9,16 @@ export interface ProjectHead {
   readonly snapshot: ProjectSnapshot;
 }
 
+export interface ProjectSummary {
+  readonly projectId: string;
+  readonly currentRevisionId: string;
+  readonly name: string;
+  readonly buildingName: string;
+  readonly status: "active" | "archived";
+  readonly updatedAt: string;
+  readonly auditHeadHash: string;
+}
+
 export interface CommandReceipt {
   readonly commandId: string;
   readonly commandType: ProjectCommandType;
@@ -34,6 +44,11 @@ export interface ProjectTransaction {
 
 export interface ProjectRepositoryPort {
   transaction<T>(projectId: string, operation: (transaction: ProjectTransaction) => Promise<T>): Promise<T>;
+}
+
+export interface ProjectQueryPort {
+  listProjects(): Promise<readonly ProjectSummary[]>;
+  getProjectHead(projectId: string): Promise<ProjectHead | null>;
 }
 
 export interface AuthorizationPort {

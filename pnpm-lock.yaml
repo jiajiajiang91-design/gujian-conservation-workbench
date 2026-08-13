@@ -39,6 +39,15 @@ importers:
 
   apps/workbench:
     dependencies:
+      '@gujian/application':
+        specifier: workspace:*
+        version: link:../../packages/application
+      '@gujian/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@gujian/infrastructure':
+        specifier: workspace:*
+        version: link:../../packages/infrastructure
       lucide-react:
         specifier: 0.539.0
         version: 0.539.0(react@19.1.1)
@@ -64,6 +73,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: 4.7.0
         version: 4.7.0(vite@7.1.1(@types/node@24.2.1))
+      fake-indexeddb:
+        specifier: 6.2.5
+        version: 6.2.5
       jsdom:
         specifier: 26.1.0
         version: 26.1.0
