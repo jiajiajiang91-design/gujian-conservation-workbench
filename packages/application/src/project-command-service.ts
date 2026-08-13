@@ -30,6 +30,12 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
   if (command.commandType === "ImportProjectSnapshot" && command.payload.modelRuns.some((run) => run.projectId !== command.projectId)) {
     throw new CommandError("PROJECT_REF_MISMATCH", "imported model runs must match command projectId");
   }
+  if (command.commandType === "ImportProjectSnapshot" && command.payload.ruleRuns.some((run) => run.projectId !== command.projectId)) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "imported rule runs must match command projectId");
+  }
+  if (command.commandType === "ImportProjectSnapshot" && command.payload.decisions.some((decision) => decision.projectId !== command.projectId)) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "imported decisions must match command projectId");
+  }
   if (command.commandType === "ImportEvidence" && (
     command.payload.evidence.projectId !== command.projectId ||
     command.payload.asset.projectId !== command.projectId ||
@@ -51,6 +57,21 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
     ))
   )) {
     throw new CommandError("COMMAND_INVALID", "model run and candidate closure is invalid");
+  }
+  if (command.commandType === "CommitRuleEvaluation" && (
+    command.payload.ruleRun.projectId !== command.projectId ||
+    command.payload.ruleRun.inputRevisionId !== command.expectedRevisionId ||
+    command.payload.issues.some((issue) => issue.projectId !== command.projectId || issue.producer.producerType !== "rule" || issue.producer.ruleRunId !== command.payload.ruleRun.id) ||
+    command.payload.ruleRun.results.flatMap((result) => result.issueRefs).some((issueId) => !command.payload.issues.some((issue) => issue.id === issueId))
+  )) {
+    throw new CommandError("COMMAND_INVALID", "rule run and issue closure is invalid");
+  }
+  if (command.commandType === "DecideCandidate" && (
+    command.payload.decision.projectId !== command.projectId ||
+    command.payload.decision.actorId !== command.actorId ||
+    command.payload.decision.commandId !== command.commandId
+  )) {
+    throw new CommandError("COMMAND_INVALID", "candidate decision closure is invalid");
   }
 }
 
@@ -112,6 +133,49 @@ function appendModelResult(
   return ProjectSnapshotSchema.parse({
     ...head.snapshot,
     candidates: [...head.snapshot.candidates, command.payload.candidate],
+  });
+}
+
+function confirmTaskSetup(
+  head: ProjectHead,
+  command: Extract<ProjectCommand, { commandType: "ConfirmTaskSetup" }>,
+): ProjectSnapshot {
+  if (head.snapshot.taskDefinitions.some((task) => task.confirmedAt !== null)) {
+    throw new CommandError("COMMAND_INVALID", "task setup is already confirmed");
+  }
+  return ProjectSnapshotSchema.parse({ ...head.snapshot, taskDefinitions: [command.payload.taskDefinition] });
+}
+
+function appendRuleEvaluation(
+  head: ProjectHead,
+  command: Extract<ProjectCommand, { commandType: "CommitRuleEvaluation" }>,
+): ProjectSnapshot {
+  const superseded = head.snapshot.issues.map((issue) => (
+    issue.status === "open" && issue.producer.producerType === "rule"
+      ? { ...issue, status: "superseded" as const, resolvedAt: command.issuedAt }
+      : issue
+  ));
+  return ProjectSnapshotSchema.parse({ ...head.snapshot, issues: [...superseded, ...command.payload.issues] });
+}
+
+function decideCandidate(
+  head: ProjectHead,
+  command: Extract<ProjectCommand, { commandType: "DecideCandidate" }>,
+): ProjectSnapshot {
+  const candidate = head.snapshot.candidates.find((item) => item.id === command.payload.candidateId);
+  const issue = head.snapshot.issues.find((item) => item.id === command.payload.decision.issueId);
+  if (!candidate || candidate.reviewStatus !== "unreviewed" || !issue || issue.status !== "open" || !issue.subjectRefs.includes(candidate.id)) {
+    throw new CommandError("COMMAND_INVALID", "candidate or issue is not open for decision");
+  }
+  const accepted = command.payload.decision.outcome === "accepted";
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
+    candidates: head.snapshot.candidates.map((item) => item.id === candidate.id
+      ? { ...item, reviewStatus: accepted ? "confirmed" as const : "rejected" as const }
+      : item),
+    issues: head.snapshot.issues.map((item) => item.id === issue.id
+      ? { ...item, status: accepted ? "resolved" as const : "rejected" as const, resolvedAt: command.issuedAt }
+      : item),
   });
 }
 
@@ -178,6 +242,12 @@ export class ProjectCommandService {
           ...(command.commandType === "ImportProjectSnapshot" && command.payload.modelRuns.length
             ? { modelRunsToPut: command.payload.modelRuns }
             : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.ruleRuns.length
+            ? { ruleRunsToPut: command.payload.ruleRuns }
+            : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.decisions.length
+            ? { decisionsToPut: command.payload.decisions }
+            : {}),
         });
       }
 
@@ -194,7 +264,13 @@ export class ProjectCommandService {
         ? appendFacts(head, command.payload.facts)
         : command.commandType === "ImportEvidence"
           ? appendEvidence(head, command)
-          : appendModelResult(head, command);
+          : command.commandType === "CommitModelRunResult"
+            ? appendModelResult(head, command)
+            : command.commandType === "ConfirmTaskSetup"
+              ? confirmTaskSetup(head, command)
+              : command.commandType === "CommitRuleEvaluation"
+                ? appendRuleEvaluation(head, command)
+                : decideCandidate(head, command);
       return transaction.commit({
         command,
         authoritativeActorId,
@@ -204,12 +280,24 @@ export class ProjectCommandService {
           ? command.payload.facts.map((fact) => fact.id)
           : command.commandType === "ImportEvidence"
             ? [command.payload.asset.id, command.payload.evidence.id, command.payload.parseRecord.id]
-            : [command.payload.run.id, ...(command.payload.candidate ? [command.payload.candidate.id] : [])],
+            : command.commandType === "CommitModelRunResult"
+              ? [command.payload.run.id, ...(command.payload.candidate ? [command.payload.candidate.id] : [])]
+              : command.commandType === "ConfirmTaskSetup"
+                ? [command.payload.taskDefinition.id]
+                : command.commandType === "CommitRuleEvaluation"
+                  ? [command.payload.ruleRun.id, ...command.payload.issues.map((issue) => issue.id)]
+                  : [command.payload.candidateId, command.payload.decision.id, command.payload.decision.issueId],
         ...(command.commandType === "ImportEvidence"
           ? { assetWrites: { records: [command.payload.asset], stagingSessionId: command.payload.stagingSessionId } }
           : {}),
         ...(command.commandType === "CommitModelRunResult"
           ? { modelRunsToPut: [command.payload.run] }
+          : {}),
+        ...(command.commandType === "CommitRuleEvaluation"
+          ? { ruleRunsToPut: [command.payload.ruleRun] }
+          : {}),
+        ...(command.commandType === "DecideCandidate"
+          ? { decisionsToPut: [command.payload.decision] }
           : {}),
       });
     });

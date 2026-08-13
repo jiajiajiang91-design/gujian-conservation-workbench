@@ -49,6 +49,30 @@ export const DecisionSchema = z.object({
   }
 });
 
+export const RuleResultSchema = z.object({
+  ruleId: z.string().min(1).max(160),
+  outcome: z.enum(["passed", "issue"]),
+  inputRefs: z.array(NonEmptyRefSchema).max(5_000),
+  issueRefs: z.array(UuidSchema).max(5_000),
+  message: z.string().min(1).max(5_000),
+}).strict();
+
+export const RuleRunSchema = z.object({
+  id: UuidSchema,
+  projectId: UuidSchema,
+  inputRevisionId: UuidSchema,
+  ruleSetVersion: z.string().min(1).max(80),
+  status: z.literal("completed"),
+  producer: z.object({ producerType: z.literal("rule"), ruleRunId: UuidSchema }).strict(),
+  results: z.array(RuleResultSchema).min(1).max(1_000),
+  startedAt: IsoDateTimeSchema,
+  completedAt: IsoDateTimeSchema,
+}).strict().superRefine((value, context) => {
+  if (value.producer.ruleRunId !== value.id) {
+    context.addIssue({ code: "custom", message: "producer ruleRunId must match run id", path: ["producer", "ruleRunId"] });
+  }
+});
+
 export const ModelUsageSchema = z.object({
   promptTokens: z.number().int().nonnegative(),
   completionTokens: z.number().int().nonnegative(),
@@ -106,3 +130,5 @@ export type AuditEvent = z.infer<typeof AuditEventSchema>;
 export type ModelRun = z.infer<typeof ModelRunSchema>;
 export type ModelRunEvent = z.infer<typeof ModelRunEventSchema>;
 export type ModelCandidate = z.infer<typeof ModelCandidateSchema>;
+export type RuleRun = z.infer<typeof RuleRunSchema>;
+export type Decision = z.infer<typeof DecisionSchema>;

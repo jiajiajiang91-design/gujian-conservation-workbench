@@ -5,12 +5,13 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { ProjectHead, ProjectSummary } from "@gujian/application";
-import type { ModelRun } from "@gujian/domain";
+import type { Decision, ModelRun, RuleRun } from "@gujian/domain";
 
 import type { ModelRunProgress } from "./model-run-client";
 import {
   createLocalProject, evidenceIngestion, listLocalProjects, localActorId,
   modelRuns, projectPackages, projectRepository,
+  workflow,
 } from "./workbench";
 
 const stages = [
@@ -31,6 +32,9 @@ export function App() {
   const [projects, setProjects] = useState<readonly ProjectSummary[]>([]);
   const [selected, setSelected] = useState<ProjectHead | null>(null);
   const [projectModelRuns, setProjectModelRuns] = useState<readonly ModelRun[]>([]);
+  const [projectRuleRuns, setProjectRuleRuns] = useState<readonly RuleRun[]>([]);
+  const [projectDecisions, setProjectDecisions] = useState<readonly Decision[]>([]);
+  const [decisionReasons, setDecisionReasons] = useState<Record<string, string>>({});
   const [activeStage, setActiveStage] = useState<StageId>("evidence");
   const [query, setQuery] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -43,12 +47,17 @@ export function App() {
 
   const refresh = async () => setProjects(await listLocalProjects());
   const loadProject = async (projectId: string) => {
-    const [head, runs] = await Promise.all([
-      projectRepository.getProjectHead(projectId),
+    const storedHead = await projectRepository.getProjectHead(projectId);
+    const head = storedHead ? await workflow.evaluate(storedHead, localActorId()) : null;
+    const [runs, rules, decisions] = await Promise.all([
       projectRepository.getProjectModelRuns(projectId),
+      projectRepository.getProjectRuleRuns(projectId),
+      projectRepository.getProjectDecisions(projectId),
     ]);
     setSelected(head);
     setProjectModelRuns(runs);
+    setProjectRuleRuns(rules);
+    setProjectDecisions(decisions);
   };
 
   useEffect(() => {
@@ -65,6 +74,8 @@ export function App() {
   );
   const parsedEvidenceCount = selected?.snapshot.parseRecords.filter((record) => record.status === "parsed" && record.extractedText?.trim()).length ?? 0;
   const modelRunning = modelProgress && !["succeeded", "failed", "cancelled"].includes(modelProgress.phase);
+  const confirmedTask = selected?.snapshot.taskDefinitions.find((task) => task.confirmedAt !== null) ?? null;
+  const openIssues = selected?.snapshot.issues.filter((issue) => issue.status === "open") ?? [];
 
   const chooseProject = async (projectId: string) => {
     setError(null);
@@ -83,8 +94,11 @@ export function App() {
         locationText: String(data.get("locationText") ?? "").trim(),
       });
       await refresh();
-      setSelected(head);
+      const evaluated = await workflow.evaluate(head, localActorId());
+      setSelected(evaluated);
       setProjectModelRuns([]);
+      setProjectRuleRuns(await projectRepository.getProjectRuleRuns(head.projectId));
+      setProjectDecisions([]);
       setActiveStage("evidence");
       setShowCreate(false);
     } catch (reason) {
@@ -127,6 +141,8 @@ export function App() {
     await projectRepository.clearAllData();
     setSelected(null);
     setProjectModelRuns([]);
+    setProjectRuleRuns([]);
+    setProjectDecisions([]);
     await refresh();
     setNotice("本地项目库已清空，可以验证空库回导");
   };
@@ -136,7 +152,9 @@ export function App() {
     setError(null);
     try {
       const updated = await evidenceIngestion.ingest(selected, localActorId(), file);
-      setSelected(updated);
+      const evaluated = await workflow.evaluate(updated, localActorId());
+      setSelected(evaluated);
+      setProjectRuleRuns(await projectRepository.getProjectRuleRuns(updated.projectId));
       await refresh();
       setNotice(`资料“${file.name}”已保存并建立来源关系`);
     } catch (reason) {
@@ -162,13 +180,63 @@ export function App() {
     setModelProgress(null);
     try {
       const outcome = await modelRuns.runEvidenceSummary(selected, localActorId(), setModelProgress);
-      setSelected(outcome.head);
+      const evaluated = await workflow.evaluate(outcome.head, localActorId());
+      setSelected(evaluated);
       setProjectModelRuns(await projectRepository.getProjectModelRuns(selected.projectId));
+      setProjectRuleRuns(await projectRepository.getProjectRuleRuns(selected.projectId));
       setActiveStage("candidates");
       setNotice(outcome.candidate ? "Kimi 运行完成，结果已进入候选区" : `模型运行已记录：${outcome.run.status}`);
       await refresh();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "模型运行失败");
+    }
+  };
+
+  const confirmTaskSetup = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selected) return;
+    const data = new FormData(event.currentTarget);
+    const split = (value: FormDataEntryValue | null) => String(value ?? "").split(/[，,\n]/).map((item) => item.trim()).filter(Boolean);
+    try {
+      const updated = await workflow.confirmTaskSetup(selected, localActorId(), {
+        taskName: String(data.get("taskName") ?? "").trim(),
+        scope: split(data.get("scope")),
+        regulationRefs: split(data.get("regulations")),
+        deliverables: ["结构化项目包", "AI 资料候选与问题清单"],
+      });
+      setSelected(updated);
+      setProjectRuleRuns(await projectRepository.getProjectRuleRuns(selected.projectId));
+      await refresh();
+      setNotice("任务范围、规范和责任角色已一次确认");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "任务设置失败");
+    }
+  };
+
+  const decideCandidate = async (issueId: string, candidateId: string, outcome: "accepted" | "rejected") => {
+    if (!selected) return;
+    const typedReason = decisionReasons[issueId]?.trim() ?? "";
+    if (outcome === "rejected" && !typedReason) {
+      setError("驳回候选时需要填写理由");
+      return;
+    }
+    try {
+      const updated = await workflow.decideCandidate(selected, localActorId(), {
+        candidateId,
+        issueId,
+        outcome,
+        reason: outcome === "accepted"
+          ? "接受为已核对的模型候选；不转为现场实测或正式事实。"
+          : typedReason,
+      });
+      setSelected(updated);
+      setProjectRuleRuns(await projectRepository.getProjectRuleRuns(selected.projectId));
+      setProjectDecisions(await projectRepository.getProjectDecisions(selected.projectId));
+      setDecisionReasons((current) => ({ ...current, [issueId]: "" }));
+      await refresh();
+      setNotice(outcome === "accepted" ? "候选已接受，仍保持模型来源" : "候选已驳回并记录理由");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "候选处理失败");
     }
   };
 
@@ -297,9 +365,57 @@ export function App() {
             )}
 
             {activeStage === "issues" && (
-              <section className="evidence-board">
-                <header className="board-heading"><div><p className="eyebrow">ISSUE QUEUE</p><h3>问题队列</h3></div></header>
-                <div className="panel-empty">问题队列将在下一任务接入规则结果、人工决定和候选处理。</div>
+              <section className="evidence-board issue-board">
+                <header className="board-heading">
+                  <div><p className="eyebrow">ISSUE QUEUE</p><h3>问题队列与必要人工节点</h3></div>
+                  <span className="issue-count">{openIssues.length} 个待处理</span>
+                </header>
+                <div className="provenance-legend" aria-label="来源图例">
+                  <span className="producer-badge model">模型候选</span>
+                  <span className="producer-badge rule">规则结果</span>
+                  <span className="producer-badge human">人工决定</span>
+                  <span className="producer-badge demo">演示数据</span>
+                </div>
+                {!confirmedTask ? (
+                  <form className="task-setup" onSubmit={(event) => void confirmTaskSetup(event)}>
+                    <div><span className="node-label">人工节点 01</span><h4>一次确认任务设置</h4><p>范围、适用规范和责任角色只在任务开始时设置一次。满足自动条件的后续检查直接执行。</p></div>
+                    <label>任务名称<input name="taskName" required defaultValue="资料整理与项目包验证" /></label>
+                    <label>任务范围<textarea name="scope" required defaultValue={"整理原始资料\n生成 AI 候选\n处理证据缺失问题\n导出与回导项目包"} /></label>
+                    <label>适用规范或项目约定<textarea name="regulations" defaultValue="项目资料真实性与来源追溯要求" /></label>
+                    <button type="submit">确认一次任务设置</button>
+                  </form>
+                ) : (
+                  <div className="task-summary"><span className="node-label complete">人工节点 01 已完成</span><strong>{confirmedTask.name}</strong><small>{confirmedTask.scope.join(" · ")}</small></div>
+                )}
+                <div className="issue-list">
+                  {openIssues.filter((issue) => issue.sourceRef !== "rule:task-setup-required").map((issue) => {
+                    const candidate = selected.snapshot.candidates.find((item) => issue.subjectRefs.includes(item.id));
+                    const canDecide = issue.sourceRef === "rule:model-candidate-review" && candidate?.reviewStatus === "unreviewed";
+                    return (
+                      <article className="issue-card" key={issue.id}>
+                        <div className="issue-meta"><span className={`issue-severity ${issue.issueType}`}>{issue.issueType}</span><span className="producer-badge rule">规则</span><span>{issue.sourceRef.replace("rule:", "")}</span></div>
+                        <h4>{issue.description}</h4>
+                        {canDecide ? (
+                          <div className="decision-actions">
+                            <p>这是非唯一的专业取舍，需要一次人工决定。接受只改变候选核对状态，不改变数据来源。</p>
+                            <label>驳回理由<textarea value={decisionReasons[issue.id] ?? ""} onChange={(event) => setDecisionReasons((current) => ({ ...current, [issue.id]: event.target.value }))} placeholder="仅在驳回时必填" /></label>
+                            <div>
+                              <button type="button" className="accept-decision" onClick={() => void decideCandidate(issue.id, candidate.id, "accepted")}>接受为已核对候选</button>
+                              <button type="button" className="reject-decision" onClick={() => void decideCandidate(issue.id, candidate.id, "rejected")}>驳回候选</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="auto-guidance">{issue.issueType === "missingEvidence" ? "补充或更换资料后，规则会自动复检，不需要手动确认。" : "由对应候选处理动作关闭。"}</p>
+                        )}
+                      </article>
+                    );
+                  })}
+                  {!openIssues.filter((issue) => issue.sourceRef !== "rule:task-setup-required").length && confirmedTask && <div className="panel-empty">当前没有需要人工处理的异常。自动规则已完成。</div>}
+                </div>
+                <div className="workflow-ledgers">
+                  <section><strong>规则运行</strong>{projectRuleRuns.slice(-4).reverse().map((run) => <span key={run.id}><b className="producer-badge rule">规则</b>{run.ruleSetVersion} · {run.results.filter((result) => result.outcome === "issue").length} 项异常</span>)}</section>
+                  <section><strong>人工决定</strong>{projectDecisions.slice(-4).reverse().map((decision) => <span key={decision.id}><b className="producer-badge human">人工</b>{decision.outcome} · {decision.decidedAt.slice(0, 19).replace("T", " ")}</span>)}{!projectDecisions.length && <small>尚无人工决定</small>}</section>
+                </div>
               </section>
             )}
 
@@ -308,7 +424,7 @@ export function App() {
                 <header className="board-heading"><div><p className="eyebrow">PROJECT PACKAGE</p><h3>结构化项目包</h3></div></header>
                 <div className="package-grid">
                   <article><FileJson /><strong>project.json</strong><p>适合检查结构化记录，不包含二进制文件本体。</p><button type="button" onClick={() => void downloadProject("json")}>导出 JSON</button></article>
-                  <article><PackageOpen /><strong>project.gujian.zip</strong><p>包含项目数据、资料文件和审计事件，可用于空库回导。</p><button type="button" onClick={() => void downloadProject("zip")}>导出 ZIP</button></article>
+                  <article><PackageOpen /><strong>project.gujian.zip</strong><p>包含资料、模型与规则运行、人工决定和审计事件，可用于空库回导。</p><button type="button" onClick={() => void downloadProject("zip")}>导出 ZIP</button></article>
                 </div>
               </section>
             )}

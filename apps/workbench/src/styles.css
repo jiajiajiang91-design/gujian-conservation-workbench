@@ -99,6 +99,9 @@ h1 { font: 600 25px/1.32 "Microsoft YaHei", sans-serif; letter-spacing: -.04em; 
 .candidate-meta { display: flex; align-items: center; gap: 9px; color: #818881; font: 9px Consolas, monospace; }
 .producer-badge { padding: 3px 6px; border: 1px solid #becfc6; text-transform: uppercase; }
 .producer-badge.model { color: #225744; background: #edf5f0; }
+.producer-badge.rule { color: #6c4d1e; border-color: #d8c7a4; background: #faf5e9; }
+.producer-badge.human { color: #3d4772; border-color: #c3c9df; background: #f0f2f9; }
+.producer-badge.demo { color: #7a4a46; border-color: #d8c2bf; background: #faf1f0; }
 .candidate-card h4 { margin: 12px 0 14px; font-size: 15px; font-weight: 650; }
 .candidate-card > div:not(.candidate-meta) { margin-top: 11px; }
 .candidate-card > div > strong { color: #4e5851; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
@@ -113,6 +116,41 @@ h1 { font: 600 25px/1.32 "Microsoft YaHei", sans-serif; letter-spacing: -.04em; 
 .package-grid article strong { font-size: 14px; }
 .package-grid article p { min-height: 52px; color: #6d756e; font-size: 11px; line-height: 1.7; }
 .package-grid article button { margin-top: auto; padding: 8px 11px; border: 1px solid #173f35; background: #fff; color: #173f35; font-size: 10px; }
+.issue-count { padding: 5px 8px; border: 1px solid #d6c3a9; background: #faf5ec; color: #6c4e28; font-size: 10px; }
+.provenance-legend { display: flex; gap: 7px; margin: 16px 0; padding-bottom: 14px; border-bottom: 1px solid #e0e4e1; }
+.task-setup { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px 18px; padding: 18px; border: 1px solid #bfcfc6; background: #f1f6f3; }
+.task-setup > div { grid-row: span 2; padding-right: 12px; border-right: 1px solid #cfdbd4; }
+.task-setup h4 { margin: 8px 0; font-size: 16px; }
+.task-setup p { margin: 0; color: #68736c; font-size: 11px; line-height: 1.7; }
+.task-setup label, .decision-actions label { display: grid; gap: 5px; color: #4e5751; font-size: 10px; font-weight: 650; }
+.task-setup input, .task-setup textarea, .decision-actions textarea { width: 100%; min-height: 34px; border: 1px solid #cdd5d0; background: #fff; padding: 7px 8px; resize: vertical; color: #2e342f; font-size: 11px; }
+.task-setup textarea { min-height: 62px; }
+.task-setup > button { grid-column: 2; width: max-content; padding: 9px 12px; border: 0; background: #173f35; color: #fff; font-size: 10px; }
+.node-label { display: inline-block; color: #765133; font: 9px Consolas, monospace; text-transform: uppercase; letter-spacing: .08em; }
+.node-label.complete { color: #2d6653; }
+.task-summary { display: grid; gap: 7px; padding: 13px 15px; border-left: 3px solid #38725f; background: #f1f6f3; }
+.task-summary strong { font-size: 12px; }
+.task-summary small { color: #748078; font-size: 10px; }
+.issue-list { display: grid; gap: 10px; margin-top: 15px; }
+.issue-card { padding: 15px 16px; border: 1px solid #d8ded9; background: #fff; }
+.issue-meta { display: flex; align-items: center; gap: 7px; color: #899089; font: 9px Consolas, monospace; }
+.issue-severity { padding: 3px 6px; color: #765133; background: #faf5ec; border: 1px solid #d6c3a9; }
+.issue-severity.professionalUncertainty { color: #3c4d73; background: #f1f3f9; border-color: #c5cce0; }
+.issue-card h4 { margin: 10px 0 0; color: #343a35; font-size: 12px; font-weight: 600; line-height: 1.6; }
+.auto-guidance { margin: 8px 0 0 !important; color: #7b837c !important; font-size: 10px !important; }
+.decision-actions { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e6e3; }
+.decision-actions > p { margin: 0 0 10px !important; color: #626c65 !important; font-size: 10px !important; }
+.decision-actions textarea { min-height: 48px; }
+.decision-actions > div { display: flex; gap: 7px; margin-top: 9px; }
+.decision-actions button { padding: 7px 10px; font-size: 10px; }
+.accept-decision { border: 0; background: #173f35; color: #fff; }
+.reject-decision { border: 1px solid #9c5441; background: #fff; color: #8a4432; }
+.workflow-ledgers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 17px; }
+.workflow-ledgers section { display: grid; align-content: start; gap: 7px; min-height: 82px; padding: 12px; border: 1px solid #dde2de; background: #f8faf8; }
+.workflow-ledgers section > strong { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.workflow-ledgers section > span { display: flex; align-items: center; gap: 6px; color: #656e67; font-size: 9px; }
+.workflow-ledgers section > span b { font-weight: 500; }
+.workflow-ledgers small { color: #8b918c; font-size: 9px; }
 .error-banner { position: fixed; left: 350px; bottom: 22px; background: #8e3d2c; color: white; padding: 10px 14px; font-size: 12px; box-shadow: 0 8px 30px rgba(61,28,19,.2); }
 .notice-banner { position: fixed; left: 350px; bottom: 22px; background: #173f35; color: white; padding: 10px 12px; font-size: 11px; box-shadow: 0 8px 30px rgba(19,35,28,.2); display: flex; align-items: center; gap: 8px; }
 .notice-banner button { border: 0; background: transparent; color: white; display: grid; place-items: center; padding: 0; }

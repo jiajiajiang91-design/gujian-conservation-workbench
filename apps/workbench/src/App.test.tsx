@@ -16,5 +16,10 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "山门" })).toBeInTheDocument();
     expect(screen.getByText(/^版本 /)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /问题处理/ }));
+    expect(await screen.findByRole("heading", { name: "问题队列与必要人工节点" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "确认一次任务设置" }));
+    expect(await screen.findByText("人工节点 01 已完成")).toBeInTheDocument();
   });
 });

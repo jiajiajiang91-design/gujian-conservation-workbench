@@ -145,11 +145,16 @@ export const MeasurementRecordSchema = z.object({
 
 export const IssueSchema = z.object({
   id: UuidSchema,
+  projectId: UuidSchema,
   issueType: z.enum(["missingEvidence", "professionalUncertainty", "ruleConflict", "highRisk"]),
   subjectRefs: z.array(NonEmptyRefSchema).min(1).max(500),
   description: z.string().min(1).max(5_000),
+  sourceRef: NonEmptyRefSchema,
   status: z.enum(["open", "resolved", "rejected", "superseded"]),
   impactRefs: z.array(NonEmptyRefSchema).max(5_000),
+  producer: ProducerRefSchema,
+  createdAt: IsoDateTimeSchema,
+  resolvedAt: IsoDateTimeSchema.nullable(),
 }).strict();
 
 export const DependencyEdgeSchema = z.object({

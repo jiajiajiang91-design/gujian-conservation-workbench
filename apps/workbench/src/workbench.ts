@@ -1,5 +1,5 @@
 import { ProjectCommandService, type ProjectHead, type ProjectSummary } from "@gujian/application";
-import { EvidenceIngestionService, IndexedDbProjectRepository, LocalAuthorization, ProjectPackageService } from "@gujian/infrastructure";
+import { EvidenceIngestionService, IndexedDbProjectRepository, LocalAuthorization, ProjectPackageService, WorkflowService } from "@gujian/infrastructure";
 
 import { ModelRunClient } from "./model-run-client";
 
@@ -11,6 +11,7 @@ export const projectCommands = new ProjectCommandService({
 export const projectPackages = new ProjectPackageService(projectRepository);
 export const evidenceIngestion = new EvidenceIngestionService(projectRepository);
 export const modelRuns = new ModelRunClient({ repository: projectRepository, commands: projectCommands });
+export const workflow = new WorkflowService(projectRepository);
 
 const ACTOR_KEY = "gujian-workbench-v3:local-actor-id";
 

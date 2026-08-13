@@ -99,4 +99,17 @@ describe("ProjectPackageService", () => {
     zip[Math.floor(zip.length / 2)] = (zip[Math.floor(zip.length / 2)] ?? 0) ^ 1;
     expect(() => seeded.packages.parse(zip, "project.zip")).toThrow();
   });
+
+  it("兼容尚未包含运行与决定数组的早期 v3 JSON 包", async () => {
+    const seeded = await seededRepository();
+    const bytes = await seeded.packages.exportJson(seeded.projectId);
+    const value = JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown>;
+    delete value.modelRuns;
+    delete value.ruleRuns;
+    delete value.decisions;
+    const parsed = seeded.packages.parse(new TextEncoder().encode(JSON.stringify(value)), "project.json");
+    expect(parsed.modelRuns).toEqual([]);
+    expect(parsed.ruleRuns).toEqual([]);
+    expect(parsed.decisions).toEqual([]);
+  });
 });

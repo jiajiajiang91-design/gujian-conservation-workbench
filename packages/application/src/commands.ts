@@ -11,7 +11,11 @@ import {
   ParseRecordSchema,
   ModelCandidateSchema,
   ModelRunSchema,
+  RuleRunSchema,
+  DecisionSchema,
+  IssueSchema,
   ProjectSchema,
+  TaskDefinitionSchema,
   Sha256Schema,
   UuidSchema,
 } from "@gujian/domain";
@@ -51,6 +55,8 @@ export const ImportProjectSnapshotCommandSchema = CommandHeaderSchema.extend({
     sourceAuditEvents: z.array(AuditEventSchema).max(100_000),
     assets: z.array(AssetRecordSchema).max(1_000),
     modelRuns: z.array(ModelRunSchema).max(100_000),
+    ruleRuns: z.array(RuleRunSchema).max(100_000),
+    decisions: z.array(DecisionSchema).max(100_000),
     assetSessionId: UuidSchema.nullable(),
     packageHash: Sha256Schema,
   }).strict(),
@@ -76,12 +82,43 @@ export const CommitModelRunResultCommandSchema = CommandHeaderSchema.extend({
   }).strict(),
 }).strict();
 
+export const ConfirmTaskSetupCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ConfirmTaskSetup"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ taskDefinition: TaskDefinitionSchema }).strict(),
+}).strict();
+
+export const CommitRuleEvaluationCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitRuleEvaluation"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    ruleRun: RuleRunSchema,
+    issues: z.array(IssueSchema).max(5_000),
+  }).strict(),
+}).strict();
+
+export const DecideCandidateCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("DecideCandidate"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    candidateId: UuidSchema,
+    decision: DecisionSchema,
+  }).strict().superRefine((value, context) => {
+    if (!(["accepted", "rejected"] as const).includes(value.decision.outcome as "accepted" | "rejected")) {
+      context.addIssue({ code: "custom", message: "candidate decision must accept or reject", path: ["decision", "outcome"] });
+    }
+  }),
+}).strict();
+
 export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CreateProjectCommandSchema,
   CommitFactsCommandSchema,
   ImportProjectSnapshotCommandSchema,
   ImportEvidenceCommandSchema,
   CommitModelRunResultCommandSchema,
+  ConfirmTaskSetupCommandSchema,
+  CommitRuleEvaluationCommandSchema,
+  DecideCandidateCommandSchema,
 ]);
 
 export type CreateProjectCommand = z.infer<typeof CreateProjectCommandSchema>;
@@ -89,5 +126,8 @@ export type CommitFactsCommand = z.infer<typeof CommitFactsCommandSchema>;
 export type ImportProjectSnapshotCommand = z.infer<typeof ImportProjectSnapshotCommandSchema>;
 export type ImportEvidenceCommand = z.infer<typeof ImportEvidenceCommandSchema>;
 export type CommitModelRunResultCommand = z.infer<typeof CommitModelRunResultCommandSchema>;
+export type ConfirmTaskSetupCommand = z.infer<typeof ConfirmTaskSetupCommandSchema>;
+export type CommitRuleEvaluationCommand = z.infer<typeof CommitRuleEvaluationCommandSchema>;
+export type DecideCandidateCommand = z.infer<typeof DecideCandidateCommandSchema>;
 export type ProjectCommand = z.infer<typeof ProjectCommandSchema>;
 export type ProjectCommandType = ProjectCommand["commandType"];

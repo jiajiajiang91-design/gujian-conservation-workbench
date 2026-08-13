@@ -16,6 +16,8 @@ import {
   type AssetRecord,
   type ProjectRevision,
   type ModelRun,
+  type RuleRun,
+  type Decision,
 } from "@gujian/domain";
 
 import { recordHash, sha256Hex } from "./hash.js";
@@ -97,6 +99,24 @@ function currentHead(summary: PersistedSummary, revision: PersistedRevision): Pr
   };
 }
 
+function orderAuditChain(events: readonly AuditEvent[]): AuditEvent[] {
+  const byPrevious = new Map<string, AuditEvent>();
+  for (const event of events) {
+    const key = event.previousEventHash ?? "ROOT";
+    if (byPrevious.has(key)) throw new Error("AUDIT_CHAIN_BRANCH");
+    byPrevious.set(key, event);
+  }
+  const ordered: AuditEvent[] = [];
+  let previous: string | null = null;
+  while (ordered.length < events.length) {
+    const next = byPrevious.get(previous ?? "ROOT");
+    if (!next) throw new Error("AUDIT_CHAIN_BROKEN");
+    ordered.push(next);
+    previous = next.eventHash;
+  }
+  return ordered;
+}
+
 export class IndexedDbProjectRepository implements ProjectRepositoryPort, ProjectQueryPort {
   readonly #database: Promise<IDBDatabase>;
 
@@ -156,7 +176,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return {
       head: currentHead(summary, revision),
       revision: ProjectRevisionSchema.parse(revision.revision),
-      auditEvents: auditEvents.sort((left, right) => left.occurredAt.localeCompare(right.occurredAt)),
+      auditEvents: orderAuditChain(auditEvents),
     };
   }
 
@@ -238,10 +258,28 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return runs.sort((left, right) => left.startedAt.localeCompare(right.startedAt));
   }
 
+  async getProjectRuleRuns(projectId: string): Promise<readonly RuleRun[]> {
+    const database = await this.#database;
+    const transaction = database.transaction("ruleRuns", "readonly");
+    const done = transactionDone(transaction);
+    const runs = await requestResult<RuleRun[]>(transaction.objectStore("ruleRuns").index("projectId").getAll(projectId));
+    await done;
+    return runs.sort((left, right) => left.startedAt.localeCompare(right.startedAt));
+  }
+
+  async getProjectDecisions(projectId: string): Promise<readonly Decision[]> {
+    const database = await this.#database;
+    const transaction = database.transaction("decisions", "readonly");
+    const done = transactionDone(transaction);
+    const decisions = await requestResult<Decision[]>(transaction.objectStore("decisions").index("projectId").getAll(projectId));
+    await done;
+    return decisions.sort((left, right) => left.decidedAt.localeCompare(right.decidedAt));
+  }
+
   async transaction<T>(projectId: string, operation: (transaction: ProjectTransaction) => Promise<T>): Promise<T> {
     const database = await this.#database;
     const transaction = database.transaction(
-      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns"],
+      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns", "ruleRuns", "decisions"],
       "readwrite",
     );
     const done = transactionDone(transaction);
@@ -327,6 +365,18 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
           id: run.id,
           hash: recordHash(run),
         })) ?? []),
+        ...(mutation.ruleRunsToPut?.map((run) => ({
+          kind: "record" as const,
+          storeName: "ruleRuns",
+          id: run.id,
+          hash: recordHash(run),
+        })) ?? []),
+        ...(mutation.decisionsToPut?.map((decision) => ({
+          kind: "record" as const,
+          storeName: "decisions",
+          id: decision.id,
+          hash: recordHash(decision),
+        })) ?? []),
       ];
       const eventBase = {
         id: auditEventId,
@@ -370,6 +420,8 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     };
     transaction.objectStore("commandReceipts").add(receipt);
     for (const run of mutation.modelRunsToPut ?? []) transaction.objectStore("modelRuns").put(run);
+    for (const run of mutation.ruleRunsToPut ?? []) transaction.objectStore("ruleRuns").put(run);
+    for (const decision of mutation.decisionsToPut ?? []) transaction.objectStore("decisions").put(decision);
     const assetWrite = mutation.assetWrites;
     if (assetWrite) {
       for (const record of assetWrite.records) {

@@ -5,6 +5,8 @@ import {
   ProjectRevisionSchema,
   ProjectSnapshotSchema,
   ModelRunSchema,
+  RuleRunSchema,
+  DecisionSchema,
   Sha256Schema,
   UuidSchema,
   type AuditEvent,
@@ -27,7 +29,9 @@ const ProjectDataSchema = z.object({
   auditHeadHash: Sha256Schema,
   snapshot: ProjectSnapshotSchema,
   auditEvents: z.array(AuditEventSchema).max(100_000),
-  modelRuns: z.array(ModelRunSchema).max(100_000),
+  modelRuns: z.array(ModelRunSchema).max(100_000).default([]),
+  ruleRuns: z.array(RuleRunSchema).max(100_000).default([]),
+  decisions: z.array(DecisionSchema).max(100_000).default([]),
   assets: z.array(AssetRecordSchema.extend({
     path: z.string().min(1).max(500),
   }).strict()).max(MAX_ENTRY_COUNT),
@@ -86,6 +90,8 @@ export class ProjectPackageService {
     const closure = await this.#repository.exportProjectClosure(projectId);
     const assets = await this.#repository.getProjectAssets(projectId);
     const modelRuns = await this.#repository.getProjectModelRuns(projectId);
+    const ruleRuns = await this.#repository.getProjectRuleRuns(projectId);
+    const decisions = await this.#repository.getProjectDecisions(projectId);
     const data = ProjectDataSchema.parse({
       format: "gujian-project-package",
       packageVersion: 1,
@@ -94,6 +100,8 @@ export class ProjectPackageService {
       snapshot: closure.head.snapshot,
       auditEvents: closure.auditEvents,
       modelRuns,
+      ruleRuns,
+      decisions,
       assets: assets.map(({ record }) => ({ ...record, path: `evidence/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}` })),
     });
     return strToU8(`${canonicalJson(data)}\n`);
@@ -217,6 +225,8 @@ export class ProjectPackageService {
         sourceAuditEvents: data.auditEvents,
         assets: assetRecords,
         modelRuns: data.modelRuns,
+        ruleRuns: data.ruleRuns,
+        decisions: data.decisions,
         assetSessionId: sessionId,
         packageHash: sha256Hex(bytes),
       },
