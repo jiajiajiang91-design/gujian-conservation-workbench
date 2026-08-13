@@ -1,0 +1,6 @@
+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+T0B-:./+-%()[]_ ±×，（）
+古建局部专业样板综合图构造详图首层平面图屋顶南立面横剖面纵剖面轴测图檐口承托柱础与基础门窗
+团队演示数据仅用于技术验证构件非实测正式节点签发上檩承块臂座檐梁柱框扇格心
+项目名称图名图号比例单位状态版本日期使用责任边界见图非正式
+generated-not-qualified demo-only not-for-formal-signoff mm frame leaf lattice

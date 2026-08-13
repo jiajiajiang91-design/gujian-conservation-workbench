@@ -1077,6 +1077,9 @@ pyparsing==3.3.2 \
     #   cadquery
     #   ezdxf
     #   matplotlib
+pypdf==6.16.0 \
+    --hash=sha256:8c47581faa1cba7006ac269da30075c929c251cc4ffbafb2bcbe260306631118
+    # via -r workers/cad/requirements.in
 python-dateutil==2.9.0.post0 \
     --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
     # via

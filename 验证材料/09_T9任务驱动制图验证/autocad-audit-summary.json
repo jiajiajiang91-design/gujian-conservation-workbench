@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "status": "passed-native-dxf-audit",
+  "tool": {
+    "product": "AutoCAD Core Console 2024",
+    "version": "24.3.61.0.0"
+  },
+  "operation": "OPEN+AUDIT on an isolated byte-identical temporary copy",
+  "sourceDxfSha256": "17d209988f768c04c917edc68d9f55a56f0ef48bb83c889ceb7ffd965794d4a5",
+  "temporaryCopyPreAuditSha256": "17d209988f768c04c917edc68d9f55a56f0ef48bb83c889ceb7ffd965794d4a5",
+  "temporaryCopyPostAuditSha256": "17d209988f768c04c917edc68d9f55a56f0ef48bb83c889ceb7ffd965794d4a5",
+  "exitCode": 0,
+  "errorsFound": 0,
+  "objectsRepaired": 0,
+  "objectsDeleted": 0,
+  "boundFontSubstituted": false,
+  "rawLogSha256": "f21503aca9f5b1fe0934785d22c9fe5c1d1a4fa83b2a2e05032cd234bad41f12",
+  "rawLogRetained": false,
+  "qualification": "native-dxf-technical-audit-only",
+  "l1Eligible": false
+}
