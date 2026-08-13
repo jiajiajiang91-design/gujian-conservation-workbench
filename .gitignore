@@ -24,6 +24,9 @@ node_modules/
 .pnpm-store/
 .venv/
 dist/
+**/dist-types/
+**/dist-config/
+*.tsbuildinfo
 coverage/
 test-results/
 playwright-report/

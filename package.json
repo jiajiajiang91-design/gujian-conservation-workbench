@@ -7,13 +7,16 @@
     "node": ">=20.19"
   },
   "scripts": {
-    "build": "tsc -b",
-    "check": "pnpm run typecheck && pnpm run test",
-    "test": "vitest run",
+    "build": "pnpm -r --filter @gujian/domain --filter @gujian/application --filter @gujian/infrastructure --filter @gujian/server --filter @gujian/workbench build",
+    "check": "pnpm run typecheck && pnpm run test && pnpm run test:legacy",
+    "dev": "pnpm --parallel --filter @gujian/server --filter @gujian/workbench dev",
+    "test": "vitest run && pnpm --filter @gujian/server test && pnpm --filter @gujian/workbench test",
+    "test:legacy": "npm run test --prefix \"\u4ea4\u4e92\u539f\u578b/02_AI\u5de5\u4f5c\u53f0\"",
     "typecheck": "tsc -b --pretty false"
   },
   "devDependencies": {
     "@types/node": "24.2.1",
+    "fake-indexeddb": "6.2.5",
     "typescript": "5.9.2",
     "vitest": "3.2.4"
   }

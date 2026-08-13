@@ -2,6 +2,10 @@
   "files": [],
   "references": [
     { "path": "packages/domain" },
-    { "path": "packages/application" }
+    { "path": "packages/application" },
+    { "path": "packages/infrastructure" },
+    { "path": "apps/server" },
+    { "path": "apps/workbench/tsconfig.app.json" },
+    { "path": "apps/workbench/tsconfig.node.json" }
   ]
 }

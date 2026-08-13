@@ -1,0 +1,24 @@
+{
+  "name": "@gujian/infrastructure",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@gujian/application": "workspace:*",
+    "@gujian/domain": "workspace:*",
+    "@noble/hashes": "2.2.0"
+  }
+}
