@@ -49,6 +49,12 @@ describe("KimiGateway", () => {
     expect(chunks.join("")).toContain('"summary":"完成"');
     expect(result.usage).toEqual({ promptTokens: 11, completionTokens: 7, totalTokens: 18, cachedTokens: 2 });
     expect(result.attempt).toBe(2);
+    expect(JSON.parse(String(fetchImpl.mock.calls[1]?.[1]?.body))).toMatchObject({
+      model: "kimi-k2.6",
+      temperature: 0.6,
+      stream: true,
+      thinking: { type: "disabled" },
+    });
   });
 
   it("超时后重试并给出稳定错误码", async () => {

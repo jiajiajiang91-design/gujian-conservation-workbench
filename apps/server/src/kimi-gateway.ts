@@ -70,7 +70,7 @@ export class KimiGateway {
             stream: true,
             stream_options: { include_usage: true },
             max_tokens: this.#maxOutputTokens,
-            temperature: 0.2,
+            temperature: 0.6,
           }),
           signal,
         });
