@@ -29,7 +29,7 @@ export class KimiGateway {
     maxAttempts?: number; maxOutputTokens?: number; fetchImpl?: typeof fetch;
   } = {}) {
     this.#apiKey = input.apiKey ?? process.env.KIMI_API_KEY ?? "";
-    this.#baseUrl = (input.baseUrl ?? process.env.KIMI_BASE_URL ?? "https://api.moonshot.cn/v1").replace(/\/$/, "");
+    this.#baseUrl = (input.baseUrl ?? process.env.KIMI_BASE_URL ?? "https://api.moonshot.ai/v1").replace(/\/$/, "");
     this.#model = input.model ?? process.env.KIMI_MODEL ?? "kimi-k2.6";
     this.#timeoutMs = input.timeoutMs ?? Number(process.env.KIMI_TIMEOUT_MS ?? 45_000);
     this.#maxAttempts = input.maxAttempts ?? Number(process.env.KIMI_MAX_ATTEMPTS ?? 2);

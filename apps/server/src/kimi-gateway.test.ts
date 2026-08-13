@@ -13,6 +13,25 @@ function sseResponse(): Response {
 }
 
 describe("KimiGateway", () => {
+  it("默认使用与旧密钥一致的 Moonshot 国际区地址", async () => {
+    const previous = process.env.KIMI_BASE_URL;
+    delete process.env.KIMI_BASE_URL;
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(sseResponse());
+    try {
+      const gateway = new KimiGateway({ apiKey: "test-key", maxAttempts: 1, fetchImpl });
+      await gateway.execute({
+        userContent: "测试资料",
+        signal: new AbortController().signal,
+        onStatus: () => undefined,
+        onChunk: () => undefined,
+      });
+      expect(fetchImpl.mock.calls[0]?.[0]).toBe("https://api.moonshot.ai/v1/chat/completions");
+    } finally {
+      if (previous === undefined) delete process.env.KIMI_BASE_URL;
+      else process.env.KIMI_BASE_URL = previous;
+    }
+  });
+
   it("消费官方 SSE 并在可重试错误后受控重试", async () => {
     const fetchImpl = vi.fn<typeof fetch>()
       .mockResolvedValueOnce(new Response("busy", { status: 503 }))
