@@ -1,5 +1,5 @@
 import { ProjectCommandService, type ProjectHead, type ProjectSummary } from "@gujian/application";
-import { IndexedDbProjectRepository, LocalAuthorization, ProjectPackageService } from "@gujian/infrastructure";
+import { EvidenceIngestionService, IndexedDbProjectRepository, LocalAuthorization, ProjectPackageService } from "@gujian/infrastructure";
 
 export const projectRepository = new IndexedDbProjectRepository();
 export const projectCommands = new ProjectCommandService({
@@ -7,6 +7,7 @@ export const projectCommands = new ProjectCommandService({
   authorization: new LocalAuthorization(),
 });
 export const projectPackages = new ProjectPackageService(projectRepository);
+export const evidenceIngestion = new EvidenceIngestionService(projectRepository);
 
 const ACTOR_KEY = "gujian-workbench-v3:local-actor-id";
 

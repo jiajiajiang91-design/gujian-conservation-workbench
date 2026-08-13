@@ -13,10 +13,11 @@ import {
   ProjectSnapshotSchema,
   type ProjectSnapshot,
   type AuditEvent,
+  type AssetRecord,
   type ProjectRevision,
 } from "@gujian/domain";
 
-import { recordHash } from "./hash.js";
+import { recordHash, sha256Hex } from "./hash.js";
 
 export const WORKBENCH_DB_NAME = "gujian-workbench-v3";
 export const WORKBENCH_DB_VERSION = 3;
@@ -40,6 +41,14 @@ interface PersistedSummary extends ProjectSummary {
 
 interface PersistedReceipt extends CommandReceipt {
   id: string;
+}
+
+interface PersistedAsset {
+  id: string;
+  projectId: string;
+  record: AssetRecord;
+  content?: Blob;
+  stagingSessionId?: string;
 }
 
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
@@ -158,9 +167,73 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     await done;
   }
 
+  async stageAssets(sessionId: string, records: readonly AssetRecord[], contents: ReadonlyMap<string, Blob>): Promise<void> {
+    if (!records.length || records.some((record) => !contents.has(record.id))) throw new Error("ASSET_STAGING_INCOMPLETE");
+    for (const record of records) {
+      const content = contents.get(record.id)!;
+      if (content.size === record.byteLength && sha256Hex(new Uint8Array(await content.arrayBuffer())) === record.sha256) {
+        continue;
+      }
+      throw new Error("ASSET_STAGING_HASH_MISMATCH");
+    }
+    const database = await this.#database;
+    const transaction = database.transaction(["assets", "importSessions"], "readwrite");
+    const done = transactionDone(transaction);
+    transaction.objectStore("importSessions").add({ id: sessionId, createdAt: new Date().toISOString(), status: "staging" });
+    for (const record of records) {
+      transaction.objectStore("assets").add({
+        id: record.id,
+        projectId: record.projectId,
+        record,
+        content: contents.get(record.id)!,
+        stagingSessionId: sessionId,
+      } satisfies PersistedAsset);
+    }
+    await done;
+  }
+
+  async cleanupStaging(sessionId: string): Promise<void> {
+    const database = await this.#database;
+    const transaction = database.transaction(["assets", "importSessions"], "readwrite");
+    const done = transactionDone(transaction);
+    const request = transaction.objectStore("assets").openCursor();
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor) return;
+      const asset = cursor.value as PersistedAsset;
+      if (asset.stagingSessionId === sessionId) cursor.delete();
+      cursor.continue();
+    };
+    transaction.objectStore("importSessions").delete(sessionId);
+    await done;
+  }
+
+  async getProjectAssets(projectId: string): Promise<readonly { record: AssetRecord; content: Blob | null }[]> {
+    const database = await this.#database;
+    const transaction = database.transaction("assets", "readonly");
+    const done = transactionDone(transaction);
+    const assets = await requestResult<PersistedAsset[]>(transaction.objectStore("assets").index("projectId").getAll(projectId));
+    await done;
+    return assets.filter((asset) => !asset.stagingSessionId).map((asset) => ({ record: asset.record, content: asset.content ?? null }));
+  }
+
+  async getAsset(assetId: string): Promise<{ record: AssetRecord; content: Blob }> {
+    const database = await this.#database;
+    const transaction = database.transaction("assets", "readonly");
+    const done = transactionDone(transaction);
+    const asset = await requestResult<PersistedAsset | undefined>(transaction.objectStore("assets").get(assetId));
+    await done;
+    if (!asset || asset.stagingSessionId) throw new Error("ASSET_NOT_FOUND");
+    if (!asset.content) throw new Error("ASSET_CONTENT_MISSING");
+    return { record: asset.record, content: asset.content };
+  }
+
   async transaction<T>(projectId: string, operation: (transaction: ProjectTransaction) => Promise<T>): Promise<T> {
     const database = await this.#database;
-    const transaction = database.transaction(["projects", "revisions", "commandReceipts", "auditEvents"], "readwrite");
+    const transaction = database.transaction(
+      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions"],
+      "readwrite",
+    );
     const done = transactionDone(transaction);
     let committed = false;
     const adapter: ProjectTransaction = {
@@ -232,6 +305,12 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
       const writeSet = [
         { kind: "record", storeName: "projects", id: mutation.command.projectId, hash: recordHash(summary) },
         { kind: "record", storeName: "revisions", id: revisionId, hash: revision.recordHash },
+        ...(mutation.assetWrites?.records.map((asset) => ({
+          kind: "asset" as const,
+          storeName: "assets",
+          id: asset.id,
+          hash: asset.sha256,
+        })) ?? []),
       ];
       const eventBase = {
         id: auditEventId,
@@ -274,6 +353,33 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
       committedAt,
     };
     transaction.objectStore("commandReceipts").add(receipt);
+    const assetWrite = mutation.assetWrites;
+    if (assetWrite) {
+      for (const record of assetWrite.records) {
+        if (assetWrite.stagingSessionId) {
+          const request = transaction.objectStore("assets").get(record.id);
+          request.onsuccess = () => {
+            const staged = request.result as PersistedAsset | undefined;
+            if (!staged || staged.stagingSessionId !== assetWrite.stagingSessionId || staged.projectId !== mutation.command.projectId) {
+              transaction.abort();
+              return;
+            }
+            const promoted: PersistedAsset = { ...staged, record };
+            delete promoted.stagingSessionId;
+            transaction.objectStore("assets").put(promoted);
+          };
+        } else {
+          transaction.objectStore("assets").add({ id: record.id, projectId: record.projectId, record } satisfies PersistedAsset);
+        }
+      }
+      if (assetWrite.stagingSessionId) {
+        transaction.objectStore("importSessions").put({
+          id: assetWrite.stagingSessionId,
+          createdAt: committedAt,
+          status: "committed",
+        });
+      }
+    }
     return receipt;
   }
 }

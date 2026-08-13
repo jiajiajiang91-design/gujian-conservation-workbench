@@ -24,6 +24,19 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
   )) {
     throw new CommandError("COMMAND_INVALID", "imported audit prefix must match project and head hash");
   }
+  if (command.commandType === "ImportProjectSnapshot" && command.payload.assets.some((asset) => asset.projectId !== command.projectId)) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "imported assets must match command projectId");
+  }
+  if (command.commandType === "ImportEvidence" && (
+    command.payload.evidence.projectId !== command.projectId ||
+    command.payload.asset.projectId !== command.projectId ||
+    command.payload.evidence.assetId !== command.payload.asset.id ||
+    command.payload.parseRecord.projectId !== command.projectId ||
+    command.payload.parseRecord.assetId !== command.payload.asset.id ||
+    command.payload.parseRecord.evidenceId !== command.payload.evidence.id
+  )) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "evidence, asset and parse references must form one project closure");
+  }
 }
 
 function createInitialSnapshot(command: Extract<ProjectCommand, { commandType: "CreateProject" }>): ProjectSnapshot {
@@ -33,6 +46,7 @@ function createInitialSnapshot(command: Extract<ProjectCommand, { commandType: "
     buildings: [command.payload.building],
     taskDefinitions: [],
     evidences: [],
+    parseRecords: [],
     entities: [],
     relations: [],
     observations: [],
@@ -53,6 +67,21 @@ function appendFacts(head: ProjectHead, facts: readonly FactEnvelope[]): Project
   return ProjectSnapshotSchema.parse({
     ...head.snapshot,
     facts: [...head.snapshot.facts, ...facts],
+  });
+}
+
+function appendEvidence(
+  head: ProjectHead,
+  command: Extract<ProjectCommand, { commandType: "ImportEvidence" }>,
+): ProjectSnapshot {
+  if (head.snapshot.evidences.some((evidence) => evidence.id === command.payload.evidence.id) ||
+      head.snapshot.parseRecords.some((record) => record.id === command.payload.parseRecord.id)) {
+    throw new CommandError("COMMAND_INVALID", "evidence or parse record id already exists");
+  }
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
+    evidences: [...head.snapshot.evidences, command.payload.evidence],
+    parseRecords: [...head.snapshot.parseRecords, command.payload.parseRecord],
   });
 }
 
@@ -113,6 +142,9 @@ export class ProjectCommandService {
           ...(command.commandType === "ImportProjectSnapshot"
             ? { priorAuditEvents: command.payload.sourceAuditEvents }
             : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.assets.length
+            ? { assetWrites: { records: command.payload.assets, stagingSessionId: command.payload.assetSessionId } }
+            : {}),
         });
       }
 
@@ -125,13 +157,20 @@ export class ProjectCommandService {
           currentRevisionId: head.revisionId,
         });
       }
-      const snapshot = appendFacts(head, command.payload.facts);
+      const snapshot = command.commandType === "CommitFacts"
+        ? appendFacts(head, command.payload.facts)
+        : appendEvidence(head, command);
       return transaction.commit({
         command,
         authoritativeActorId,
         parentRevisionId: head.revisionId,
         snapshot,
-        changedRefs: command.payload.facts.map((fact) => fact.id),
+        changedRefs: command.commandType === "CommitFacts"
+          ? command.payload.facts.map((fact) => fact.id)
+          : [command.payload.asset.id, command.payload.evidence.id, command.payload.parseRecord.id],
+        ...(command.commandType === "ImportEvidence"
+          ? { assetWrites: { records: [command.payload.asset], stagingSessionId: command.payload.stagingSessionId } }
+          : {}),
       });
     });
   }

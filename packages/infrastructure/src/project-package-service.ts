@@ -1,6 +1,7 @@
 import { ProjectCommandService } from "@gujian/application";
 import {
   AuditEventSchema,
+  AssetRecordSchema,
   ProjectRevisionSchema,
   ProjectSnapshotSchema,
   Sha256Schema,
@@ -25,12 +26,8 @@ const ProjectDataSchema = z.object({
   auditHeadHash: Sha256Schema,
   snapshot: ProjectSnapshotSchema,
   auditEvents: z.array(AuditEventSchema).max(100_000),
-  assets: z.array(z.object({
-    id: UuidSchema,
+  assets: z.array(AssetRecordSchema.extend({
     path: z.string().min(1).max(500),
-    sha256: Sha256Schema,
-    mimeType: z.string().min(1).max(200),
-    size: z.number().int().nonnegative(),
   }).strict()).max(MAX_ENTRY_COUNT),
 }).strict();
 
@@ -85,6 +82,7 @@ export class ProjectPackageService {
 
   async exportJson(projectId: string): Promise<Uint8Array> {
     const closure = await this.#repository.exportProjectClosure(projectId);
+    const assets = await this.#repository.getProjectAssets(projectId);
     const data = ProjectDataSchema.parse({
       format: "gujian-project-package",
       packageVersion: 1,
@@ -92,7 +90,7 @@ export class ProjectPackageService {
       auditHeadHash: closure.auditEvents.at(-1)?.eventHash,
       snapshot: closure.head.snapshot,
       auditEvents: closure.auditEvents,
-      assets: [],
+      assets: assets.map(({ record }) => ({ ...record, path: `evidence/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}` })),
     });
     return strToU8(`${canonicalJson(data)}\n`);
   }
@@ -101,10 +99,19 @@ export class ProjectPackageService {
     const projectBytes = await this.exportJson(projectId);
     const project = parseProjectData(projectBytes);
     const auditBytes = strToU8(project.auditEvents.map((event) => canonicalJson(event)).join("\n") + "\n");
+    const storedAssets = await this.#repository.getProjectAssets(projectId);
+    const assetContents = new Map(storedAssets.map((asset) => [asset.record.id, asset.content]));
     const files = [
       { path: "project.json", bytes: projectBytes, mimeType: "application/json" },
       { path: "audit/events.ndjson", bytes: auditBytes, mimeType: "application/x-ndjson" },
+      ...project.assets.flatMap((asset) => {
+        const content = assetContents.get(asset.id);
+        return content ? [{ path: asset.path, bytes: new Uint8Array([]), blob: content, mimeType: asset.mimeType }] : [];
+      }),
     ];
+    for (const file of files) {
+      if ("blob" in file && file.blob) file.bytes = new Uint8Array(await file.blob.arrayBuffer());
+    }
     const manifest = ManifestSchema.parse({
       format: "gujian-project-package",
       packageVersion: 1,
@@ -124,7 +131,11 @@ export class ProjectPackageService {
   }
 
   parse(bytes: Uint8Array, fileName: string): ProjectData {
-    if (fileName.toLowerCase().endsWith(".json")) return parseProjectData(bytes);
+    return this.parseWithContents(bytes, fileName).data;
+  }
+
+  parseWithContents(bytes: Uint8Array, fileName: string): { data: ProjectData; contents: ReadonlyMap<string, Blob> } {
+    if (fileName.toLowerCase().endsWith(".json")) return { data: parseProjectData(bytes), contents: new Map() };
     if (!fileName.toLowerCase().endsWith(".zip")) throw new Error("PACKAGE_TYPE_NOT_SUPPORTED");
     if (bytes.byteLength > MAX_ARCHIVE_BYTES) throw new Error("PACKAGE_TOO_LARGE");
     let expandedBytes = 0;
@@ -166,12 +177,29 @@ export class ProjectPackageService {
     if (!auditBytes) throw new Error("PACKAGE_AUDIT_MISSING");
     const auditEvents = strFromU8(auditBytes).trim().split("\n").filter(Boolean).map((line) => AuditEventSchema.parse(JSON.parse(line)));
     if (canonicalJson(auditEvents) !== canonicalJson(project.auditEvents)) throw new Error("PACKAGE_AUDIT_MISMATCH");
-    return project;
+    const contents = new Map<string, Blob>();
+    for (const asset of project.assets) {
+      if (!safePath(asset.path)) throw new Error("PACKAGE_PATH_INVALID");
+      const content = entries[asset.path];
+      if (!content || content.byteLength !== asset.byteLength || sha256Hex(content) !== asset.sha256) {
+        throw new Error("PACKAGE_ASSET_HASH_MISMATCH");
+      }
+      contents.set(asset.id, new Blob([content as BlobPart], { type: asset.mimeType }));
+    }
+    return { data: project, contents };
   }
 
   async import(bytes: Uint8Array, fileName: string, actorId: string): Promise<string> {
-    const data = this.parse(bytes, fileName);
-    await this.#commands.execute({
+    const parsed = this.parseWithContents(bytes, fileName);
+    const data = parsed.data;
+    const sessionId = parsed.contents.size ? crypto.randomUUID() : null;
+    const assetRecords = data.assets.map(({ path: _path, ...asset }) => AssetRecordSchema.parse({
+      ...asset,
+      contentStatus: parsed.contents.has(asset.id) ? "available" : "missing",
+    }));
+    if (sessionId) await this.#repository.stageAssets(sessionId, assetRecords, parsed.contents);
+    try {
+      await this.#commands.execute({
       commandType: "ImportProjectSnapshot",
       commandId: crypto.randomUUID(),
       projectId: data.snapshot.project.id,
@@ -183,9 +211,15 @@ export class ProjectPackageService {
         sourceRevisionId: data.sourceRevision.id,
         sourceAuditHeadHash: data.auditHeadHash,
         sourceAuditEvents: data.auditEvents,
+        assets: assetRecords,
+        assetSessionId: sessionId,
         packageHash: sha256Hex(bytes),
       },
-    });
+      });
+    } catch (error) {
+      if (sessionId) await this.#repository.cleanupStaging(sessionId);
+      throw error;
+    }
     return data.snapshot.project.id;
   }
 }

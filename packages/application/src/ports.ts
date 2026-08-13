@@ -1,4 +1,4 @@
-import type { AuditEvent, ProjectSnapshot } from "@gujian/domain";
+import type { AssetRecord, AuditEvent, ProjectSnapshot } from "@gujian/domain";
 
 import type { ProjectCommand, ProjectCommandType } from "./commands.js";
 
@@ -35,6 +35,10 @@ export interface CommitProjectMutation {
   readonly snapshot: ProjectSnapshot;
   readonly changedRefs: readonly string[];
   readonly priorAuditEvents?: readonly AuditEvent[];
+  readonly assetWrites?: {
+    readonly records: readonly AssetRecord[];
+    readonly stagingSessionId: string | null;
+  };
 }
 
 export interface ProjectTransaction {

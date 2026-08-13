@@ -64,6 +64,30 @@ export const EvidenceSchema = z.object({
   dataStatus: DataStatusSchema,
 }).strict();
 
+export const AssetRecordSchema = z.object({
+  id: UuidSchema,
+  projectId: UuidSchema,
+  fileName: z.string().min(1).max(300),
+  mimeType: z.string().min(1).max(200),
+  byteLength: z.number().int().nonnegative(),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  contentStatus: z.enum(["available", "missing"]),
+  createdAt: IsoDateTimeSchema,
+}).strict();
+
+export const ParseRecordSchema = z.object({
+  id: UuidSchema,
+  projectId: UuidSchema,
+  assetId: UuidSchema,
+  evidenceId: UuidSchema,
+  parser: z.string().min(1).max(120),
+  parserVersion: z.string().min(1).max(80),
+  status: z.enum(["parsed", "metadataOnly", "pending", "failed"]),
+  extractedText: z.string().max(200_000).nullable(),
+  warnings: z.array(z.string().min(1).max(500)).max(100),
+  createdAt: IsoDateTimeSchema,
+}).strict();
+
 export const HeritageEntitySchema = z.object({
   id: UuidSchema,
   projectId: UuidSchema,
@@ -148,6 +172,7 @@ export const ProjectSnapshotSchema = z.object({
   buildings: z.array(BuildingSchema).min(1),
   taskDefinitions: z.array(TaskDefinitionSchema),
   evidences: z.array(EvidenceSchema),
+  parseRecords: z.array(ParseRecordSchema),
   entities: z.array(HeritageEntitySchema),
   relations: z.array(RelationSchema),
   observations: z.array(ObservationSchema),
@@ -164,3 +189,5 @@ export const ProjectSnapshotSchema = z.object({
 
 export type ProjectSnapshot = z.infer<typeof ProjectSnapshotSchema>;
 export type MeasurementRecord = z.infer<typeof MeasurementRecordSchema>;
+export type AssetRecord = z.infer<typeof AssetRecordSchema>;
+export type ParseRecord = z.infer<typeof ParseRecordSchema>;

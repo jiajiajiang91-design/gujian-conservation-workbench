@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { ProjectHead, ProjectSummary } from "@gujian/application";
 
-import { createLocalProject, listLocalProjects, localActorId, projectPackages, projectRepository } from "./workbench";
+import { createLocalProject, evidenceIngestion, listLocalProjects, localActorId, projectPackages, projectRepository } from "./workbench";
 
 const stages = ["项目资料", "AI 候选", "问题处理", "项目包"];
 
@@ -15,6 +15,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const importInput = useRef<HTMLInputElement>(null);
+  const evidenceInput = useRef<HTMLInputElement>(null);
 
   const refresh = async () => setProjects(await listLocalProjects());
   useEffect(() => { void refresh().catch((reason: unknown) => setError(String(reason))); }, []);
@@ -82,6 +83,31 @@ export function App() {
     setSelected(null);
     await refresh();
     setNotice("本地项目库已清空，可以验证空库回导");
+  };
+
+  const uploadEvidence = async (file: File) => {
+    if (!selected) return;
+    setError(null);
+    try {
+      const updated = await evidenceIngestion.ingest(selected, localActorId(), file);
+      setSelected(updated);
+      await refresh();
+      setNotice(`资料“${file.name}”已保存并建立来源关系`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "资料上传失败");
+    } finally {
+      if (evidenceInput.current) evidenceInput.current.value = "";
+    }
+  };
+
+  const downloadEvidence = async (assetId: string) => {
+    const asset = await projectRepository.getAsset(assetId);
+    const url = URL.createObjectURL(asset.content);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = asset.record.fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -152,11 +178,31 @@ export function App() {
               {stages.map((stage, index) => <div className="stage-row" key={stage}><span>{String(index + 1).padStart(2, "0")}</span><strong>{stage}</strong></div>)}
             </div>
             <section className="evidence-board">
-              <div className="trace-spine" aria-hidden="true"><span /><span /><span /><span /></div>
-              <div>
-                <p className="eyebrow">EVIDENCE CHAIN</p>
-                <h3>项目骨架已经建立</h3>
-                <p>所有后续资料、候选、规则结果和人工决定都将通过唯一命令入口形成新版本。</p>
+              <header className="board-heading">
+                <div><p className="eyebrow">PROJECT EVIDENCE</p><h3>原始资料与解析记录</h3></div>
+                <button className="upload-evidence" type="button" onClick={() => evidenceInput.current?.click()}><Upload size={14} /> 上传原始资料</button>
+                <input
+                  ref={evidenceInput}
+                  className="sr-only"
+                  type="file"
+                  onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadEvidence(file); }}
+                />
+              </header>
+              <div className="evidence-list">
+                {selected.snapshot.evidences.map((evidence) => {
+                  const parse = selected.snapshot.parseRecords.find((record) => record.evidenceId === evidence.id);
+                  return (
+                    <article className="evidence-card" key={evidence.id}>
+                      <span className="evidence-type">{evidence.evidenceType}</span>
+                      <div><strong>{evidence.title}</strong><small>{parse?.parser ?? "未解析"} · {parse?.status ?? "pending"}</small></div>
+                      <span className={`data-status ${evidence.dataStatus}`}>{evidence.dataStatus === "available" ? "可用" : evidence.dataStatus}</span>
+                      <button type="button" onClick={() => void downloadEvidence(evidence.assetId)}>原文件</button>
+                    </article>
+                  );
+                })}
+                {!selected.snapshot.evidences.length && (
+                  <div className="evidence-empty"><div className="trace-spine" aria-hidden="true"><span /><span /><span /><span /></div><p>上传任务书、照片、测量记录或已有图纸。文件本体、证据记录和解析结果会一起进入项目版本。</p></div>
+                )}
               </div>
             </section>
           </div>
