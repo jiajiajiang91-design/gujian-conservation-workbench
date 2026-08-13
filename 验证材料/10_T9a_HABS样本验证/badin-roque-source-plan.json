@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "sampleId": "habs-la-1294-badin-roque",
+  "officialRecord": "https://www.loc.gov/pictures/item/la0415/",
+  "callNumber": "HABS LA-1294",
+  "retrievedAt": "2026-08-13T22:30:00Z",
+  "rightsAdvisory": "No known restrictions on images made by the U.S. Government; images copied from other sources may be restricted.",
+  "unknowns": [
+    {
+      "reasonCode": "FIELD_NOTES_NOT_DIGITIZED",
+      "requiredEvidence": "Unprocessed field note material N613",
+      "impact": "Exact field measurement date, personnel attribution per dimension and measurement method remain unavailable online.",
+      "blocksFormalEligibility": true,
+      "blocksProxyBenchmark": false
+    }
+  ],
+  "assets": [
+    {"assetId":"photo-01","category":"photo","title":"General view from the northeast","relativePath":"photos/210210pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210210pu.tif","mediaType":"image/tiff","expectedBytes":18944564},
+    {"assetId":"photo-02","category":"photo","title":"East front elevation","relativePath":"photos/210211pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210211pu.tif","mediaType":"image/tiff","expectedBytes":18972398},
+    {"assetId":"photo-03","category":"photo","title":"East elevation with scale and cistern","relativePath":"photos/210212pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210212pu.tif","mediaType":"image/tiff","expectedBytes":19031370},
+    {"assetId":"photo-04","category":"photo","title":"East elevation with scale","relativePath":"photos/210213pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210213pu.tif","mediaType":"image/tiff","expectedBytes":19380102},
+    {"assetId":"photo-05","category":"photo","title":"East elevation door and bousillage detail with scale","relativePath":"photos/210214pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210214pu.tif","mediaType":"image/tiff","expectedBytes":19535342},
+    {"assetId":"photo-06","category":"photo","title":"East elevation door detail with scale","relativePath":"photos/210215pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210215pu.tif","mediaType":"image/tiff","expectedBytes":19741504},
+    {"assetId":"photo-07","category":"photo","title":"East elevation bousillage detail looking north","relativePath":"photos/210216pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210216pu.tif","mediaType":"image/tiff","expectedBytes":20636488},
+    {"assetId":"photo-08","category":"photo","title":"North elevation with scale","relativePath":"photos/210217pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210217pu.tif","mediaType":"image/tiff","expectedBytes":19226980},
+    {"assetId":"photo-09","category":"photo","title":"General view from the southeast","relativePath":"photos/210218pu.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/photos/210218pu.tif","mediaType":"image/tiff","expectedBytes":19072082},
+    {"assetId":"sheet-01","category":"measuredDrawing","title":"Measured drawing sheet 1 of 10","relativePath":"drawings/00001a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00001a.tif","mediaType":"image/tiff","expectedBytes":966240},
+    {"assetId":"sheet-02","category":"measuredDrawing","title":"Measured drawing sheet 2 of 10","relativePath":"drawings/00002a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00002a.tif","mediaType":"image/tiff","expectedBytes":298998},
+    {"assetId":"sheet-03","category":"measuredDrawing","title":"Measured drawing sheet 3 of 10","relativePath":"drawings/00003a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00003a.tif","mediaType":"image/tiff","expectedBytes":356333},
+    {"assetId":"sheet-04","category":"measuredDrawing","title":"Measured drawing sheet 4 of 10","relativePath":"drawings/00004a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00004a.tif","mediaType":"image/tiff","expectedBytes":310361},
+    {"assetId":"sheet-05","category":"measuredDrawing","title":"Measured drawing sheet 5 of 10","relativePath":"drawings/00005a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00005a.tif","mediaType":"image/tiff","expectedBytes":294120},
+    {"assetId":"sheet-06","category":"measuredDrawing","title":"Measured drawing sheet 6 of 10","relativePath":"drawings/00006a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00006a.tif","mediaType":"image/tiff","expectedBytes":552346},
+    {"assetId":"sheet-07","category":"measuredDrawing","title":"Measured drawing sheet 7 of 10","relativePath":"drawings/00007a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00007a.tif","mediaType":"image/tiff","expectedBytes":508320},
+    {"assetId":"sheet-08","category":"measuredDrawing","title":"Measured drawing sheet 8 of 10","relativePath":"drawings/00008a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00008a.tif","mediaType":"image/tiff","expectedBytes":322396},
+    {"assetId":"sheet-09","category":"measuredDrawing","title":"Measured drawing sheet 9 of 10","relativePath":"drawings/00009a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00009a.tif","mediaType":"image/tiff","expectedBytes":307684},
+    {"assetId":"sheet-10","category":"measuredDrawing","title":"Measured drawing sheet 10 of 10","relativePath":"drawings/00010a.tif","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/sheet/00010a.tif","mediaType":"image/tiff","expectedBytes":544925},
+    {"assetId":"data-pages","category":"surveyData","title":"HABS data page","relativePath":"data/la0415data.pdf","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/data/la0415data.pdf","mediaType":"application/pdf","expectedBytes":31724},
+    {"assetId":"caption-page","category":"surveyData","title":"HABS photo caption page","relativePath":"data/la0415cap.pdf","url":"https://cdn.loc.gov/master/pnp/habshaer/la/la0400/la0415/data/la0415cap.pdf","mediaType":"application/pdf","expectedBytes":22678}
+  ]
+}
