@@ -16,6 +16,7 @@
 tmp/
 .codex_staging/
 .codex_staging*/
+**/.projections.staging-*/
 .autocad-reference-profile/
 /plot.log
 _deploy/
