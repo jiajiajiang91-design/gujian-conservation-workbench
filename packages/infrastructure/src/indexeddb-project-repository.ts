@@ -12,6 +12,8 @@ import {
   ProjectRevisionSchema,
   ProjectSnapshotSchema,
   type ProjectSnapshot,
+  type AuditEvent,
+  type ProjectRevision,
 } from "@gujian/domain";
 
 import { recordHash } from "./hash.js";
@@ -28,6 +30,7 @@ interface PersistedRevision {
   id: string;
   projectId: string;
   auditEventId: string;
+  revision: ProjectRevision;
   snapshot: ProjectSnapshot;
 }
 
@@ -119,6 +122,42 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return currentHead(summary, revision);
   }
 
+  async exportProjectClosure(projectId: string): Promise<{
+    head: ProjectHead;
+    revision: ProjectRevision;
+    auditEvents: readonly AuditEvent[];
+  }> {
+    const database = await this.#database;
+    const transaction = database.transaction(["projects", "revisions", "auditEvents"], "readonly");
+    const done = transactionDone(transaction);
+    const summary = await requestResult<PersistedSummary | undefined>(transaction.objectStore("projects").get(projectId));
+    if (!summary) {
+      await done;
+      throw new Error("PROJECT_NOT_FOUND");
+    }
+    const revision = await requestResult<PersistedRevision | undefined>(
+      transaction.objectStore("revisions").get(summary.currentRevisionId),
+    );
+    const auditEvents = await requestResult<AuditEvent[]>(
+      transaction.objectStore("auditEvents").index("projectId").getAll(projectId),
+    );
+    await done;
+    if (!revision) throw new Error("REVISION_NOT_FOUND");
+    return {
+      head: currentHead(summary, revision),
+      revision: ProjectRevisionSchema.parse(revision.revision),
+      auditEvents: auditEvents.sort((left, right) => left.occurredAt.localeCompare(right.occurredAt)),
+    };
+  }
+
+  async clearAllData(): Promise<void> {
+    const database = await this.#database;
+    const transaction = database.transaction([...STORE_NAMES], "readwrite");
+    const done = transactionDone(transaction);
+    for (const storeName of STORE_NAMES) transaction.objectStore(storeName).clear();
+    await done;
+  }
+
   async transaction<T>(projectId: string, operation: (transaction: ProjectTransaction) => Promise<T>): Promise<T> {
     const database = await this.#database;
     const transaction = database.transaction(["projects", "revisions", "commandReceipts", "auditEvents"], "readwrite");
@@ -199,7 +238,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
         projectId: mutation.command.projectId,
         commandId: mutation.command.commandId,
         actorId: mutation.authoritativeActorId,
-        previousEventHash: previous?.auditHeadHash ?? null,
+        previousEventHash: previous?.auditHeadHash ?? mutation.priorAuditEvents?.at(-1)?.eventHash ?? null,
         writeSet,
         writeSetHash: recordHash(writeSet),
         outcome: "committed",
@@ -213,12 +252,16 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
       });
       const committedSummary: PersistedSummary = { ...summary, auditHeadHash: auditEvent.eventHash };
       transaction.objectStore("projects").put(committedSummary);
+      for (const priorEvent of mutation.priorAuditEvents ?? []) {
+        transaction.objectStore("auditEvents").add(AuditEventSchema.parse(priorEvent));
+      }
       transaction.objectStore("auditEvents").add(auditEvent);
     };
     transaction.objectStore("revisions").add({
       id: revisionId,
       projectId: mutation.command.projectId,
       auditEventId,
+      revision,
       snapshot: mutation.snapshot,
     } satisfies PersistedRevision);
     const receipt: PersistedReceipt = {

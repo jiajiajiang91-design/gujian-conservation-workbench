@@ -115,6 +115,12 @@ importers:
       '@noble/hashes':
         specifier: 2.2.0
         version: 2.2.0
+      fflate:
+        specifier: 0.8.2
+        version: 0.8.2
+      zod:
+        specifier: 4.0.17
+        version: 4.0.17
 
 packages:
 
@@ -949,6 +955,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.2:
+    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -2040,6 +2049,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.5):
     optionalDependencies:
       picomatch: 4.0.5
+
+  fflate@0.8.2: {}
 
   fsevents@2.3.3:
     optional: true

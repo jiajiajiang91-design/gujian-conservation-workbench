@@ -1,3 +1,4 @@
 export * from "./indexeddb-project-repository.js";
+export * from "./project-package-service.js";
 
 export const INFRASTRUCTURE_VERSION = "3.0.0";

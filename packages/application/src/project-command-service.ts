@@ -11,11 +11,18 @@ import type {
 } from "./ports.js";
 
 function requireMatchingProjectRefs(command: ProjectCommand): void {
-  if (command.commandType !== "CreateProject") {
-    return;
-  }
-  if (command.payload.project.id !== command.projectId || command.payload.building.projectId !== command.projectId) {
+  if (command.commandType === "CreateProject" &&
+      (command.payload.project.id !== command.projectId || command.payload.building.projectId !== command.projectId)) {
     throw new CommandError("PROJECT_REF_MISMATCH", "project and building references must match command projectId");
+  }
+  if (command.commandType === "ImportProjectSnapshot" && command.payload.snapshot.project.id !== command.projectId) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "imported snapshot must match command projectId");
+  }
+  if (command.commandType === "ImportProjectSnapshot" && (
+    command.payload.sourceAuditEvents.at(-1)?.eventHash !== command.payload.sourceAuditHeadHash ||
+    command.payload.sourceAuditEvents.some((event) => event.projectId !== command.projectId)
+  )) {
+    throw new CommandError("COMMAND_INVALID", "imported audit prefix must match project and head hash");
   }
 }
 
@@ -81,7 +88,7 @@ export class ProjectCommandService {
       }
 
       const head = await transaction.getProjectHead();
-      if (command.commandType === "CreateProject") {
+      if (command.commandType === "CreateProject" || command.commandType === "ImportProjectSnapshot") {
         if (head) {
           throw new CommandError("PROJECT_ALREADY_EXISTS", "project already exists", {
             currentRevisionId: head.revisionId,
@@ -91,8 +98,21 @@ export class ProjectCommandService {
           command,
           authoritativeActorId,
           parentRevisionId: null,
-          snapshot: createInitialSnapshot(command),
-          changedRefs: [command.projectId, command.payload.building.id],
+          snapshot: command.commandType === "CreateProject"
+            ? createInitialSnapshot(command)
+            : ProjectSnapshotSchema.parse({
+                ...command.payload.snapshot,
+                adoptedRecordRefs: Array.from(new Set([
+                  ...command.payload.snapshot.adoptedRecordRefs,
+                  `revision:${command.payload.sourceRevisionId}`,
+                ])),
+              }),
+          changedRefs: command.commandType === "CreateProject"
+            ? [command.projectId, command.payload.building.id]
+            : [command.projectId, command.payload.sourceRevisionId],
+          ...(command.commandType === "ImportProjectSnapshot"
+            ? { priorAuditEvents: command.payload.sourceAuditEvents }
+            : {}),
         });
       }
 

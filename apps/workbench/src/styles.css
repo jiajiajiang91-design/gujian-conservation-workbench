@@ -34,9 +34,11 @@ h1 { font: 600 25px/1.32 "Microsoft YaHei", sans-serif; letter-spacing: -.04em; 
 .stage-row { display: grid; grid-template-columns: 32px 1fr; align-items: center; min-height: 48px; border-bottom: 1px solid #dfe3df; }
 .stage-row span { color: #8d958e; font: 10px Consolas, monospace; }
 .stage-row strong { font-size: 13px; font-weight: 550; }
-.catalog-panel footer { margin-top: 26px; color: #8b918c; font-size: 11px; }
+.catalog-panel footer { margin-top: 26px; color: #8b918c; font-size: 11px; display: grid; gap: 10px; }
+.catalog-panel footer button { width: max-content; padding: 0; display: flex; align-items: center; gap: 5px; border: 0; background: transparent; color: #8e4b3b; font-size: 10px; }
 
 .new-project { width: 100%; min-height: 38px; margin: 20px 0 0; border: 1px solid #173f35; color: #173f35; background: #f8faf8; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 12px; font-weight: 650; }
+.secondary-action { width: 100%; min-height: 36px; border: 0; border-bottom: 1px solid #d5dbd6; color: #586159; background: transparent; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 11px; }
 .project-list { display: grid; align-content: start; max-height: calc(100vh - 342px); overflow: auto; border-top: 1px solid #dfe3df; }
 .project-card { min-height: 78px; padding: 12px 10px; border: 0; border-bottom: 1px solid #dfe3df; background: transparent; text-align: left; display: grid; gap: 3px; color: #252a26; }
 .project-card:hover, .project-card.selected { background: #edf2ef; }
@@ -65,12 +67,16 @@ h1 { font: 600 25px/1.32 "Microsoft YaHei", sans-serif; letter-spacing: -.04em; 
 .project-heading h2 { margin: 6px 0; font: 600 30px/1.2 "Microsoft YaHei", sans-serif; }
 .project-heading > div > p:last-child { margin: 0; color: #737b74; font-size: 12px; }
 .revision-chip { color: #4d665d; border: 1px solid #b9c8c0; background: #edf3ef; padding: 6px 9px; font: 10px Consolas, monospace; }
+.project-actions { display: flex; align-items: center; gap: 7px; }
+.project-actions button { min-height: 29px; padding: 0 9px; border: 1px solid #cad2cc; background: #fbfcfa; color: #425048; display: flex; align-items: center; gap: 5px; font-size: 10px; }
 .stage-list.horizontal { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 0; margin-top: 22px; }
 .stage-list.horizontal .stage-row { border-top: 1px solid #d3d9d4; border-right: 1px solid #d3d9d4; padding: 0 10px; }
 .evidence-board { margin-top: 30px; min-height: 330px; background: #fbfcfa; border: 1px solid #d7dcd7; display: grid; grid-template-columns: 90px 1fr; align-items: center; padding: 30px; }
 .evidence-board h3 { font-size: 23px; margin: 8px 0; }
 .evidence-board p:last-child { max-width: 510px; color: #6b736c; font-size: 13px; line-height: 1.8; }
 .error-banner { position: fixed; left: 350px; bottom: 22px; background: #8e3d2c; color: white; padding: 10px 14px; font-size: 12px; box-shadow: 0 8px 30px rgba(61,28,19,.2); }
+.notice-banner { position: fixed; left: 350px; bottom: 22px; background: #173f35; color: white; padding: 10px 12px; font-size: 11px; box-shadow: 0 8px 30px rgba(19,35,28,.2); display: flex; align-items: center; gap: 8px; }
+.notice-banner button { border: 0; background: transparent; color: white; display: grid; place-items: center; padding: 0; }
 
 .assistant-shell { border-right: 0; border-left: 1px solid #d7dcd7; }
 .assistant-title { display: flex; align-items: center; gap: 8px; padding-bottom: 18px; border-bottom: 1px solid #dfe3df; font-size: 13px; }

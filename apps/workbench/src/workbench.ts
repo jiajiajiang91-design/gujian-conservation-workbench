@@ -1,11 +1,12 @@
 import { ProjectCommandService, type ProjectHead, type ProjectSummary } from "@gujian/application";
-import { IndexedDbProjectRepository, LocalAuthorization } from "@gujian/infrastructure";
+import { IndexedDbProjectRepository, LocalAuthorization, ProjectPackageService } from "@gujian/infrastructure";
 
 export const projectRepository = new IndexedDbProjectRepository();
 export const projectCommands = new ProjectCommandService({
   repository: projectRepository,
   authorization: new LocalAuthorization(),
 });
+export const projectPackages = new ProjectPackageService(projectRepository);
 
 const ACTOR_KEY = "gujian-workbench-v3:local-actor-id";
 

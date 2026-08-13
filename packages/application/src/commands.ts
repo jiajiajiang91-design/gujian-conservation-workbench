@@ -2,9 +2,12 @@ import { z } from "zod";
 
 import {
   BuildingSchema,
+  AuditEventSchema,
   FactEnvelopeSchema,
   IsoDateTimeSchema,
+  ProjectSnapshotSchema,
   ProjectSchema,
+  Sha256Schema,
   UuidSchema,
 } from "@gujian/domain";
 
@@ -33,12 +36,26 @@ export const CommitFactsCommandSchema = CommandHeaderSchema.extend({
   }).strict(),
 }).strict();
 
+export const ImportProjectSnapshotCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ImportProjectSnapshot"),
+  expectedRevisionId: z.null(),
+  payload: z.object({
+    snapshot: ProjectSnapshotSchema,
+    sourceRevisionId: UuidSchema,
+    sourceAuditHeadHash: Sha256Schema,
+    sourceAuditEvents: z.array(AuditEventSchema).max(100_000),
+    packageHash: Sha256Schema,
+  }).strict(),
+}).strict();
+
 export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CreateProjectCommandSchema,
   CommitFactsCommandSchema,
+  ImportProjectSnapshotCommandSchema,
 ]);
 
 export type CreateProjectCommand = z.infer<typeof CreateProjectCommandSchema>;
 export type CommitFactsCommand = z.infer<typeof CommitFactsCommandSchema>;
+export type ImportProjectSnapshotCommand = z.infer<typeof ImportProjectSnapshotCommandSchema>;
 export type ProjectCommand = z.infer<typeof ProjectCommandSchema>;
 export type ProjectCommandType = ProjectCommand["commandType"];
