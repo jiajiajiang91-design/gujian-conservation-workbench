@@ -99,7 +99,7 @@ export class ModelRunClient {
   }) {
     this.#repository = input.repository;
     this.#commands = input.commands;
-    this.#fetch = input.fetchImpl ?? fetch;
+    this.#fetch = input.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
 
   get activeRunId(): string | null { return this.#active?.runId ?? null; }

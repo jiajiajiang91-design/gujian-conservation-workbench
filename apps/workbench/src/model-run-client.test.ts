@@ -32,6 +32,33 @@ function head(): ProjectHead {
 }
 
 describe("ModelRunClient", () => {
+  it("保留浏览器原生 fetch 的调用上下文", async () => {
+    const current = head();
+    const asset = {
+      id: current.snapshot.evidences[0]!.assetId,
+      projectId: current.projectId,
+      fileName: "记录.txt", mimeType: "text/plain", byteLength: 18, sha256: "a".repeat(64),
+      contentStatus: "available" as const, createdAt: new Date().toISOString(),
+    };
+    const repository = {
+      getProjectAssets: async () => [{ record: asset, content: new Blob(["test"]) }],
+    } as unknown as IndexedDbProjectRepository;
+    const commands = { execute: async () => ({}) } as unknown as ProjectCommandService;
+    let receiver: unknown;
+    vi.stubGlobal("fetch", function (this: unknown) {
+      receiver = this;
+      return Promise.resolve(new Response(JSON.stringify({ error: "EXPECTED_TEST_STOP" }), { status: 503 }));
+    });
+    try {
+      const client = new ModelRunClient({ repository, commands });
+      await expect(client.runEvidenceSummary(current, crypto.randomUUID(), () => undefined))
+        .rejects.toThrow("EXPECTED_TEST_STOP");
+      expect(receiver).toBe(globalThis);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("只把成功模型输出作为未审核候选提交", async () => {
     const current = head();
     const asset = {
