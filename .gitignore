@@ -32,6 +32,7 @@ test-results/
 playwright-report/
 blob-report/
 .vite/
+**/.data/
 __pycache__/
 *.pyc
 

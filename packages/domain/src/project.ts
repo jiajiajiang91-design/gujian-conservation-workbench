@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { FactEnvelopeSchema, ProducerRefSchema } from "./provenance.js";
+import { ModelCandidateSchema } from "./records.js";
 import {
   DataStatusSchema,
   IsoDateTimeSchema,
@@ -178,6 +179,7 @@ export const ProjectSnapshotSchema = z.object({
   observations: z.array(ObservationSchema),
   measurements: z.array(MeasurementRecordSchema),
   facts: z.array(FactEnvelopeSchema),
+  candidates: z.array(ModelCandidateSchema),
   issues: z.array(IssueSchema),
   dependencyEdges: z.array(DependencyEdgeSchema),
   adoptedRecordRefs: z.array(NonEmptyRefSchema),

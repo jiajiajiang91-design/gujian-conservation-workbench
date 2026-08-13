@@ -15,6 +15,7 @@ import {
   type AuditEvent,
   type AssetRecord,
   type ProjectRevision,
+  type ModelRun,
 } from "@gujian/domain";
 
 import { recordHash, sha256Hex } from "./hash.js";
@@ -228,10 +229,19 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return { record: asset.record, content: asset.content };
   }
 
+  async getProjectModelRuns(projectId: string): Promise<readonly ModelRun[]> {
+    const database = await this.#database;
+    const transaction = database.transaction("modelRuns", "readonly");
+    const done = transactionDone(transaction);
+    const runs = await requestResult<ModelRun[]>(transaction.objectStore("modelRuns").index("projectId").getAll(projectId));
+    await done;
+    return runs.sort((left, right) => left.startedAt.localeCompare(right.startedAt));
+  }
+
   async transaction<T>(projectId: string, operation: (transaction: ProjectTransaction) => Promise<T>): Promise<T> {
     const database = await this.#database;
     const transaction = database.transaction(
-      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions"],
+      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns"],
       "readwrite",
     );
     const done = transactionDone(transaction);
@@ -311,6 +321,12 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
           id: asset.id,
           hash: asset.sha256,
         })) ?? []),
+        ...(mutation.modelRunsToPut?.map((run) => ({
+          kind: "record" as const,
+          storeName: "modelRuns",
+          id: run.id,
+          hash: recordHash(run),
+        })) ?? []),
       ];
       const eventBase = {
         id: auditEventId,
@@ -353,6 +369,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
       committedAt,
     };
     transaction.objectStore("commandReceipts").add(receipt);
+    for (const run of mutation.modelRunsToPut ?? []) transaction.objectStore("modelRuns").put(run);
     const assetWrite = mutation.assetWrites;
     if (assetWrite) {
       for (const record of assetWrite.records) {

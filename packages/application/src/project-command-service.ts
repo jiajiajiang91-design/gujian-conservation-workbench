@@ -27,6 +27,9 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
   if (command.commandType === "ImportProjectSnapshot" && command.payload.assets.some((asset) => asset.projectId !== command.projectId)) {
     throw new CommandError("PROJECT_REF_MISMATCH", "imported assets must match command projectId");
   }
+  if (command.commandType === "ImportProjectSnapshot" && command.payload.modelRuns.some((run) => run.projectId !== command.projectId)) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "imported model runs must match command projectId");
+  }
   if (command.commandType === "ImportEvidence" && (
     command.payload.evidence.projectId !== command.projectId ||
     command.payload.asset.projectId !== command.projectId ||
@@ -36,6 +39,18 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
     command.payload.parseRecord.evidenceId !== command.payload.evidence.id
   )) {
     throw new CommandError("PROJECT_REF_MISMATCH", "evidence, asset and parse references must form one project closure");
+  }
+  if (command.commandType === "CommitModelRunResult" && (
+    command.payload.run.projectId !== command.projectId ||
+    command.payload.run.inputRevisionId !== command.expectedRevisionId ||
+    (command.payload.run.status === "succeeded") !== (command.payload.candidate !== null) ||
+    (command.payload.candidate !== null && (
+      command.payload.candidate.projectId !== command.projectId ||
+      command.payload.candidate.runId !== command.payload.run.id ||
+      command.payload.candidate.inputRevisionId !== command.payload.run.inputRevisionId
+    ))
+  )) {
+    throw new CommandError("COMMAND_INVALID", "model run and candidate closure is invalid");
   }
 }
 
@@ -52,6 +67,7 @@ function createInitialSnapshot(command: Extract<ProjectCommand, { commandType: "
     observations: [],
     measurements: [],
     facts: [],
+    candidates: [],
     issues: [],
     dependencyEdges: [],
     adoptedRecordRefs: [],
@@ -82,6 +98,20 @@ function appendEvidence(
     ...head.snapshot,
     evidences: [...head.snapshot.evidences, command.payload.evidence],
     parseRecords: [...head.snapshot.parseRecords, command.payload.parseRecord],
+  });
+}
+
+function appendModelResult(
+  head: ProjectHead,
+  command: Extract<ProjectCommand, { commandType: "CommitModelRunResult" }>,
+): ProjectSnapshot {
+  if (!command.payload.candidate) return head.snapshot;
+  if (head.snapshot.candidates.some((candidate) => candidate.id === command.payload.candidate?.id || candidate.runId === command.payload.run.id)) {
+    throw new CommandError("COMMAND_INVALID", "model candidate already exists");
+  }
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
+    candidates: [...head.snapshot.candidates, command.payload.candidate],
   });
 }
 
@@ -145,6 +175,9 @@ export class ProjectCommandService {
           ...(command.commandType === "ImportProjectSnapshot" && command.payload.assets.length
             ? { assetWrites: { records: command.payload.assets, stagingSessionId: command.payload.assetSessionId } }
             : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.modelRuns.length
+            ? { modelRunsToPut: command.payload.modelRuns }
+            : {}),
         });
       }
 
@@ -159,7 +192,9 @@ export class ProjectCommandService {
       }
       const snapshot = command.commandType === "CommitFacts"
         ? appendFacts(head, command.payload.facts)
-        : appendEvidence(head, command);
+        : command.commandType === "ImportEvidence"
+          ? appendEvidence(head, command)
+          : appendModelResult(head, command);
       return transaction.commit({
         command,
         authoritativeActorId,
@@ -167,9 +202,14 @@ export class ProjectCommandService {
         snapshot,
         changedRefs: command.commandType === "CommitFacts"
           ? command.payload.facts.map((fact) => fact.id)
-          : [command.payload.asset.id, command.payload.evidence.id, command.payload.parseRecord.id],
+          : command.commandType === "ImportEvidence"
+            ? [command.payload.asset.id, command.payload.evidence.id, command.payload.parseRecord.id]
+            : [command.payload.run.id, ...(command.payload.candidate ? [command.payload.candidate.id] : [])],
         ...(command.commandType === "ImportEvidence"
           ? { assetWrites: { records: [command.payload.asset], stagingSessionId: command.payload.stagingSessionId } }
+          : {}),
+        ...(command.commandType === "CommitModelRunResult"
+          ? { modelRunsToPut: [command.payload.run] }
           : {}),
       });
     });

@@ -23,7 +23,7 @@ async function seededRepository() {
       building: { id: crypto.randomUUID(), projectId, name: "正殿", periodText: null, addressText: null, status: "existing" },
     },
   });
-  return { projectId, repository, packages: new ProjectPackageService(repository) };
+  return { projectId, repository, commands, packages: new ProjectPackageService(repository) };
 }
 
 describe("ProjectPackageService", () => {
@@ -42,6 +42,48 @@ describe("ProjectPackageService", () => {
       expect(closure.auditEvents).toHaveLength(2);
       expect(closure.auditEvents[1]?.previousEventHash).toBe(closure.auditEvents[0]?.eventHash);
     }
+  });
+
+  it("ZIP 空库回导保留模型运行和未审核候选", async () => {
+    const seeded = await seededRepository();
+    const head = await seeded.repository.getProjectHead(seeded.projectId);
+    if (!head) throw new Error("missing seeded project");
+    const runId = crypto.randomUUID();
+    const now = "2026-08-13T12:05:00Z";
+    const events = ["queued", "succeeded"].map((eventType, sequence) => ({
+      id: crypto.randomUUID(), runId, sequence, eventType: eventType as "queued" | "succeeded",
+      attempt: 1, detail: null, occurredAt: now,
+    }));
+    await seeded.commands.execute({
+      commandType: "CommitModelRunResult",
+      commandId: crypto.randomUUID(),
+      projectId: seeded.projectId,
+      actorId: crypto.randomUUID(),
+      expectedRevisionId: head.revisionId,
+      issuedAt: now,
+      payload: {
+        run: {
+          id: runId, projectId: seeded.projectId, inputRevisionId: head.revisionId,
+          inputHash: "a".repeat(64), provider: "moonshot", model: "kimi-k2.6", taskType: "evidence-summary",
+          status: "succeeded", evidenceRefs: [], events,
+          usage: { promptTokens: 10, completionTokens: 5, totalTokens: 15, cachedTokens: 0 },
+          outputHash: "b".repeat(64), startedAt: now, completedAt: now,
+        },
+        candidate: {
+          id: crypto.randomUUID(), projectId: seeded.projectId, runId, inputRevisionId: head.revisionId,
+          taskType: "evidence-summary", contentText: "候选摘要",
+          structured: { summary: "候选摘要", findings: [], missingInformation: ["现场尺寸"] },
+          producer: { producerType: "model", runId }, evidenceRefs: [], reviewStatus: "unreviewed", createdAt: now,
+        },
+      },
+    });
+    const zip = await seeded.packages.exportZip(seeded.projectId);
+    await seeded.repository.clearAllData();
+    await seeded.packages.import(zip, "project.gujian.zip", crypto.randomUUID());
+    const imported = await seeded.repository.getProjectHead(seeded.projectId);
+    expect(imported?.snapshot.candidates).toHaveLength(1);
+    expect(imported?.snapshot.candidates[0]?.producer.producerType).toBe("model");
+    expect(await seeded.repository.getProjectModelRuns(seeded.projectId)).toHaveLength(1);
   });
 
   it("拒绝 ZIP 路径穿越和未支持的文件类型", async () => {
