@@ -86,13 +86,13 @@ export class ProjectPackageService {
     this.#commands = new ProjectCommandService({ repository, authorization: new LocalAuthorization() });
   }
 
-  async exportJson(projectId: string): Promise<Uint8Array> {
+  async #buildProjectData(projectId: string, includeBinary: boolean): Promise<ProjectData> {
     const closure = await this.#repository.exportProjectClosure(projectId);
     const assets = await this.#repository.getProjectAssets(projectId);
     const modelRuns = await this.#repository.getProjectModelRuns(projectId);
     const ruleRuns = await this.#repository.getProjectRuleRuns(projectId);
     const decisions = await this.#repository.getProjectDecisions(projectId);
-    const data = ProjectDataSchema.parse({
+    return ProjectDataSchema.parse({
       format: "gujian-project-package",
       packageVersion: 1,
       sourceRevision: closure.revision,
@@ -102,14 +102,22 @@ export class ProjectPackageService {
       modelRuns,
       ruleRuns,
       decisions,
-      assets: assets.map(({ record }) => ({ ...record, path: `evidence/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}` })),
+      assets: assets.map(({ record, content }) => ({
+        ...record,
+        contentStatus: includeBinary && content !== null ? "available" : "missing",
+        path: `evidence/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}`,
+      })),
     });
+  }
+
+  async exportJson(projectId: string): Promise<Uint8Array> {
+    const data = await this.#buildProjectData(projectId, false);
     return strToU8(`${canonicalJson(data)}\n`);
   }
 
   async exportZip(projectId: string): Promise<Uint8Array> {
-    const projectBytes = await this.exportJson(projectId);
-    const project = parseProjectData(projectBytes);
+    const project = await this.#buildProjectData(projectId, true);
+    const projectBytes = strToU8(`${canonicalJson(project)}\n`);
     const auditBytes = strToU8(project.auditEvents.map((event) => canonicalJson(event)).join("\n") + "\n");
     const storedAssets = await this.#repository.getProjectAssets(projectId);
     const assetContents = new Map(storedAssets.map((asset) => [asset.record.id, asset.content]));
@@ -117,6 +125,7 @@ export class ProjectPackageService {
       { path: "project.json", bytes: projectBytes, mimeType: "application/json" },
       { path: "audit/events.ndjson", bytes: auditBytes, mimeType: "application/x-ndjson" },
       ...project.assets.flatMap((asset) => {
+        if (asset.contentStatus !== "available") return [];
         const content = assetContents.get(asset.id);
         return content ? [{ path: asset.path, bytes: new Uint8Array([]), blob: content, mimeType: asset.mimeType }] : [];
       }),
@@ -192,6 +201,7 @@ export class ProjectPackageService {
     const contents = new Map<string, Blob>();
     for (const asset of project.assets) {
       if (!safePath(asset.path)) throw new Error("PACKAGE_PATH_INVALID");
+      if (asset.contentStatus === "missing") continue;
       const content = entries[asset.path];
       if (!content || content.byteLength !== asset.byteLength || sha256Hex(content) !== asset.sha256) {
         throw new Error("PACKAGE_ASSET_HASH_MISMATCH");

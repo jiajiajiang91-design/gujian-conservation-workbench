@@ -49,6 +49,8 @@ describe("EvidenceIngestionService", () => {
       await service.ingest(input.head, crypto.randomUUID(), upload("说明.md", "# 调查记录", "text/markdown"));
       const packages = new ProjectPackageService(input.repository);
       const bytes = type === "zip" ? await packages.exportZip(input.head.projectId) : await packages.exportJson(input.head.projectId);
+      const exported = packages.parse(bytes, `project.${type}`);
+      expect(exported.assets[0]?.contentStatus).toBe(type === "zip" ? "available" : "missing");
       await input.repository.clearAllData();
       await packages.import(bytes, `project.${type}`, crypto.randomUUID());
       const assets = await input.repository.getProjectAssets(input.head.projectId);
@@ -56,6 +58,7 @@ describe("EvidenceIngestionService", () => {
       expect(assets).toHaveLength(1);
       expect(assets[0]?.record.contentStatus).toBe(type === "zip" ? "available" : "missing");
       expect(assets[0]?.content === null).toBe(type === "json");
+      if (type === "zip") expect(assets[0]?.record.sha256).toBe(exported.assets[0]?.sha256);
     }
   });
 
