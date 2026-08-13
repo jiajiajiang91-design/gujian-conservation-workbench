@@ -23,6 +23,6 @@ describe("App", () => {
     expect(await screen.findByText("人工节点 01 已完成")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /项目包/ }));
-    expect(screen.getByRole("button", { name: "导出 ZIP 并验证空库回导" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "验证 JSON 与 ZIP 空库回导" })).toBeInTheDocument();
   });
 });

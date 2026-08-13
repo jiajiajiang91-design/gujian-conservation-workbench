@@ -29,8 +29,12 @@ interface ServerStatus {
 }
 
 interface RoundTripReceipt {
-  packageSha256: string;
-  packageBytes: number;
+  jsonSha256: string;
+  jsonBytes: number;
+  jsonEvidenceCount: number;
+  jsonMissingAssetCount: number;
+  zipSha256: string;
+  zipBytes: number;
   projectId: string;
   sourceRevisionId: string;
   importedRevisionId: string;
@@ -169,18 +173,39 @@ export function App() {
       assetIds: selected.snapshot.evidences.map((item) => item.assetId).sort(),
     };
     try {
-      const bytes = await projectPackages.exportZip(selected.projectId);
-      const digestInput = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-      const packageSha256 = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", digestInput)))
-        .map((value) => value.toString(16).padStart(2, "0"))
-        .join("");
+      const [jsonBytes, zipBytes] = await Promise.all([
+        projectPackages.exportJson(selected.projectId),
+        projectPackages.exportZip(selected.projectId),
+      ]);
+      const sha256 = async (bytes: Uint8Array) => {
+        const input = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+        return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", input)))
+          .map((value) => value.toString(16).padStart(2, "0"))
+          .join("");
+      };
+      const [jsonSha256, zipSha256] = await Promise.all([sha256(jsonBytes), sha256(zipBytes)]);
       await projectRepository.clearAllData();
       setSelected(null);
       setProjectModelRuns([]);
       setProjectRuleRuns([]);
       setProjectDecisions([]);
 
-      const importedProjectId = await projectPackages.import(bytes, "roundtrip.gujian.zip", localActorId());
+      const jsonProjectId = await projectPackages.import(jsonBytes, "roundtrip.project.json", localActorId());
+      const jsonHead = await projectRepository.getProjectHead(jsonProjectId);
+      if (!jsonHead) throw new Error("JSON_ROUNDTRIP_PROJECT_MISSING");
+      const jsonAssets = await projectRepository.getProjectAssets(jsonProjectId);
+      const jsonMissingAssetCount = jsonAssets.filter(({ record, content }) => record.contentStatus === "missing" && content === null).length;
+      if (
+        jsonHead.projectId !== expected.projectId
+        || !jsonHead.snapshot.adoptedRecordRefs.includes(`revision:${expected.revisionId}`)
+        || jsonHead.snapshot.evidences.length !== expected.evidenceIds.length
+        || jsonMissingAssetCount !== expected.assetIds.length
+      ) {
+        throw new Error("JSON_ROUNDTRIP_IDENTITY_MISMATCH");
+      }
+
+      await projectRepository.clearAllData();
+      const importedProjectId = await projectPackages.import(zipBytes, "roundtrip.gujian.zip", localActorId());
       const importedHead = await projectRepository.getProjectHead(importedProjectId);
       if (!importedHead) throw new Error("ROUNDTRIP_PROJECT_MISSING");
       const importedEvidenceIds = importedHead.snapshot.evidences.map((item) => item.id).sort();
@@ -197,12 +222,20 @@ export function App() {
         projectRepository.getProjectRuleRuns(importedProjectId),
         projectRepository.getProjectDecisions(importedProjectId),
       ]);
+      const importedAssets = await projectRepository.getProjectAssets(importedProjectId);
+      if (importedAssets.some(({ record, content }) => record.contentStatus !== "available" || content === null)) {
+        throw new Error("ZIP_ROUNDTRIP_ASSET_CONTENT_MISSING");
+      }
       await refresh();
       await loadProject(importedProjectId);
       setActiveStage("package");
       setRoundTripReceipt({
-        packageSha256,
-        packageBytes: bytes.byteLength,
+        jsonSha256,
+        jsonBytes: jsonBytes.byteLength,
+        jsonEvidenceCount: jsonHead.snapshot.evidences.length,
+        jsonMissingAssetCount,
+        zipSha256,
+        zipBytes: zipBytes.byteLength,
         projectId: importedProjectId,
         sourceRevisionId: expected.revisionId,
         importedRevisionId: importedHead.revisionId,
@@ -210,7 +243,7 @@ export function App() {
         ruleRunCount: rules.length,
         decisionCount: decisions.length,
       });
-      setNotice("已用当前项目 ZIP 清空本地库并完成回导校验");
+      setNotice("已用当前项目依次完成 JSON 结构回导和 ZIP 完整资料回导");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "空库回导校验失败");
       await refresh();
@@ -499,9 +532,9 @@ export function App() {
                 <section className="roundtrip-check">
                   <div>
                     <ShieldCheck size={17} />
-                    <span><strong>空库回导验证</strong><small>以当前项目、当前版本实时生成 ZIP，清空 IndexedDB v3 后重新导入；不使用预置项目。</small></span>
+                    <span><strong>空库回导验证</strong><small>以当前项目、当前版本实时生成 JSON 与 ZIP。先校验 JSON 结构回导，再由原 ZIP 恢复完整资料；不使用预置项目。</small></span>
                   </div>
-                  <button type="button" onClick={() => void verifyEmptyLibraryRoundTrip()}>导出 ZIP 并验证空库回导</button>
+                  <button type="button" onClick={() => void verifyEmptyLibraryRoundTrip()}>验证 JSON 与 ZIP 空库回导</button>
                   {roundTripReceipt && (
                     <dl aria-label="空库回导结果">
                       <div><dt>项目</dt><dd>{roundTripReceipt.projectId.slice(0, 8).toUpperCase()}</dd></div>
@@ -510,7 +543,9 @@ export function App() {
                       <div><dt>资料</dt><dd>{roundTripReceipt.evidenceCount}</dd></div>
                       <div><dt>规则</dt><dd>{roundTripReceipt.ruleRunCount}</dd></div>
                       <div><dt>人工决定</dt><dd>{roundTripReceipt.decisionCount}</dd></div>
-                      <div><dt>ZIP SHA-256</dt><dd>{roundTripReceipt.packageSha256.slice(0, 12)}…</dd></div>
+                      <div><dt>JSON 结构</dt><dd>{roundTripReceipt.jsonEvidenceCount} 份资料 · {roundTripReceipt.jsonMissingAssetCount} 个文件待补</dd></div>
+                      <div><dt>JSON SHA-256</dt><dd>{roundTripReceipt.jsonSha256.slice(0, 12)}…</dd></div>
+                      <div><dt>ZIP SHA-256</dt><dd>{roundTripReceipt.zipSha256.slice(0, 12)}…</dd></div>
                     </dl>
                   )}
                 </section>
