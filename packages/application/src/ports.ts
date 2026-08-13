@@ -1,4 +1,4 @@
-import type { AssetRecord, AuditEvent, Decision, ModelRun, ProjectSnapshot, RuleRun } from "@gujian/domain";
+import type { AssetRecord, AuditEvent, CadJob, Decision, GeometryRevision, ModelRun, ProjectDrivenGeometrySpec, ProjectSnapshot, RuleRun } from "@gujian/domain";
 
 import type { ProjectCommand, ProjectCommandType } from "./commands.js";
 
@@ -42,11 +42,15 @@ export interface CommitProjectMutation {
   readonly modelRunsToPut?: readonly ModelRun[];
   readonly ruleRunsToPut?: readonly RuleRun[];
   readonly decisionsToPut?: readonly Decision[];
+  readonly cadJobsToPut?: readonly CadJob[];
+  readonly geometrySpecsToPut?: readonly ProjectDrivenGeometrySpec[];
+  readonly geometryRevisionsToPut?: readonly GeometryRevision[];
 }
 
 export interface ProjectTransaction {
   getCommandReceipt(commandId: string): Promise<CommandReceipt | null>;
   getProjectHead(): Promise<ProjectHead | null>;
+  getCadJob(jobId: string): Promise<CadJob | null>;
   commit(mutation: CommitProjectMutation): Promise<CommandReceipt>;
 }
 

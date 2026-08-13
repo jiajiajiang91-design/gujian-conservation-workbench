@@ -26,7 +26,7 @@ function head(): ProjectHead {
         id: crypto.randomUUID(), projectId, assetId, evidenceId, parser: "utf8-text", parserVersion: "1.0.0",
         status: "parsed", extractedText: "仅有正立面照片，未提供现场尺寸。", warnings: [], createdAt: new Date().toISOString(),
       }],
-      entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [], issues: [], dependencyEdges: [], adoptedRecordRefs: [],
+      entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [], issues: [], dependencyEdges: [], geometrySpecs: [], geometryRevisions: [], adoptedRecordRefs: [],
     },
   };
 }

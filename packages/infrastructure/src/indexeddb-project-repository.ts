@@ -18,16 +18,18 @@ import {
   type ModelRun,
   type RuleRun,
   type Decision,
+  type CadJob,
 } from "@gujian/domain";
 
 import { recordHash, sha256Hex } from "./hash.js";
 
 export const WORKBENCH_DB_NAME = "gujian-workbench-v3";
-export const WORKBENCH_DB_VERSION = 3;
+export const WORKBENCH_DB_VERSION = 4;
 
 const STORE_NAMES = [
   "projects", "revisions", "commandReceipts", "auditEvents", "assets",
   "importSessions", "modelRuns", "modelRunEvents", "ruleRuns", "decisions",
+  "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions", "artifacts", "checkRuns", "deliveries",
 ] as const;
 
 interface PersistedRevision {
@@ -276,10 +278,19 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return decisions.sort((left, right) => left.decidedAt.localeCompare(right.decidedAt));
   }
 
+  async getProjectCadJobs(projectId: string): Promise<readonly CadJob[]> {
+    const database = await this.#database;
+    const transaction = database.transaction("cadJobs", "readonly");
+    const done = transactionDone(transaction);
+    const jobs = await requestResult<CadJob[]>(transaction.objectStore("cadJobs").index("projectId").getAll(projectId));
+    await done;
+    return jobs.sort((left, right) => left.startedAt.localeCompare(right.startedAt));
+  }
+
   async transaction<T>(projectId: string, operation: (transaction: ProjectTransaction) => Promise<T>): Promise<T> {
     const database = await this.#database;
     const transaction = database.transaction(
-      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns", "ruleRuns", "decisions"],
+      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns", "ruleRuns", "decisions", "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions"],
       "readwrite",
     );
     const done = transactionDone(transaction);
@@ -301,6 +312,12 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
         );
         if (!revision) throw new Error("项目头引用的版本不存在");
         return currentHead(summary, revision);
+      },
+      getCadJob: async (jobId) => {
+        const job = await requestResult<CadJob | undefined>(transaction.objectStore("cadJobs").get(jobId));
+        if (!job) return null;
+        if (job.projectId !== projectId) throw new Error("CAD_JOB_PROJECT_MISMATCH");
+        return job;
       },
       commit: async (mutation) => {
         if (committed) throw new Error("同一事务只能提交一次");
@@ -422,6 +439,12 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     for (const run of mutation.modelRunsToPut ?? []) transaction.objectStore("modelRuns").put(run);
     for (const run of mutation.ruleRunsToPut ?? []) transaction.objectStore("ruleRuns").put(run);
     for (const decision of mutation.decisionsToPut ?? []) transaction.objectStore("decisions").put(decision);
+    for (const job of mutation.cadJobsToPut ?? []) {
+      transaction.objectStore("cadJobs").put(job);
+      for (const event of job.events) transaction.objectStore("cadJobEvents").put({ ...event, projectId: job.projectId });
+    }
+    for (const spec of mutation.geometrySpecsToPut ?? []) transaction.objectStore("geometrySpecs").put(spec);
+    for (const revision of mutation.geometryRevisionsToPut ?? []) transaction.objectStore("geometryRevisions").put(revision);
     const assetWrite = mutation.assetWrites;
     if (assetWrite) {
       for (const record of assetWrite.records) {

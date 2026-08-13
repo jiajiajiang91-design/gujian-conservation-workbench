@@ -1,8 +1,11 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
+import { ProjectDrivenGeometrySpecSchema } from "@gujian/domain";
 import { z } from "zod";
 
+import { CadJobLedger } from "./cad-ledger.js";
+import { PythonCadWorker, type CadWorker, type CadWorkerRun } from "./cad-worker.js";
 import { KimiGateway, RunCancelledError, type GatewayResult } from "./kimi-gateway.js";
 import { ModelRunLedger } from "./model-ledger.js";
 
@@ -33,10 +36,21 @@ const RunRequestSchema = z.object({
 
 type RunRequest = z.infer<typeof RunRequestSchema>;
 
+const CadJobRequestSchema = z.object({
+  jobId: z.uuid(),
+  clientRequestId: z.uuid(),
+  idempotencyKey: z.uuid(),
+  projectId: z.uuid(),
+  projectRevisionId: z.uuid(),
+  geometrySpec: ProjectDrivenGeometrySpecSchema,
+}).strict();
+
 interface SessionRecord {
   csrfToken: string;
   capabilityToken: string;
   capabilityUsed: boolean;
+  cadCapabilityToken: string;
+  cadCapabilityUsed: boolean;
   expiresAt: number;
   lastRunStartedAt: number;
 }
@@ -46,6 +60,12 @@ interface ActiveRun {
   response: ServerResponse;
   state: "running" | "cancelled" | "settled";
   lateRecorded: boolean;
+}
+
+interface ActiveCadJob {
+  workerRun: CadWorkerRun;
+  response: ServerResponse;
+  state: "running" | "cancelled" | "settled";
 }
 
 export interface ModelGateway {
@@ -61,6 +81,20 @@ export interface ModelGateway {
 
 function canonicalHash(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => [key, canonicalize(item)]));
+  }
+  return value;
+}
+
+function geometryInputHash(value: z.infer<typeof ProjectDrivenGeometrySpecSchema>): string {
+  return createHash("sha256").update(JSON.stringify(canonicalize({ ...value, inputHash: "0".repeat(64) }))).digest("hex");
 }
 
 function randomToken(): string {
@@ -133,14 +167,20 @@ function publicErrorCode(error: unknown): string {
 export function createWorkbenchServer(options: {
   gateway?: ModelGateway;
   ledger?: ModelRunLedger;
+  cadLedger?: CadJobLedger;
+  cadWorker?: CadWorker;
   allowedOrigin?: string;
 } = {}) {
   const gateway = options.gateway ?? new KimiGateway();
   const ownsLedger = options.ledger === undefined;
   const ledger = options.ledger ?? new ModelRunLedger(process.env.NODE_ENV === "test" ? ":memory:" : undefined);
+  const ownsCadLedger = options.cadLedger === undefined;
+  const cadLedger = options.cadLedger ?? new CadJobLedger(process.env.NODE_ENV === "test" ? ":memory:" : undefined);
+  const cadWorker = options.cadWorker ?? new PythonCadWorker();
   const allowedOrigin = options.allowedOrigin ?? defaultAllowedOrigin;
   const sessions = new Map<string, SessionRecord>();
   const activeRuns = new Map<string, ActiveRun>();
+  const activeCadJobs = new Map<string, ActiveCadJob>();
 
   const server = createServer((request, response) => {
     void (async () => {
@@ -164,6 +204,7 @@ export function createWorkbenchServer(options: {
       }
 
       const url = new URL(request.url ?? "/", `http://${requestHost}`);
+      const cadAssetMatch = url.pathname.match(/^\/api\/cad-jobs\/([0-9a-f-]+)\/assets\/([^/]+)$/i);
       if (request.method === "GET" && url.pathname === "/api/status") {
         return writeJson(response, 200, {
           service: "gujian-workbench-server",
@@ -172,6 +213,7 @@ export function createWorkbenchServer(options: {
           model: gateway.model,
           modelConfigured: gateway.configured,
           projectStorage: "browser-indexeddb-v3",
+          cadWorker: "cadquery-2.8.0/ocp-7.9.3.1.1",
         }, origin);
       }
 
@@ -179,6 +221,7 @@ export function createWorkbenchServer(options: {
         const sessionId = randomToken();
         const record: SessionRecord = {
           csrfToken: randomToken(), capabilityToken: randomToken(), capabilityUsed: false,
+          cadCapabilityToken: randomToken(), cadCapabilityUsed: false,
           expiresAt: Date.now() + sessionLifetimeMs, lastRunStartedAt: 0,
         };
         sessions.set(sessionId, record);
@@ -186,8 +229,21 @@ export function createWorkbenchServer(options: {
         return writeJson(response, 200, {
           csrfToken: record.csrfToken,
           capabilityToken: record.capabilityToken,
+          cadCapabilityToken: record.cadCapabilityToken,
           expiresAt: new Date(record.expiresAt).toISOString(),
         }, origin);
+      }
+
+      if (cadAssetMatch && request.method === "GET") {
+        const jobId = cadAssetMatch[1] ?? "";
+        const fileName = cadAssetMatch[2] ?? "";
+        const entry = cadLedger.read(jobId);
+        if (!entry || entry.job.status !== "succeeded") return writeJson(response, 404, { error: "CAD_ASSET_NOT_READY" }, origin);
+        const data = cadWorker.readAsset(jobId, fileName);
+        const mime = fileName.endsWith(".glb") ? "model/gltf-binary" : fileName.endsWith(".ifc") ? "application/x-step"
+          : fileName.endsWith(".png") ? "image/png" : fileName.endsWith(".ndjson") ? "application/x-ndjson" : "application/json";
+        response.writeHead(200, { "content-type": mime, "content-length": data.length, "cache-control": "no-store" });
+        return response.end(data);
       }
 
       const sessionId = parseCookies(request).get("gujian_session");
@@ -293,6 +349,76 @@ export function createWorkbenchServer(options: {
         return;
       }
 
+      if (request.method === "POST" && url.pathname === "/api/cad-jobs") {
+        if (request.headers["x-capability-token"] !== session.cadCapabilityToken || session.cadCapabilityUsed) {
+          return writeJson(response, 403, { error: "CAD_CAPABILITY_INVALID" }, origin);
+        }
+        const parsed = CadJobRequestSchema.safeParse(await readJsonBody(request));
+        if (!parsed.success) return writeJson(response, 400, { error: "CAD_JOB_REQUEST_INVALID", issues: parsed.error.issues }, origin);
+        const input = parsed.data;
+        if (input.projectId !== input.geometrySpec.projectId || input.projectRevisionId !== input.geometrySpec.projectRevisionId ||
+            input.geometrySpec.inputHash !== geometryInputHash(input.geometrySpec)) {
+          return writeJson(response, 400, { error: "CAD_INPUT_SNAPSHOT_INVALID" }, origin);
+        }
+        if (cadLedger.read(input.jobId) || activeCadJobs.has(input.jobId)) {
+          return writeJson(response, 409, { error: "CAD_JOB_ALREADY_EXISTS" }, origin);
+        }
+        if ([...activeCadJobs.values()].some((job) => job.state === "running")) {
+          return writeJson(response, 429, { error: "CAD_JOB_CONCURRENCY_LIMITED" }, origin);
+        }
+        session.cadCapabilityUsed = true;
+        const startedAt = new Date().toISOString();
+        cadLedger.start({
+          jobId: input.jobId, projectId: input.projectId, projectRevisionId: input.projectRevisionId,
+          geometrySpecId: input.geometrySpec.id, inputHash: input.geometrySpec.inputHash,
+          idempotencyKey: input.idempotencyKey, startedAt,
+        });
+        const queued = cadLedger.append(input.jobId, "queued", null);
+        response.writeHead(200, {
+          "content-type": "text/event-stream; charset=utf-8", "cache-control": "no-store, no-transform",
+          connection: "keep-alive", "x-content-type-options": "nosniff",
+          ...(origin ? { "access-control-allow-origin": origin, vary: "origin" } : {}),
+        });
+        sendSse(response, { type: "queued", event: queued, inputHash: input.geometrySpec.inputHash, startedAt });
+        let workerRun: CadWorkerRun;
+        try {
+          workerRun = cadWorker.start({ jobId: input.jobId, geometrySpec: input.geometrySpec });
+        } catch (error) {
+          const event = cadLedger.append(input.jobId, "failed", "CAD_WORKER_START_FAILED");
+          cadLedger.complete(input.jobId, { status: "failed", outputManifestHash: null, outputDirectory: null });
+          sendSse(response, { type: "failed", event, errorCode: publicErrorCode(error) });
+          return response.end();
+        }
+        const active: ActiveCadJob = { workerRun, response, state: "running" };
+        activeCadJobs.set(input.jobId, active);
+        const running = cadLedger.append(input.jobId, "running", null);
+        sendSse(response, { type: "running", event: running });
+        try {
+          const result = await workerRun.result;
+          if (active.state === "cancelled") {
+            const late = cadLedger.append(input.jobId, "late", "ignored-worker-completion");
+            sendSse(response, { type: "late", event: late });
+          } else {
+            const succeeded = cadLedger.append(input.jobId, "succeeded", result.manifestHash);
+            cadLedger.complete(input.jobId, { status: "succeeded", outputManifestHash: result.manifestHash, outputDirectory: result.outputDirectory });
+            active.state = "settled";
+            sendSse(response, { type: "succeeded", event: succeeded, ...result });
+            response.end();
+          }
+        } catch (error) {
+          if (active.state !== "cancelled") {
+            const event = cadLedger.append(input.jobId, "failed", publicErrorCode(error));
+            cadLedger.complete(input.jobId, { status: "failed", outputManifestHash: null, outputDirectory: null });
+            active.state = "settled";
+            sendSse(response, { type: "failed", event, errorCode: publicErrorCode(error) });
+            response.end();
+          }
+        } finally {
+          activeCadJobs.delete(input.jobId);
+        }
+        return;
+      }
+
       const runMatch = url.pathname.match(/^\/api\/model-runs\/([0-9a-f-]+)$/i);
       if (runMatch && request.method === "DELETE") {
         const runId = runMatch[1] ?? "";
@@ -312,6 +438,23 @@ export function createWorkbenchServer(options: {
           ? writeJson(response, 200, entry, origin)
           : writeJson(response, 404, { error: "RUN_NOT_FOUND" }, origin);
       }
+      const cadMatch = url.pathname.match(/^\/api\/cad-jobs\/([0-9a-f-]+)$/i);
+      if (cadMatch && request.method === "GET") {
+        const entry = cadLedger.read(cadMatch[1] ?? "");
+        return entry ? writeJson(response, 200, entry, origin) : writeJson(response, 404, { error: "CAD_JOB_NOT_FOUND" }, origin);
+      }
+      if (cadMatch && request.method === "DELETE") {
+        const jobId = cadMatch[1] ?? "";
+        const active = activeCadJobs.get(jobId);
+        if (!active || active.state !== "running") return writeJson(response, 404, { error: "CAD_JOB_NOT_ACTIVE" }, origin);
+        active.state = "cancelled";
+        active.workerRun.process.kill();
+        const event = cadLedger.append(jobId, "cancelled", "user-cancelled");
+        cadLedger.complete(jobId, { status: "cancelled", outputManifestHash: null, outputDirectory: null });
+        sendSse(active.response, { type: "cancelled", event });
+        active.response.end();
+        return writeJson(response, 200, { jobId, status: "cancelled" }, origin);
+      }
       return writeJson(response, 404, { error: "NOT_FOUND" }, origin);
     })().catch((error: unknown) => {
       if (!response.headersSent) writeJson(response, error instanceof Error && error.message === "REQUEST_TOO_LARGE" ? 413 : 400, {
@@ -320,7 +463,10 @@ export function createWorkbenchServer(options: {
       else if (!response.writableEnded) response.end();
     });
   });
-  if (ownsLedger) server.once("close", () => ledger.close());
+  server.once("close", () => {
+    if (ownsLedger) ledger.close();
+    if (ownsCadLedger) cadLedger.close();
+  });
   return server;
 }
 

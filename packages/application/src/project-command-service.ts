@@ -73,6 +73,30 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
   )) {
     throw new CommandError("COMMAND_INVALID", "candidate decision closure is invalid");
   }
+  if (command.commandType === "StartCadJob" && (
+    command.payload.job.projectId !== command.projectId ||
+    command.payload.job.inputRevisionId !== command.expectedRevisionId ||
+    command.payload.job.status !== "queued" || command.payload.job.events.length !== 0 ||
+    command.payload.job.outputManifestHash !== null || command.payload.job.completedAt !== null
+  )) {
+    throw new CommandError("COMMAND_INVALID", "CAD job start closure is invalid");
+  }
+  if (command.commandType === "SyncCadJobEvents" && command.payload.job.projectId !== command.projectId) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "CAD job must match command projectId");
+  }
+  if (command.commandType === "CommitGeometryRevision") {
+    const { geometrySpec: spec, geometryRevision: revision, assets } = command.payload;
+    const assetById = new Map(assets.map((asset) => [asset.id, asset]));
+    if (spec.projectId !== command.projectId || revision.projectId !== command.projectId ||
+        revision.geometrySpecId !== spec.id || revision.projectRevisionId !== spec.projectRevisionId ||
+        revision.inputHash !== spec.inputHash || revision.assets.some((ref) => {
+          const asset = assetById.get(ref.assetId);
+          return !asset || asset.projectId !== command.projectId || asset.sha256 !== ref.sha256 ||
+            asset.mimeType !== ref.mimeType || asset.byteLength !== ref.byteLength;
+        })) {
+      throw new CommandError("COMMAND_INVALID", "geometry revision closure is invalid");
+    }
+  }
 }
 
 function createInitialSnapshot(command: Extract<ProjectCommand, { commandType: "CreateProject" }>): ProjectSnapshot {
@@ -91,6 +115,8 @@ function createInitialSnapshot(command: Extract<ProjectCommand, { commandType: "
     candidates: [],
     issues: [],
     dependencyEdges: [],
+    geometrySpecs: [],
+    geometryRevisions: [],
     adoptedRecordRefs: [],
   });
 }
@@ -179,6 +205,41 @@ function decideCandidate(
   });
 }
 
+function appendGeometryRevision(
+  head: ProjectHead,
+  command: Extract<ProjectCommand, { commandType: "CommitGeometryRevision" }>,
+): ProjectSnapshot {
+  if (head.snapshot.geometrySpecs.some((item) => item.id === command.payload.geometrySpec.id) ||
+      head.snapshot.geometryRevisions.some((item) => item.id === command.payload.geometryRevision.id)) {
+    throw new CommandError("COMMAND_INVALID", "geometry spec or revision id already exists");
+  }
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
+    geometrySpecs: [...head.snapshot.geometrySpecs, command.payload.geometrySpec],
+    geometryRevisions: [...head.snapshot.geometryRevisions, command.payload.geometryRevision],
+  });
+}
+
+function assertCadJobEventPrefix(previous: import("@gujian/domain").CadJob, next: import("@gujian/domain").CadJob): void {
+  if (next.id !== previous.id || next.projectId !== previous.projectId ||
+      next.inputRevisionId !== previous.inputRevisionId || next.geometrySpecId !== previous.geometrySpecId ||
+      next.inputHash !== previous.inputHash || next.idempotencyKey !== previous.idempotencyKey ||
+      next.startedAt !== previous.startedAt || next.events.length < previous.events.length) {
+    throw new CommandError("COMMAND_INVALID", "CAD job immutable fields or event prefix changed");
+  }
+  for (let index = 0; index < previous.events.length; index += 1) {
+    if (previous.events[index]?.eventHash !== next.events[index]?.eventHash) {
+      throw new CommandError("COMMAND_INVALID", "CAD job event prefix changed");
+    }
+  }
+  for (let index = 0; index < next.events.length; index += 1) {
+    const event = next.events[index]!;
+    if (event.jobId !== next.id || event.sequence !== index || event.previousHash !== (index === 0 ? null : next.events[index - 1]!.eventHash)) {
+      throw new CommandError("COMMAND_INVALID", "CAD job event chain is invalid");
+    }
+  }
+}
+
 export class ProjectCommandService {
   readonly #repository: ProjectRepositoryPort;
   readonly #authorization: AuthorizationPort;
@@ -260,6 +321,23 @@ export class ProjectCommandService {
           currentRevisionId: head.revisionId,
         });
       }
+      const persistedCadJob = command.commandType === "StartCadJob" || command.commandType === "SyncCadJobEvents" || command.commandType === "CommitGeometryRevision"
+        ? await transaction.getCadJob(command.commandType === "CommitGeometryRevision" ? command.payload.cadJobId : command.payload.job.id)
+        : null;
+      if (command.commandType === "StartCadJob" && persistedCadJob) {
+        throw new CommandError("COMMAND_INVALID", "CAD job already exists");
+      }
+      if (command.commandType === "SyncCadJobEvents") {
+        if (!persistedCadJob) throw new CommandError("COMMAND_INVALID", "CAD job does not exist");
+        assertCadJobEventPrefix(persistedCadJob, command.payload.job);
+      }
+      if (command.commandType === "CommitGeometryRevision") {
+        const manifestHash = command.payload.geometryRevision.assets.find((asset) => asset.kind === "manifest")?.sha256;
+        if (!persistedCadJob || persistedCadJob.status !== "succeeded" || persistedCadJob.outputManifestHash !== manifestHash ||
+            persistedCadJob.geometrySpecId !== command.payload.geometrySpec.id || persistedCadJob.inputHash !== command.payload.geometrySpec.inputHash) {
+          throw new CommandError("COMMAND_INVALID", "successful synchronized CAD job is required");
+        }
+      }
       const snapshot = command.commandType === "CommitFacts"
         ? appendFacts(head, command.payload.facts)
         : command.commandType === "ImportEvidence"
@@ -270,7 +348,11 @@ export class ProjectCommandService {
               ? confirmTaskSetup(head, command)
               : command.commandType === "CommitRuleEvaluation"
                 ? appendRuleEvaluation(head, command)
-                : decideCandidate(head, command);
+                : command.commandType === "DecideCandidate"
+                  ? decideCandidate(head, command)
+                  : command.commandType === "CommitGeometryRevision"
+                    ? appendGeometryRevision(head, command)
+                    : head.snapshot;
       return transaction.commit({
         command,
         authoritativeActorId,
@@ -286,7 +368,11 @@ export class ProjectCommandService {
                 ? [command.payload.taskDefinition.id]
                 : command.commandType === "CommitRuleEvaluation"
                   ? [command.payload.ruleRun.id, ...command.payload.issues.map((issue) => issue.id)]
-                  : [command.payload.candidateId, command.payload.decision.id, command.payload.decision.issueId],
+                  : command.commandType === "DecideCandidate"
+                    ? [command.payload.candidateId, command.payload.decision.id, command.payload.decision.issueId]
+                    : command.commandType === "CommitGeometryRevision"
+                      ? [command.payload.cadJobId, command.payload.geometrySpec.id, command.payload.geometryRevision.id, ...command.payload.assets.map((asset) => asset.id)]
+                      : [command.payload.job.id, ...command.payload.job.events.map((event) => event.id)],
         ...(command.commandType === "ImportEvidence"
           ? { assetWrites: { records: [command.payload.asset], stagingSessionId: command.payload.stagingSessionId } }
           : {}),
@@ -298,6 +384,16 @@ export class ProjectCommandService {
           : {}),
         ...(command.commandType === "DecideCandidate"
           ? { decisionsToPut: [command.payload.decision] }
+          : {}),
+        ...(command.commandType === "StartCadJob" || command.commandType === "SyncCadJobEvents"
+          ? { cadJobsToPut: [command.payload.job] }
+          : {}),
+        ...(command.commandType === "CommitGeometryRevision"
+          ? {
+              geometrySpecsToPut: [command.payload.geometrySpec],
+              geometryRevisionsToPut: [command.payload.geometryRevision],
+              assetWrites: { records: command.payload.assets, stagingSessionId: command.payload.stagingSessionId },
+            }
           : {}),
       });
     });

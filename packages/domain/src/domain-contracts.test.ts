@@ -145,6 +145,8 @@ describe("测量与未知值契约", () => {
       unresolvedConstraintRefs: ["constraint:roof-rise"],
     });
 
+    expect(parsed.schemaVersion).toBe("1.0");
+    if (parsed.schemaVersion !== "1.0") throw new Error("legacy geometry contract was not selected");
     expect(parsed.primitives).toHaveLength(0);
     expect(parsed.unknownRegions[0]?.reasonCode).toBe("missing-measured-roof-rise");
   });

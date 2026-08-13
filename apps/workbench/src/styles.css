@@ -70,7 +70,7 @@ h1 { font: 600 25px/1.32 "Microsoft YaHei", sans-serif; letter-spacing: -.04em; 
 .revision-chip { color: #4d665d; border: 1px solid #b9c8c0; background: #edf3ef; padding: 6px 9px; font: 10px Consolas, monospace; }
 .project-actions { display: flex; align-items: center; gap: 7px; }
 .project-actions button { min-height: 29px; padding: 0 9px; border: 1px solid #cad2cc; background: #fbfcfa; color: #425048; display: flex; align-items: center; gap: 5px; font-size: 10px; }
-.stage-list.horizontal { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 0; margin-top: 22px; }
+.stage-list.horizontal { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 0; margin-top: 22px; }
 .stage-list.horizontal .stage-row { border-top: 1px solid #d3d9d4; border-right: 1px solid #d3d9d4; padding: 0 10px; }
 .stage-list.horizontal .stage-row:first-child { border-left: 1px solid #d3d9d4; }
 .stage-list.horizontal .stage-row.active { background: #173f35; color: #fff; }
@@ -99,6 +99,19 @@ h1 { font: 600 25px/1.32 "Microsoft YaHei", sans-serif; letter-spacing: -.04em; 
 .candidate-meta { display: flex; align-items: center; gap: 9px; color: #818881; font: 9px Consolas, monospace; }
 .producer-badge { padding: 3px 6px; border: 1px solid #becfc6; text-transform: uppercase; }
 .producer-badge.model { color: #225744; background: #edf5f0; }
+
+.geometry-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 280px; min-height: 520px; border: 1px solid #d3d9d4; background: #f4f5f3; }
+.glb-viewer { min-width: 0; height: 520px; border-right: 1px solid #d3d9d4; }
+.geometry-inspector { display: flex; flex-direction: column; gap: 12px; padding: 20px; background: #fff; }
+.geometry-inspector h4 { margin: 0; font-size: 17px; }
+.geometry-inspector dl { margin: 0; display: grid; gap: 8px; }
+.geometry-inspector dl div { display: grid; grid-template-columns: 72px 1fr; gap: 8px; font-size: 12px; }
+.geometry-inspector dt { color: #7b827d; }
+.geometry-inspector dd { margin: 0; overflow-wrap: anywhere; }
+.qualification-chip { width: fit-content; padding: 5px 8px; border-radius: 3px; color: #8b2d24; background: #f7ebe8; font-size: 11px; font-weight: 650; }
+.unknown-card { padding: 12px; border-left: 3px solid #a74b3e; background: #faf3f1; }
+.unknown-card p { margin: 6px 0; font-size: 12px; line-height: 1.5; }
+@media (max-width: 1100px) { .geometry-workspace { grid-template-columns: 1fr; } .glb-viewer { border-right: 0; border-bottom: 1px solid #d3d9d4; } }
 .producer-badge.rule { color: #6c4d1e; border-color: #d8c7a4; background: #faf5e9; }
 .producer-badge.human { color: #3d4772; border-color: #c3c9df; background: #f0f2f9; }
 .producer-badge.demo { color: #7a4a46; border-color: #d8c2bf; background: #faf1f0; }

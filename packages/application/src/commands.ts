@@ -18,6 +18,9 @@ import {
   TaskDefinitionSchema,
   Sha256Schema,
   UuidSchema,
+  CadJobSchema,
+  GeometryRevisionSchema,
+  ProjectDrivenGeometrySpecSchema,
 } from "@gujian/domain";
 
 const CommandHeaderSchema = z.object({
@@ -110,6 +113,30 @@ export const DecideCandidateCommandSchema = CommandHeaderSchema.extend({
   }),
 }).strict();
 
+export const StartCadJobCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("StartCadJob"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ job: CadJobSchema }).strict(),
+}).strict();
+
+export const SyncCadJobEventsCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("SyncCadJobEvents"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ job: CadJobSchema }).strict(),
+}).strict();
+
+export const CommitGeometryRevisionCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitGeometryRevision"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    cadJobId: UuidSchema,
+    geometrySpec: ProjectDrivenGeometrySpecSchema,
+    geometryRevision: GeometryRevisionSchema,
+    assets: z.array(AssetRecordSchema).min(6).max(20),
+    stagingSessionId: UuidSchema,
+  }).strict(),
+}).strict();
+
 export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CreateProjectCommandSchema,
   CommitFactsCommandSchema,
@@ -119,6 +146,9 @@ export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   ConfirmTaskSetupCommandSchema,
   CommitRuleEvaluationCommandSchema,
   DecideCandidateCommandSchema,
+  StartCadJobCommandSchema,
+  SyncCadJobEventsCommandSchema,
+  CommitGeometryRevisionCommandSchema,
 ]);
 
 export type CreateProjectCommand = z.infer<typeof CreateProjectCommandSchema>;
@@ -129,5 +159,8 @@ export type CommitModelRunResultCommand = z.infer<typeof CommitModelRunResultCom
 export type ConfirmTaskSetupCommand = z.infer<typeof ConfirmTaskSetupCommandSchema>;
 export type CommitRuleEvaluationCommand = z.infer<typeof CommitRuleEvaluationCommandSchema>;
 export type DecideCandidateCommand = z.infer<typeof DecideCandidateCommandSchema>;
+export type StartCadJobCommand = z.infer<typeof StartCadJobCommandSchema>;
+export type SyncCadJobEventsCommand = z.infer<typeof SyncCadJobEventsCommandSchema>;
+export type CommitGeometryRevisionCommand = z.infer<typeof CommitGeometryRevisionCommandSchema>;
 export type ProjectCommand = z.infer<typeof ProjectCommandSchema>;
 export type ProjectCommandType = ProjectCommand["commandType"];

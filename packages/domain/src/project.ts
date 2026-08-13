@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { FactEnvelopeSchema, ProducerRefSchema } from "./provenance.js";
+import { GeometryRevisionSchema, ProjectDrivenGeometrySpecSchema } from "./geometry.js";
 import { ModelCandidateSchema } from "./records.js";
 import {
   DataStatusSchema,
@@ -187,6 +188,8 @@ export const ProjectSnapshotSchema = z.object({
   candidates: z.array(ModelCandidateSchema),
   issues: z.array(IssueSchema),
   dependencyEdges: z.array(DependencyEdgeSchema),
+  geometrySpecs: z.array(ProjectDrivenGeometrySpecSchema).default([]),
+  geometryRevisions: z.array(GeometryRevisionSchema).default([]),
   adoptedRecordRefs: z.array(NonEmptyRefSchema),
 }).strict().superRefine((value, context) => {
   if (value.buildings.some((building) => building.projectId !== value.project.id)) {

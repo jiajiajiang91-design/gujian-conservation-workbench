@@ -6,10 +6,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { ProjectHead, ProjectSummary } from "@gujian/application";
 import type { Decision, ModelRun, RuleRun } from "@gujian/domain";
+import type { GeometryRevision } from "@gujian/domain";
 
 import type { ModelRunProgress } from "./model-run-client";
+import type { CadJobProgress } from "./cad-job-client";
+import { GlbViewer } from "./GlbViewer";
 import {
-  createLocalProject, evidenceIngestion, listLocalProjects, localActorId,
+  cadJobs, createLocalProject, evidenceIngestion, listLocalProjects, localActorId,
   modelRuns, projectPackages, projectRepository,
   workflow,
 } from "./workbench";
@@ -18,6 +21,7 @@ const stages = [
   { id: "evidence", label: "项目资料" },
   { id: "candidates", label: "AI 候选" },
   { id: "issues", label: "问题处理" },
+  { id: "geometry", label: "三维模型" },
   { id: "package", label: "项目包" },
 ] as const;
 type StageId = typeof stages[number]["id"];
@@ -56,6 +60,9 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [modelProgress, setModelProgress] = useState<ModelRunProgress | null>(null);
+  const [cadProgress, setCadProgress] = useState<CadJobProgress | null>(null);
+  const [geometryBlob, setGeometryBlob] = useState<Blob | null>(null);
+  const [selectedGeometryEntityId, setSelectedGeometryEntityId] = useState<string | null>(null);
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
   const [roundTripReceipt, setRoundTripReceipt] = useState<RoundTripReceipt | null>(null);
   const importInput = useRef<HTMLInputElement>(null);
@@ -91,11 +98,43 @@ export function App() {
   const modelRunning = modelProgress && !["succeeded", "failed", "cancelled"].includes(modelProgress.phase);
   const confirmedTask = selected?.snapshot.taskDefinitions.find((task) => task.confirmedAt !== null) ?? null;
   const openIssues = selected?.snapshot.issues.filter((issue) => issue.status === "open") ?? [];
+  const geometryRevision = selected?.snapshot.geometryRevisions.at(-1) ?? null;
+  const geometrySpec = selected && geometryRevision
+    ? selected.snapshot.geometrySpecs.find((item) => item.id === geometryRevision.geometrySpecId) ?? null
+    : null;
+  const selectedGeometryEntity = geometrySpec?.objects.find((item) => item.id === selectedGeometryEntityId) ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!geometryRevision) return setGeometryBlob(null);
+      const glb = geometryRevision.assets.find((asset) => asset.kind === "glb");
+      if (!glb) return setGeometryBlob(null);
+      const stored = await projectRepository.getAsset(glb.assetId);
+      if (!cancelled) setGeometryBlob(stored.content);
+    };
+    void load().catch(() => setGeometryBlob(null));
+    return () => { cancelled = true; };
+  }, [geometryRevision?.id]);
 
   const chooseProject = async (projectId: string) => {
     setError(null);
     setModelProgress(null);
     await loadProject(projectId);
+  };
+
+  const generateDemoGeometry = async () => {
+    if (!selected) return;
+    setError(null);
+    setCadProgress(null);
+    try {
+      const outcome = await cadJobs.startDemoGeometry(selected, localActorId(), setCadProgress);
+      setSelected(outcome.head);
+      await refresh();
+      setNotice("项目驱动 GeometryRevision 已生成；仍为代理成果、未签发、L1=false");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "几何作业失败");
+    }
   };
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
@@ -519,6 +558,44 @@ export function App() {
                   <section><strong>规则运行</strong>{projectRuleRuns.slice(-4).reverse().map((run) => <span key={run.id}><b className="producer-badge rule">规则</b>{run.ruleSetVersion} · {run.results.filter((result) => result.outcome === "issue").length} 项异常</span>)}</section>
                   <section><strong>人工决定</strong>{projectDecisions.slice(-4).reverse().map((decision) => <span key={decision.id}><b className="producer-badge human">人工</b>{decision.outcome} · {decision.decidedAt.slice(0, 19).replace("T", " ")}</span>)}{!projectDecisions.length && <small>尚无人工决定</small>}</section>
                 </div>
+              </section>
+            )}
+
+            {activeStage === "geometry" && (
+              <section className="evidence-board geometry-board">
+                <header className="board-heading">
+                  <div><p className="eyebrow">GEOMETRY REVISION</p><h3>项目驱动三维模型</h3></div>
+                  <button className="upload-evidence" type="button" disabled={Boolean(cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase))} onClick={() => void generateDemoGeometry()}>
+                    <Play size={14} /> {geometryRevision ? "生成新代理版本" : "生成代理几何"}
+                  </button>
+                </header>
+                <div className="transmission-note"><ShieldCheck size={15} /><span>浏览器冻结 GeometrySpec 与输入哈希；Node 只接收受限结构，Python worker 不接收 URL、提示或用户文件路径。</span></div>
+                {geometryRevision && geometryBlob ? (
+                  <div className="geometry-workspace">
+                    <GlbViewer blob={geometryBlob} onSelect={setSelectedGeometryEntityId} />
+                    <aside className="geometry-inspector">
+                      <span className="qualification-chip">代理成果 · 未签发 · L1=false</span>
+                      <h4>{selectedGeometryEntity?.displayNameZh ?? "选择模型构件查看来源"}</h4>
+                      {selectedGeometryEntity ? <>
+                        <dl>
+                          <div><dt>稳定键</dt><dd>{selectedGeometryEntity.stableKey}</dd></div>
+                          <div><dt>构件类型</dt><dd>{selectedGeometryEntity.componentType}</dd></div>
+                          <div><dt>来源</dt><dd>{selectedGeometryEntity.producer.producerType}</dd></div>
+                          <div><dt>证据</dt><dd>{selectedGeometryEntity.evidenceRefs.length} 项</dd></div>
+                        </dl>
+                        {selectedGeometryEntity.unknownRefs.map((id) => {
+                          const unknown = geometrySpec?.unknowns.find((item) => item.id === id);
+                          return unknown ? <div className="unknown-card" key={id}><strong>{unknown.reasonCode}</strong><p>{unknown.description}</p><small>正式资格阻断：{unknown.blocksFormalEligibility ? "是" : "否"}</small></div> : null;
+                        })}
+                      </> : <p>点击模型中的构件，查看稳定 ID、证据引用、未知项和资格影响。</p>}
+                      <hr />
+                      <small>GeometryRevision {geometryRevision.id.slice(0, 8)} · {geometryRevision.geometrySignature.slice(0, 12)}…</small>
+                      <small>{geometrySpec?.objects.length ?? 0} 个实体 · {geometrySpec?.interfaces.length ?? 0} 个界面 · {geometrySpec?.unknowns.length ?? 0} 个未知项</small>
+                    </aside>
+                  </div>
+                ) : (
+                  <div className="panel-empty">尚未建立 GeometryRevision。此入口先验证通用几何内核，不宣称项目已有实测三维成果。</div>
+                )}
               </section>
             )}
 
