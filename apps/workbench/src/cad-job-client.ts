@@ -1,6 +1,6 @@
 import { ProjectCommandService, type ProjectHead } from "@gujian/application";
 import { CadJobSchema, GeometryRevisionSchema, ProjectDrivenGeometrySpecSchema, type CadJob, type CadJobEvent, type GeometryRevision, type ProjectDrivenGeometrySpec } from "@gujian/domain";
-import { IndexedDbProjectRepository, sha256Hex } from "@gujian/infrastructure";
+import { IndexedDbProjectRepository, recordHash, sha256Hex } from "@gujian/infrastructure";
 
 import { buildProjectGeometrySpec } from "./geometry-spec-builder";
 
@@ -62,26 +62,15 @@ export function rebindExistingGeometrySpec(head: ProjectHead, source: ProjectDri
   if (source.projectId !== head.projectId) throw new Error("GEOMETRY_SPEC_PROJECT_MISMATCH");
   const buildingIds = new Set(head.snapshot.buildings.map((building) => building.id));
   if (!buildingIds.has(source.buildingId)) throw new Error("GEOMETRY_SPEC_BUILDING_MISMATCH");
-  const id = crypto.randomUUID();
-  const createdAt = new Date().toISOString();
-  const inputHash = sha256Hex(JSON.stringify({
-    schemaVersion: "2.0",
-    projectId: head.projectId,
-    projectRevisionId: head.revisionId,
-    buildingId: source.buildingId,
-    coordinateSystem: source.coordinateSystem,
-    tolerances: source.tolerances,
-    objects: source.objects,
-    interfaces: source.interfaces,
-    unknowns: source.unknowns,
-  }));
-  return ProjectDrivenGeometrySpecSchema.parse({
+  const rebound = {
     ...source,
-    id,
+    id: crypto.randomUUID(),
     projectRevisionId: head.revisionId,
-    inputHash,
-    createdAt,
-  });
+    inputHash: "0".repeat(64),
+    createdAt: new Date().toISOString(),
+  };
+  // inputHash 必须与服务端 geometryInputHash 的 canonical 重算一致，统一用 recordHash
+  return ProjectDrivenGeometrySpecSchema.parse({ ...rebound, inputHash: recordHash(rebound) });
 }
 
 function projectEvent(event: WorkerEvent): CadJobEvent {

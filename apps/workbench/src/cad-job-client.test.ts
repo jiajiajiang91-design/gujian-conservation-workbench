@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ProjectDrivenGeometrySpecSchema } from "@gujian/domain";
+import { recordHash } from "@gujian/infrastructure";
 
 import { rebindExistingGeometrySpec } from "./cad-job-client";
 
@@ -32,5 +33,8 @@ describe("existing GeometrySpec input", () => {
     expect(rebound.objects[0]?.id).toBe(objectId);
     expect(rebound.objects[0]?.stableKey).toBe("column:west");
     expect(rebound.inputHash).not.toBe(source.inputHash);
+    // 服务端 geometryInputHash 会把 inputHash 置零后按 canonical JSON 重算并比对；
+    // 重绑结果必须能通过该校验，否则 existingGeometrySpec 路径被 CAD_INPUT_SNAPSHOT_INVALID 拒绝
+    expect(rebound.inputHash).toBe(recordHash({ ...rebound, inputHash: "0".repeat(64) }));
   });
 });
