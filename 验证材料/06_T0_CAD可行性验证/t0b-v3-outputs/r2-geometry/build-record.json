@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "t0b-v3-geometry-build-2",
+  "status": "generated-not-qualified",
+  "qualification": {
+    "passedGenerationOnly": true,
+    "independentVerificationComplete": false,
+    "technicalDemoRevalidationPassed": false,
+    "localProfessionalSampleEligible": false,
+    "L1": false
+  },
+  "fixturePath": "t0b-v3-local-construction-fixture-r2.json",
+  "fixtureSha256": "7f48c20881789df3834919648f7bba0c352cf81d701d42256cb59cebc8f804c6",
+  "geometryRevisionId": "544fd784-4407-5065-b391-a970ba62aacc",
+  "geometrySignature": "505f123620856c3c14825e132fd516b45dfca934d7f568b8f9a76a6e0ddfc210",
+  "entityCount": 869,
+  "interfaceCount": 2080,
+  "outputs": [
+    {
+      "path": "geometry-manifest.json",
+      "sha256": "9f704c87cb25c9ad02f11657a12f3f399102726ff13c5161cd4750cc2741d1a5"
+    },
+    {
+      "path": "source-meshes.ndjson.gz",
+      "sha256": "882bcfd13015d8d6eada30c5844e3f08a552b587cab7e5cfe574127893699db3"
+    },
+    {
+      "path": "local-construction-sample.glb",
+      "sha256": "f8c2dcf5b472818424f26a9fede785f8eee1a6728d68fd09c031188e90d48ead"
+    }
+  ],
+  "blockers": [
+    "INDEPENDENT_GEOMETRY_VERIFICATION_REQUIRED",
+    "VIEW_AND_DRAWING_REGENERATION_REQUIRED",
+    "GENERIC_GEOMETRY_KERNEL_REQUIRED",
+    "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED",
+    "PROFESSIONAL_REVIEW_REQUIRED"
+  ]
+}
