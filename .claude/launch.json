@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "workbench",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": ["pnpm", "--parallel", "--filter", "@gujian/server", "--filter", "@gujian/workbench", "dev"],
+      "port": 5173
+    }
+  ]
+}
