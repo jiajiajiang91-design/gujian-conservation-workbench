@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "t0b-v2-sheet-output-verifier-tests-1",
+  "status": "passed",
+  "runner": "python-unittest",
+  "tests": 10,
+  "failures": 0,
+  "errors": 0,
+  "durationSeconds": 80.681,
+  "coveredAttacks": [
+    "forbidden-generator-or-oracle-import",
+    "font-source-commit",
+    "font-corpus-coverage",
+    "contract-signature",
+    "ir-hash",
+    "artifact-hash",
+    "qualification-elevation",
+    "required-blocker-removal",
+    "svg-structural-coordinate",
+    "svg-remote-dependency",
+    "pdf-ToUnicode-removal",
+    "png-size-and-dpi"
+  ]
+}

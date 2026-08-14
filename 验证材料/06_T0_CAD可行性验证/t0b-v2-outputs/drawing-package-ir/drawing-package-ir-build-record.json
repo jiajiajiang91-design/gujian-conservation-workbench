@@ -3,12 +3,12 @@
   "status": "generated-not-qualified",
   "L1": false,
   "generatedAt": "2000-01-01T00:00:00Z",
-  "drawingPackageContractRevisionId": "176ee4f0-9cbd-51ba-939e-aa2cad36a307",
+  "drawingPackageContractRevisionId": "965dd6d3-29c9-59fb-b922-9c0ae56e16f2",
   "inputs": {
     "contract": {
       "path": "t0b-v2-drawing-package-contract.json",
-      "sha256": "5c021d066c5bfb9ba4b4326f901c258284b18abc104a53cb9a45b9eed5568753",
-      "contractSignature": "8b3f2570c8dddab4ca006362bda2a850660620047bb0ccb5d42695134a1bbcc3"
+      "sha256": "132e23a6523906fbe79bff8d54dc229764956c9e36a618a2449a6e7f39dde739",
+      "contractSignature": "4e27aabfb80bba82bc92c965b06b4f820f743d35838717d9fbf47e48488f7eaf"
     },
     "manifest": {
       "relativePath": "t0b-v2-outputs/geometry-manifest.json",
@@ -72,8 +72,8 @@
   },
   "output": {
     "path": "drawing-package.ir.json.gz",
-    "sha256": "b9cb575dd421082b45b6e335c590b00b3dd6c3b8da4eeafa9a9369c94c402021",
-    "drawingPackageIrSha256": "7e688805caac842cc6ce652e2196378a580acce20b3b75478732527b42637769",
+    "sha256": "c463edca1eb1c2d76fc649adb6e9d76ff6753f54403c30f28a3f960f1a253a60",
+    "drawingPackageIrSha256": "5b3ede93f4d6071b0a126cacdf4e6cf868fd41e39939435df4898d9b2f6b39dc",
     "statistics": {
       "viewCount": 10,
       "layoutCount": 2,

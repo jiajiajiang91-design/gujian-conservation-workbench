@@ -39,6 +39,17 @@ __pycache__/
 # 历史归档不进入当前活动项目基线
 /归档/
 
+# CAD 运行残留
+acad.err
+
+# t0b 大型可重建产物不进 Git 主线，哈希见 t0b-v2-evidence-invalidation-note.md
+验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/*.svg
+验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/*.pdf
+验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/*-300dpi.png
+验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/**/geometry-manifest.json
+验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/**/*.glb
+验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/**/*.ndjson.gz
+
 # 系统文件
 Thumbs.db
 desktop.ini
