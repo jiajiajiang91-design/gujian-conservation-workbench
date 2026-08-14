@@ -493,12 +493,32 @@ def _verify_tile_laps(fixture: dict, manifest: dict, meshes: dict[str, trimesh.T
     return results
 
 
+def _roof_layout(fixture: dict) -> dict[str, int]:
+    """从 fixture 独立推导屋面布局数量，不引用生成器代码。"""
+    assembly = fixture["assembly"]
+    templates = fixture["componentTemplates"]
+    purlins = [float(value) for value in assembly.get("purlinYPositions", [-3000, -2400, -1200, 0, 1200, 2400, 3000])]
+    rafter_half = float(assembly.get("rafterXHalfRange", 2400))
+    pan_half = float(assembly.get("boardPanXHalfRange", 2250))
+    cover_half = float(assembly.get("coverXHalfRange", 2400))
+    spacing = float(templates["rafter"]["parameters"]["spacing"])
+    panel_width = float(templates["roofBoard"]["parameters"]["panelWidth"])
+    return {
+        "purlins": len(purlins),
+        "rafters": int(round(2 * rafter_half / spacing)) + 1,
+        "boards": int(round(2 * pan_half / panel_width)) + 1,
+        "panColumns": int(round(2 * pan_half / float(templates["panTile"]["parameters"]["columnPitch"]))) + 1,
+        "coverColumns": int(round(2 * cover_half / float(templates["coverTile"]["parameters"]["columnPitch"]))) + 1,
+        "panHalf": pan_half,
+        "coverHalf": cover_half,
+    }
+
+
 def _expected_entity_type_counts(fixture: dict) -> dict[str, int]:
     assembly = fixture["assembly"]
     templates = fixture["componentTemplates"]
     row_count = _roof_row_count(fixture)
-    pan = templates["panTile"]["parameters"]
-    cover = templates["coverTile"]["parameters"]
+    layout = _roof_layout(fixture)
     ridge = templates["ridgeTile"]["parameters"]
     roof_width = float(assembly["roofWidth"])
     return {
@@ -510,17 +530,17 @@ def _expected_entity_type_counts(fixture: dict) -> dict[str, int]:
         "column": 4,
         "eaveBeam": 2,
         "tieBeam": 2,
-        "interiorPost": 10,
+        "interiorPost": 2 * (layout["purlins"] - 2),
         "bracketSeat": 4,
         "bracketArm": 8,
         "bearingBlock": 4,
-        "purlin": 7,
-        "rafter": 34,
-        "flyRafter": 34,
+        "purlin": layout["purlins"],
+        "rafter": 2 * layout["rafters"],
+        "flyRafter": 2 * layout["rafters"],
         "eaveClosure": 2,
-        "roofBoard": 32,
-        "panTile": 2 * (int(round((roof_width - float(pan["columnPitch"])) / float(pan["columnPitch"]))) + 1) * row_count,
-        "coverTile": 2 * (int(round(roof_width / float(cover["columnPitch"]))) + 1) * row_count,
+        "roofBoard": 2 * layout["boards"],
+        "panTile": 2 * layout["panColumns"] * row_count,
+        "coverTile": 2 * layout["coverColumns"] * row_count,
         "ridgeTile": int(math.ceil(roof_width / float(ridge["segmentLength"]))),
         "wall": 1,
         "doorFrameMember": 4,
@@ -534,8 +554,9 @@ def _expected_entity_type_counts(fixture: dict) -> dict[str, int]:
 
 def _expected_interface_role_counts(fixture: dict) -> dict[str, int]:
     row_count = _roof_row_count(fixture)
-    pan_columns = 16
-    cover_columns = 17
+    layout = _roof_layout(fixture)
+    pan_columns = layout["panColumns"]
+    cover_columns = layout["coverColumns"]
     ridge = fixture["componentTemplates"]["ridgeTile"]["parameters"]
     pan = fixture["componentTemplates"]["panTile"]["parameters"]
     cover = fixture["componentTemplates"]["coverTile"]["parameters"]
@@ -546,11 +567,11 @@ def _expected_interface_role_counts(fixture: dict) -> dict[str, int]:
     for side in range(2):
         finish_intervals.extend(
             (x - float(pan["width"]) / 2, x + float(pan["width"]) / 2)
-            for x in np.arange(-2250, 2250.1, float(pan["columnPitch"]))
+            for x in np.arange(-layout["panHalf"], layout["panHalf"] + 0.1, float(pan["columnPitch"]))
         )
         finish_intervals.extend(
             (x - float(cover["width"]) / 2, x + float(cover["width"]) / 2)
-            for x in np.arange(-2400, 2400.1, float(cover["columnPitch"]))
+            for x in np.arange(-layout["coverHalf"], layout["coverHalf"] + 0.1, float(cover["columnPitch"]))
         )
     ridge_finish = 0
     for index in range(ridge_count):
@@ -570,22 +591,22 @@ def _expected_interface_role_counts(fixture: dict) -> dict[str, int]:
         "base-terrace": 4,
         "column-eave-beam": 4,
         "column-tie-beam": 4,
-        "tie-beam-interior-post": 10,
-        "interior-post-purlin": 10,
+        "tie-beam-interior-post": 2 * (layout["purlins"] - 2),
+        "interior-post-purlin": 2 * (layout["purlins"] - 2),
         "eave-beam-seat": 4,
         "seat-arm-x": 4,
         "seat-arm-y": 4,
         "arm-cross-half-lap": 4,
         "arm-bearing-block": 8,
         "bearing-block-purlin": 4,
-        "rafter-purlin": 136,
-        "fly-rafter-rafter": 34,
-        "roof-board-rafter": 64,
+        "rafter-purlin": 2 * layout["rafters"] * ((layout["purlins"] + 1) // 2),
+        "fly-rafter-rafter": 2 * layout["rafters"],
+        "roof-board-rafter": 4 * layout["boards"],
         "pan-tile-roof-board": 2 * pan_columns * row_count,
         "cover-tile-pan-tile": 2 * (cover_columns * 2 - 2) * row_count,
         "tile-longitudinal-lap": 2 * (pan_columns + cover_columns) * (row_count - 1),
         "ridge-roof-finish": ridge_finish,
-        "eave-closure": 32,
+        "eave-closure": 2 * layout["boards"],
         "wall-terrace": 1,
         "door-frame-terrace": 1,
         "frame-corner-joint": 4,
@@ -633,38 +654,39 @@ def _expected_interface_bindings(fixture: dict) -> dict[str, tuple[str, str, str
             add("arm-cross-half-lap", f"bracket-arm-y:{x_index}:{y_index}", f"bracket-arm-x:{x_index}:{y_index}", f"{x_index}-{y_index}")
             for arm_axis in ("x", "y"):
                 add("arm-bearing-block", f"bearing-block:{x_index}:{y_index}", f"bracket-arm-{arm_axis}:{x_index}:{y_index}", f"{x_index}-{y_index}-{arm_axis}")
-            add("bearing-block-purlin", f"purlin:{0 if y_index == 0 else 6}", f"bearing-block:{x_index}:{y_index}", f"{x_index}-{y_index}")
+            add("bearing-block-purlin", f"purlin:{0 if y_index == 0 else _roof_layout(fixture)['purlins'] - 1}", f"bearing-block:{x_index}:{y_index}", f"{x_index}-{y_index}")
     for course in (1, 2):
         add("terrace-course-stack", f"terrace:course:{course}", f"terrace:course:{course - 1}", f"c{course}")
         add("step-course-stack", f"step:south:{course}", f"step:south:{course - 1}", f"c{course}")
     add("ground-step", "step:south:0", "ground:ring:foundation-course:2", "south")
     add("step-terrace", "step:south:2", "terrace:course:2", "south")
+    layout = _roof_layout(fixture)
     for x_index in range(2):
-        for post_index, purlin_index in enumerate(range(1, 6)):
+        for post_index, purlin_index in enumerate(range(1, layout["purlins"] - 1)):
             add("tie-beam-interior-post", f"interior-post:{x_index}:{post_index}", f"tie-beam:{x_index}", f"{x_index}-{post_index}")
             add("interior-post-purlin", f"purlin:{purlin_index}", f"interior-post:{x_index}:{post_index}", f"{x_index}-{post_index}")
     row_count = _roof_row_count(fixture)
     for side in ("south", "north"):
-        purlins = range(0, 4) if side == "south" else range(3, 7)
-        for rafter in range(17):
+        purlins = range(0, (layout["purlins"] + 1) // 2) if side == "south" else range(layout["purlins"] // 2, layout["purlins"])
+        for rafter in range(layout["rafters"]):
             for purlin in purlins:
                 add("rafter-purlin", f"rafter:{side}:{rafter}", f"purlin:{purlin}", f"{side}-{rafter}-p{purlin}")
             add("fly-rafter-rafter", f"fly-rafter:{side}:{rafter}", f"rafter:{side}:{rafter}", f"{side}-{rafter}")
-        for board in range(16):
+        for board in range(layout["boards"]):
             for rafter in (board, board + 1):
                 add("roof-board-rafter", f"roof-board:{side}:{board}", f"rafter:{side}:{rafter}", f"{side}-{board}-r{rafter}")
             for row in range(row_count):
                 add("pan-tile-roof-board", f"pan-tile:{side}:{board}:{row}", f"roof-board:{side}:{board}", f"{side}-{board}-{row}")
-        for cover in range(17):
+        for cover in range(layout["coverColumns"]):
             for pan in (cover - 1, cover):
-                if 0 <= pan < 16:
+                if 0 <= pan < layout["panColumns"]:
                     for row in range(row_count):
                         add("cover-tile-pan-tile", f"cover-tile:{side}:{cover}:{row}", f"pan-tile:{side}:{pan}:{row}", f"{side}-c{cover}-p{pan}-r{row}")
-        for tile_type, columns in (("pan-tile", 16), ("cover-tile", 17)):
+        for tile_type, columns in (("pan-tile", layout["panColumns"]), ("cover-tile", layout["coverColumns"])):
             for column in range(columns):
                 for row in range(1, row_count):
                     add("tile-longitudinal-lap", f"{tile_type}:{side}:{column}:{row}", f"{tile_type}:{side}:{column}:{row - 1}", f"{tile_type}-{side}-{column}-{row}")
-        for board in range(16):
+        for board in range(layout["boards"]):
             add("eave-closure", f"eave-closure:{side}", f"roof-board:{side}:{board}", f"{side}-{board}")
     roof_width = float(fixture["assembly"]["roofWidth"])
     ridge = fixture["componentTemplates"]["ridgeTile"]["parameters"]
@@ -673,10 +695,10 @@ def _expected_interface_bindings(fixture: dict) -> dict[str, tuple[str, str, str
     finish: list[tuple[str, float, float]] = []
     final_row = row_count - 1
     for side in ("south", "north"):
-        for column, x in enumerate(np.arange(-2250, 2250.1, float(fixture["componentTemplates"]["panTile"]["parameters"]["columnPitch"]))):
+        for column, x in enumerate(np.arange(-layout["panHalf"], layout["panHalf"] + 0.1, float(fixture["componentTemplates"]["panTile"]["parameters"]["columnPitch"]))):
             width = float(fixture["componentTemplates"]["panTile"]["parameters"]["width"])
             finish.append((f"pan-tile:{side}:{column}:{final_row}", float(x) - width / 2, float(x) + width / 2))
-        for column, x in enumerate(np.arange(-2400, 2400.1, float(fixture["componentTemplates"]["coverTile"]["parameters"]["columnPitch"]))):
+        for column, x in enumerate(np.arange(-layout["coverHalf"], layout["coverHalf"] + 0.1, float(fixture["componentTemplates"]["coverTile"]["parameters"]["columnPitch"]))):
             width = float(fixture["componentTemplates"]["coverTile"]["parameters"]["width"])
             finish.append((f"cover-tile:{side}:{column}:{final_row}", float(x) - width / 2, float(x) + width / 2))
     for index in range(ridge_count):

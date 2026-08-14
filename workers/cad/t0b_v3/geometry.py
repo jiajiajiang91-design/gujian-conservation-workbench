@@ -818,7 +818,9 @@ class GeometryBuilder:
         fly = self.templates["flyRafter"]["parameters"]
         purlin = self.templates["purlin"]["parameters"]
         purlin_seat_depth = float(rafter["purlinSeatCenterDepth"])
-        y_positions = [-3000, -2400, -1200, 0, 1200, 2400, 3000]
+        # 檩位默认保持首版 demo 的手工对齐值；fixture 可通过 assembly.purlinYPositions 覆盖
+        y_positions = [float(value) for value in assembly.get("purlinYPositions", [-3000, -2400, -1200, 0, 1200, 2400, 3000])]
+        self.purlin_y_positions = y_positions
         for index, y in enumerate(y_positions):
             side = -1 if y <= 0 else 1
             rafter_bottom = _roof_point(
@@ -855,7 +857,7 @@ class GeometryBuilder:
         post = self.templates["interiorPost"]["parameters"]
         tie = self.templates["tieBeam"]["parameters"]
         for x_index, x in enumerate(assembly["axisX"]):
-            for index in range(1, 6):
+            for index in range(1, len(y_positions) - 1):
                 center = self.purlin_centers[index]
                 bottom = assembly["levels"]["columnTop"] + tie["height"]
                 radius = purlin["diameter"] / 2
@@ -882,7 +884,9 @@ class GeometryBuilder:
                 )
                 self.entity_by_key[f"interior-post:{x_index}:{index - 1}"].mesh.apply_translation([x, center[1], 0])
 
-        rafter_x_positions = [float(value) for value in np.arange(-2400, 2400.1, rafter["spacing"])]
+        rafter_half_range = float(assembly.get("rafterXHalfRange", 2400))
+        rafter_x_positions = [float(value) for value in np.arange(-rafter_half_range, rafter_half_range + 0.1, rafter["spacing"])]
+        self.rafter_count = len(rafter_x_positions)
         for side_name, sign in (("south", -1), ("north", 1)):
             for index, x in enumerate(rafter_x_positions):
                 joint_start = sign * (curve["halfSpan"] - rafter["jointLength"])
@@ -957,7 +961,9 @@ class GeometryBuilder:
                 self.add("flyRafter", f"fly-rafter:{side_name}:{index}", fly_mesh, ["rafter-half-lap", "eave-termination"])
 
             finished_half_span = _finished_half_span(curve, fly)
-            panel_centers = [float(value) for value in np.arange(-2250, 2250.1, board["panelWidth"])]
+            panel_half_range = float(assembly.get("boardPanXHalfRange", 2250))
+            panel_centers = [float(value) for value in np.arange(-panel_half_range, panel_half_range + 0.1, board["panelWidth"])]
+            self.board_count = len(panel_centers)
             for index, x in enumerate(panel_centers):
                 path = _roof_path(curve, 0.0, sign * finished_half_span, x, -board["thickness"] / 2)
                 self.add("roofBoard", f"roof-board:{side_name}:{index}", _path_prism(path, board["panelWidth"], board["thickness"]))
@@ -1115,8 +1121,13 @@ class GeometryBuilder:
         finished_half_span = _finished_half_span(curve, fly)
         for side_name, sign in (("south", -1), ("north", 1)):
             row_count = int(math.floor((finished_half_span - pan["length"]) / pan["rowPitch"])) + 1
-            pan_x = [float(value) for value in np.arange(-2250, 2250.1, pan["columnPitch"])]
-            cover_x = [float(value) for value in np.arange(-2400, 2400.1, cover["columnPitch"])]
+            pan_half_range = float(assembly.get("boardPanXHalfRange", 2250))
+            cover_half_range = float(assembly.get("coverXHalfRange", 2400))
+            pan_x = [float(value) for value in np.arange(-pan_half_range, pan_half_range + 0.1, pan["columnPitch"])]
+            cover_x = [float(value) for value in np.arange(-cover_half_range, cover_half_range + 0.1, cover["columnPitch"])]
+            self.tile_rows = row_count
+            self.pan_columns = len(pan_x)
+            self.cover_columns = len(cover_x)
             for x_index, x in enumerate(pan_x):
                 for row in range(row_count):
                     distance = finished_half_span - pan["length"] / 2 - row * pan["rowPitch"]
@@ -1378,7 +1389,7 @@ class GeometryBuilder:
                 center_x + wall["windowWidth"] / 2,
                 z0 + wall["windowSill"] + wall["windowHeight"],
             )
-            for center_x in (-1300, 1300)
+            for center_x in (-float(assembly.get("windowCenterX", 1300)), float(assembly.get("windowCenterX", 1300)))
         ]
         openings = [door_opening, *window_openings]
         core_depth = wall["thickness"] - wall["finishThickness"] * 2
@@ -1523,7 +1534,8 @@ class GeometryBuilder:
         lattice_frame = self.templates["latticeFrameMember"]["parameters"]
         lattice = self.templates["latticeBar"]["parameters"]
         sill = z0 + wall["windowSill"]
-        for side, center_x in (("left", -1300), ("right", 1300)):
+        window_center_x = float(assembly.get("windowCenterX", 1300))
+        for side, center_x in (("left", -window_center_x), ("right", window_center_x)):
             window_y = y - wall["thickness"] / 2 + lattice_frame["depth"] / 2
             left = center_x - lattice_frame["width"] / 2
             right = center_x + lattice_frame["width"] / 2
@@ -1630,7 +1642,7 @@ class GeometryBuilder:
                     )
                 bind(
                     "bearing-block-purlin",
-                    f"purlin:{0 if y_index == 0 else 6}",
+                    f"purlin:{0 if y_index == 0 else len(self.purlin_y_positions) - 1}",
                     f"bearing-block:{x_index}:{y_index}",
                     f"{x_index}-{y_index}",
                 )
@@ -1642,43 +1654,44 @@ class GeometryBuilder:
         bind("step-terrace", "step:south:2", "terrace:course:2", "south")
 
         for x_index in range(2):
-            for post_index, purlin_index in enumerate(range(1, 6)):
+            for post_index, purlin_index in enumerate(range(1, len(self.purlin_y_positions) - 1)):
                 bind("tie-beam-interior-post", f"interior-post:{x_index}:{post_index}", f"tie-beam:{x_index}", f"{x_index}-{post_index}")
                 bind("interior-post-purlin", f"purlin:{purlin_index}", f"interior-post:{x_index}:{post_index}", f"{x_index}-{post_index}")
 
+        purlin_total = len(self.purlin_y_positions)
         for side in ("south", "north"):
-            purlin_indices = range(0, 4) if side == "south" else range(3, 7)
-            for rafter_index in range(17):
+            purlin_indices = range(0, (purlin_total + 1) // 2) if side == "south" else range(purlin_total // 2, purlin_total)
+            for rafter_index in range(self.rafter_count):
                 for purlin_index in purlin_indices:
                     bind("rafter-purlin", f"rafter:{side}:{rafter_index}", f"purlin:{purlin_index}", f"{side}-{rafter_index}-p{purlin_index}")
                 bind("fly-rafter-rafter", f"fly-rafter:{side}:{rafter_index}", f"rafter:{side}:{rafter_index}", f"{side}-{rafter_index}")
-            for board_index in range(16):
+            for board_index in range(self.board_count):
                 for rafter_index in (board_index, board_index + 1):
                     bind("roof-board-rafter", f"roof-board:{side}:{board_index}", f"rafter:{side}:{rafter_index}", f"{side}-{board_index}-r{rafter_index}")
-                for row in range(10):
+                for row in range(self.tile_rows):
                     bind("pan-tile-roof-board", f"pan-tile:{side}:{board_index}:{row}", f"roof-board:{side}:{board_index}", f"{side}-{board_index}-{row}")
-            for cover_index in range(17):
+            for cover_index in range(self.cover_columns):
                 for pan_index in (cover_index - 1, cover_index):
-                    if 0 <= pan_index < 16:
-                        for row in range(10):
+                    if 0 <= pan_index < self.pan_columns:
+                        for row in range(self.tile_rows):
                             bind("cover-tile-pan-tile", f"cover-tile:{side}:{cover_index}:{row}", f"pan-tile:{side}:{pan_index}:{row}", f"{side}-c{cover_index}-p{pan_index}-r{row}")
-            for tile_type, column_count in (("pan-tile", 16), ("cover-tile", 17)):
+            for tile_type, column_count in (("pan-tile", self.pan_columns), ("cover-tile", self.cover_columns)):
                 for column in range(column_count):
-                    for row in range(1, 10):
+                    for row in range(1, self.tile_rows):
                         bind(
                             "tile-longitudinal-lap",
                             f"{tile_type}:{side}:{column}:{row}",
                             f"{tile_type}:{side}:{column}:{row - 1}",
                             f"{tile_type}-{side}-{column}-{row}",
                         )
-            for board_index in range(16):
+            for board_index in range(self.board_count):
                 bind("eave-closure", f"eave-closure:{side}", f"roof-board:{side}:{board_index}", f"{side}-{board_index}")
 
         ridge_entities = [item for item in self.entities if item.component_type == "ridgeTile"]
         ridge_finish = [
             item
             for item in self.entities
-            if item.component_type in {"panTile", "coverTile"} and item.key.endswith(":9")
+            if item.component_type in {"panTile", "coverTile"} and item.key.endswith(f":{self.tile_rows - 1}")
         ]
         for ridge in ridge_entities:
             ridge_bounds = np.asarray(ridge.mesh.bounds, dtype=float)
