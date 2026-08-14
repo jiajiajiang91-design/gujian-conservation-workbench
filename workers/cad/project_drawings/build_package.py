@@ -31,7 +31,8 @@ def build_package(matrix_value: dict, geometry_dir: Path, font_path: Path, outpu
     view_dir.mkdir(exist_ok=True)
     for view in views:
         raw = canonical_bytes(view) + b"\n"
-        with (view_dir / f"{view['drawingRef']}.json.gz").open("wb") as target:
+        # Transport names stay ASCII-safe; the Chinese drawing reference remains inside ViewGeometry.
+        with (view_dir / f"{view['viewKey']}.json.gz").open("wb") as target:
             with gzip.GzipFile(filename="", mode="wb", fileobj=target, mtime=0) as stream:
                 stream.write(raw)
     ir_path = output_dir / "drawing-ir.json"

@@ -1,9 +1,8 @@
 import { ProjectCommandService, type ProjectHead } from "@gujian/application";
-import {
-  CadJobSchema, GeometryRevisionSchema, ProjectDrivenGeometrySpecSchema,
-  type CadJob, type CadJobEvent, type GeometryRevision, type ProjectDrivenGeometrySpec, type ProjectGeometryObject,
-} from "@gujian/domain";
-import { IndexedDbProjectRepository, recordHash, sha256Hex } from "@gujian/infrastructure";
+import { CadJobSchema, GeometryRevisionSchema, type CadJob, type CadJobEvent, type GeometryRevision, type ProjectDrivenGeometrySpec } from "@gujian/domain";
+import { IndexedDbProjectRepository, sha256Hex } from "@gujian/infrastructure";
+
+import { buildProjectGeometrySpec } from "./geometry-spec-builder";
 
 interface SessionResponse {
   csrfToken: string;
@@ -64,44 +63,6 @@ function projectEvent(event: WorkerEvent): CadJobEvent {
   return event;
 }
 
-function geometrySpecHash(spec: ProjectDrivenGeometrySpec): string {
-  return recordHash({ ...spec, inputHash: "0".repeat(64) });
-}
-
-function localDemoGeometry(head: ProjectHead): ProjectDrivenGeometrySpec {
-  const object = (input: {
-    stableKey: string; displayNameZh: string; componentType: string;
-    solid: { kind: "box"; sizeX: string; sizeY: string; sizeZ: string; centerMm: [number, number, number] } |
-      { kind: "cylinder"; radius: string; height: string; axis: "z"; centerMm: [number, number, number] };
-  }): ProjectGeometryObject => ({
-    id: crypto.randomUUID(), stableKey: input.stableKey, parentId: null, componentType: input.componentType,
-    displayNameZh: input.displayNameZh, materialCode: "team-demo", solid: input.solid, parameters: [],
-    producer: { producerType: "demo" as const, fixtureId: "workbench-project-geometry-start" },
-    factRefs: [], evidenceRefs: head.snapshot.evidences.map((item) => item.id), unknownRefs: [],
-  });
-  const base = object({ stableKey: "base", displayNameZh: "演示台基", componentType: "base", solid: { kind: "box", sizeX: "3200", sizeY: "2400", sizeZ: "300", centerMm: [0, 0, 150] } });
-  const column = object({ stableKey: "column", displayNameZh: "演示柱", componentType: "column", solid: { kind: "cylinder", radius: "180", height: "2400", axis: "z", centerMm: [0, 0, 1500] } });
-  const beam = object({ stableKey: "beam", displayNameZh: "演示横向构件", componentType: "beam", solid: { kind: "box", sizeX: "2800", sizeY: "280", sizeZ: "260", centerMm: [0, 0, 2830] } });
-  const unknown = {
-    id: crypto.randomUUID(), subjectRef: column.id, reasonCode: "DEMO_GEOMETRY_NOT_MEASURED",
-    description: "当前几何仅用于验证项目驱动内核，不是现场实测或专业模型。",
-    requiredEvidence: ["现场测量记录", "经核对的平立剖尺寸"], affectedRefs: [base.id, column.id, beam.id],
-    evidenceRefs: head.snapshot.evidences.map((item) => item.id), blocksProxyOutcome: false, blocksFormalEligibility: true,
-  };
-  column.unknownRefs = [unknown.id];
-  const value: ProjectDrivenGeometrySpec = {
-    schemaVersion: "2.0", id: crypto.randomUUID(), projectId: head.projectId,
-    projectRevisionId: head.revisionId, buildingId: head.snapshot.buildings[0]!.id, inputHash: "0".repeat(64),
-    coordinateSystem: { name: "项目局部坐标", axisOrder: "XYZ", upAxis: "Z", lengthUnit: "mm", origin: [0, 0, 0] },
-    tolerances: { modellingMm: 0.01, interfaceMm: 0.5, tessellationMm: 0.5 }, objects: [base, column, beam],
-    interfaces: [
-      { id: crypto.randomUUID(), fromObjectId: base.id, toObjectId: column.id, interfaceType: "bearing", fromSurface: "zMax", toSurface: "zMin", direction: [0, 0, 1], maximumGapMm: 0.01, maximumUnexpectedOverlapMm3: 0, minimumDeclaredOverlapMm3: null, factRefs: [], evidenceRefs: [] },
-      { id: crypto.randomUUID(), fromObjectId: column.id, toObjectId: beam.id, interfaceType: "bearing", fromSurface: "zMax", toSurface: "zMin", direction: [0, 0, 1], maximumGapMm: 0.01, maximumUnexpectedOverlapMm3: 0, minimumDeclaredOverlapMm3: null, factRefs: [], evidenceRefs: [] },
-    ], unknowns: [unknown], createdAt: new Date().toISOString(),
-  };
-  return ProjectDrivenGeometrySpecSchema.parse({ ...value, inputHash: geometrySpecHash(value) });
-}
-
 export class CadJobClient {
   readonly #repository: IndexedDbProjectRepository;
   readonly #commands: ProjectCommandService;
@@ -114,22 +75,35 @@ export class CadJobClient {
     this.#fetch = input.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
 
-  async startDemoGeometry(head: ProjectHead, actorId: string, onProgress: (value: CadJobProgress) => void): Promise<{ head: ProjectHead; revision: GeometryRevision; job: CadJob }> {
+  async startGeometry(head: ProjectHead, actorId: string, onProgress: (value: CadJobProgress) => void): Promise<{ head: ProjectHead; revision: GeometryRevision; job: CadJob }> {
     if (this.#active) throw new Error("CAD_JOB_ALREADY_ACTIVE");
-    const geometrySpec = localDemoGeometry(head);
+    const ruleRunId = crypto.randomUUID();
+    const ruleStarted = new Date().toISOString();
+    await this.#commands.execute({
+      commandType: "CommitRuleEvaluation", commandId: crypto.randomUUID(), projectId: head.projectId, actorId,
+      expectedRevisionId: head.revisionId, issuedAt: ruleStarted, payload: { ruleRun: {
+        id: ruleRunId, projectId: head.projectId, inputRevisionId: head.revisionId, ruleSetVersion: "geometry-spec-builder/1.0",
+        status: "completed", producer: { producerType: "rule", ruleRunId },
+        results: [{ ruleId: "geometry-input-closure", outcome: "passed", inputRefs: head.snapshot.facts.map((item) => item.id), issueRefs: [], message: "有证据的控制尺寸已形成受控 GeometrySpec 输入。" }],
+        startedAt: ruleStarted, completedAt: ruleStarted,
+      }, issues: [] },
+    });
+    const ruledHead = await this.#repository.getProjectHead(head.projectId);
+    if (!ruledHead) throw new Error("PROJECT_NOT_FOUND_AFTER_GEOMETRY_RULE");
+    const geometrySpec = buildProjectGeometrySpec(ruledHead, ruleRunId);
     const jobId = crypto.randomUUID();
     const idempotencyKey = crypto.randomUUID();
     const startedAt = new Date().toISOString();
     const initialJob = CadJobSchema.parse({
-      id: jobId, projectId: head.projectId, inputRevisionId: head.revisionId, geometrySpecId: geometrySpec.id,
+      id: jobId, projectId: ruledHead.projectId, inputRevisionId: ruledHead.revisionId, geometrySpecId: geometrySpec.id,
       inputHash: geometrySpec.inputHash, idempotencyKey, status: "queued", events: [], outputManifestHash: null,
       startedAt, completedAt: null,
     });
     await this.#commands.execute({
-      commandType: "StartCadJob", commandId: crypto.randomUUID(), projectId: head.projectId, actorId,
-      expectedRevisionId: head.revisionId, issuedAt: startedAt, payload: { job: initialJob },
+      commandType: "StartCadJob", commandId: crypto.randomUUID(), projectId: ruledHead.projectId, actorId,
+      expectedRevisionId: ruledHead.revisionId, issuedAt: startedAt, payload: { job: initialJob },
     });
-    let commandHead = await this.#repository.getProjectHead(head.projectId);
+    let commandHead = await this.#repository.getProjectHead(ruledHead.projectId);
     if (!commandHead) throw new Error("PROJECT_NOT_FOUND_AFTER_CAD_START");
     const sessionResponse = await this.#fetch("/api/session", { credentials: "same-origin" });
     if (!sessionResponse.ok) throw new Error("CAD_SESSION_FAILED");
@@ -141,7 +115,7 @@ export class CadJobClient {
         "x-capability-token": session.cadCapabilityToken,
       }, body: JSON.stringify({
         jobId, clientRequestId: crypto.randomUUID(), idempotencyKey,
-        projectId: head.projectId, projectRevisionId: head.revisionId, geometrySpec,
+        projectId: ruledHead.projectId, projectRevisionId: ruledHead.revisionId, geometrySpec,
       }),
     });
     if (!response.ok || !response.body) throw new Error("CAD_JOB_START_FAILED");
@@ -181,10 +155,10 @@ export class CadJobClient {
     const finalCompletedAt = completedAt as string;
     const job = CadJobSchema.parse({ ...initialJob, status: terminalStatus, events, outputManifestHash: manifestHash, completedAt: finalCompletedAt });
     await this.#commands.execute({
-      commandType: "SyncCadJobEvents", commandId: crypto.randomUUID(), projectId: head.projectId, actorId,
+      commandType: "SyncCadJobEvents", commandId: crypto.randomUUID(), projectId: ruledHead.projectId, actorId,
       expectedRevisionId: commandHead.revisionId, issuedAt: finalCompletedAt, payload: { job },
     });
-    commandHead = await this.#repository.getProjectHead(head.projectId);
+    commandHead = await this.#repository.getProjectHead(ruledHead.projectId);
     if (!commandHead) throw new Error("PROJECT_NOT_FOUND_AFTER_CAD_SYNC");
     if (terminalStatus !== "succeeded" || !manifestHash) throw new Error(`CAD_JOB_${terminalStatus.toUpperCase()}`);
 
@@ -204,7 +178,7 @@ export class CadJobClient {
     }
     files.set("manifest", { bytes: manifestBytes, kind: "manifest", mimeType: "application/json", sha256: manifestHash, fileName: "manifest.json" });
     const assetRecords = [...files.values()].map((item) => ({
-      id: crypto.randomUUID(), projectId: head.projectId, fileName: item.fileName, mimeType: item.mimeType,
+      id: crypto.randomUUID(), projectId: ruledHead.projectId, fileName: item.fileName, mimeType: item.mimeType,
       byteLength: item.bytes.byteLength, sha256: item.sha256, contentStatus: "available" as const, createdAt: finalCompletedAt,
     }));
     const contents = new Map(assetRecords.map((record, index) => [record.id, new Blob([[...files.values()][index]!.bytes.slice().buffer as ArrayBuffer], { type: record.mimeType })]));
@@ -214,18 +188,18 @@ export class CadJobClient {
       mimeType: asset.mimeType, byteLength: asset.byteLength,
     }));
     const revision = GeometryRevisionSchema.parse({
-      id: manifest.geometryRevisionId, projectId: head.projectId, projectRevisionId: head.revisionId,
+      id: manifest.geometryRevisionId, projectId: ruledHead.projectId, projectRevisionId: ruledHead.revisionId,
       geometrySpecId: geometrySpec.id, inputHash: manifest.inputHash, entityClosureHash: manifest.entityClosureHash,
       interfaceClosureHash: manifest.interfaceClosureHash, geometrySignature: manifest.geometrySignature,
       assets: geometryAssets, status: "generated-not-qualified", l1Eligible: false, formalEligibility: false,
       blockers: ["PROFESSIONAL_REVIEW_REQUIRED", "FORMAL_SIGNOFF_UNAVAILABLE"], createdAt: finalCompletedAt,
     });
     await this.#commands.execute({
-      commandType: "CommitGeometryRevision", commandId: crypto.randomUUID(), projectId: head.projectId, actorId,
+      commandType: "CommitGeometryRevision", commandId: crypto.randomUUID(), projectId: ruledHead.projectId, actorId,
       expectedRevisionId: commandHead.revisionId, issuedAt: finalCompletedAt,
       payload: { cadJobId: jobId, geometrySpec, geometryRevision: revision, assets: assetRecords, stagingSessionId: sessionId },
     });
-    const updated = await this.#repository.getProjectHead(head.projectId);
+    const updated = await this.#repository.getProjectHead(ruledHead.projectId);
     if (!updated) throw new Error("PROJECT_NOT_FOUND_AFTER_GEOMETRY_COMMIT");
     return { head: updated, revision, job };
   }

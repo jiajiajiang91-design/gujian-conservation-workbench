@@ -1,0 +1,245 @@
+{
+  "schemaVersion": "2.0",
+  "qualification": "generated-not-qualified",
+  "l1Eligible": false,
+  "formalEligibility": false,
+  "sourceProjectId": "ab103b54-3fd2-4124-8fd0-72f478d6ead0",
+  "includesSourceAndPostRoundtripVersions": true,
+  "files": [
+    {
+      "path": "drawings/input/artifact-matrix.json",
+      "sha256": "449aef872bbdda5eb0be97b3e37ee582d659b71ea12d7f7464971d4ae2bd379a",
+      "byteLength": 3553
+    },
+    {
+      "path": "drawings/output/drawing-build-record.json",
+      "sha256": "022b409f5d22aba71285a36d3385eef01fbc71b7d6faf01a3e891aaf86357d0a",
+      "byteLength": 3626
+    },
+    {
+      "path": "drawings/output/drawing-ir.json",
+      "sha256": "66ce6cc0a1e625f6f366a5ebdc249f65c216be8edb7fcdf95f150bf2d9f48e1a",
+      "byteLength": 117212
+    },
+    {
+      "path": "drawings/output/drawing-source-map.ndjson",
+      "sha256": "54e2bacff27245a53b80997a0083d2eaee0a292a7f322399e969e2431b9082cd",
+      "byteLength": 92944
+    },
+    {
+      "path": "drawings/output/drawings.dxf",
+      "sha256": "f2b651d02c29941f2d8fd41dd9bbd2fa0065b8b790736b43bddd054637717a17",
+      "byteLength": 233102
+    },
+    {
+      "path": "drawings/output/drawings.pdf",
+      "sha256": "1bc16b2f0577a84241f99d9d01fb4acff7bfd973486424539cf6d513f5e1d881",
+      "byteLength": 20451
+    },
+    {
+      "path": "drawings/output/P-01.png",
+      "sha256": "41210d8884e845cbcb53ea3f5e915c0819ce8a5ad0f3b591e6be7433d64e45f3",
+      "byteLength": 284286
+    },
+    {
+      "path": "drawings/output/P-01.svg",
+      "sha256": "ecba594686e416da0e20bf2cf97ba36057b6762981aa0a60cff12264db460334",
+      "byteLength": 14145869
+    },
+    {
+      "path": "drawings/output/P-02.png",
+      "sha256": "ec020c596e4bb1a05bbc9eaf6bfd9ba793d918d22ba7ff39326d2d98de294f19",
+      "byteLength": 316731
+    },
+    {
+      "path": "drawings/output/P-02.svg",
+      "sha256": "340b72b66fdaa41c052196861293864511de621edcb69336c357f4ea2a4e79e0",
+      "byteLength": 14154819
+    },
+    {
+      "path": "drawings/output/view-geometry/axonometric.json.gz",
+      "sha256": "ea7a15e32bee11302d916fe9b5b2c7067c769fff7355fb460914aa0dbfd76d5a",
+      "byteLength": 3238
+    },
+    {
+      "path": "drawings/output/view-geometry/eave-section-detail.json.gz",
+      "sha256": "2670fd9a809d719afa19d4de97519dff919129d41763b09a49754afbcf61e9ce",
+      "byteLength": 2232
+    },
+    {
+      "path": "drawings/output/view-geometry/floor-plan.json.gz",
+      "sha256": "b65034d3addfee3d2f7d03e03e98158059f4eaf4e5a76254e684f9ce4e13b59c",
+      "byteLength": 833
+    },
+    {
+      "path": "drawings/output/view-geometry/longitudinal-section.json.gz",
+      "sha256": "6bdc6dd27567e932e06bd4e89988370c50f3d80ee28dbc63c1b4c1676398104e",
+      "byteLength": 2786
+    },
+    {
+      "path": "drawings/output/view-geometry/roof-plan.json.gz",
+      "sha256": "037de6ceb9720cd04d11330cfa41c442db21124ed5d502147901250e12084250",
+      "byteLength": 1099
+    },
+    {
+      "path": "drawings/output/view-geometry/south-elevation.json.gz",
+      "sha256": "1536c0cd2db10fa2a2d618e24a25b742063420073e12ffed432ae15155dbfd1b",
+      "byteLength": 1902
+    },
+    {
+      "path": "drawings/output/view-geometry/transverse-section.json.gz",
+      "sha256": "4795aa3fba76ddc96db2ed1cef59743d48b0bb40fa9f251345be1cca89c45a4d",
+      "byteLength": 2195
+    },
+    {
+      "path": "drawings-post-roundtrip-current/drawing-build-record.json",
+      "sha256": "5e8c1966e320f1c28d3f82ad650706983e941c14b1eb402c7dee0774d3a98a8b",
+      "byteLength": 3626
+    },
+    {
+      "path": "drawings-post-roundtrip-current/drawing-ir.json",
+      "sha256": "0cb0278280e37b0ea6263574c86bfc0381bfaea1dfb0ad2571081eaf12938397",
+      "byteLength": 117212
+    },
+    {
+      "path": "drawings-post-roundtrip-current/drawing-source-map.ndjson",
+      "sha256": "515bddb0706c521d388d9507f4dd59e4db811fe9a50fd44868940970e30f5258",
+      "byteLength": 92944
+    },
+    {
+      "path": "drawings-post-roundtrip-current/drawings.dxf",
+      "sha256": "e28e898b2b79f04a4098e6e3e0441d1e52c8cda7b7e2d7048bb58db6f5e79028",
+      "byteLength": 233786
+    },
+    {
+      "path": "drawings-post-roundtrip-current/drawings.pdf",
+      "sha256": "fb54e9370612f7d02b957c665e68b744d709f6036e581683b29b7ee4d4cab435",
+      "byteLength": 20470
+    },
+    {
+      "path": "drawings-post-roundtrip-current/P-01.png",
+      "sha256": "b95bfffa4d67ec7bc514dbf334ee0b247c9e5570f2671b1cadabbd92b5b74cc3",
+      "byteLength": 284825
+    },
+    {
+      "path": "drawings-post-roundtrip-current/P-01.svg",
+      "sha256": "fb0bb9ab060d88e31fc9ff9ec8cbd80b357c6749f1a184db70bbb956dcb1ad86",
+      "byteLength": 14145869
+    },
+    {
+      "path": "drawings-post-roundtrip-current/P-02.png",
+      "sha256": "34f266544e13439a4da2ce87a8d2b63565c3f639cd2d6e9dc313ff83a8449202",
+      "byteLength": 316739
+    },
+    {
+      "path": "drawings-post-roundtrip-current/P-02.svg",
+      "sha256": "9dc1f3fc2833bdaf110e65a49240c2f0aff9b85d5a2fd5f89b234ab0c9db72a8",
+      "byteLength": 14154819
+    },
+    {
+      "path": "drawings-post-roundtrip-current/view-geometry/axonometric.json.gz",
+      "sha256": "84643c0e2bb0a4f12979643dff412cd704d6421985774d33ba70d05566aeff53",
+      "byteLength": 3254
+    },
+    {
+      "path": "drawings-post-roundtrip-current/view-geometry/eave-section-detail.json.gz",
+      "sha256": "5453ab33e69da48b99d441b2cab9fd41c5e4f9c3cb8f1ec0ba0853f9d015d6df",
+      "byteLength": 2218
+    },
+    {
+      "path": "drawings-post-roundtrip-current/view-geometry/floor-plan.json.gz",
+      "sha256": "7977d6cb009ecce62cc0c00237c2a4e9bb66d97643ded0a96ff6b760a5c6a866",
+      "byteLength": 835
+    },
+    {
+      "path": "drawings-post-roundtrip-current/view-geometry/longitudinal-section.json.gz",
+      "sha256": "80a769de760d5a52aab9d5d11e30dd4b6e431af6fc97fddd372d90a57d0511f7",
+      "byteLength": 2778
+    },
+    {
+      "path": "drawings-post-roundtrip-current/view-geometry/roof-plan.json.gz",
+      "sha256": "a014383f605078c2bad3f2db58e33916fedd2da594c65b3e70f63f6f4eaa0800",
+      "byteLength": 1092
+    },
+    {
+      "path": "drawings-post-roundtrip-current/view-geometry/south-elevation.json.gz",
+      "sha256": "c153e70e277d6c093a4e8e0083d56872cba593e5b7b226621263f21b626f044a",
+      "byteLength": 1910
+    },
+    {
+      "path": "drawings-post-roundtrip-current/view-geometry/transverse-section.json.gz",
+      "sha256": "d2ff48f5248d7fb14b05e48d0e0d3f52e22d18846814788970b17a7848d3ffb4",
+      "byteLength": 2213
+    },
+    {
+      "path": "geometry-post-roundtrip-version/input/geometry-spec.json",
+      "sha256": "dc7aaeca2a73ef35941ad7f1e025e24afc0592cebf0adfaa6b41b15fb9f0bfc2",
+      "byteLength": 20238
+    },
+    {
+      "path": "geometry-post-roundtrip-version/output/geometry-report.json",
+      "sha256": "792b6c158e8e31724e6bafefe9ad261422c798f4e043a9aa50c1b73eec6911b7",
+      "byteLength": 1544
+    },
+    {
+      "path": "geometry-post-roundtrip-version/output/manifest.json",
+      "sha256": "7f00bbcf819a1aa4d2d0926ec5e19758e269ce6203040ed6e35e51bc62476093",
+      "byteLength": 15554
+    },
+    {
+      "path": "geometry-post-roundtrip-version/output/model.glb",
+      "sha256": "88377fe84b79c2be29b5c0e691d770f76dacbf500893317555dfb810a64e070b",
+      "byteLength": 8044
+    },
+    {
+      "path": "geometry-post-roundtrip-version/output/model.ifc",
+      "sha256": "18a4bfc631bc1ab3505c68408caf1e34e931ce22520e7613577ae71c190847dd",
+      "byteLength": 15380
+    },
+    {
+      "path": "geometry-post-roundtrip-version/output/preview.png",
+      "sha256": "8fbedda5023b953b8337c4b8d98bd29371c6b6cd85a9d06e6ac4af8e15e30122",
+      "byteLength": 23489
+    },
+    {
+      "path": "geometry-post-roundtrip-version/output/source-map.ndjson",
+      "sha256": "9f9664f650aa1099f0c8d8250fea0ade6efb99889ea6365574c19bf2c10355c1",
+      "byteLength": 13311
+    },
+    {
+      "path": "geometry-source-version/input/geometry-spec.json",
+      "sha256": "d630a6529cf8aa7dc66728b248717e9d7dcbbcaad5b079a262cb0638478877f9",
+      "byteLength": 20238
+    },
+    {
+      "path": "geometry-source-version/output/geometry-report.json",
+      "sha256": "af31b4b7422b6d539cefe804deecb84b318296bbc19554b919ec343ac9ee375d",
+      "byteLength": 1544
+    },
+    {
+      "path": "geometry-source-version/output/manifest.json",
+      "sha256": "3bb72dde3ff91b7ad98e08202ac606d2805f7662fa06fbae03799b5ffdb20141",
+      "byteLength": 15554
+    },
+    {
+      "path": "geometry-source-version/output/model.glb",
+      "sha256": "88377fe84b79c2be29b5c0e691d770f76dacbf500893317555dfb810a64e070b",
+      "byteLength": 8044
+    },
+    {
+      "path": "geometry-source-version/output/model.ifc",
+      "sha256": "20437221b784c5d07c805761919e72a0129f5c371fc8f4d8cefbfe43c5ab0a6c",
+      "byteLength": 15380
+    },
+    {
+      "path": "geometry-source-version/output/preview.png",
+      "sha256": "8fbedda5023b953b8337c4b8d98bd29371c6b6cd85a9d06e6ac4af8e15e30122",
+      "byteLength": 23489
+    },
+    {
+      "path": "geometry-source-version/output/source-map.ndjson",
+      "sha256": "74ae9046845e292d8239e2c8e996a414cb99bf3a7dc93827d855eb9fdd1c9361",
+      "byteLength": 13311
+    }
+  ]
+}

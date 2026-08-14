@@ -112,4 +112,22 @@ describe("WorkflowService", () => {
     expect(await current.repository.getProjectRuleRuns(current.projectId)).toHaveLength(expectedRules);
     expect(await current.repository.getProjectDecisions(current.projectId)).toHaveLength(1);
   });
+
+  it("按当前项目事实计算尺寸链差值并阻断缺少测量元数据的记录", async () => {
+    const current = await setup();
+    const commandId = crypto.randomUUID();
+    await current.commands.execute({
+      commandType: "CommitFacts", commandId, projectId: current.projectId, actorId: current.actorId,
+      expectedRevisionId: current.head.revisionId, issuedAt: "2026-08-14T00:00:00Z", payload: { facts: [
+        { id: crypto.randomUUID(), subjectRef: current.head.snapshot.buildings[0]!.id, field: "documentedDimension.totalWidthMm", value: 15800, producer: { producerType: "human", actorId: current.actorId, actionRef: { commandId } }, evidenceRefs: ["evidence:dimension-note"], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
+        { id: crypto.randomUUID(), subjectRef: current.head.snapshot.buildings[0]!.id, field: "documentedDimension.segmentWidthsMm", value: [4200, 3600, 3600], producer: { producerType: "human", actorId: current.actorId, actionRef: { commandId } }, evidenceRefs: ["evidence:dimension-note"], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
+        { id: crypto.randomUUID(), subjectRef: current.head.snapshot.buildings[0]!.id, field: "documentedDimension.measurementMetadataComplete", value: false, producer: { producerType: "human", actorId: current.actorId, actionRef: { commandId } }, evidenceRefs: ["evidence:dimension-note"], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
+      ] },
+    });
+    const head = await current.repository.getProjectHead(current.projectId) as ProjectHead;
+    const evaluated = await current.workflow.evaluate(head, current.actorId);
+    const descriptions = evaluated.snapshot.issues.filter((item) => item.status === "open").map((item) => item.description);
+    expect(descriptions).toContain("资料转写尺寸链不闭合：总尺寸 15800 mm，分段合计 11400 mm，差值 4400 mm。");
+    expect(descriptions).toContain("尺寸记录缺少测量人、时间、方法或原始记录，不能作为正式实测事实。");
+  });
 });

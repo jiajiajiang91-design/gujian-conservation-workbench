@@ -7,6 +7,11 @@ import {
   ModelRunSchema,
   RuleRunSchema,
   DecisionSchema,
+  CadJobSchema,
+  ArtifactRecordSchema,
+  CheckRunSchema,
+  DeliveryEvaluationSchema,
+  DeliveryDraftSchema,
   Sha256Schema,
   UuidSchema,
   type AuditEvent,
@@ -17,9 +22,11 @@ import { z } from "zod";
 import { canonicalJson, recordHash, sha256Hex } from "./hash.js";
 import { IndexedDbProjectRepository, LocalAuthorization } from "./indexeddb-project-repository.js";
 
-const MAX_ARCHIVE_BYTES = 120 * 1024 * 1024;
-const MAX_ENTRY_BYTES = 80 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 240 * 1024 * 1024;
+// Large evidence packages can contain high-resolution image masters. Keep
+// per-entry and expanded-size limits strict while preserving complete sources.
+const MAX_ARCHIVE_BYTES = 240 * 1024 * 1024;
+const MAX_ENTRY_BYTES = 96 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 320 * 1024 * 1024;
 const MAX_ENTRY_COUNT = 1_000;
 
 const ProjectDataSchema = z.object({
@@ -32,6 +39,11 @@ const ProjectDataSchema = z.object({
   modelRuns: z.array(ModelRunSchema).max(100_000).default([]),
   ruleRuns: z.array(RuleRunSchema).max(100_000).default([]),
   decisions: z.array(DecisionSchema).max(100_000).default([]),
+  cadJobs: z.array(CadJobSchema).max(100_000).default([]),
+  artifacts: z.array(ArtifactRecordSchema).max(100_000).default([]),
+  checkRuns: z.array(CheckRunSchema).max(100_000).default([]),
+  deliveryEvaluations: z.array(DeliveryEvaluationSchema).max(100_000).default([]),
+  deliveries: z.array(DeliveryDraftSchema).max(100_000).default([]),
   assets: z.array(AssetRecordSchema.extend({
     path: z.string().min(1).max(500),
   }).strict()).max(MAX_ENTRY_COUNT),
@@ -92,6 +104,12 @@ export class ProjectPackageService {
     const modelRuns = await this.#repository.getProjectModelRuns(projectId);
     const ruleRuns = await this.#repository.getProjectRuleRuns(projectId);
     const decisions = await this.#repository.getProjectDecisions(projectId);
+    const cadJobs = await this.#repository.getProjectCadJobs(projectId);
+    const artifacts = await this.#repository.getProjectArtifacts(projectId);
+    const checkRuns = await this.#repository.getProjectCheckRuns(projectId);
+    const deliveryEvaluations = await this.#repository.getProjectDeliveryEvaluations(projectId);
+    const deliveries = await this.#repository.getProjectDeliveries(projectId);
+    const artifactByAsset = new Map(artifacts.map((item) => [item.assetId, item]));
     return ProjectDataSchema.parse({
       format: "gujian-project-package",
       packageVersion: 1,
@@ -102,10 +120,17 @@ export class ProjectPackageService {
       modelRuns,
       ruleRuns,
       decisions,
+      cadJobs,
+      artifacts,
+      checkRuns,
+      deliveryEvaluations,
+      deliveries,
       assets: assets.map(({ record, content }) => ({
         ...record,
         contentStatus: includeBinary && content !== null ? "available" : "missing",
-        path: `evidence/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}`,
+        path: artifactByAsset.has(record.id)
+          ? `artifacts/${artifactByAsset.get(record.id)!.kind}/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}`
+          : `evidence/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}`,
       })),
     });
   }
@@ -237,6 +262,11 @@ export class ProjectPackageService {
         modelRuns: data.modelRuns,
         ruleRuns: data.ruleRuns,
         decisions: data.decisions,
+        cadJobs: data.cadJobs,
+        artifacts: data.artifacts,
+        checkRuns: data.checkRuns,
+        deliveryEvaluations: data.deliveryEvaluations,
+        deliveries: data.deliveries,
         assetSessionId: sessionId,
         packageHash: sha256Hex(bytes),
       },

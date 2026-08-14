@@ -27,7 +27,7 @@ export const ArtifactViewRequirementSchema = z.object({
   up: Vec3Schema,
   sectionPlane: z.object({ normal: Vec3Schema, offsetMm: z.number() }).optional(),
   sourceTypes: z.array(z.string().min(1)).default([]),
-});
+}).strict();
 
 export const ArtifactSheetRequirementSchema = z.object({
   id: z.uuid(),
@@ -35,7 +35,7 @@ export const ArtifactSheetRequirementSchema = z.object({
   displayLabelZh: z.string().min(1).max(80),
   pageMm: z.tuple([z.number().positive(), z.number().positive()]),
   viewIds: z.array(z.uuid()).min(1),
-});
+}).strict();
 
 export const ArtifactRequirementMatrixSchema = z.object({
   schemaVersion: z.literal("1.0"),
@@ -56,9 +56,9 @@ export const ArtifactRequirementMatrixSchema = z.object({
     displayLabelZh: z.string().min(1).max(160),
     reviewStatus: z.literal("unreviewed"),
     producerType: z.literal("demo"),
-  })).default([]),
+  }).strict()).default([]),
   createdAt: z.iso.datetime(),
-}).superRefine((value, context) => {
+}).strict().superRefine((value, context) => {
   const viewIds = new Set(value.views.map((item) => item.id));
   const used = new Set<string>();
   for (const sheet of value.sheets) {

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "canonicalDxf": {
+    "path": "apps/server/.data/acceptance/milestone-two/t10-habs/drawings-post-roundtrip-current/drawings.dxf",
+    "sha256": "e28e898b2b79f04a4098e6e3e0441d1e52c8cda7b7e2d7048bb58db6f5e79028",
+    "dxfVersion": "AC1032",
+    "insunits": 4,
+    "modelSpaceOneToOneMm": true,
+    "layouts": ["P-01", "P-02"],
+    "userViewportCount": 7,
+    "lockedUserViewportCount": 7,
+    "nativeTypes": {"LINE": 256, "DIMENSION": 7, "MTEXT": 7, "HATCH": 14}
+  },
+  "ezdxf": {"errors": 0, "fixes": 0},
+  "autoCad": {
+    "tool": "AutoCAD 2024 Core Console U.61.0.0",
+    "input": "hash-identical temporary copy",
+    "font": "GujianSansSC-Regular.ttf loaded from isolated support path",
+    "command": "OPEN + AUDIT",
+    "exitCode": 0,
+    "errors": 0,
+    "fixes": 0,
+    "deletedObjects": 0
+  },
+  "qcad": {
+    "tool": "QCAD Professional Trial 3.32.9",
+    "operation": "open, view and print only",
+    "layoutsPrinted": ["P-01", "P-02"],
+    "temporaryPdfPages": 2,
+    "temporaryPdfSha256": "31b68f430788077767ec0153c0358c67a5bc6aa543d0e4289c24cd0406fe1c9",
+    "savedBackToCanonical": false,
+    "knownLimit": "QCAD save is not a lossless qualification path; its copy cannot replace canonical DXF"
+  },
+  "qualification": "proxy-unissued",
+  "l1Eligible": false,
+  "formalEligibility": false
+}

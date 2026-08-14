@@ -3,7 +3,7 @@ import "fake-indexeddb/auto";
 import { ProjectCommandService } from "@gujian/application";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { IndexedDbProjectRepository, LocalAuthorization, openWorkbenchDatabase } from "./indexeddb-project-repository.js";
+import { IndexedDbProjectRepository, LocalAuthorization, openWorkbenchDatabase, WORKBENCH_DB_VERSION } from "./indexeddb-project-repository.js";
 
 const databaseNames: string[] = [];
 
@@ -40,6 +40,22 @@ afterEach(async () => {
 });
 
 describe("IndexedDbProjectRepository", () => {
+  it("将已有 v4 数据库向前升级到 v5 并保留项目库", async () => {
+    const databaseName = `gujian-upgrade-${crypto.randomUUID()}`;
+    databaseNames.push(databaseName);
+    const legacy = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(databaseName, 4);
+      request.onupgradeneeded = () => request.result.createObjectStore("projects", { keyPath: "projectId" });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    legacy.close();
+    const upgraded = await openWorkbenchDatabase(databaseName);
+    expect(upgraded.version).toBe(WORKBENCH_DB_VERSION);
+    expect([...upgraded.objectStoreNames]).toEqual(expect.arrayContaining(["projects", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries"]));
+    upgraded.close();
+  });
+
   it("通过 v3 原子事务创建、查询并幂等返回项目", async () => {
     const input = createCommand(`gujian-test-${crypto.randomUUID()}`);
     databaseNames.push(input.databaseName);

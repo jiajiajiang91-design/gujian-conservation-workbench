@@ -62,6 +62,34 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
       impactRefs: failedParses.map((record) => record.id),
     });
   }
+  const latestFact = (field: string) => head.snapshot.facts.filter((fact) =>
+    fact.field === field && fact.reviewStatus === "confirmed" && fact.dataStatus === "available").at(-1);
+  const totalWidth = latestFact("documentedDimension.totalWidthMm")?.value;
+  const segmentWidths = latestFact("documentedDimension.segmentWidthsMm")?.value;
+  const metadataComplete = latestFact("documentedDimension.measurementMetadataComplete")?.value;
+  if (typeof totalWidth === "number" && Array.isArray(segmentWidths) &&
+      segmentWidths.every((value) => typeof value === "number" && Number.isFinite(value))) {
+    const segmentTotal = segmentWidths.reduce((sum, value) => sum + value, 0);
+    const difference = totalWidth - segmentTotal;
+    if (Math.abs(difference) > 1) {
+      result.push({
+        ruleId: "documented-dimension-chain-conflict",
+        issueType: "ruleConflict",
+        subjectRefs: [head.snapshot.buildings[0]?.id ?? head.projectId],
+        description: `资料转写尺寸链不闭合：总尺寸 ${totalWidth} mm，分段合计 ${segmentTotal} mm，差值 ${difference} mm。`,
+        impactRefs: [head.projectId],
+      });
+    }
+    if (metadataComplete !== true) {
+      result.push({
+        ruleId: "measurement-metadata-required",
+        issueType: "missingEvidence",
+        subjectRefs: [head.snapshot.buildings[0]?.id ?? head.projectId],
+        description: "尺寸记录缺少测量人、时间、方法或原始记录，不能作为正式实测事实。",
+        impactRefs: [head.projectId],
+      });
+    }
+  }
   for (const candidate of head.snapshot.candidates) {
     if (candidate.reviewStatus === "unreviewed") {
       result.push({
@@ -123,6 +151,8 @@ export class WorkflowService {
       { id: "parse-failure-review", message: "资料解析失败检查" },
       { id: "model-candidate-review", message: "模型候选人工取舍检查" },
       { id: "model-reported-missing-information", message: "模型报告缺失信息检查" },
+      { id: "documented-dimension-chain-conflict", message: "文档尺寸链一致性检查" },
+      { id: "measurement-metadata-required", message: "测量元数据完整性检查" },
     ];
     const ruleRun = RuleRunSchema.parse({
       id: ruleRunId,

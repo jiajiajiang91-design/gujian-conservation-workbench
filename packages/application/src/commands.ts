@@ -21,6 +21,10 @@ import {
   CadJobSchema,
   GeometryRevisionSchema,
   ProjectDrivenGeometrySpecSchema,
+  ArtifactRecordSchema,
+  CheckRunSchema,
+  DeliveryEvaluationSchema,
+  DeliveryDraftSchema,
 } from "@gujian/domain";
 
 const CommandHeaderSchema = z.object({
@@ -60,6 +64,11 @@ export const ImportProjectSnapshotCommandSchema = CommandHeaderSchema.extend({
     modelRuns: z.array(ModelRunSchema).max(100_000),
     ruleRuns: z.array(RuleRunSchema).max(100_000),
     decisions: z.array(DecisionSchema).max(100_000),
+    cadJobs: z.array(CadJobSchema).max(100_000).default([]),
+    artifacts: z.array(ArtifactRecordSchema).max(100_000).default([]),
+    checkRuns: z.array(CheckRunSchema).max(100_000).default([]),
+    deliveryEvaluations: z.array(DeliveryEvaluationSchema).max(100_000).default([]),
+    deliveries: z.array(DeliveryDraftSchema).max(100_000).default([]),
     assetSessionId: UuidSchema.nullable(),
     packageHash: Sha256Schema,
   }).strict(),
@@ -137,6 +146,39 @@ export const CommitGeometryRevisionCommandSchema = CommandHeaderSchema.extend({
   }).strict(),
 }).strict();
 
+export const CommitArtifactSetCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitArtifactSet"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    artifacts: z.array(ArtifactRecordSchema).min(1).max(10_000),
+    assets: z.array(AssetRecordSchema).max(10_000),
+    stagingSessionId: UuidSchema.nullable(),
+  }).strict(),
+}).strict();
+
+export const CommitCheckRunCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitCheckRun"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ checkRun: CheckRunSchema }).strict(),
+}).strict();
+
+export const EvaluateDeliveryCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("EvaluateDelivery"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ evaluation: DeliveryEvaluationSchema }).strict(),
+}).strict();
+
+export const CreateDeliveryDraftCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CreateDeliveryDraft"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    draft: DeliveryDraftSchema,
+    manifestAsset: AssetRecordSchema,
+    manifestArtifact: ArtifactRecordSchema,
+    stagingSessionId: UuidSchema,
+  }).strict(),
+}).strict();
+
 export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CreateProjectCommandSchema,
   CommitFactsCommandSchema,
@@ -149,6 +191,10 @@ export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   StartCadJobCommandSchema,
   SyncCadJobEventsCommandSchema,
   CommitGeometryRevisionCommandSchema,
+  CommitArtifactSetCommandSchema,
+  CommitCheckRunCommandSchema,
+  EvaluateDeliveryCommandSchema,
+  CreateDeliveryDraftCommandSchema,
 ]);
 
 export type CreateProjectCommand = z.infer<typeof CreateProjectCommandSchema>;
@@ -162,5 +208,9 @@ export type DecideCandidateCommand = z.infer<typeof DecideCandidateCommandSchema
 export type StartCadJobCommand = z.infer<typeof StartCadJobCommandSchema>;
 export type SyncCadJobEventsCommand = z.infer<typeof SyncCadJobEventsCommandSchema>;
 export type CommitGeometryRevisionCommand = z.infer<typeof CommitGeometryRevisionCommandSchema>;
+export type CommitArtifactSetCommand = z.infer<typeof CommitArtifactSetCommandSchema>;
+export type CommitCheckRunCommand = z.infer<typeof CommitCheckRunCommandSchema>;
+export type EvaluateDeliveryCommand = z.infer<typeof EvaluateDeliveryCommandSchema>;
+export type CreateDeliveryDraftCommand = z.infer<typeof CreateDeliveryDraftCommandSchema>;
 export type ProjectCommand = z.infer<typeof ProjectCommandSchema>;
 export type ProjectCommandType = ProjectCommand["commandType"];

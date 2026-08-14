@@ -36,6 +36,15 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
   if (command.commandType === "ImportProjectSnapshot" && command.payload.decisions.some((decision) => decision.projectId !== command.projectId)) {
     throw new CommandError("PROJECT_REF_MISMATCH", "imported decisions must match command projectId");
   }
+  if (command.commandType === "ImportProjectSnapshot" && (
+    command.payload.cadJobs.some((item) => item.projectId !== command.projectId) ||
+    command.payload.artifacts.some((item) => item.projectId !== command.projectId) ||
+    command.payload.checkRuns.some((item) => item.projectId !== command.projectId) ||
+    command.payload.deliveryEvaluations.some((item) => item.projectId !== command.projectId) ||
+    command.payload.deliveries.some((item) => item.projectId !== command.projectId)
+  )) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "imported CAD, artifact and delivery records must match command projectId");
+  }
   if (command.commandType === "ImportEvidence" && (
     command.payload.evidence.projectId !== command.projectId ||
     command.payload.asset.projectId !== command.projectId ||
@@ -97,6 +106,30 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
       throw new CommandError("COMMAND_INVALID", "geometry revision closure is invalid");
     }
   }
+  if (command.commandType === "CommitArtifactSet") {
+    const assets = new Map(command.payload.assets.map((item) => [item.id, item]));
+    if (command.payload.artifacts.some((item) => {
+      const asset = assets.get(item.assetId);
+      return item.projectId !== command.projectId || (asset !== undefined && (asset.projectId !== command.projectId ||
+        asset.sha256 !== item.sha256 || asset.byteLength !== item.byteLength || asset.mimeType !== item.mimeType));
+    })) throw new CommandError("COMMAND_INVALID", "artifact and asset closure is invalid");
+  }
+  if (command.commandType === "CommitCheckRun" && command.payload.checkRun.projectId !== command.projectId) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "check run must match command projectId");
+  }
+  if (command.commandType === "EvaluateDelivery" && command.payload.evaluation.projectId !== command.projectId) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "delivery evaluation must match command projectId");
+  }
+  if (command.commandType === "CreateDeliveryDraft" && (
+    command.payload.draft.projectId !== command.projectId || command.payload.manifestAsset.projectId !== command.projectId ||
+    command.payload.manifestArtifact.projectId !== command.projectId ||
+    command.payload.draft.manifestAssetId !== command.payload.manifestAsset.id ||
+    command.payload.draft.manifestHash !== command.payload.manifestAsset.sha256 ||
+    command.payload.manifestArtifact.assetId !== command.payload.manifestAsset.id ||
+    command.payload.manifestArtifact.kind !== "deliveryManifest" ||
+    command.payload.manifestArtifact.sha256 !== command.payload.manifestAsset.sha256 ||
+    !command.payload.draft.artifactRefs.includes(command.payload.manifestArtifact.id)
+  )) throw new CommandError("COMMAND_INVALID", "delivery draft and manifest closure is invalid");
 }
 
 function createInitialSnapshot(command: Extract<ProjectCommand, { commandType: "CreateProject" }>): ProjectSnapshot {
@@ -220,6 +253,33 @@ function appendGeometryRevision(
   });
 }
 
+function appendArtifactSet(head: ProjectHead, command: Extract<ProjectCommand, { commandType: "CommitArtifactSet" }>): ProjectSnapshot {
+  const geometryIds = new Set(head.snapshot.geometryRevisions.map((item) => item.id));
+  const geometryAssets = new Map(head.snapshot.geometryRevisions.flatMap((item) => item.assets.map((asset) => [asset.assetId, asset] as const)));
+  const newAssets = new Map(command.payload.assets.map((item) => [item.id, item]));
+  if (command.payload.artifacts.some((item) => {
+    const asset = newAssets.get(item.assetId) ?? geometryAssets.get(item.assetId);
+    return !geometryIds.has(item.geometryRevisionId) || !asset ||
+      asset.sha256 !== item.sha256 || asset.byteLength !== item.byteLength || asset.mimeType !== item.mimeType;
+  })) {
+    throw new CommandError("COMMAND_INVALID", "artifact references unknown geometry or duplicate id");
+  }
+  return head.snapshot;
+}
+
+function appendCheckRun(head: ProjectHead, command: Extract<ProjectCommand, { commandType: "CommitCheckRun" }>): ProjectSnapshot {
+  const run = command.payload.checkRun;
+  return head.snapshot;
+}
+
+function appendDeliveryEvaluation(head: ProjectHead, command: Extract<ProjectCommand, { commandType: "EvaluateDelivery" }>): ProjectSnapshot {
+  return head.snapshot;
+}
+
+function appendDeliveryDraft(head: ProjectHead, command: Extract<ProjectCommand, { commandType: "CreateDeliveryDraft" }>): ProjectSnapshot {
+  return head.snapshot;
+}
+
 function assertCadJobEventPrefix(previous: import("@gujian/domain").CadJob, next: import("@gujian/domain").CadJob): void {
   if (next.id !== previous.id || next.projectId !== previous.projectId ||
       next.inputRevisionId !== previous.inputRevisionId || next.geometrySpecId !== previous.geometrySpecId ||
@@ -309,6 +369,27 @@ export class ProjectCommandService {
           ...(command.commandType === "ImportProjectSnapshot" && command.payload.decisions.length
             ? { decisionsToPut: command.payload.decisions }
             : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.cadJobs.length
+            ? { cadJobsToPut: command.payload.cadJobs }
+            : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.snapshot.geometrySpecs.length
+            ? { geometrySpecsToPut: command.payload.snapshot.geometrySpecs }
+            : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.snapshot.geometryRevisions.length
+            ? { geometryRevisionsToPut: command.payload.snapshot.geometryRevisions }
+            : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.artifacts.length
+            ? { artifactsToPut: command.payload.artifacts }
+            : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.checkRuns.length
+            ? { checkRunsToPut: command.payload.checkRuns }
+            : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.deliveryEvaluations.length
+            ? { deliveryEvaluationsToPut: command.payload.deliveryEvaluations }
+            : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.deliveries.length
+            ? { deliveriesToPut: command.payload.deliveries }
+            : {}),
         });
       }
 
@@ -338,6 +419,40 @@ export class ProjectCommandService {
           throw new CommandError("COMMAND_INVALID", "successful synchronized CAD job is required");
         }
       }
+      if (command.commandType === "CommitArtifactSet") {
+        for (const artifact of command.payload.artifacts) {
+          if (await transaction.getArtifact(artifact.id)) throw new CommandError("COMMAND_INVALID", "artifact id already exists");
+        }
+      }
+      if (command.commandType === "CommitCheckRun") {
+        if (await transaction.getCheckRun(command.payload.checkRun.id)) throw new CommandError("COMMAND_INVALID", "check run id already exists");
+        let reportMatched = false;
+        for (const artifactId of command.payload.checkRun.artifactRefs) {
+          const artifact = await transaction.getArtifact(artifactId);
+          if (!artifact) throw new CommandError("COMMAND_INVALID", "check run artifact closure is invalid");
+          if (artifact.assetId === command.payload.checkRun.reportAssetId && artifact.sha256 === command.payload.checkRun.reportHash) reportMatched = true;
+        }
+        if (!reportMatched) throw new CommandError("COMMAND_INVALID", "check run report closure is invalid");
+      }
+      if (command.commandType === "EvaluateDelivery") {
+        for (const artifactId of command.payload.evaluation.artifactRefs) {
+          if (!await transaction.getArtifact(artifactId)) throw new CommandError("COMMAND_INVALID", "delivery artifact closure is invalid");
+        }
+        for (const checkRunId of command.payload.evaluation.checkRunRefs) {
+          if (!await transaction.getCheckRun(checkRunId)) throw new CommandError("COMMAND_INVALID", "delivery check closure is invalid");
+        }
+      }
+      if (command.commandType === "CreateDeliveryDraft") {
+        const evaluation = await transaction.getDeliveryEvaluation(command.payload.draft.evaluationId);
+        if (!evaluation || evaluation.projectId !== command.projectId || evaluation.geometryRevisionId !== command.payload.draft.geometryRevisionId) {
+          throw new CommandError("COMMAND_INVALID", "delivery evaluation is missing or mismatched");
+        }
+        if (await transaction.getArtifact(command.payload.manifestArtifact.id)) throw new CommandError("COMMAND_INVALID", "delivery manifest artifact id already exists");
+        for (const artifactId of command.payload.draft.artifactRefs) {
+          if (artifactId === command.payload.manifestArtifact.id) continue;
+          if (!await transaction.getArtifact(artifactId)) throw new CommandError("COMMAND_INVALID", "delivery draft artifact closure is invalid");
+        }
+      }
       const snapshot = command.commandType === "CommitFacts"
         ? appendFacts(head, command.payload.facts)
         : command.commandType === "ImportEvidence"
@@ -352,7 +467,15 @@ export class ProjectCommandService {
                   ? decideCandidate(head, command)
                   : command.commandType === "CommitGeometryRevision"
                     ? appendGeometryRevision(head, command)
-                    : head.snapshot;
+                    : command.commandType === "CommitArtifactSet"
+                      ? appendArtifactSet(head, command)
+                      : command.commandType === "CommitCheckRun"
+                        ? appendCheckRun(head, command)
+                        : command.commandType === "EvaluateDelivery"
+                          ? appendDeliveryEvaluation(head, command)
+                          : command.commandType === "CreateDeliveryDraft"
+                            ? appendDeliveryDraft(head, command)
+                            : head.snapshot;
       return transaction.commit({
         command,
         authoritativeActorId,
@@ -372,7 +495,15 @@ export class ProjectCommandService {
                     ? [command.payload.candidateId, command.payload.decision.id, command.payload.decision.issueId]
                     : command.commandType === "CommitGeometryRevision"
                       ? [command.payload.cadJobId, command.payload.geometrySpec.id, command.payload.geometryRevision.id, ...command.payload.assets.map((asset) => asset.id)]
-                      : [command.payload.job.id, ...command.payload.job.events.map((event) => event.id)],
+                      : command.commandType === "CommitArtifactSet"
+                        ? [...command.payload.artifacts.map((item) => item.id), ...command.payload.assets.map((item) => item.id)]
+                        : command.commandType === "CommitCheckRun"
+                          ? [command.payload.checkRun.id]
+                          : command.commandType === "EvaluateDelivery"
+                            ? [command.payload.evaluation.id]
+                            : command.commandType === "CreateDeliveryDraft"
+                              ? [command.payload.draft.id, command.payload.manifestArtifact.id, command.payload.manifestAsset.id]
+                              : [command.payload.job.id, ...command.payload.job.events.map((event) => event.id)],
         ...(command.commandType === "ImportEvidence"
           ? { assetWrites: { records: [command.payload.asset], stagingSessionId: command.payload.stagingSessionId } }
           : {}),
@@ -393,6 +524,18 @@ export class ProjectCommandService {
               geometrySpecsToPut: [command.payload.geometrySpec],
               geometryRevisionsToPut: [command.payload.geometryRevision],
               assetWrites: { records: command.payload.assets, stagingSessionId: command.payload.stagingSessionId },
+            }
+          : {}),
+        ...(command.commandType === "CommitArtifactSet"
+          ? { artifactsToPut: command.payload.artifacts, ...(command.payload.assets.length ? { assetWrites: { records: command.payload.assets, stagingSessionId: command.payload.stagingSessionId } } : {}) }
+          : {}),
+        ...(command.commandType === "CommitCheckRun" ? { checkRunsToPut: [command.payload.checkRun] } : {}),
+        ...(command.commandType === "EvaluateDelivery" ? { deliveryEvaluationsToPut: [command.payload.evaluation] } : {}),
+        ...(command.commandType === "CreateDeliveryDraft"
+          ? {
+              artifactsToPut: [command.payload.manifestArtifact],
+              deliveriesToPut: [command.payload.draft],
+              assetWrites: { records: [command.payload.manifestAsset], stagingSessionId: command.payload.stagingSessionId },
             }
           : {}),
       });

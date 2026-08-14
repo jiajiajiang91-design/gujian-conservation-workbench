@@ -1,13 +1,14 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
-import { ProjectDrivenGeometrySpecSchema } from "@gujian/domain";
+import { ArtifactRequirementMatrixSchema, ProjectDrivenGeometrySpecSchema } from "@gujian/domain";
 import { z } from "zod";
 
 import { CadJobLedger } from "./cad-ledger.js";
 import { PythonCadWorker, type CadWorker, type CadWorkerRun } from "./cad-worker.js";
 import { KimiGateway, RunCancelledError, type GatewayResult } from "./kimi-gateway.js";
 import { ModelRunLedger } from "./model-ledger.js";
+import { PythonDrawingWorker, type DrawingWorker, type DrawingWorkerRun, type DrawingWorkerResult } from "./drawing-worker.js";
 
 const host = "127.0.0.1";
 const port = Number.parseInt(process.env.GUJIAN_SERVER_PORT ?? "8787", 10);
@@ -45,12 +46,24 @@ const CadJobRequestSchema = z.object({
   geometrySpec: ProjectDrivenGeometrySpecSchema,
 }).strict();
 
+const DrawingJobRequestSchema = z.object({
+  jobId: z.uuid(),
+  clientRequestId: z.uuid(),
+  sourceCadJobId: z.uuid(),
+  projectId: z.uuid(),
+  projectRevisionId: z.uuid(),
+  geometryRevisionId: z.uuid(),
+  artifactMatrix: ArtifactRequirementMatrixSchema,
+}).strict();
+
 interface SessionRecord {
   csrfToken: string;
   capabilityToken: string;
   capabilityUsed: boolean;
   cadCapabilityToken: string;
   cadCapabilityUsed: boolean;
+  drawingCapabilityToken: string;
+  drawingCapabilityUsed: boolean;
   expiresAt: number;
   lastRunStartedAt: number;
 }
@@ -66,6 +79,11 @@ interface ActiveCadJob {
   workerRun: CadWorkerRun;
   response: ServerResponse;
   state: "running" | "cancelled" | "settled";
+}
+
+interface ActiveDrawingJob {
+  workerRun: DrawingWorkerRun;
+  response: ServerResponse;
 }
 
 export interface ModelGateway {
@@ -95,6 +113,16 @@ function canonicalize(value: unknown): unknown {
 
 function geometryInputHash(value: z.infer<typeof ProjectDrivenGeometrySpecSchema>): string {
   return createHash("sha256").update(JSON.stringify(canonicalize({ ...value, inputHash: "0".repeat(64) }))).digest("hex");
+}
+
+function containsForbiddenExternalInput(value: unknown): boolean {
+  if (typeof value === "string") {
+    return /^(?:https?:|file:)/i.test(value) || /^[A-Za-z]:[\\/]/.test(value) ||
+      /(?:^|[\\/])Downloads(?:[\\/]|$)/i.test(value) || /\.(?:dwg|dws|dwt|dxf)$/i.test(value) ||
+      /\b(?:xref|underlay|proxyObject)\b/i.test(value);
+  }
+  if (Array.isArray(value)) return value.some(containsForbiddenExternalInput);
+  return Boolean(value && typeof value === "object" && Object.values(value as Record<string, unknown>).some(containsForbiddenExternalInput));
 }
 
 function randomToken(): string {
@@ -169,6 +197,7 @@ export function createWorkbenchServer(options: {
   ledger?: ModelRunLedger;
   cadLedger?: CadJobLedger;
   cadWorker?: CadWorker;
+  drawingWorker?: DrawingWorker;
   allowedOrigin?: string;
 } = {}) {
   const gateway = options.gateway ?? new KimiGateway();
@@ -177,10 +206,13 @@ export function createWorkbenchServer(options: {
   const ownsCadLedger = options.cadLedger === undefined;
   const cadLedger = options.cadLedger ?? new CadJobLedger(process.env.NODE_ENV === "test" ? ":memory:" : undefined);
   const cadWorker = options.cadWorker ?? new PythonCadWorker();
+  const drawingWorker = options.drawingWorker ?? new PythonDrawingWorker();
   const allowedOrigin = options.allowedOrigin ?? defaultAllowedOrigin;
   const sessions = new Map<string, SessionRecord>();
   const activeRuns = new Map<string, ActiveRun>();
   const activeCadJobs = new Map<string, ActiveCadJob>();
+  const activeDrawingJobs = new Map<string, ActiveDrawingJob>();
+  const completedDrawingJobs = new Map<string, DrawingWorkerResult>();
 
   const server = createServer((request, response) => {
     void (async () => {
@@ -205,6 +237,7 @@ export function createWorkbenchServer(options: {
 
       const url = new URL(request.url ?? "/", `http://${requestHost}`);
       const cadAssetMatch = url.pathname.match(/^\/api\/cad-jobs\/([0-9a-f-]+)\/assets\/([^/]+)$/i);
+      const drawingAssetMatch = url.pathname.match(/^\/api\/drawing-jobs\/([0-9a-f-]+)\/assets\/(.+)$/i);
       if (request.method === "GET" && url.pathname === "/api/status") {
         return writeJson(response, 200, {
           service: "gujian-workbench-server",
@@ -222,6 +255,7 @@ export function createWorkbenchServer(options: {
         const record: SessionRecord = {
           csrfToken: randomToken(), capabilityToken: randomToken(), capabilityUsed: false,
           cadCapabilityToken: randomToken(), cadCapabilityUsed: false,
+          drawingCapabilityToken: randomToken(), drawingCapabilityUsed: false,
           expiresAt: Date.now() + sessionLifetimeMs, lastRunStartedAt: 0,
         };
         sessions.set(sessionId, record);
@@ -230,11 +264,15 @@ export function createWorkbenchServer(options: {
           csrfToken: record.csrfToken,
           capabilityToken: record.capabilityToken,
           cadCapabilityToken: record.cadCapabilityToken,
+          drawingCapabilityToken: record.drawingCapabilityToken,
           expiresAt: new Date(record.expiresAt).toISOString(),
         }, origin);
       }
 
       if (cadAssetMatch && request.method === "GET") {
+        const assetSessionId = parseCookies(request).get("gujian_session");
+        const assetSession = assetSessionId ? sessions.get(assetSessionId) : undefined;
+        if (!assetSession || assetSession.expiresAt < Date.now()) return writeJson(response, 403, { error: "SESSION_INVALID" }, origin);
         const jobId = cadAssetMatch[1] ?? "";
         const fileName = cadAssetMatch[2] ?? "";
         const entry = cadLedger.read(jobId);
@@ -242,6 +280,21 @@ export function createWorkbenchServer(options: {
         const data = cadWorker.readAsset(jobId, fileName);
         const mime = fileName.endsWith(".glb") ? "model/gltf-binary" : fileName.endsWith(".ifc") ? "application/x-step"
           : fileName.endsWith(".png") ? "image/png" : fileName.endsWith(".ndjson") ? "application/x-ndjson" : "application/json";
+        response.writeHead(200, { "content-type": mime, "content-length": data.length, "cache-control": "no-store" });
+        return response.end(data);
+      }
+
+      if (drawingAssetMatch && request.method === "GET") {
+        const assetSessionId = parseCookies(request).get("gujian_session");
+        const assetSession = assetSessionId ? sessions.get(assetSessionId) : undefined;
+        if (!assetSession || assetSession.expiresAt < Date.now()) return writeJson(response, 403, { error: "SESSION_INVALID" }, origin);
+        const jobId = drawingAssetMatch[1] ?? "";
+        if (!completedDrawingJobs.has(jobId)) return writeJson(response, 404, { error: "DRAWING_ASSET_NOT_READY" }, origin);
+        const fileName = (drawingAssetMatch[2] ?? "").split("/").map((part) => decodeURIComponent(part)).join("/");
+        const data = drawingWorker.readAsset(jobId, fileName);
+        const mime = fileName.endsWith(".dxf") ? "image/vnd.dxf" : fileName.endsWith(".svg") ? "image/svg+xml"
+          : fileName.endsWith(".pdf") ? "application/pdf" : fileName.endsWith(".png") ? "image/png"
+            : fileName.endsWith(".ndjson") ? "application/x-ndjson" : fileName.endsWith(".gz") ? "application/gzip" : "application/json";
         response.writeHead(200, { "content-type": mime, "content-length": data.length, "cache-control": "no-store" });
         return response.end(data);
       }
@@ -353,7 +406,9 @@ export function createWorkbenchServer(options: {
         if (request.headers["x-capability-token"] !== session.cadCapabilityToken || session.cadCapabilityUsed) {
           return writeJson(response, 403, { error: "CAD_CAPABILITY_INVALID" }, origin);
         }
-        const parsed = CadJobRequestSchema.safeParse(await readJsonBody(request));
+        const body = await readJsonBody(request);
+        if (containsForbiddenExternalInput(body)) return writeJson(response, 400, { error: "CAD_EXTERNAL_INPUT_FORBIDDEN" }, origin);
+        const parsed = CadJobRequestSchema.safeParse(body);
         if (!parsed.success) return writeJson(response, 400, { error: "CAD_JOB_REQUEST_INVALID", issues: parsed.error.issues }, origin);
         const input = parsed.data;
         if (input.projectId !== input.geometrySpec.projectId || input.projectRevisionId !== input.geometrySpec.projectRevisionId ||
@@ -415,6 +470,48 @@ export function createWorkbenchServer(options: {
           }
         } finally {
           activeCadJobs.delete(input.jobId);
+        }
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/drawing-jobs") {
+        if (request.headers["x-capability-token"] !== session.drawingCapabilityToken || session.drawingCapabilityUsed) {
+          return writeJson(response, 403, { error: "DRAWING_CAPABILITY_INVALID" }, origin);
+        }
+        const body = await readJsonBody(request);
+        if (containsForbiddenExternalInput(body)) return writeJson(response, 400, { error: "DRAWING_EXTERNAL_INPUT_FORBIDDEN" }, origin);
+        const parsed = DrawingJobRequestSchema.safeParse(body);
+        if (!parsed.success) return writeJson(response, 400, { error: "DRAWING_JOB_REQUEST_INVALID", issues: parsed.error.issues }, origin);
+        const input = parsed.data;
+        const source = cadLedger.read(input.sourceCadJobId);
+        if (!source || source.job.status !== "succeeded" || source.job.project_id !== input.projectId ||
+            source.job.project_revision_id !== input.projectRevisionId ||
+            input.artifactMatrix.projectId !== input.projectId || input.artifactMatrix.projectRevisionId !== input.projectRevisionId ||
+            input.artifactMatrix.geometryRevisionId !== input.geometryRevisionId) {
+          return writeJson(response, 400, { error: "DRAWING_SOURCE_CLOSURE_INVALID" }, origin);
+        }
+        if (activeDrawingJobs.size || completedDrawingJobs.has(input.jobId)) return writeJson(response, 409, { error: "DRAWING_JOB_ALREADY_EXISTS" }, origin);
+        session.drawingCapabilityUsed = true;
+        response.writeHead(200, { "content-type": "text/event-stream; charset=utf-8", "cache-control": "no-store, no-transform", connection: "keep-alive" });
+        sendSse(response, { type: "queued", jobId: input.jobId });
+        let workerRun: DrawingWorkerRun;
+        try {
+          workerRun = drawingWorker.start({ jobId: input.jobId, sourceCadJobId: input.sourceCadJobId, matrix: input.artifactMatrix });
+        } catch (error) {
+          sendSse(response, { type: "failed", jobId: input.jobId, errorCode: publicErrorCode(error) });
+          return response.end();
+        }
+        activeDrawingJobs.set(input.jobId, { workerRun, response });
+        sendSse(response, { type: "running", jobId: input.jobId });
+        try {
+          const result = await workerRun.result;
+          completedDrawingJobs.set(input.jobId, result);
+          sendSse(response, { type: "succeeded", jobId: input.jobId, buildRecordHash: result.buildRecordHash, assets: result.assets });
+        } catch (error) {
+          sendSse(response, { type: "failed", jobId: input.jobId, errorCode: publicErrorCode(error) });
+        } finally {
+          activeDrawingJobs.delete(input.jobId);
+          response.end();
         }
         return;
       }

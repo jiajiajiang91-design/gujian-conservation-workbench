@@ -3,6 +3,8 @@ import { EvidenceIngestionService, IndexedDbProjectRepository, LocalAuthorizatio
 
 import { ModelRunClient } from "./model-run-client";
 import { CadJobClient } from "./cad-job-client";
+import { DrawingJobClient } from "./drawing-job-client";
+import { DeliveryService } from "./delivery-service";
 
 export const projectRepository = new IndexedDbProjectRepository();
 export const projectCommands = new ProjectCommandService({
@@ -13,6 +15,8 @@ export const projectPackages = new ProjectPackageService(projectRepository);
 export const evidenceIngestion = new EvidenceIngestionService(projectRepository);
 export const modelRuns = new ModelRunClient({ repository: projectRepository, commands: projectCommands });
 export const cadJobs = new CadJobClient({ repository: projectRepository, commands: projectCommands });
+export const drawingJobs = new DrawingJobClient({ repository: projectRepository, commands: projectCommands });
+export const deliveries = new DeliveryService({ repository: projectRepository, commands: projectCommands });
 export const workflow = new WorkflowService(projectRepository);
 
 const ACTOR_KEY = "gujian-workbench-v3:local-actor-id";

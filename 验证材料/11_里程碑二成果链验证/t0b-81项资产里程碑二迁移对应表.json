@@ -1,0 +1,3704 @@
+{
+  "schemaVersion": "2.0",
+  "generatedAt": "2026-08-14T00:42:55.181Z",
+  "sourceTable": {
+    "path": "验证材料/07_里程碑一工作台验证/t0b-81项资产迁移对应表.json",
+    "sha256": "36d5cca810951c4e006c983afd6b5f8b7c1fb6c17ca35537a66be7eced50b0ab",
+    "assetCount": 81
+  },
+  "protections": {
+    "recoverySnapshot": "归档/recovery/2026-08-13-pre-t0b",
+    "recoverySnapshotDeleted": false,
+    "rawDirtyAssetsDeleted": false,
+    "historicalFailureEvidenceDeleted": false,
+    "externalDwgGenerationDependency": false
+  },
+  "assets": [
+    {
+      "inventoryIndex": 1,
+      "source": {
+        "path": "package.json",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 460,
+        "sha256": "96d2d0d603fc069a0832cc5d20ad8be71037e08044c0036138b3abd48fec12fb",
+        "headBlob": "7145f6615ccbbcaf048cb8baa21b941d5ec8896d",
+        "group": "root-domain-infrastructure",
+        "category": "修正后迁移",
+        "reason": "领域字段缺少迁移测试；基础设施包没有 src；依赖与 pnpm-lock 未闭合",
+        "qualificationBoundary": "不适用"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "5201b2193187c0b1161ce7257653d22a117ed6406f58dc8649a482eeef8d525c",
+        "matchesT0bSnapshot": false
+      },
+      "migration": {
+        "milestone": "里程碑一（T2/T3/T4/T5/T7）",
+        "status": "migrated-reworked-tested",
+        "target": "根级 pnpm 工作区、packages/domain、packages/application、packages/infrastructure 与 IndexedDB v3",
+        "evidenceCommits": [
+          "d194c2b",
+          "fe245ca",
+          "f27db50",
+          "a5d9847",
+          "37d2e94"
+        ],
+        "note": "没有原样提交半成品；按架构补齐源码、锁文件、命令入口、存储、迁移和测试后迁入。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "里程碑一已迁移；里程碑二扩展后通过回归",
+        "newModule": "packages/domain、packages/application、packages/infrastructure、apps/workbench",
+        "modificationReason": "沿用唯一命令写入口、IndexedDB v3 和项目包，在同一真源增加几何、成果、检查与交付记录",
+        "tests": [
+          "pnpm run check",
+          "项目 JSON/ZIP 空库回导",
+          "回导后继续生成新版本"
+        ],
+        "commits": [
+          "83465c2",
+          "T10 待提交"
+        ],
+        "currentQualification": "不适用",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 2,
+      "source": {
+        "path": "packages/domain/src/records.ts",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 1760,
+        "sha256": "2b29a3f2de85998b5197bb1be052f64490462b46b2c8535418f1cf37f6b70289",
+        "headBlob": "159eb34f063c8c2b6c88e92a48ea39d27aa88045",
+        "group": "root-domain-infrastructure",
+        "category": "修正后迁移",
+        "reason": "领域字段缺少迁移测试；基础设施包没有 src；依赖与 pnpm-lock 未闭合",
+        "qualificationBoundary": "不适用"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "6d0275587d91c57a705247a24686e85b751ddbd3dacca130906fb3f1eda1f234",
+        "matchesT0bSnapshot": false
+      },
+      "migration": {
+        "milestone": "里程碑一（T2/T3/T4/T5/T7）",
+        "status": "migrated-reworked-tested",
+        "target": "根级 pnpm 工作区、packages/domain、packages/application、packages/infrastructure 与 IndexedDB v3",
+        "evidenceCommits": [
+          "d194c2b",
+          "fe245ca",
+          "f27db50",
+          "a5d9847",
+          "37d2e94"
+        ],
+        "note": "没有原样提交半成品；按架构补齐源码、锁文件、命令入口、存储、迁移和测试后迁入。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "里程碑一已迁移；里程碑二扩展后通过回归",
+        "newModule": "packages/domain、packages/application、packages/infrastructure、apps/workbench",
+        "modificationReason": "沿用唯一命令写入口、IndexedDB v3 和项目包，在同一真源增加几何、成果、检查与交付记录",
+        "tests": [
+          "pnpm run check",
+          "项目 JSON/ZIP 空库回导",
+          "回导后继续生成新版本"
+        ],
+        "commits": [
+          "83465c2",
+          "T10 待提交"
+        ],
+        "currentQualification": "不适用",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 3,
+      "source": {
+        "path": "packages/infrastructure/package.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 512,
+        "sha256": "96c4cbe4a236613060b26d730e96a595982ee24489761d5da3801c566775608c",
+        "headBlob": null,
+        "group": "root-domain-infrastructure",
+        "category": "修正后迁移",
+        "reason": "领域字段缺少迁移测试；基础设施包没有 src；依赖与 pnpm-lock 未闭合",
+        "qualificationBoundary": "不适用"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "d9e2ea9487e6b6f27fe096484db43739ecf03c3d0358abc9cc56898f2211d101",
+        "matchesT0bSnapshot": false
+      },
+      "migration": {
+        "milestone": "里程碑一（T2/T3/T4/T5/T7）",
+        "status": "migrated-reworked-tested",
+        "target": "根级 pnpm 工作区、packages/domain、packages/application、packages/infrastructure 与 IndexedDB v3",
+        "evidenceCommits": [
+          "d194c2b",
+          "fe245ca",
+          "f27db50",
+          "a5d9847",
+          "37d2e94"
+        ],
+        "note": "没有原样提交半成品；按架构补齐源码、锁文件、命令入口、存储、迁移和测试后迁入。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "里程碑一已迁移；里程碑二扩展后通过回归",
+        "newModule": "packages/domain、packages/application、packages/infrastructure、apps/workbench",
+        "modificationReason": "沿用唯一命令写入口、IndexedDB v3 和项目包，在同一真源增加几何、成果、检查与交付记录",
+        "tests": [
+          "pnpm run check",
+          "项目 JSON/ZIP 空库回导",
+          "回导后继续生成新版本"
+        ],
+        "commits": [
+          "83465c2",
+          "T10 待提交"
+        ],
+        "currentQualification": "不适用",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 4,
+      "source": {
+        "path": "packages/infrastructure/tsconfig.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 253,
+        "sha256": "2c24e8ab3607b3ffde76d5c4b13d42ab3cd685cc802ee85549b250141d0951ba",
+        "headBlob": null,
+        "group": "root-domain-infrastructure",
+        "category": "修正后迁移",
+        "reason": "领域字段缺少迁移测试；基础设施包没有 src；依赖与 pnpm-lock 未闭合",
+        "qualificationBoundary": "不适用"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "2c24e8ab3607b3ffde76d5c4b13d42ab3cd685cc802ee85549b250141d0951ba",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "里程碑一（T2/T3/T4/T5/T7）",
+        "status": "migrated-reworked-tested",
+        "target": "根级 pnpm 工作区、packages/domain、packages/application、packages/infrastructure 与 IndexedDB v3",
+        "evidenceCommits": [
+          "d194c2b",
+          "fe245ca",
+          "f27db50",
+          "a5d9847",
+          "37d2e94"
+        ],
+        "note": "没有原样提交半成品；按架构补齐源码、锁文件、命令入口、存储、迁移和测试后迁入。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "里程碑一已迁移；里程碑二扩展后通过回归",
+        "newModule": "packages/domain、packages/application、packages/infrastructure、apps/workbench",
+        "modificationReason": "沿用唯一命令写入口、IndexedDB v3 和项目包，在同一真源增加几何、成果、检查与交付记录",
+        "tests": [
+          "pnpm run check",
+          "项目 JSON/ZIP 空库回导",
+          "回导后继续生成新版本"
+        ],
+        "commits": [
+          "83465c2",
+          "T10 待提交"
+        ],
+        "currentQualification": "不适用",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 5,
+      "source": {
+        "path": "tsconfig.json",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 158,
+        "sha256": "3555dfee7a7ac6cb3eeb30c3f5c785c9fea32c1802f0747083521056a1d4e248",
+        "headBlob": "38f6dc4909ce42ef243e9f6492a12c164aec4936",
+        "group": "root-domain-infrastructure",
+        "category": "修正后迁移",
+        "reason": "领域字段缺少迁移测试；基础设施包没有 src；依赖与 pnpm-lock 未闭合",
+        "qualificationBoundary": "不适用"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "8ad8749f257504a60095b4505e96f297773a1a37f08d078718b43cdb294196a6",
+        "matchesT0bSnapshot": false
+      },
+      "migration": {
+        "milestone": "里程碑一（T2/T3/T4/T5/T7）",
+        "status": "migrated-reworked-tested",
+        "target": "根级 pnpm 工作区、packages/domain、packages/application、packages/infrastructure 与 IndexedDB v3",
+        "evidenceCommits": [
+          "d194c2b",
+          "fe245ca",
+          "f27db50",
+          "a5d9847",
+          "37d2e94"
+        ],
+        "note": "没有原样提交半成品；按架构补齐源码、锁文件、命令入口、存储、迁移和测试后迁入。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "里程碑一已迁移；里程碑二扩展后通过回归",
+        "newModule": "packages/domain、packages/application、packages/infrastructure、apps/workbench",
+        "modificationReason": "沿用唯一命令写入口、IndexedDB v3 和项目包，在同一真源增加几何、成果、检查与交付记录",
+        "tests": [
+          "pnpm run check",
+          "项目 JSON/ZIP 空库回导",
+          "回导后继续生成新版本"
+        ],
+        "commits": [
+          "83465c2",
+          "T10 待提交"
+        ],
+        "currentQualification": "不适用",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 6,
+      "source": {
+        "path": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/font-corpus.txt",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 508,
+        "sha256": "6c08f536ee3a22d7d86aa8a7321ffe7a10b646910c3a5d9c387ef90fef2b3385",
+        "headBlob": null,
+        "group": "v2-font",
+        "category": "修正后迁移",
+        "reason": "官方 Noto 源、OFL 和 METADATA 已在 b03ac05 提交；当前为派生字体闭包",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "6c08f536ee3a22d7d86aa8a7321ffe7a10b646910c3a5d9c387ef90fef2b3385",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "可复算的中文字体闭包与 Release 资产",
+        "evidenceCommits": [
+          "b03ac05"
+        ],
+        "note": "官方 Noto Sans SC、OFL.txt、METADATA.pb 已保留；派生脚本、语料、manifest、测试后续迁移，可重建 TTF 不进入当前里程碑。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "通用字体资产已在 T9 复用；旧工作区副本仍受 T0b 保护",
+        "newModule": "workers/cad/project_drawings/assets/fonts/noto-sans-sc",
+        "modificationReason": "复用许可、语料、派生字体和哈希闭包，生成端不读取外部 DWG 字体",
+        "tests": [
+          "T9 字体覆盖测试",
+          "PDF/SVG 中文反向检查",
+          "AutoCAD 隔离字体检查"
+        ],
+        "commits": [
+          "54515ee"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 7,
+      "source": {
+        "path": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/font-manifest.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 2743,
+        "sha256": "7bdbbb65a02ba0f8f76bf67d392f9926045f0a375b8e78192d8ad45caee29751",
+        "headBlob": null,
+        "group": "v2-font",
+        "category": "修正后迁移",
+        "reason": "官方 Noto 源、OFL 和 METADATA 已在 b03ac05 提交；当前为派生字体闭包",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "7bdbbb65a02ba0f8f76bf67d392f9926045f0a375b8e78192d8ad45caee29751",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "可复算的中文字体闭包与 Release 资产",
+        "evidenceCommits": [
+          "b03ac05"
+        ],
+        "note": "官方 Noto Sans SC、OFL.txt、METADATA.pb 已保留；派生脚本、语料、manifest、测试后续迁移，可重建 TTF 不进入当前里程碑。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "通用字体资产已在 T9 复用；旧工作区副本仍受 T0b 保护",
+        "newModule": "workers/cad/project_drawings/assets/fonts/noto-sans-sc",
+        "modificationReason": "复用许可、语料、派生字体和哈希闭包，生成端不读取外部 DWG 字体",
+        "tests": [
+          "T9 字体覆盖测试",
+          "PDF/SVG 中文反向检查",
+          "AutoCAD 隔离字体检查"
+        ],
+        "commits": [
+          "54515ee"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 8,
+      "source": {
+        "path": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/GujianSansSC-Regular.ttf",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 10595948,
+        "sha256": "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7",
+        "headBlob": null,
+        "group": "v2-font",
+        "category": "修正后迁移",
+        "reason": "官方 Noto 源、OFL 和 METADATA 已在 b03ac05 提交；当前为派生字体闭包",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "可复算的中文字体闭包与 Release 资产",
+        "evidenceCommits": [
+          "b03ac05"
+        ],
+        "note": "官方 Noto Sans SC、OFL.txt、METADATA.pb 已保留；派生脚本、语料、manifest、测试后续迁移，可重建 TTF 不进入当前里程碑。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "通用字体资产已在 T9 复用；旧工作区副本仍受 T0b 保护",
+        "newModule": "workers/cad/project_drawings/assets/fonts/noto-sans-sc",
+        "modificationReason": "复用许可、语料、派生字体和哈希闭包，生成端不读取外部 DWG 字体",
+        "tests": [
+          "T9 字体覆盖测试",
+          "PDF/SVG 中文反向检查",
+          "AutoCAD 隔离字体检查"
+        ],
+        "commits": [
+          "54515ee"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 9,
+      "source": {
+        "path": "workers/cad/t0b_v2/drawing_contract.py",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 28915,
+        "sha256": "2557d1cc22a105eedaf5379278b7835bb960506b472bbc103b5f5040e8159690",
+        "headBlob": "a0822189ad9258eabdd6ceedd4e9ec342efb6332",
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "2557d1cc22a105eedaf5379278b7835bb960506b472bbc103b5f5040e8159690",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 10,
+      "source": {
+        "path": "workers/cad/t0b_v2/font_assets.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 10822,
+        "sha256": "d4cbdc465eca61e4a340daa9cb626ab078255bbba881ee9ea21d17a91d5b92e3",
+        "headBlob": null,
+        "group": "v2-font",
+        "category": "修正后迁移",
+        "reason": "官方 Noto 源、OFL 和 METADATA 已在 b03ac05 提交；当前为派生字体闭包",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "d4cbdc465eca61e4a340daa9cb626ab078255bbba881ee9ea21d17a91d5b92e3",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "可复算的中文字体闭包与 Release 资产",
+        "evidenceCommits": [
+          "b03ac05"
+        ],
+        "note": "官方 Noto Sans SC、OFL.txt、METADATA.pb 已保留；派生脚本、语料、manifest、测试后续迁移，可重建 TTF 不进入当前里程碑。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "通用字体资产已在 T9 复用；旧工作区副本仍受 T0b 保护",
+        "newModule": "workers/cad/project_drawings/assets/fonts/noto-sans-sc",
+        "modificationReason": "复用许可、语料、派生字体和哈希闭包，生成端不读取外部 DWG 字体",
+        "tests": [
+          "T9 字体覆盖测试",
+          "PDF/SVG 中文反向检查",
+          "AutoCAD 隔离字体检查"
+        ],
+        "commits": [
+          "54515ee"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 11,
+      "source": {
+        "path": "workers/cad/t0b_v2/generate_dxf.py",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 41740,
+        "sha256": "e1f00dac588e765cb940a01b3ec46ee6b8519b870c30972ade7b636f9590f496",
+        "headBlob": "440aa3539cffb17995c54cf31ceae170c7642054",
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "e1f00dac588e765cb940a01b3ec46ee6b8519b870c30972ade7b636f9590f496",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 12,
+      "source": {
+        "path": "workers/cad/t0b_v2/generate_sheet_outputs.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 44084,
+        "sha256": "901ee6ff1d87f9313e439d24826b9b49f53b3178fd6f4840054b06f642611520",
+        "headBlob": null,
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "901ee6ff1d87f9313e439d24826b9b49f53b3178fd6f4840054b06f642611520",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 13,
+      "source": {
+        "path": "workers/cad/t0b_v2/logical_font_config.json",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 1002,
+        "sha256": "03b8dbe63468f6006237943b0767623e64fb42b370fe9c12ca5d9bff5d3e7f7b",
+        "headBlob": "07332ba7f1f99c29d95e3478e81c2be0074b52ff",
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "03b8dbe63468f6006237943b0767623e64fb42b370fe9c12ca5d9bff5d3e7f7b",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 14,
+      "source": {
+        "path": "workers/cad/t0b_v2/render_sheet_output_review.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 3132,
+        "sha256": "0fa8691816363541328dc033523bcf6a7ab54b11cafcb1dcbc46741bf866a4cc",
+        "headBlob": null,
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "0fa8691816363541328dc033523bcf6a7ab54b11cafcb1dcbc46741bf866a4cc",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 15,
+      "source": {
+        "path": "workers/cad/t0b_v2/test_drawing_contract.py",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 14615,
+        "sha256": "4bb8314ccf27c02dbe89a77109b1a51df1894f903bf639dccb3700bf3963c4a4",
+        "headBlob": "196d2bd9967db9b569b2d4f34137dd682f132814",
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "4bb8314ccf27c02dbe89a77109b1a51df1894f903bf639dccb3700bf3963c4a4",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 16,
+      "source": {
+        "path": "workers/cad/t0b_v2/test_drawing_ir.py",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 12030,
+        "sha256": "dfece8c6b44ae78752d2712573d457370ce36e9bcc7e49a6f22e715b59199c61",
+        "headBlob": "bf843387ae928bffaa378498d349236cd4fddf0d",
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "dfece8c6b44ae78752d2712573d457370ce36e9bcc7e49a6f22e715b59199c61",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 17,
+      "source": {
+        "path": "workers/cad/t0b_v2/test_dxf_generation.py",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 17279,
+        "sha256": "6319c98c933f2faba09f1db85119c15afbecfb19fa4fb2fbb327f08180ae23ee",
+        "headBlob": "cae90e9172b4f76c1d33ab19ed6929d64084b19c",
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "6319c98c933f2faba09f1db85119c15afbecfb19fa4fb2fbb327f08180ae23ee",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 18,
+      "source": {
+        "path": "workers/cad/t0b_v2/test_font_assets.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 4886,
+        "sha256": "887fdf0998d9a32448cb15548a33f109e03d088c98294bca417ef54b00ff02e1",
+        "headBlob": null,
+        "group": "v2-font",
+        "category": "修正后迁移",
+        "reason": "官方 Noto 源、OFL 和 METADATA 已在 b03ac05 提交；当前为派生字体闭包",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "887fdf0998d9a32448cb15548a33f109e03d088c98294bca417ef54b00ff02e1",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "可复算的中文字体闭包与 Release 资产",
+        "evidenceCommits": [
+          "b03ac05"
+        ],
+        "note": "官方 Noto Sans SC、OFL.txt、METADATA.pb 已保留；派生脚本、语料、manifest、测试后续迁移，可重建 TTF 不进入当前里程碑。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "通用字体资产已在 T9 复用；旧工作区副本仍受 T0b 保护",
+        "newModule": "workers/cad/project_drawings/assets/fonts/noto-sans-sc",
+        "modificationReason": "复用许可、语料、派生字体和哈希闭包，生成端不读取外部 DWG 字体",
+        "tests": [
+          "T9 字体覆盖测试",
+          "PDF/SVG 中文反向检查",
+          "AutoCAD 隔离字体检查"
+        ],
+        "commits": [
+          "54515ee"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 19,
+      "source": {
+        "path": "workers/cad/t0b_v2/test_sheet_output_verifier.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 6878,
+        "sha256": "61a68261686ee5375475a54504665fc7092ea0dfe346fa331a1e0da3ca2174d1",
+        "headBlob": null,
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "61a68261686ee5375475a54504665fc7092ea0dfe346fa331a1e0da3ca2174d1",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 20,
+      "source": {
+        "path": "workers/cad/t0b_v2/test_sheet_outputs.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 10036,
+        "sha256": "4733ece5b1623d20a3669a45636c9487acb8e9988e392d53214148dd0cf81650",
+        "headBlob": null,
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "4733ece5b1623d20a3669a45636c9487acb8e9988e392d53214148dd0cf81650",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 21,
+      "source": {
+        "path": "workers/cad/t0b_v2/verify_drawing_ir.py",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 61547,
+        "sha256": "7bd3756b46647e96f0cacf7733e8ac68c741950b367662f7fca604f76671d968",
+        "headBlob": "40d1cc76b00f8c49107cfdf896a0a15446a3a99a",
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "7bd3756b46647e96f0cacf7733e8ac68c741950b367662f7fca604f76671d968",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 22,
+      "source": {
+        "path": "workers/cad/t0b_v2/verify_dxf.py",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 53609,
+        "sha256": "7d081692cba542af757dc355cb996ed985a308e4a0f599a1c674ab0ca6fc41d7",
+        "headBlob": "f5fbbf9728d336cebcd5ab249b1d627e0290c3b7",
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "7d081692cba542af757dc355cb996ed985a308e4a0f599a1c674ab0ca6fc41d7",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 23,
+      "source": {
+        "path": "workers/cad/t0b_v2/verify_sheet_outputs.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 46319,
+        "sha256": "45f33445d954da7961e3b819ac16dbd3a4ed8947a7e95d74736849b1fcfeaf77",
+        "headBlob": null,
+        "group": "v2-code-tests",
+        "category": "修正后迁移",
+        "reason": "IR、原生 DXF、跨格式生成、来源映射和攻击验证有复用价值，但仍固定十视图、两张 A1、标题和日期",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "45f33445d954da7961e3b819ac16dbd3a4ed8947a7e95d74736849b1fcfeaf77",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9",
+        "status": "deferred-preserved",
+        "target": "TaskDefinition 与 ArtifactRequirementMatrix 驱动的通用制图管线",
+        "evidenceCommits": [],
+        "note": "保留 IR、原生 DXF、跨格式、来源映射和攻击验证；后续去除固定视图、布局、标题和日期。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "已审查后抽取通用能力；旧固定合同与失败代码保留为迁移参照",
+        "newModule": "workers/cad/project_drawings",
+        "modificationReason": "迁移原生 DXF、Drawing IR、跨格式、来源映射和攻击验证，移除固定项目、视图、布局、标题和日期",
+        "tests": [
+          "两种成果矩阵契约测试",
+          "动态布局",
+          "跨格式与原生对象测试",
+          "T10 AutoCAD/QCAD 检查"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 24,
+      "source": {
+        "path": "workers/cad/t0b_v3/__init__.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 49,
+        "sha256": "f396047fafd599e68377f0deefdc4bf53614f1076d1d8006a2e9c69cc2fa3be7",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "f396047fafd599e68377f0deefdc4bf53614f1076d1d8006a2e9c69cc2fa3be7",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 25,
+      "source": {
+        "path": "workers/cad/t0b_v3/build_geometry.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 8168,
+        "sha256": "179d85fcddfced668a68d9dabf7f844cce76e0ca5bbaae76b713f24df7cfc87e",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "179d85fcddfced668a68d9dabf7f844cce76e0ca5bbaae76b713f24df7cfc87e",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 26,
+      "source": {
+        "path": "workers/cad/t0b_v3/contracts.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 16367,
+        "sha256": "6a291754784ee2e2e23e5dadf93fee61c72e1aac3f4d721098a2b729719d9c4b",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "6a291754784ee2e2e23e5dadf93fee61c72e1aac3f4d721098a2b729719d9c4b",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 27,
+      "source": {
+        "path": "workers/cad/t0b_v3/geometry.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 90117,
+        "sha256": "80fc9f0aecd130f91f13120f72480c2bff2910721373dfde67e3ba69d98888ba",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "80fc9f0aecd130f91f13120f72480c2bff2910721373dfde67e3ba69d98888ba",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 28,
+      "source": {
+        "path": "workers/cad/t0b_v3/render_previews.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 6866,
+        "sha256": "29a29dd92e206c557b935759ab90612562de1f96111533e6d860a804d00f5670",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "29a29dd92e206c557b935759ab90612562de1f96111533e6d860a804d00f5670",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 29,
+      "source": {
+        "path": "workers/cad/t0b_v3/test_contracts.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 4464,
+        "sha256": "6d484c6a48ed73968747ebe966c09674a376615d6385e69c1031631111401d79",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "6d484c6a48ed73968747ebe966c09674a376615d6385e69c1031631111401d79",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 30,
+      "source": {
+        "path": "workers/cad/t0b_v3/test_geometry.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 10472,
+        "sha256": "477aa7fe33fe64899b2babdd42397da155d833108712d560a77d4ece813e9fe2",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "477aa7fe33fe64899b2babdd42397da155d833108712d560a77d4ece813e9fe2",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 31,
+      "source": {
+        "path": "workers/cad/t0b_v3/test_geometry_verifier.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 6164,
+        "sha256": "7145807b13968257483ba45ede1e80976a66016061c8661ad2e09c8794d4b767",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "7145807b13968257483ba45ede1e80976a66016061c8661ad2e09c8794d4b767",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 32,
+      "source": {
+        "path": "workers/cad/t0b_v3/verify_geometry.py",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 60923,
+        "sha256": "65f490503743af15103a4ce6c47dd0d62a6ca36ffa3651f6738e8efb1aa87839",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "65f490503743af15103a4ce6c47dd0d62a6ca36ffa3651f6738e8efb1aa87839",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 33,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-drawing-package-contract.json",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 33595,
+        "sha256": "132e23a6523906fbe79bff8d54dc229764956c9e36a618a2449a6e7f39dde739",
+        "headBlob": "bf71776ee88fb585f2b316d0f019001038f5588d",
+        "group": "v2-ir-contract",
+        "category": "失败或历史证据保留",
+        "reason": "绑定旧 v2 GeometryRevision、固定布局和旧资格状态，不能作为当前成果",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "132e23a6523906fbe79bff8d54dc229764956c9e36a618a2449a6e7f39dde739",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史输入",
+        "status": "historical-failure-preserved",
+        "target": "失败证据与迁移参照，不作为当前成果",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "绑定旧 v2 revision 和固定布局，保持 rejected/generated-not-qualified/L1=false。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "旧固定 IR 失败证据保留；通用 IR 能力在 T9 重新实现并用于 T10 当前成果",
+        "newModule": "packages/domain/src/drawings.ts、workers/cad/project_drawings",
+        "modificationReason": "不覆盖旧报告；新 IR 由当前任务要求和当前 GeometryRevision 生成",
+        "tests": [
+          "T9 两种目录/布局",
+          "T10 当前 GeometryRevision 来源闭包"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 34,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/sheet-output-review-record.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 3966,
+        "sha256": "94449366e47a2be350477c08cb9a75c4e8adeaddcc04a3f064a09e698b7675f9",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "94449366e47a2be350477c08cb9a75c4e8adeaddcc04a3f064a09e698b7675f9",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 35,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-01-floor-plan-indices.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 184074,
+        "sha256": "5c43552eeaa65257cf6d9ea999cc4cadf7ae7a1dcb6af70e3103464ad99c3f87",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "5c43552eeaa65257cf6d9ea999cc4cadf7ae7a1dcb6af70e3103464ad99c3f87",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 36,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-01-review-full.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 601145,
+        "sha256": "055017a6e97cb376e858850dfc25364dd74ce8b3dba50e1ab2380a298ce35146",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "055017a6e97cb376e858850dfc25364dd74ce8b3dba50e1ab2380a298ce35146",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 37,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-01-title-block.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 89954,
+        "sha256": "f745422e05f5eb5f008bf0ca24dfaf5cf26b90c10233f835b9e4465405061cf2",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "f745422e05f5eb5f008bf0ca24dfaf5cf26b90c10233f835b9e4465405061cf2",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 38,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-01-transverse-annotations.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 712346,
+        "sha256": "42f6cf840111c10b12370ccde30e869e7da44312bc0d93b6606a27ab7e856dce",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "42f6cf840111c10b12370ccde30e869e7da44312bc0d93b6606a27ab7e856dce",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 39,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-02-column-door-details.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 333077,
+        "sha256": "289a4bb75f8816ba7ee1139af2effb43ef1cd80ffc1699667127527b9b39017e",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "289a4bb75f8816ba7ee1139af2effb43ef1cd80ffc1699667127527b9b39017e",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 40,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-02-eave-bracket-details.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 256206,
+        "sha256": "c5fd94729f53d879c0220d58a9c702a914b7e9d227e7fad82768eaa21dcc86b2",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "c5fd94729f53d879c0220d58a9c702a914b7e9d227e7fad82768eaa21dcc86b2",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 41,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-02-longitudinal-annotations.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 61592,
+        "sha256": "48df9652026ad4b1bf7b3dab72e37ca4684250c464822d73a170713064bae288",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "48df9652026ad4b1bf7b3dab72e37ca4684250c464822d73a170713064bae288",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 42,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-02-review-full.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 402826,
+        "sha256": "623f850a11b217f7a748b983367afd85b86dbd4fdbeb2090c24f57950aacb701",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "623f850a11b217f7a748b983367afd85b86dbd4fdbeb2090c24f57950aacb701",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 43,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/independent-review/T0B-02-title-block.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 91472,
+        "sha256": "ae62ba2bf5f0fe27f9a1fd4719b4a1bf5b94ed799c176bdfaf01aa8495c70425",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "ae62ba2bf5f0fe27f9a1fd4719b4a1bf5b94ed799c176bdfaf01aa8495c70425",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 44,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/sheet-output-verification.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 17894,
+        "sha256": "ed5a410e6cb6dd57139a08ea9ab2b7fda8fe7715a818e66d1672778451da3546",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "ed5a410e6cb6dd57139a08ea9ab2b7fda8fe7715a818e66d1672778451da3546",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 45,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/sheet-output-verifier-tests.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 555,
+        "sha256": "a5b4b97db1f5de5949a6530475eefe0c704d17dc1ad103bac4dc9ef29d8538d5",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "a5b4b97db1f5de5949a6530475eefe0c704d17dc1ad103bac4dc9ef29d8538d5",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 46,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/T0B.pdf",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 1469508,
+        "sha256": "9d50f760c95e9534afba528640b4daa4598c967b5ab597aceaab2e9f3aa8d022",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "9d50f760c95e9534afba528640b4daa4598c967b5ab597aceaab2e9f3aa8d022",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 47,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/T0B-01.svg",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 24544850,
+        "sha256": "7615bbb017505614a040ba72c799cb22d12b0b2921f9f65f73b0a7cf9ad321f0",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "7615bbb017505614a040ba72c799cb22d12b0b2921f9f65f73b0a7cf9ad321f0",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 48,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/T0B-01-300dpi.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 661870,
+        "sha256": "f9bd74b7e95ae3d1b0e70a0aee64fc3ee938f52aa347c6a306141462d03a15b7",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "f9bd74b7e95ae3d1b0e70a0aee64fc3ee938f52aa347c6a306141462d03a15b7",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 49,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/T0B-02.svg",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 14677487,
+        "sha256": "29980d47e313f58f50d1157663216ee94fc0935a607744897c3656bde9756d69",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "29980d47e313f58f50d1157663216ee94fc0935a607744897c3656bde9756d69",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 50,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/T0B-02-300dpi.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 512617,
+        "sha256": "5113e26ca684d46bec7b71789d807aa4b0e795b1d64fcaf31fdc93b26bdaa060",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "5113e26ca684d46bec7b71789d807aa4b0e795b1d64fcaf31fdc93b26bdaa060",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 51,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-artifacts/T0B-sheet-output-build-record.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 3173,
+        "sha256": "7633f2e32032ce8af1696f231543b03fc68a95e48d64629168995296f940d9f6",
+        "headBlob": null,
+        "group": "v2-sheet-artifacts",
+        "category": "失败或历史证据保留",
+        "reason": "独立专业复核已拒绝：内部 ID、文字碰撞、假日期、病害与保护缺失、承托简化和 QCAD 阻断",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "7633f2e32032ce8af1696f231543b03fc68a95e48d64629168995296f940d9f6",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "被专业审查拒绝的 SVG/PDF/PNG 与报告",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "保留拒绝结论、版本和哈希，不作为合格作品或真实功能证明。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史拒绝证据原样保留；不作为新成果，T10 另生成新的代理图纸",
+        "newModule": "历史证据：T0b 快照；新成果：apps/server/.data/acceptance/milestone-two/t10-habs",
+        "modificationReason": "旧成果含专业 P0，不能改名冒充；新成果只复用已审查的生成能力并绑定当前 GeometryRevision",
+        "tests": [
+          "旧哈希与失败原因保留",
+          "T10 跨格式清单和浏览器预览"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 52,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-ir/drawing-package.ir.json.gz",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 8523268,
+        "sha256": "c463edca1eb1c2d76fc649adb6e9d76ff6753f54403c30f28a3f960f1a253a60",
+        "headBlob": "2cfc46ae17118b5831d95094678dad3c1f4523e5",
+        "group": "v2-ir-contract",
+        "category": "失败或历史证据保留",
+        "reason": "绑定旧 v2 GeometryRevision、固定布局和旧资格状态，不能作为当前成果",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "c463edca1eb1c2d76fc649adb6e9d76ff6753f54403c30f28a3f960f1a253a60",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史输入",
+        "status": "historical-failure-preserved",
+        "target": "失败证据与迁移参照，不作为当前成果",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "绑定旧 v2 revision 和固定布局，保持 rejected/generated-not-qualified/L1=false。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "旧固定 IR 失败证据保留；通用 IR 能力在 T9 重新实现并用于 T10 当前成果",
+        "newModule": "packages/domain/src/drawings.ts、workers/cad/project_drawings",
+        "modificationReason": "不覆盖旧报告；新 IR 由当前任务要求和当前 GeometryRevision 生成",
+        "tests": [
+          "T9 两种目录/布局",
+          "T10 当前 GeometryRevision 来源闭包"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 53,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-ir/drawing-package-ir-build-record.json",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 3899,
+        "sha256": "93f901d0115357aec48cd39e948efb1293b6368bf87b916666e538baa3f58fe4",
+        "headBlob": "356f8410cf98a7f4731bd0d86115903a28be59e0",
+        "group": "v2-ir-contract",
+        "category": "失败或历史证据保留",
+        "reason": "绑定旧 v2 GeometryRevision、固定布局和旧资格状态，不能作为当前成果",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "93f901d0115357aec48cd39e948efb1293b6368bf87b916666e538baa3f58fe4",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史输入",
+        "status": "historical-failure-preserved",
+        "target": "失败证据与迁移参照，不作为当前成果",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "绑定旧 v2 revision 和固定布局，保持 rejected/generated-not-qualified/L1=false。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "旧固定 IR 失败证据保留；通用 IR 能力在 T9 重新实现并用于 T10 当前成果",
+        "newModule": "packages/domain/src/drawings.ts、workers/cad/project_drawings",
+        "modificationReason": "不覆盖旧报告；新 IR 由当前任务要求和当前 GeometryRevision 生成",
+        "tests": [
+          "T9 两种目录/布局",
+          "T10 当前 GeometryRevision 来源闭包"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 54,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/drawing-package-ir/drawing-package-ir-verification.json",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 3823,
+        "sha256": "92c006ea34a0ecaf118f3f9e0b4b55fdb31a68a86cc9f55478a5455df317d8c2",
+        "headBlob": "da9578cb092485b970d3dabea1bebd4b6d30a599",
+        "group": "v2-ir-contract",
+        "category": "失败或历史证据保留",
+        "reason": "绑定旧 v2 GeometryRevision、固定布局和旧资格状态，不能作为当前成果",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "92c006ea34a0ecaf118f3f9e0b4b55fdb31a68a86cc9f55478a5455df317d8c2",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史输入",
+        "status": "historical-failure-preserved",
+        "target": "失败证据与迁移参照，不作为当前成果",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "绑定旧 v2 revision 和固定布局，保持 rejected/generated-not-qualified/L1=false。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "旧固定 IR 失败证据保留；通用 IR 能力在 T9 重新实现并用于 T10 当前成果",
+        "newModule": "packages/domain/src/drawings.ts、workers/cad/project_drawings",
+        "modificationReason": "不覆盖旧报告；新 IR 由当前任务要求和当前 GeometryRevision 生成",
+        "tests": [
+          "T9 两种目录/布局",
+          "T10 当前 GeometryRevision 来源闭包"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 55,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/dxf-verification.json",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 6052,
+        "sha256": "cb7cda727b205094dfd34bad45a9f23ba4a3f132fb9d4c0e5974d623ca223473",
+        "headBlob": "a8b30f15033ba8498a7c16482442bb710c5cf7af",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "cb7cda727b205094dfd34bad45a9f23ba4a3f132fb9d4c0e5974d623ca223473",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 56,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/qcad-roundtrip-compatibility.json",
+        "statusAtT0b": "D",
+        "kind": "tracked",
+        "sizeBytes": 0,
+        "sha256": null,
+        "headBlob": "4f59342629648e5bac8145deed3a0a3009a16e0c",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "absent-preserved-in-t0b-recovery-snapshot",
+        "sha256": null,
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 57,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/qcad-roundtrip-compatibility.log",
+        "statusAtT0b": "D",
+        "kind": "tracked",
+        "sizeBytes": 0,
+        "sha256": null,
+        "headBlob": "24122aea9528256a7123e88e794484a9c6ee2e0e",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "absent-preserved-in-t0b-recovery-snapshot",
+        "sha256": null,
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 58,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/qcad-roundtrip-verifier-tests.log",
+        "statusAtT0b": "D",
+        "kind": "tracked",
+        "sizeBytes": 0,
+        "sha256": null,
+        "headBlob": "6c298821601801ae54807a7384da82a7c964ff06",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "absent-preserved-in-t0b-recovery-snapshot",
+        "sha256": null,
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 59,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/T0B.dxf",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 37144608,
+        "sha256": "60122094fc43183e235724cfa1a6b48e629e19126c21d0d1167ac515421e358f",
+        "headBlob": "2ecd1fd825f1b10e82025d5e7cc988fea466ad2f",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "60122094fc43183e235724cfa1a6b48e629e19126c21d0d1167ac515421e358f",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 60,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/T0B-autocad-audit-summary.json",
+        "statusAtT0b": "D",
+        "kind": "tracked",
+        "sizeBytes": 0,
+        "sha256": null,
+        "headBlob": "32369cc7e8480d08a21ba710bec7873e61f98bf7",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "absent-preserved-in-t0b-recovery-snapshot",
+        "sha256": null,
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 61,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/T0B-dxf-build-record.json",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 3779,
+        "sha256": "2fb75bf3a643154ea3ac7bf5d4485ca060eb0a33831262cc80aca0f147bca64d",
+        "headBlob": "39d89c39cd94539c386f217bad65f650f8ab99c8",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "2fb75bf3a643154ea3ac7bf5d4485ca060eb0a33831262cc80aca0f147bca64d",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 62,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/T0B-dxf-verifier-tests.log",
+        "statusAtT0b": "D",
+        "kind": "tracked",
+        "sizeBytes": 0,
+        "sha256": null,
+        "headBlob": "662adbb2dee218fb2ad5153d1cad37f782eac567",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "absent-preserved-in-t0b-recovery-snapshot",
+        "sha256": null,
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 63,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v2-outputs/native-dxf/T0B-source-map.ndjson",
+        "statusAtT0b": "M",
+        "kind": "tracked",
+        "sizeBytes": 25559141,
+        "sha256": "6389b786339d48e2617708980e753dbd4c68906631027096c21525b7eb9cea9c",
+        "headBlob": "eec62f2f6ec5d81d1968b09774f6e36d6f564841",
+        "group": "v2-native-dxf",
+        "category": "失败或历史证据保留",
+        "reason": "当前 DXF 不属于 v3 同源链，独立双构建和 AutoCAD 复审未对当前哈希闭合，QCAD 无损往返失败",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "6389b786339d48e2617708980e753dbd4c68906631027096c21525b7eb9cea9c",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T9 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 DXF、AutoCAD/QCAD 失败证据与恢复快照",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "不属于当前工作台数据链；删除状态仅由 T0b 恢复包保全，未经通知不移入回收站。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 DXF/QCAD 失败证据保留；T10 规范 DXF 为新文件且仍是代理成果",
+        "newModule": "workers/cad/project_drawings/dxf_writer.py",
+        "modificationReason": "复用原生对象与来源追踪；当前 DXF 重新生成并重新执行 AutoCAD、QCAD 检查",
+        "tests": [
+          "ezdxf audit 0/0",
+          "AutoCAD 2024 Core Console 0 错误/0 修复/0 删除",
+          "QCAD 仅打开/查看/打印"
+        ],
+        "commits": [
+          "54515ee",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 64,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-local-construction-fixture.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 48709,
+        "sha256": "38e5f34a6a4bc745e12b315cc3ad96174e0cc7eb0c861d92103195207b3ad334",
+        "headBlob": null,
+        "group": "v3-source-fixture",
+        "category": "修正后迁移",
+        "reason": "稳定 ID、几何原语、接口和独立验证器有价值；仍有固定形制计数、计数误标 mm、未知项和资格语义问题",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "38e5f34a6a4bc745e12b315cc3ad96174e0cc7eb0c861d92103195207b3ad334",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a/T8b",
+        "status": "deferred-preserved",
+        "target": "保全 demo 后抽取由 GeometrySpec 驱动的无固定形制几何内核",
+        "evidenceCommits": [],
+        "note": "稳定 ID、几何原语、接口和攻击验证可复用；固定形制、计数和过度资格声明必须在 T8 修正。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "T8a 技术重验并由 T8b 抽取通用几何能力；demo 仍 L1=false",
+        "newModule": "workers/cad/project_geometry、packages/domain/src/geometry.ts",
+        "modificationReason": "保留稳定 ID、接口与验证思想；修复单位、未知项、资格越权和固定数量，运行时改由 GeometrySpec 驱动",
+        "tests": [
+          "T8a demo 重验",
+          "T8b 两套 GeometrySpec",
+          "接触/搭接/剖切/哈希攻击负例"
+        ],
+        "commits": [
+          "0b1c65d",
+          "0227ef3"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 65,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/geometry/build-record.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 1269,
+        "sha256": "a9bdd2ab2c4ee20ea2aa2631aefbe9f84af58daf11a380caa05eba90457e8e9c",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "a9bdd2ab2c4ee20ea2aa2631aefbe9f84af58daf11a380caa05eba90457e8e9c",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 66,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/geometry/geometry-manifest.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 4536751,
+        "sha256": "89743ec3e91cb66d5bbb400472d3db0ddae2836c73832a9e4a513eb3a69942c0",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "89743ec3e91cb66d5bbb400472d3db0ddae2836c73832a9e4a513eb3a69942c0",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 67,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/geometry/local-construction-sample.glb",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 3363516,
+        "sha256": "e31038ef18e5b94f8007c68ec9c1d4bb0428348ba8fb0b3059badb7264012551",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "e31038ef18e5b94f8007c68ec9c1d4bb0428348ba8fb0b3059badb7264012551",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 68,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/geometry/source-meshes.ndjson.gz",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 3165469,
+        "sha256": "697a7ea14de10c7fcfc4e55a6f302747417229f413e08375b56d75039ab820b0",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "697a7ea14de10c7fcfc4e55a6f302747417229f413e08375b56d75039ab820b0",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 69,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/prefreeze-geometry/geometry-manifest.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 10833398,
+        "sha256": "8821b800723453b40598cc78c05f5494bdf467ff5d4bc853b85bfb28094c992d",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "8821b800723453b40598cc78c05f5494bdf467ff5d4bc853b85bfb28094c992d",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 70,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/prefreeze-geometry/local-construction-sample.glb",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 3184428,
+        "sha256": "059b254d9c9bf4eb0fbd187075f0826ade7cb7c52e73f89049281ee8b7c0d22f",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "059b254d9c9bf4eb0fbd187075f0826ade7cb7c52e73f89049281ee8b7c0d22f",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 71,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/prefreeze-geometry/prefreeze-build-record.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 1275,
+        "sha256": "ce8821f8c8ea9ea1b9fd9fd854ab2de014b208cf70612be06e11e147e1a4927c",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "ce8821f8c8ea9ea1b9fd9fd854ab2de014b208cf70612be06e11e147e1a4927c",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 72,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/prefreeze-geometry/prefreeze-verification.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 2180,
+        "sha256": "ae593525385f648003693238d844d727fdab84467429bd17e315ed7a61c88e98",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "ae593525385f648003693238d844d727fdab84467429bd17e315ed7a61c88e98",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 73,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/prefreeze-geometry/source-meshes.ndjson.gz",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 3133135,
+        "sha256": "8695bb739bdc3465c75fbfddf6420253a1d78ab2e7f4b9f85fd2c0ce3002cad6",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "8695bb739bdc3465c75fbfddf6420253a1d78ab2e7f4b9f85fd2c0ce3002cad6",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 74,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/previews/assembly.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 941,
+        "sha256": "f2bc8f7719074e259e084aaad5698daf633542b10945a5fbe1a0e9d59901baaa",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "f2bc8f7719074e259e084aaad5698daf633542b10945a5fbe1a0e9d59901baaa",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 75,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/previews/assembly.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 1599441,
+        "sha256": "142459e32db4e126ce1f59483e24cd295d73de162c043d79d47a6b2e096ec881",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "142459e32db4e126ce1f59483e24cd295d73de162c043d79d47a6b2e096ec881",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 76,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/previews/column-base.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 945,
+        "sha256": "aa2e0d33b1a8afb4f7ae0dae79c280ba2c3a36159a66fe96c6f1fbb80679e48a",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "aa2e0d33b1a8afb4f7ae0dae79c280ba2c3a36159a66fe96c6f1fbb80679e48a",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 77,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/previews/column-base.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 985250,
+        "sha256": "202a0b26d417c535a3016b7dddee260d7b52a90a07f6eee8b178ac4fa06484da",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "202a0b26d417c535a3016b7dddee260d7b52a90a07f6eee8b178ac4fa06484da",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 78,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/previews/door-window.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 946,
+        "sha256": "5ab2d2bdd0903523cae17385d7a439614dee27ef84575229f2208c9f3fb0a03d",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "5ab2d2bdd0903523cae17385d7a439614dee27ef84575229f2208c9f3fb0a03d",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 79,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/previews/door-window.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 1379018,
+        "sha256": "04581992317ad5c8833e56d1ad1ce16739349bdbb5031ac16032f7c5d49a60df",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "04581992317ad5c8833e56d1ad1ce16739349bdbb5031ac16032f7c5d49a60df",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 80,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/previews/eave-support.json",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 947,
+        "sha256": "62807d896411115b9a87b422d309f1072fc51e3143619b7eb7a38eca05f36320",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "62807d896411115b9a87b422d309f1072fc51e3143619b7eb7a38eca05f36320",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    },
+    {
+      "inventoryIndex": 81,
+      "source": {
+        "path": "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/previews/eave-support.png",
+        "statusAtT0b": "??",
+        "kind": "untracked",
+        "sizeBytes": 1282660,
+        "sha256": "a586c87436cd933f0c99c885d2be38239f5627c2e7c1b30430fb9e1f00f9bbc6",
+        "headBlob": null,
+        "group": "v3-generated-outputs",
+        "category": "失败或历史证据保留",
+        "reason": "geometry 为旧 881/24；prefreeze 为 886/2118 但验证报告哈希过期；previews 绑定旧 revision",
+        "qualificationBoundary": "generated-not-qualified; L1=false"
+      },
+      "currentEvidence": {
+        "fileState": "present",
+        "sha256": "a586c87436cd933f0c99c885d2be38239f5627c2e7c1b30430fb9e1f00f9bbc6",
+        "matchesT0bSnapshot": true
+      },
+      "migration": {
+        "milestone": "T8a 历史审计",
+        "status": "historical-failure-preserved",
+        "target": "旧 geometry 与 prefreeze 失效证据",
+        "evidenceCommits": [
+          "dca5720"
+        ],
+        "note": "881/24 旧输出与 886/2118 过期报告分别保持 superseded/invalidated，不与后续 GeometryRevision 混用。"
+      },
+      "milestoneTwo": {
+        "reviewConclusion": "历史 881/24 为 superseded；过期 prefreeze 报告为 invalidated；新成果不覆盖旧文件",
+        "newModule": "历史证据：T0b 快照；新输出：T8a 受控验收目录与 T10 项目成果目录",
+        "modificationReason": "只保留失败与失效证据的原版本和哈希；新 GeometryRevision 独立生成",
+        "tests": [
+          "T8a 当前哈希链",
+          "旧报告失效扫描",
+          "T10 成果哈希清单"
+        ],
+        "commits": [
+          "0b1c65d",
+          "T10 待提交"
+        ],
+        "currentQualification": "generated-not-qualified; L1=false",
+        "t0bRecoveryProtected": true,
+        "originalHashRetained": true
+      }
+    }
+  ]
+}
