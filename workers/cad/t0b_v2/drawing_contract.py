@@ -11,6 +11,11 @@ from uuid import UUID, uuid5
 DRAWING_PACKAGE_REVISION_NAMESPACE = UUID("e145714a-5f3c-58d8-bcc7-b34965cc5f8b")
 GEOMETRY_REVISION_ID = "3788f4e4-339c-568d-aa58-f74b36b23c5a"
 VIEW_CONTRACT_REVISION_ID = "04d00093-0bec-5f2a-bc68-def2a292c932"
+FONT_SOURCE_COMMIT = "038b637da7b3fd956a4ed93ffc607c3d5e4ce172"
+FONT_SOURCE_SHA256 = "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+FONT_INSTANCE_SHA256 = "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7"
+FONT_MANIFEST_SHA256 = "7bdbbb65a02ba0f8f76bf67d392f9926045f0a375b8e78192d8ad45caee29751"
+FONT_LICENSE_SHA256 = "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
 VIEW_IDS = {
     "floorPlan",
     "roofPlan",
@@ -334,9 +339,69 @@ def validate_drawing_package_contract(contract: dict) -> dict:
     _require(material.get("patternOwnership") == "team-owned" and material.get("boundarySourceKinds") == ["ViewGeometry.cutRegion", "ViewGeometry.materialRegion"] and material.get("boundaryRecalculationRequired") is True and material.get("externalPatternAllowed") is False, "material hatch contract is incomplete")
 
     font = contract["fontPolicy"]
-    _require(font.get("redistributionLicenseRequired") is True and set(font.get("requiredManifestFields", [])) == {"fontId", "family", "fileName", "sha256", "licenseSpdx", "licenseFileSha256", "redistributionAllowed", "glyphCoverage"}, "font manifest contract is incomplete")
+    _require(
+        font.get("redistributionLicenseRequired") is True
+        and set(font.get("requiredManifestFields", []))
+        == {
+            "fontId",
+            "family",
+            "fullName",
+            "postScriptName",
+            "fileName",
+            "sha256",
+            "fsType",
+            "redistributionAllowed",
+            "pdfEmbeddingAllowed",
+            "licenseSpdx",
+            "licenseFileSha256",
+            "namingCompliance",
+            "derivedFrom",
+            "source",
+            "instance",
+            "glyphCoverage",
+            "build",
+            "manifestPayloadSha256",
+        },
+        "font manifest contract is incomplete",
+    )
     _require(set(font.get("forbiddenFamilies", [])) == {"SimHei", "LiSu", "NEW-ROMD"}, "known non-qualifying fonts must be forbidden")
-    _require(font.get("currentBindingStatus") == "blocked-missing-team-font" and font.get("blockerCode") == "FONT_ASSET_NOT_BOUND", "missing licensed team font must remain a blocker")
+    _require(font.get("currentBindingStatus") == "bound-licensed-static-instance" and font.get("blockerCode") is None, "licensed static font binding is invalid")
+    bound_fonts = font.get("boundFonts")
+    _require(isinstance(bound_fonts, list) and len(bound_fonts) == 1, "exactly one drawing font must be bound")
+    bound = bound_fonts[0]
+    _require(
+        set(bound)
+        == {
+            "fontId",
+            "family",
+            "postScriptName",
+            "cadStyleName",
+            "relativeFontPath",
+            "sha256",
+            "relativeManifestPath",
+            "manifestSha256",
+            "sourceFontSha256",
+            "sourceCommit",
+            "instanceWeight",
+            "licenseSpdx",
+            "licenseFileSha256",
+            "fsType",
+            "redistributionAllowed",
+            "pdfEmbeddingAllowed",
+            "glyphCoverage",
+            "namingCompliance",
+        },
+        "bound font fields are incomplete",
+    )
+    _require(bound["fontId"] == "gujian-sans-sc-regular-400-v1" and bound["family"] == "Gujian Sans SC" and bound["postScriptName"] == "GujianSansSC-Regular" and bound["cadStyleName"] == "GJ-GUJIAN-SANS-SC", "bound font identity differs")
+    _require(_relative_input_path(bound["relativeFontPath"], "fontPolicy.boundFonts.relativeFontPath") == "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/GujianSansSC-Regular.ttf", "bound font path differs")
+    _require(_relative_input_path(bound["relativeManifestPath"], "fontPolicy.boundFonts.relativeManifestPath") == "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/font-manifest.json", "font manifest path differs")
+    _require(bound["sha256"] == FONT_INSTANCE_SHA256 and bound["manifestSha256"] == FONT_MANIFEST_SHA256 and bound["sourceFontSha256"] == FONT_SOURCE_SHA256, "font asset hashes differ")
+    _require(bound["sourceCommit"] == FONT_SOURCE_COMMIT and bound["instanceWeight"] == 400, "font source commit or instance weight differs")
+    _require(bound["licenseSpdx"] == "OFL-1.1" and bound["licenseFileSha256"] == FONT_LICENSE_SHA256 and bound["fsType"] == 0, "font license or embedding permission differs")
+    _require(bound["redistributionAllowed"] is True and bound["pdfEmbeddingAllowed"] is True, "font redistribution or PDF embedding is not allowed")
+    _require(bound["glyphCoverage"] == {"requiredCodepointCount": 168, "coveredCodepointCount": 168, "missingCodepoints": []}, "font glyph coverage differs")
+    _require(bound["namingCompliance"] == {"isModifiedVersion": True, "reservedFontNames": ["Source"], "derivedFamilyRenamed": True, "reservedNamesUsedByDerivedFamily": []}, "font reserved-name compliance differs")
     _require(font.get("pdfEmbeddingRequired") is True and font.get("missingGlyphs") == 0 and font.get("fontSubstitutions") == 0 and font.get("questionMarkPlaceholders") == 0, "font output gate is incomplete")
 
     outputs = contract["outputMatrix"]
@@ -349,12 +414,31 @@ def validate_drawing_package_contract(contract: dict) -> dict:
     compatibility = contract["compatibilityMatrix"]
     _require(set(compatibility) == {"AutoCAD", "QCAD"}, "only AutoCAD and QCAD belong in the compatibility matrix")
     _require(compatibility["AutoCAD"].get("auditErrors") == 0, "AutoCAD audit must allow zero errors")
-    _require(compatibility["QCAD"].get("operations") == ["open", "select", "edit", "save", "print", "reverseParse"] and compatibility["QCAD"].get("roundtripCopyIsCanonical") is False, "QCAD roundtrip boundary is invalid")
+    _require(
+        compatibility["QCAD"].get("operations") == ["open", "select", "edit", "save", "print", "reverseParse"]
+        and compatibility["QCAD"].get("roundtripCopyIsCanonical") is False
+        and compatibility["QCAD"].get("supportStatus") == "unsupported-lossless-roundtrip"
+        and compatibility["QCAD"].get("qualificationBlocker") == "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED"
+        and compatibility["QCAD"].get("knownLosses") == ["DIMENSION_ASSOCIATION", "VIEWPORT_LOCK_FLAG"],
+        "QCAD unsupported lossless-roundtrip boundary is invalid",
+    )
 
     qualification = contract["qualificationBoundary"]
     _require(qualification.get("status") == "generated-not-qualified" and qualification.get("L1") is False and qualification.get("useBoundary") == ["demo-only", "not-for-formal-signoff"], "qualification boundary is invalid")
     _require(qualification.get("generatorMaySetEligible") is False and qualification.get("independentVerificationRequired") is True and qualification.get("professionalGroupedReviewRequired") is True, "generator must not grant qualification")
-    _require(set(qualification.get("requiredBlockers", [])) >= {"BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", "FONT_ASSET_NOT_BOUND", "DRAWING_OUTPUTS_NOT_BUILT", "COMPATIBILITY_NOT_VERIFIED", "PROFESSIONAL_REVIEW_PENDING"}, "known qualification blockers are incomplete")
+    _require(
+        set(qualification.get("requiredBlockers", []))
+        >= {
+            "BRACKET_DETAIL_SIMPLIFIED_GEOMETRY",
+            "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED",
+            "AUTOCAD_REAUDIT_REQUIRED",
+            "CROSS_FORMAT_INDEPENDENT_VERIFICATION_PENDING",
+            "PROFESSIONAL_REVIEW_PENDING",
+        }
+        and "FONT_ASSET_NOT_BOUND" not in qualification.get("requiredBlockers", [])
+        and "DRAWING_OUTPUTS_NOT_BUILT" not in qualification.get("requiredBlockers", []),
+        "known qualification blockers are incomplete",
+    )
 
     determinism = contract["determinismPolicy"]
     _require(determinism == {"fixedTimestamp": "2000-01-01T00:00:00Z", "gzipMtime": 0, "stableOrdering": ["layoutName", "viewId", "sourceLineId", "requirementId", "cadObjectId"], "volatileMetadataAllowed": False, "temporaryDirectoryDoubleBuildRequired": True, "fullArtifactHashMustMatch": True, "contractChangeRequiresNewSignatureAndRevision": True}, "determinism policy is invalid")

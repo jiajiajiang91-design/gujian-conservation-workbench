@@ -185,7 +185,9 @@ class T0BV2DrawingPackageIRTests(unittest.TestCase):
         self.assertEqual(by_requirement["DR-CB-DIM"]["semanticPayload"]["valuesMm"], [560, 400, 240, 800])
         self.assertEqual(by_requirement["DR-DW-DIM"]["semanticPayload"]["valuesMm"], [1800, 2700, 720, 1500])
         self.assertIn("BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", self.ir["qualificationBoundary"]["requiredBlockers"])
-        self.assertIn("FONT_ASSET_NOT_BOUND", self.ir["qualificationBoundary"]["requiredBlockers"])
+        self.assertNotIn("FONT_ASSET_NOT_BOUND", self.ir["qualificationBoundary"]["requiredBlockers"])
+        self.assertIn("QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED", self.ir["qualificationBoundary"]["requiredBlockers"])
+        self.assertEqual(self.ir["fontPolicy"]["boundFonts"][0]["instanceWeight"], 400)
 
     def test_builder_imports_no_fixture_or_geometry_oracle(self) -> None:
         source = inspect.getsource(drawing_ir_module)

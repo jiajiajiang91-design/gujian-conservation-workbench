@@ -91,10 +91,12 @@ class T0BV2NativeDXFGenerationTests(unittest.TestCase):
         self.assertEqual(self.record["outputs"]["dxf"]["sha256"], sha256(DXF_PATH.read_bytes()).hexdigest())
         self.assertEqual(self.record["outputs"]["provenanceSidecar"]["sha256"], sha256(SIDECAR_PATH.read_bytes()).hexdigest())
         blockers = set(self.record["qualification"]["requiredBlockers"])
-        self.assertIn("FONT_ASSET_NOT_BOUND", blockers)
+        self.assertNotIn("FONT_ASSET_NOT_BOUND", blockers)
         self.assertIn("BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", blockers)
+        self.assertIn("QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED", blockers)
         self.assertFalse(self.record["qualification"]["generatorMaySetEligible"])
-        self.assertEqual(self.record["outputsNotGenerated"], ["SVG", "PDF", "PNG"])
+        self.assertEqual(self.record["qualification"]["fontAssetStatus"], "bound-licensed-static-instance")
+        self.assertEqual(self.record["crossFormatOutputs"], {"status": "generated-by-separate-ir-consumer", "sourceIrRequired": True})
         self.assertEqual(self.record["autocadCompatibility"]["earthPatternLineOffsetsMm"], [[0, 24], [24, 0]])
         self.assertTrue(self.record["autocadCompatibility"]["parallelPatternOffsetRejected"])
         self.assertEqual(self.record["autocadCompatibility"]["defaultPaperViewportLayer"], "0")
@@ -245,11 +247,13 @@ class T0BV2NativeDXFGenerationTests(unittest.TestCase):
         for layout_name in ("T0B-01", "T0B-02"):
             self.assertEqual(len(self.doc.layouts.get(layout_name).query('INSERT[name=="GJ_TITLEBLOCK"]')), 1)
 
-    def test_logical_font_is_unbound_and_external_assets_are_absent(self) -> None:
-        self.assertEqual(self.record["inputs"]["logicalFont"]["family"], "Noto Sans SC")
-        self.assertEqual(self.record["inputs"]["logicalFont"]["assetStatus"], "unbound")
-        self.assertIsNone(self.record["inputs"]["logicalFont"]["fontFilePath"])
-        self.assertEqual({style.dxf.font for style in self.doc.styles}, {"Noto Sans SC"})
+    def test_licensed_static_font_is_bound_without_absolute_external_paths(self) -> None:
+        logical_font = self.record["inputs"]["logicalFont"]
+        self.assertEqual(logical_font["family"], "Gujian Sans SC")
+        self.assertEqual(logical_font["assetStatus"], "bound-licensed-static-instance")
+        self.assertEqual(logical_font["instanceWeight"], 400)
+        self.assertEqual(logical_font["fontSha256"], "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7")
+        self.assertEqual({style.dxf.font for style in self.doc.styles}, {"GujianSansSC-Regular.ttf"})
         forbidden_types = {
             entity.dxftype()
             for entity in self.doc.entitydb.values()
@@ -268,10 +272,13 @@ class T0BV2NativeDXFGenerationTests(unittest.TestCase):
             self.assertNotIn(token, source)
         self.assertNotIn(".dwg", source.lower().replace('".dwg"', ""))
 
-    def test_absolute_or_bound_font_asset_configuration_is_rejected(self) -> None:
+    def test_absolute_or_mismatched_font_asset_configuration_is_rejected(self) -> None:
         invalid = deepcopy(self.font)
-        invalid["fontFilePath"] = "C:/Windows/Fonts/forbidden.ttf"
-        invalid["assetStatus"] = "bound"
+        invalid["fontAssetRelativePath"] = "C:/Windows/Fonts/forbidden.ttf"
+        with self.assertRaisesRegex(DXFGenerationError, "font"):
+            NativeDXFGenerator(self.contract, self.ir, self.manifest, invalid)
+        invalid = deepcopy(self.font)
+        invalid["instanceWeight"] = 100
         with self.assertRaisesRegex(DXFGenerationError, "font"):
             NativeDXFGenerator(self.contract, self.ir, self.manifest, invalid)
 

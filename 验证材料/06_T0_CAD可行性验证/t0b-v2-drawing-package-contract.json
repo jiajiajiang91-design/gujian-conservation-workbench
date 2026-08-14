@@ -1,8 +1,8 @@
 {
   "schemaVersion": "t0b-v2-drawing-package-contract-1",
   "contractId": "e0d53f01-5c85-52a8-b25d-5139d6caec22",
-  "contractSignature": "8b3f2570c8dddab4ca006362bda2a850660620047bb0ccb5d42695134a1bbcc3",
-  "contractRevisionId": "176ee4f0-9cbd-51ba-939e-aa2cad36a307",
+  "contractSignature": "4e27aabfb80bba82bc92c965b06b4f820f743d35838717d9fbf47e48488f7eaf",
+  "contractRevisionId": "965dd6d3-29c9-59fb-b922-9c0ae56e16f2",
   "producerType": "demo",
   "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
   "viewContractRevisionId": "04d00093-0bec-5f2a-bc68-def2a292c932",
@@ -179,9 +179,20 @@
   },
   "fontPolicy": {
     "redistributionLicenseRequired": true,
-    "requiredManifestFields": ["fontId", "family", "fileName", "sha256", "licenseSpdx", "licenseFileSha256", "redistributionAllowed", "glyphCoverage"],
-    "forbiddenFamilies": ["SimHei", "LiSu", "NEW-ROMD"], "currentBindingStatus": "blocked-missing-team-font", "blockerCode": "FONT_ASSET_NOT_BOUND",
-    "boundFonts": [], "pdfEmbeddingRequired": true, "missingGlyphs": 0, "fontSubstitutions": 0, "questionMarkPlaceholders": 0
+    "requiredManifestFields": ["fontId", "family", "fullName", "postScriptName", "fileName", "sha256", "fsType", "redistributionAllowed", "pdfEmbeddingAllowed", "licenseSpdx", "licenseFileSha256", "namingCompliance", "derivedFrom", "source", "instance", "glyphCoverage", "build", "manifestPayloadSha256"],
+    "forbiddenFamilies": ["SimHei", "LiSu", "NEW-ROMD"], "currentBindingStatus": "bound-licensed-static-instance", "blockerCode": null,
+    "boundFonts": [
+      {
+        "fontId": "gujian-sans-sc-regular-400-v1", "family": "Gujian Sans SC", "postScriptName": "GujianSansSC-Regular", "cadStyleName": "GJ-GUJIAN-SANS-SC",
+        "relativeFontPath": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/GujianSansSC-Regular.ttf", "sha256": "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7",
+        "relativeManifestPath": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/font-manifest.json", "manifestSha256": "7bdbbb65a02ba0f8f76bf67d392f9926045f0a375b8e78192d8ad45caee29751",
+        "sourceFontSha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da", "sourceCommit": "038b637da7b3fd956a4ed93ffc607c3d5e4ce172", "instanceWeight": 400,
+        "licenseSpdx": "OFL-1.1", "licenseFileSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9", "fsType": 0, "redistributionAllowed": true, "pdfEmbeddingAllowed": true,
+        "glyphCoverage": {"requiredCodepointCount": 168, "coveredCodepointCount": 168, "missingCodepoints": []},
+        "namingCompliance": {"isModifiedVersion": true, "reservedFontNames": ["Source"], "derivedFamilyRenamed": true, "reservedNamesUsedByDerivedFamily": []}
+      }
+    ],
+    "pdfEmbeddingRequired": true, "missingGlyphs": 0, "fontSubstitutions": 0, "questionMarkPlaceholders": 0
   },
   "outputMatrix": {
     "dxf": {"files": ["T0B.dxf"], "modelSpaceUnit": "mm", "insunits": 4, "modelSpaceScale": "1:1", "layouts": ["T0B-01", "T0B-02"], "sourceIrRequired": true},
@@ -192,11 +203,11 @@
   },
   "compatibilityMatrix": {
     "AutoCAD": {"required": true, "auditErrors": 0, "operations": ["open", "audit", "select", "edit", "save", "print", "reverseParse"]},
-    "QCAD": {"required": true, "operations": ["open", "select", "edit", "save", "print", "reverseParse"], "roundtripCopyIsCanonical": false, "roundtripLossFails": ["XDATA", "nativeType", "layout", "viewport"]}
+    "QCAD": {"required": true, "operations": ["open", "select", "edit", "save", "print", "reverseParse"], "roundtripCopyIsCanonical": false, "roundtripLossFails": ["XDATA", "nativeType", "layout", "viewport"], "supportStatus": "unsupported-lossless-roundtrip", "qualificationBlocker": "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED", "knownLosses": ["DIMENSION_ASSOCIATION", "VIEWPORT_LOCK_FLAG"]}
   },
   "qualificationBoundary": {
     "status": "generated-not-qualified", "L1": false, "useBoundary": ["demo-only", "not-for-formal-signoff"], "generatorMaySetEligible": false, "independentVerificationRequired": true, "professionalGroupedReviewRequired": true,
-    "requiredBlockers": ["BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", "FONT_ASSET_NOT_BOUND", "DRAWING_OUTPUTS_NOT_BUILT", "COMPATIBILITY_NOT_VERIFIED", "PROFESSIONAL_REVIEW_PENDING"]
+    "requiredBlockers": ["BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED", "AUTOCAD_REAUDIT_REQUIRED", "CROSS_FORMAT_INDEPENDENT_VERIFICATION_PENDING", "PROFESSIONAL_REVIEW_PENDING"]
   },
   "determinismPolicy": {"fixedTimestamp": "2000-01-01T00:00:00Z", "gzipMtime": 0, "stableOrdering": ["layoutName", "viewId", "sourceLineId", "requirementId", "cadObjectId"], "volatileMetadataAllowed": false, "temporaryDirectoryDoubleBuildRequired": true, "fullArtifactHashMustMatch": true, "contractChangeRequiresNewSignatureAndRevision": true},
   "p0Requirements": [

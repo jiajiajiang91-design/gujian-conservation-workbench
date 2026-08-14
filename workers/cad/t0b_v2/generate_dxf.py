@@ -23,6 +23,7 @@ FIXED_JULIAN_DATE = 2451544.5
 DXF_NAME = "T0B.dxf"
 SIDECAR_NAME = "T0B-source-map.ndjson"
 BUILD_RECORD_NAME = "T0B-dxf-build-record.json"
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 FORBIDDEN_OUTPUT_TOKENS = (
     ".dwg",
     "downloads",
@@ -164,20 +165,36 @@ class NativeDXFGenerator:
         _require(self.ir.get("status") == "generated-not-qualified" and self.ir.get("L1") is False, "IR qualification boundary was relaxed")
         _require(self.ir.get("modelSpace") == {**self.ir["modelSpace"], "unit": "mm", "insunits": 4, "scale": "1:1"}, "IR model-space policy differs")
         _require(len(self.view_stages) == 10 and len(self.ir["paperSpace"]["layouts"]) == 2, "IR drawing package view or layout count differs")
-        _require(self.font_config == {
-            "schemaVersion": "t0b-v2-logical-font-config-1",
-            "family": "Noto Sans SC",
-            "styleName": "GJ-NOTO-SANS-SC",
-            "assetStatus": "unbound",
-            "fontFilePath": None,
-            "releaseAssetIncluded": False,
-            "embeddingAttempted": False,
-            "source": "logical-declaration-only",
-            "qualificationBlocker": "FONT_ASSET_NOT_BOUND",
-        }, "logical font configuration is invalid")
+        bound_font = self.contract["fontPolicy"]["boundFonts"][0]
+        _require(
+            self.font_config
+            == {
+                "schemaVersion": "t0b-v2-logical-font-config-2",
+                "family": "Gujian Sans SC",
+                "postScriptName": "GujianSansSC-Regular",
+                "styleName": "GJ-GUJIAN-SANS-SC",
+                "assetStatus": "bound-licensed-static-instance",
+                "fontFileName": "GujianSansSC-Regular.ttf",
+                "fontAssetRelativePath": bound_font["relativeFontPath"],
+                "fontSha256": bound_font["sha256"],
+                "fontManifestRelativePath": bound_font["relativeManifestPath"],
+                "fontManifestSha256": bound_font["manifestSha256"],
+                "sourceFontSha256": bound_font["sourceFontSha256"],
+                "sourceCommit": bound_font["sourceCommit"],
+                "instanceWeight": 400,
+                "licenseSpdx": "OFL-1.1",
+                "fsType": 0,
+                "releaseAssetIncluded": True,
+                "pdfEmbeddingEligible": True,
+                "source": "google-fonts-pinned-derived-instance",
+                "qualificationBlocker": None,
+            },
+            "logical font configuration is invalid",
+        )
         _require(self.manifest.get("producerType") == "demo", "manifest must retain demo provenance")
-        _require("FONT_ASSET_NOT_BOUND" in self.ir["qualificationBoundary"]["requiredBlockers"], "font blocker is missing")
+        _require("FONT_ASSET_NOT_BOUND" not in self.ir["qualificationBoundary"]["requiredBlockers"], "closed font blocker remains in IR")
         _require("BRACKET_DETAIL_SIMPLIFIED_GEOMETRY" in self.ir["qualificationBoundary"]["requiredBlockers"], "bracket detail blocker is missing")
+        _require("QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED" in self.ir["qualificationBoundary"]["requiredBlockers"], "QCAD lossless-roundtrip blocker is missing")
 
     def _new_document(self) -> ezdxf.document.Drawing:
         doc = ezdxf.new("R2018", setup=False)
@@ -231,9 +248,9 @@ class NativeDXFGenerator:
 
     def _setup_text_and_dimensions(self, doc: ezdxf.document.Drawing) -> None:
         standard = doc.styles.get("Standard")
-        standard.dxf.font = self.font_config["family"]
+        standard.dxf.font = self.font_config["fontFileName"]
         if self.font_config["styleName"] not in doc.styles:
-            doc.styles.add(self.font_config["styleName"], font=self.font_config["family"])
+            doc.styles.add(self.font_config["styleName"], font=self.font_config["fontFileName"])
         if "GJ-DIM" not in doc.dimstyles:
             style = doc.dimstyles.add("GJ-DIM")
             style.dxf.dimtxsty = self.font_config["styleName"]
@@ -610,6 +627,10 @@ def build_native_dxf(contract_path: Path, ir_path: Path, manifest_path: Path, fo
     ir = _load_json_gzip(ir_path)
     manifest = _load_json(manifest_path)
     font_config = _load_json(font_config_path)
+    font_path = REPOSITORY_ROOT / Path(*font_config.get("fontAssetRelativePath", "").split("/"))
+    font_manifest_path = REPOSITORY_ROOT / Path(*font_config.get("fontManifestRelativePath", "").split("/"))
+    _require(font_path.is_file() and _file_hash(font_path) == font_config.get("fontSha256"), "bound font file hash differs")
+    _require(font_manifest_path.is_file() and _file_hash(font_manifest_path) == font_config.get("fontManifestSha256"), "bound font manifest hash differs")
     _require(_file_hash(manifest_path) == contract["manifestBinding"]["sha256"], "geometry manifest file hash differs from contract")
     generator = NativeDXFGenerator(contract, ir, manifest, font_config)
 
@@ -663,8 +684,8 @@ def build_native_dxf(contract_path: Path, ir_path: Path, manifest_path: Path, fo
                 "defaultPaperViewportLayer": "0",
                 "userViewportLayer": "GJ-FRAME",
             },
-            "qualification": {"requiredBlockers": blockers, "fontAssetStatus": "unbound", "generatorMaySetEligible": False},
-            "outputsNotGenerated": ["SVG", "PDF", "PNG"],
+            "qualification": {"requiredBlockers": blockers, "fontAssetStatus": "bound-licensed-static-instance", "generatorMaySetEligible": False},
+            "crossFormatOutputs": {"status": "generated-by-separate-ir-consumer", "sourceIrRequired": True},
         }
         (staging / BUILD_RECORD_NAME).write_text(json.dumps(record, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8", newline="\n")
         if output_dir.exists():

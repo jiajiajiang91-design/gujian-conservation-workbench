@@ -16,7 +16,7 @@ import ezdxf
 from ezdxf import const
 
 
-VERIFIER_VERSION = "1.1.0"
+VERIFIER_VERSION = "1.2.0"
 APPID = "GUJIAN_TRACE_V1"
 CONTRACT_REVISION_NAMESPACE = UUID("e145714a-5f3c-58d8-bcc7-b34965cc5f8b")
 EXPECTED_LAYOUTS = {"T0B-01", "T0B-02"}
@@ -477,7 +477,7 @@ def verify_inputs_header_status(bundle: DXFBundle) -> dict:
     _require(ir["modelSpace"]["unit"] == "mm" and ir["modelSpace"]["insunits"] == 4 and ir["modelSpace"]["scale"] == "1:1", "IR model-space unit or scale is invalid")
     _require(record["schemaVersion"] == "t0b-v2-native-dxf-build-1" and record["status"] == "generated-not-qualified" and record["L1"] is False, "DXF build record qualification is invalid")
     _require(ir["qualificationBoundary"]["status"] == "generated-not-qualified" and ir["qualificationBoundary"]["L1"] is False and ir["qualificationBoundary"]["generatorMaySetEligible"] is False, "IR qualification was elevated")
-    _require(record["outputsNotGenerated"] == ["SVG", "PDF", "PNG"], "build record claims outputs outside this task")
+    _require(record.get("crossFormatOutputs") == {"sourceIrRequired": True, "status": "generated-by-separate-ir-consumer"}, "DXF build record cross-format boundary differs")
     _require(state["auditErrors"] == 0, "ezdxf independent audit found errors")
     return {
         "dxfVersion": state["dxfVersion"],
@@ -671,7 +671,7 @@ def verify_annotations_and_details(bundle: DXFBundle) -> dict:
         elif annotation["cadObjectType"] == "MTEXT":
             actual = sorted(entity["data"]["plainText"] for _, entity in group)
             _require(actual == sorted(_expected_texts(annotation)), f"{requirement_id} MTEXT differs from the IR semantic payload")
-            _require(all(entity["data"]["style"] == "GJ-NOTO-SANS-SC" for _, entity in group), f"{requirement_id} uses an unexpected text style")
+            _require(all(entity["data"]["style"] == "GJ-GUJIAN-SANS-SC" for _, entity in group), f"{requirement_id} uses an unexpected text style")
         elif annotation["cadObjectType"] == "INSERT":
             block_by_category = {
                 "axes": "GJ_AXIS_BUBBLE",
@@ -805,14 +805,20 @@ def verify_security_font_qualification(bundle: DXFBundle) -> dict:
     _require(not state["externalMarkers"], f"DXF contains an external path/reference marker: {state['externalMarkers']}")
     _require(not (set(state["allEntityTypes"]) & FORBIDDEN_ENTITY_TYPES), "DXF contains image, underlay or proxy entities")
     _require(all(not block["xrefPath"] and not (block["flags"] & (4 | 8 | 16)) for block in state["blocks"]), "DXF contains an xref block")
-    _require(font == {"schemaVersion": "t0b-v2-logical-font-config-1", "family": "Noto Sans SC", "styleName": "GJ-NOTO-SANS-SC", "assetStatus": "unbound", "fontFilePath": None, "releaseAssetIncluded": False, "embeddingAttempted": False, "source": "logical-declaration-only", "qualificationBlocker": "FONT_ASSET_NOT_BOUND"}, "logical font declaration was changed or bound")
-    _require(state["styles"].get("GJ-NOTO-SANS-SC") == "Noto Sans SC", "DXF logical text style differs")
+    _require(font.get("schemaVersion") == "t0b-v2-logical-font-config-2" and font.get("assetStatus") == "bound-licensed-static-instance", "logical font binding state differs")
+    _require(font.get("family") == "Gujian Sans SC" and font.get("postScriptName") == "GujianSansSC-Regular" and font.get("styleName") == "GJ-GUJIAN-SANS-SC", "logical font identity differs")
+    _require(font.get("fontFileName") == "GujianSansSC-Regular.ttf" and font.get("fontSha256") == "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7", "bound static font file differs")
+    _require(font.get("sourceCommit") == "038b637da7b3fd956a4ed93ffc607c3d5e4ce172" and font.get("sourceFontSha256") == "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da", "bound source font provenance differs")
+    _require(font.get("instanceWeight") == 400 and font.get("fsType") == 0 and font.get("licenseSpdx") == "OFL-1.1" and font.get("pdfEmbeddingEligible") is True, "font weight, embedding or license differs")
+    _require(font.get("releaseAssetIncluded") is True and font.get("qualificationBlocker") is None, "font asset blocker was not closed correctly")
+    _require(state["styles"].get("GJ-GUJIAN-SANS-SC") == "GujianSansSC-Regular.ttf", "DXF bound text style differs")
     _require(not any(ABSOLUTE_PATH.search(str(value)) for value in state["styles"].values()), "DXF font style contains an absolute path")
-    _require(ir["fontPolicy"]["boundFonts"] == [] and ir["fontPolicy"]["currentBindingStatus"] == "blocked-missing-team-font", "IR font blocker was closed without an asset")
+    _require(ir["fontPolicy"]["boundFonts"] == bundle.contract["fontPolicy"]["boundFonts"] and ir["fontPolicy"]["currentBindingStatus"] == "bound-licensed-static-instance", "IR font binding differs from the contract")
     blockers = set(record["qualification"]["requiredBlockers"])
-    _require({"FONT_ASSET_NOT_BOUND", "BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", "COMPATIBILITY_NOT_VERIFIED", "PROFESSIONAL_REVIEW_PENDING"}.issubset(blockers), "required L1 blockers are missing")
+    _require({"BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED", "AUTOCAD_REAUDIT_REQUIRED", "CROSS_FORMAT_INDEPENDENT_VERIFICATION_PENDING", "PROFESSIONAL_REVIEW_PENDING"}.issubset(blockers), "required L1 blockers are missing")
+    _require("FONT_ASSET_NOT_BOUND" not in blockers, "closed font blocker remains")
     _require(record["qualification"]["generatorMaySetEligible"] is False and record["L1"] is False, "DXF task claims eligibility")
-    return {"externalDependencies": 0, "xrefBlocks": 0, "forbiddenEntityTypes": 0, "logicalFontStatus": "unbound", "L1": False, "requiredBlockers": sorted(blockers)}
+    return {"externalDependencies": 0, "xrefBlocks": 0, "forbiddenEntityTypes": 0, "logicalFontStatus": "bound-licensed-static-instance", "fontWeight": 400, "L1": False, "requiredBlockers": sorted(blockers)}
 
 
 def verify_hashes_and_determinism(bundle: DXFBundle) -> dict:
@@ -837,7 +843,7 @@ CHECKS: list[tuple[str, str, Callable[[DXFBundle], dict]]] = [
     ("DXF-004", "48 annotation requirements, native objects and four detail gates", verify_annotations_and_details),
     ("DXF-005", "Two A1 layouts and ten locked source-bound viewports", verify_layouts_and_viewports),
     ("DXF-006", "XDATA and 51,636-row provenance sidecar closure", verify_provenance_sidecar),
-    ("DXF-007", "External dependency isolation, logical font blocker and L1 boundary", verify_security_font_qualification),
+    ("DXF-007", "External dependency isolation, licensed font binding and L1 boundary", verify_security_font_qualification),
     ("DXF-008", "Input/output hashes and deterministic serialization evidence", verify_hashes_and_determinism),
 ]
 
@@ -906,8 +912,8 @@ def build_report(bundle: DXFBundle, verifier_path: Path, autocad_audit: dict | N
         "negativeTestSuite": negative_tests or {"status": "not-recorded-in-this-run"},
         "findings": {"P0": p0, "P1": [], "P2": []},
         "submissionDecision": "accept-native-dxf-task-only" if not failed else "reject-until-independent-failures-close",
-        "outputsNotGenerated": ["SVG", "PDF", "PNG"],
-        "qualificationBoundary": {"status": "generated-not-qualified", "L1": False, "fontAssetStatus": "unbound", "remainingBlockers": bundle.record.get("qualification", {}).get("requiredBlockers", [])},
+        "crossFormatOutputs": bundle.record.get("crossFormatOutputs"),
+        "qualificationBoundary": {"status": "generated-not-qualified", "L1": False, "fontAssetStatus": "bound-licensed-static-instance", "remainingBlockers": bundle.record.get("qualification", {}).get("requiredBlockers", [])},
     }
 
 

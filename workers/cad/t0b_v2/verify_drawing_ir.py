@@ -13,7 +13,7 @@ from typing import Callable
 from uuid import UUID, uuid5
 
 
-VERIFIER_VERSION = "1.0.0"
+VERIFIER_VERSION = "1.1.0"
 DRAWING_PACKAGE_REVISION_NAMESPACE = UUID("e145714a-5f3c-58d8-bcc7-b34965cc5f8b")
 CAD_OBJECT_NAMESPACE = UUID("f19472cf-8a79-596c-b52f-d05c4dd2bc70")
 GEOMETRY_REVISION_ID = "3788f4e4-339c-568d-aa58-f74b36b23c5a"
@@ -464,8 +464,26 @@ def verify_contract(bundle: VerificationBundle) -> dict:
     _require(material.get("materialCodePatternMap") == expected_material_map, "material-code hatch mapping is incomplete")
     _require(material.get("patternOwnership") == "team-owned" and material.get("boundarySourceKinds") == ["ViewGeometry.cutRegion", "ViewGeometry.materialRegion"] and material.get("boundaryRecalculationRequired") is True and material.get("externalPatternAllowed") is False, "material policy is incomplete")
     font = contract["fontPolicy"]
-    _require(font.get("currentBindingStatus") == "blocked-missing-team-font" and font.get("blockerCode") == "FONT_ASSET_NOT_BOUND" and font.get("boundFonts") == [], "font blocker is not explicit")
+    _require(font.get("currentBindingStatus") == "bound-licensed-static-instance" and font.get("blockerCode") is None, "font binding state is invalid")
     _require(set(font.get("forbiddenFamilies", [])) == {"SimHei", "LiSu", "NEW-ROMD"} and font.get("redistributionLicenseRequired") is True and font.get("pdfEmbeddingRequired") is True, "font licensing policy is incomplete")
+    bound_fonts = font.get("boundFonts")
+    _require(isinstance(bound_fonts, list) and len(bound_fonts) == 1, "exactly one drawing font must be bound")
+    bound_font = bound_fonts[0]
+    _require(
+        bound_font.get("fontId") == "gujian-sans-sc-regular-400-v1"
+        and bound_font.get("family") == "Gujian Sans SC"
+        and bound_font.get("postScriptName") == "GujianSansSC-Regular"
+        and bound_font.get("cadStyleName") == "GJ-GUJIAN-SANS-SC"
+        and bound_font.get("instanceWeight") == 400
+        and bound_font.get("fsType") == 0,
+        "bound drawing font identity or weight differs",
+    )
+    _require(bound_font.get("licenseSpdx") == "OFL-1.1" and bound_font.get("redistributionAllowed") is True and bound_font.get("pdfEmbeddingAllowed") is True, "bound font redistribution policy differs")
+    _require(bound_font.get("sourceCommit") == "038b637da7b3fd956a4ed93ffc607c3d5e4ce172", "bound font source commit differs")
+    _require(bound_font.get("sourceFontSha256") == "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da", "bound source font hash differs")
+    _require(bound_font.get("sha256") == "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7", "bound static font hash differs")
+    coverage = bound_font.get("glyphCoverage", {})
+    _require(coverage.get("requiredCodepointCount") == coverage.get("coveredCodepointCount") == 168 and coverage.get("missingCodepoints") == [], "bound font glyph coverage differs")
 
     outputs = contract["outputMatrix"]
     _require(outputs.get("dxf") == {"files": ["T0B.dxf"], "modelSpaceUnit": "mm", "insunits": 4, "modelSpaceScale": "1:1", "layouts": ["T0B-01", "T0B-02"], "sourceIrRequired": True}, "future DXF matrix is invalid")
@@ -481,8 +499,9 @@ def verify_contract(bundle: VerificationBundle) -> dict:
     qualification = contract["qualificationBoundary"]
     _require(qualification.get("status") == "generated-not-qualified" and qualification.get("L1") is False and qualification.get("useBoundary") == ["demo-only", "not-for-formal-signoff"], "qualification boundary was elevated")
     _require(qualification.get("generatorMaySetEligible") is False and qualification.get("independentVerificationRequired") is True and qualification.get("professionalGroupedReviewRequired") is True, "qualification responsibility boundary is incomplete")
-    required_blockers = {"BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", "FONT_ASSET_NOT_BOUND", "DRAWING_OUTPUTS_NOT_BUILT", "COMPATIBILITY_NOT_VERIFIED", "PROFESSIONAL_REVIEW_PENDING"}
+    required_blockers = {"BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED", "AUTOCAD_REAUDIT_REQUIRED", "CROSS_FORMAT_INDEPENDENT_VERIFICATION_PENDING", "PROFESSIONAL_REVIEW_PENDING"}
     _require(set(qualification.get("requiredBlockers", [])) >= required_blockers, "known L1 blockers are missing")
+    _require("FONT_ASSET_NOT_BOUND" not in qualification.get("requiredBlockers", []) and "DRAWING_OUTPUTS_NOT_BUILT" not in qualification.get("requiredBlockers", []), "closed font or output blocker remains")
     determinism = contract["determinismPolicy"]
     _require(determinism == {"fixedTimestamp": "2000-01-01T00:00:00Z", "gzipMtime": 0, "stableOrdering": ["layoutName", "viewId", "sourceLineId", "requirementId", "cadObjectId"], "volatileMetadataAllowed": False, "temporaryDirectoryDoubleBuildRequired": True, "fullArtifactHashMustMatch": True, "contractChangeRequiresNewSignatureAndRevision": True}, "determinism policy is invalid")
 

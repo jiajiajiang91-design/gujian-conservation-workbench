@@ -121,16 +121,24 @@ class T0BV2DrawingPackageContractTests(unittest.TestCase):
                         self.assertIsInstance(record["valuesMm"], (list, dict))
                         self.assertTrue(record["valuesMm"])
 
-    def test_future_outputs_fonts_and_compatibility_remain_qualification_gates(self) -> None:
+    def test_outputs_bound_font_and_compatibility_remain_qualification_gates(self) -> None:
         outputs = self.contract["outputMatrix"]
         self.assertTrue(all(outputs[name]["sourceIrRequired"] for name in ("dxf", "svg", "pdf", "reviewPng")))
         self.assertEqual(outputs["reviewPng"]["pixelSize"], [9933, 7016])
         self.assertEqual(outputs["reviewPng"]["dpi"], 300)
         font = self.contract["fontPolicy"]
-        self.assertEqual(font["currentBindingStatus"], "blocked-missing-team-font")
+        self.assertEqual(font["currentBindingStatus"], "bound-licensed-static-instance")
+        self.assertIsNone(font["blockerCode"])
+        self.assertEqual(len(font["boundFonts"]), 1)
+        self.assertEqual(font["boundFonts"][0]["instanceWeight"], 400)
+        self.assertEqual(font["boundFonts"][0]["family"], "Gujian Sans SC")
+        self.assertEqual(font["boundFonts"][0]["cadStyleName"], "GJ-GUJIAN-SANS-SC")
+        self.assertEqual(font["boundFonts"][0]["licenseSpdx"], "OFL-1.1")
         self.assertEqual(set(font["forbiddenFamilies"]), {"SimHei", "LiSu", "NEW-ROMD"})
         self.assertEqual(set(self.contract["compatibilityMatrix"]), {"AutoCAD", "QCAD"})
         self.assertFalse(self.contract["compatibilityMatrix"]["QCAD"]["roundtripCopyIsCanonical"])
+        self.assertEqual(self.contract["compatibilityMatrix"]["QCAD"]["supportStatus"], "unsupported-lossless-roundtrip")
+        self.assertEqual(self.contract["compatibilityMatrix"]["QCAD"]["qualificationBlocker"], "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED")
 
     def test_qualification_and_determinism_cannot_be_relaxed(self) -> None:
         boundary = self.contract["qualificationBoundary"]
@@ -138,6 +146,11 @@ class T0BV2DrawingPackageContractTests(unittest.TestCase):
         self.assertIs(boundary["L1"], False)
         self.assertEqual(boundary["useBoundary"], ["demo-only", "not-for-formal-signoff"])
         self.assertFalse(boundary["generatorMaySetEligible"])
+        self.assertNotIn("FONT_ASSET_NOT_BOUND", boundary["requiredBlockers"])
+        self.assertNotIn("DRAWING_OUTPUTS_NOT_BUILT", boundary["requiredBlockers"])
+        self.assertIn("BRACKET_DETAIL_SIMPLIFIED_GEOMETRY", boundary["requiredBlockers"])
+        self.assertIn("QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED", boundary["requiredBlockers"])
+        self.assertIn("AUTOCAD_REAUDIT_REQUIRED", boundary["requiredBlockers"])
         self.assertEqual(self.contract["determinismPolicy"]["fixedTimestamp"], "2000-01-01T00:00:00Z")
         self.assertTrue(self.contract["determinismPolicy"]["temporaryDirectoryDoubleBuildRequired"])
         invalid = deepcopy(self.contract)
@@ -200,6 +213,26 @@ class T0BV2DrawingPackageContractTests(unittest.TestCase):
         invalid = deepcopy(self.contract)
         invalid["materialPolicy"]["materialCodePatternMap"]["unknown"] = "ceramic"
         with self.assertRaisesRegex(DrawingContractError, "resolution map"):
+            validate_drawing_package_contract(_resign(invalid))
+
+    def test_bound_font_path_hash_weight_and_reserved_name_policy_are_frozen(self) -> None:
+        variants = [
+            ("relativeFontPath", "D:/Downloads/font.ttf"),
+            ("relativeFontPath", "workers/cad/t0b_v2/assets/fonts/external.dwg"),
+            ("relativeManifestPath", "../font-manifest.json"),
+            ("sha256", "a" * 64),
+            ("sourceFontSha256", "b" * 64),
+            ("manifestSha256", "c" * 64),
+            ("instanceWeight", 100),
+        ]
+        for field, value in variants:
+            invalid = deepcopy(self.contract)
+            invalid["fontPolicy"]["boundFonts"][0][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(DrawingContractError, "font|path|hash|weight|dependency"):
+                validate_drawing_package_contract(_resign(invalid))
+        invalid = deepcopy(self.contract)
+        invalid["fontPolicy"]["boundFonts"][0]["namingCompliance"]["reservedNamesUsedByDerivedFamily"] = ["Source"]
+        with self.assertRaisesRegex(DrawingContractError, "reserved-name"):
             validate_drawing_package_contract(_resign(invalid))
 
     def test_contract_change_requires_new_signature_and_revision(self) -> None:
