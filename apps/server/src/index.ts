@@ -14,7 +14,8 @@ const host = "127.0.0.1";
 const port = Number.parseInt(process.env.GUJIAN_SERVER_PORT ?? "8787", 10);
 const defaultAllowedOrigin = process.env.GUJIAN_ALLOWED_ORIGIN ?? "http://127.0.0.1:5173";
 const sessionLifetimeMs = 30 * 60 * 1_000;
-const maxBodyBytes = 2 * 1_024 * 1_024;
+// GeometrySpec 随项目构件数增长（三方项目 1258 实体约 3.7 MB），上限按最大预期项目留余量
+const maxBodyBytes = 32 * 1_024 * 1_024;
 const maxEvidenceTextChars = 120_000;
 
 const RunRequestSchema = z.object({
