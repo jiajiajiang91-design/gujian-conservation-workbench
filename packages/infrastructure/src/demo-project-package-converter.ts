@@ -16,6 +16,8 @@ interface LegacyDimensionFact {
   readonly value: number | string;
 }
 
+type LegacyUnknown = string | { readonly stableKey?: string; readonly reasonCode?: string; readonly displayNameZh?: string };
+
 interface LegacyEntity {
   readonly entityId: string;
   readonly key: string;
@@ -23,8 +25,16 @@ interface LegacyEntity {
   readonly domainTerm?: { readonly displayNameZh?: string };
   readonly materialFact?: { readonly materialCode?: string };
   readonly dimensionFacts?: readonly LegacyDimensionFact[];
-  readonly unknowns?: readonly string[];
+  readonly unknowns?: readonly LegacyUnknown[];
   readonly bounds: readonly [readonly [number, number, number], readonly [number, number, number]];
+}
+
+function unknownKey(item: LegacyUnknown): string {
+  return typeof item === "string" ? item : item.stableKey ?? item.reasonCode ?? "unknown";
+}
+
+function unknownLabel(item: LegacyUnknown): string {
+  return typeof item === "string" ? item : item.displayNameZh ?? unknownKey(item);
 }
 
 interface LegacyInterface {
@@ -222,12 +232,12 @@ function translateManifest(input: DemoConversionInput, evidenceId: string, fixtu
       if (!facts.has(fact.category) && Number.isFinite(numeric)) facts.set(fact.category, numeric);
     }
     const translation = translateEntity(entity.componentType, facts, entity.bounds, meshes.get(entity.entityId));
-    const entityUnknownIds = (entity.unknowns ?? []).map((reason) => deterministicUuid(`unknown:${entity.entityId}:${reason}`));
-    for (const [index, reason] of (entity.unknowns ?? []).entries()) {
+    const entityUnknownIds = (entity.unknowns ?? []).map((item) => deterministicUuid(`unknown:${entity.entityId}:${unknownKey(item)}`));
+    for (const [index, item] of (entity.unknowns ?? []).entries()) {
       unknowns.push({
         id: entityUnknownIds[index]!, subjectRef: entity.entityId,
-        reasonCode: `LEGACY_DEMO_${reason.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`.slice(0, 120),
-        description: `旧 v3 团队 demo 未知项：${reason}`,
+        reasonCode: `LEGACY_DEMO_${unknownKey(item).toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`.slice(0, 120),
+        description: `旧 v3 团队 demo 未知项：${unknownLabel(item)}`,
         requiredEvidence: ["项目自身证据或专业人员复核记录"], affectedRefs: [entity.entityId], evidenceRefs: [evidenceId],
         blocksProxyOutcome: false, blocksFormalEligibility: true,
       });

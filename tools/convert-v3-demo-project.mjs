@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { buildDemoProjectPackage } from "../packages/infrastructure/dist/index.js";
 
 const root = resolve(import.meta.dirname, "..");
-const source = resolve(root, "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/prefreeze-geometry");
+const source = resolve(root, "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/r2-geometry");
 const output = resolve(root, "apps/server/.data/acceptance/milestone-three/third-project");
 const [manifestText, sourceMeshes, glb] = await Promise.all([
   readFile(resolve(source, "geometry-manifest.json"), "utf8"),
@@ -17,7 +17,7 @@ const result = buildDemoProjectPackage({
   createdAt: "2026-08-14T12:00:00Z",
   projectName: "团队演示构造项目（跨项目泛化）",
   buildingName: "团队演示构造样本",
-  fixtureId: "v3-reviewed-team-demo-2026-08-14",
+  fixtureId: "v3-r2-proportioned-team-demo-2026-08-14",
   sourceFiles: [
     { fileName: "v3-geometry-manifest.json", mimeType: "application/json", bytes: new TextEncoder().encode(manifestText), evidenceType: "document", title: "旧 v3 几何 manifest（团队 demo）" },
     { fileName: "v3-source-meshes.ndjson.gz", mimeType: "application/gzip", bytes: sourceMeshes, evidenceType: "other", title: "旧 v3 source mesh bundle（团队 demo）" },
