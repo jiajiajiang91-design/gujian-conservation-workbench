@@ -66,6 +66,10 @@ REQUIRED_COMPONENT_TYPES = {
     "latticeBar",
 }
 
+# 可选构件与接口：形制补全件（山边脊件、山面封板）。旧 fixture 不含时行为不变。
+OPTIONAL_COMPONENT_TYPES = {"gableRidgeCap", "gableBoard"}
+OPTIONAL_INTERFACE_ROLES = {"gable-board-purlin", "gable-ridge-board"}
+
 REQUIRED_INTERFACE_ROLES = {
     "ground-step",
     "foundation-ground",
@@ -238,7 +242,10 @@ def validate_fixture(fixture: dict, *, allow_unfrozen: bool = False) -> dict:
 
     templates = fixture["componentTemplates"]
     _require(set(fixture["requiredComponentTypes"]) == REQUIRED_COMPONENT_TYPES, "required component type set differs from v3 contract")
-    _require(set(templates) == REQUIRED_COMPONENT_TYPES, "component template set differs from v3 contract")
+    _require(
+        REQUIRED_COMPONENT_TYPES <= set(templates) <= REQUIRED_COMPONENT_TYPES | OPTIONAL_COMPONENT_TYPES,
+        "component template set differs from v3 contract",
+    )
     for component_type, template in templates.items():
         resolution = template.get("resolution", {})
         _require(resolution.get("geometric") in GEOMETRIC_RESOLUTIONS, f"{component_type} geometric resolution is invalid")
@@ -290,7 +297,7 @@ def validate_fixture(fixture: dict, *, allow_unfrozen: bool = False) -> dict:
         _require(isinstance(interface_id, str) and interface_id and interface_id not in interface_ids, "interfaceId must be unique")
         interface_ids.add(interface_id)
         role = item.get("role")
-        _require(role in REQUIRED_INTERFACE_ROLES, f"unsupported interface role: {role}")
+        _require(role in REQUIRED_INTERFACE_ROLES | OPTIONAL_INTERFACE_ROLES, f"unsupported interface role: {role}")
         roles.add(role)
         _require(item.get("fromEntityKey") and item.get("toEntityKey"), f"{interface_id} must bind two entity keys")
         _require(item.get("fromSurfaceRef") and item.get("toSurfaceRef"), f"{interface_id} must bind two surfaces")
@@ -306,7 +313,10 @@ def validate_fixture(fixture: dict, *, allow_unfrozen: bool = False) -> dict:
             value = item.get(tolerance)
             _require(value is None or isinstance(value, (int, float)), f"{interface_id} {tolerance} is invalid")
     _require(set(fixture["requiredInterfaceRoles"]) == REQUIRED_INTERFACE_ROLES, "required interface roles differ from v3 contract")
-    _require(roles == REQUIRED_INTERFACE_ROLES, "interface role coverage is incomplete")
+    _require(
+        REQUIRED_INTERFACE_ROLES <= roles <= REQUIRED_INTERFACE_ROLES | OPTIONAL_INTERFACE_ROLES,
+        "interface role coverage is incomplete",
+    )
 
     observations = fixture["observationCandidates"]
     _require(len(observations) >= 1, "at least one observation candidate is required")

@@ -521,7 +521,7 @@ def _expected_entity_type_counts(fixture: dict) -> dict[str, int]:
     layout = _roof_layout(fixture)
     ridge = templates["ridgeTile"]["parameters"]
     roof_width = float(assembly["roofWidth"])
-    return {
+    counts = {
         "groundLayer": 6,
         "foundationLayer": 4 * int(templates["foundationLayer"]["parameters"]["courses"]),
         "terrace": round(templates["terrace"]["parameters"]["height"] / templates["terrace"]["parameters"]["courseHeight"]),
@@ -550,6 +550,11 @@ def _expected_entity_type_counts(fixture: dict) -> dict[str, int]:
         "latticeFrameMember": 8,
         "latticeBar": 10,
     }
+    if "gableBoard" in templates:
+        counts["gableBoard"] = 4
+    if "gableRidgeCap" in templates:
+        counts["gableRidgeCap"] = 4
+    return counts
 
 
 def _expected_interface_role_counts(fixture: dict) -> dict[str, int]:
@@ -578,7 +583,7 @@ def _expected_interface_role_counts(fixture: dict) -> dict[str, int]:
         x0 = -roof_width / 2 + segment * index
         x1 = x0 + segment
         ridge_finish += sum(1 for a, b in finish_intervals if min(x1, b) - max(x0, a) > 0)
-    return {
+    counts = {
         "foundation-ground": 8,
         "foundation-bearing-ground": 4,
         "foundation-course-stack": 8,
@@ -618,6 +623,12 @@ def _expected_interface_role_counts(fixture: dict) -> dict[str, int]:
         "lattice-bar-frame": 20,
         "opening-closure": 11,
     }
+    templates = fixture["componentTemplates"]
+    if "gableBoard" in templates:
+        counts["gable-board-purlin"] = 4
+        if "gableRidgeCap" in templates:
+            counts["gable-ridge-board"] = 4
+    return counts
 
 
 def _expected_interface_bindings(fixture: dict) -> dict[str, tuple[str, str, str]]:
@@ -708,6 +719,14 @@ def _expected_interface_bindings(fixture: dict) -> dict[str, tuple[str, str, str
         for finish_key, finish_x0, finish_x1 in finish:
             if min(x1, finish_x1) - max(x0, finish_x0) > 0:
                 add("ridge-roof-finish", ridge_key, finish_key, f"{ridge_key}-{finish_key}")
+    templates = fixture["componentTemplates"]
+    if "gableBoard" in templates:
+        last_purlin = layout["purlins"] - 1
+        for gable_name in ("west", "east"):
+            for side_name, purlin_index in (("south", 0), ("north", last_purlin)):
+                add("gable-board-purlin", f"gable-board:{gable_name}:{side_name}", f"purlin:{purlin_index}", f"{gable_name}-{side_name}")
+                if "gableRidgeCap" in templates:
+                    add("gable-ridge-board", f"gable-ridge:{gable_name}:{side_name}", f"gable-board:{gable_name}:{side_name}", f"{gable_name}-{side_name}")
     add("wall-terrace", "wall:south:left", "terrace:course:2", "south")
     add("door-frame-terrace", "door-frame:threshold", "terrace:course:2", "south")
     for horizontal in ("head", "threshold"):

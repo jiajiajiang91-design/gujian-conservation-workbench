@@ -964,16 +964,18 @@ class GeometryBuilder:
             panel_half_range = float(assembly.get("boardPanXHalfRange", 2250))
             panel_centers = [float(value) for value in np.arange(-panel_half_range, panel_half_range + 0.1, board["panelWidth"])]
             self.board_count = len(panel_centers)
+            # 望板浮升：消除与椽顶的共面退化（默认 0 保持旧版输出）
+            board_lift = float(assembly.get("roofBoardLiftMm", 0.0))
             for index, x in enumerate(panel_centers):
-                path = _roof_path(curve, 0.0, sign * finished_half_span, x, -board["thickness"] / 2)
+                path = _roof_path(curve, 0.0, sign * finished_half_span, x, board_lift - board["thickness"] / 2)
                 self.add("roofBoard", f"roof-board:{side_name}:{index}", _path_prism(path, board["panelWidth"], board["thickness"]))
 
         closure = self.templates["eaveClosure"]["parameters"]
         finished_half_span = _finished_half_span(curve, fly)
         for side_name, sign in (("south", -1), ("north", 1)):
             y = sign * finished_half_span
-            roof_z = _roof_curve_value(curve, y)
-            board_seat = _roof_point(curve, y, 0.0, -board["thickness"], sign)
+            roof_z = _roof_curve_value(curve, y) + board_lift
+            board_seat = _roof_point(curve, y, 0.0, board_lift - board["thickness"], sign)
             seat_y = float(board_seat[1])
             seat_z = float(board_seat[2])
             outer_y = seat_y + sign * closure["width"] / 2
@@ -1123,6 +1125,7 @@ class GeometryBuilder:
             row_count = int(math.floor((finished_half_span - pan["length"]) / pan["rowPitch"])) + 1
             pan_half_range = float(assembly.get("boardPanXHalfRange", 2250))
             cover_half_range = float(assembly.get("coverXHalfRange", 2400))
+            finish_lift = float(assembly.get("roofBoardLiftMm", 0.0))
             pan_x = [float(value) for value in np.arange(-pan_half_range, pan_half_range + 0.1, pan["columnPitch"])]
             cover_x = [float(value) for value in np.arange(-cover_half_range, cover_half_range + 0.1, cover["columnPitch"])]
             self.tile_rows = row_count
@@ -1141,7 +1144,7 @@ class GeometryBuilder:
                         curve=curve,
                         x=x,
                         y=sign * distance,
-                        normal_offset=pan["thickness"],
+                        normal_offset=pan["thickness"] + finish_lift,
                         longitudinal_sections=int(pan["longitudinalSegments"]),
                         raised_overlap=row > 0,
                         lap_clearance=float(pan["lapClearance"]),
@@ -1165,7 +1168,7 @@ class GeometryBuilder:
                         curve=curve,
                         x=x,
                         y=sign * distance,
-                        normal_offset=bearing_offset,
+                        normal_offset=bearing_offset + finish_lift,
                         longitudinal_sections=int(cover["longitudinalSegments"]),
                         raised_overlap=row > 0,
                         lap_clearance=float(cover["lapClearance"]),
@@ -1246,6 +1249,43 @@ class GeometryBuilder:
                 trimesh.util.concatenate([*support_parts, roll, cap]),
                 ["roof-finish-saddle", "roof-finish-support-pads"],
             )
+
+        # 可选形制补全件：山面封板与山边脊件（模板存在时才构建）
+        if "gableBoard" in self.templates:
+            board_parameters = self.templates["gableBoard"]["parameters"]
+            fly = self.templates["flyRafter"]["parameters"]
+            finished_half_span = _finished_half_span(curve, fly)
+            for gable_name, gable_sign in (("west", -1), ("east", 1)):
+                for side_name, sign in (("south", -1), ("north", 1)):
+                    x_center = gable_sign * (assembly["roofWidth"] / 2 + board_parameters["width"] / 2)
+                    path = _roof_path(
+                        curve, 0.0, sign * finished_half_span, x_center,
+                        90.0 - board_parameters["depth"] / 2,
+                    )
+                    self.add(
+                        "gableBoard",
+                        f"gable-board:{gable_name}:{side_name}",
+                        _path_prism(path, board_parameters["width"], board_parameters["depth"]),
+                        ["gable-edge-closure"],
+                    )
+        if "gableRidgeCap" in self.templates:
+            cap_parameters = self.templates["gableRidgeCap"]["parameters"]
+            fly = self.templates["flyRafter"]["parameters"]
+            finished_half_span = _finished_half_span(curve, fly)
+            ridge_clear = float(self.templates["ridgeTile"]["parameters"]["baseWidth"]) / 2 + 20.0
+            for gable_name, gable_sign in (("west", -1), ("east", 1)):
+                for side_name, sign in (("south", -1), ("north", 1)):
+                    x_center = gable_sign * (assembly["roofWidth"] / 2 - cap_parameters["width"] / 2)
+                    path = _roof_path(
+                        curve, sign * ridge_clear, sign * (finished_half_span - 30.0), x_center,
+                        80.0 + cap_parameters["height"] / 2,
+                    )
+                    self.add(
+                        "gableRidgeCap",
+                        f"gable-ridge:{gable_name}:{side_name}",
+                        _path_prism(path, cap_parameters["width"], cap_parameters["height"]),
+                        ["gable-edge-finish"],
+                    )
 
     @staticmethod
     def _notched_stile(
@@ -1699,6 +1739,24 @@ class GeometryBuilder:
                 finish_bounds = np.asarray(finish.mesh.bounds, dtype=float)
                 if min(ridge_bounds[1, 0], finish_bounds[1, 0]) - max(ridge_bounds[0, 0], finish_bounds[0, 0]) > 0:
                     bind("ridge-roof-finish", ridge.key, finish.key, f"{ridge.key}-{finish.key}")
+
+        if "gableBoard" in self.templates:
+            last_purlin = len(self.purlin_y_positions) - 1
+            for gable_name in ("west", "east"):
+                for side_name, purlin_index in (("south", 0), ("north", last_purlin)):
+                    bind(
+                        "gable-board-purlin",
+                        f"gable-board:{gable_name}:{side_name}",
+                        f"purlin:{purlin_index}",
+                        f"{gable_name}-{side_name}",
+                    )
+                    if "gableRidgeCap" in self.templates:
+                        bind(
+                            "gable-ridge-board",
+                            f"gable-ridge:{gable_name}:{side_name}",
+                            f"gable-board:{gable_name}:{side_name}",
+                            f"{gable_name}-{side_name}",
+                        )
 
         bind("wall-terrace", "wall:south:left", "terrace:course:2", "south")
         bind("door-frame-terrace", "door-frame:threshold", "terrace:course:2", "south")
