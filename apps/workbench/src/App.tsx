@@ -1,6 +1,7 @@
 import {
-  Archive, Bot, Building2, CircleStop, Download, FileJson, FolderKanban,
-  PackageOpen, Play, Plus, Search, ShieldCheck, Trash2, Upload, X, Images, FileCheck2,
+  Activity, Archive, Bot, Boxes, Building2, ChevronRight, CircleStop, ClipboardList,
+  Download, FileJson, FolderKanban, Images, Link2, PackageOpen, PanelRightClose,
+  PanelRightOpen, Play, Plus, Ruler, Search, ShieldCheck, Trash2, Upload, X, FileCheck2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
@@ -19,14 +20,25 @@ import { buildArtifactMatrix } from "./artifact-matrix-builder";
 import { commitGeometryFacts } from "./geometry-fact-service";
 import { commitDocumentedDimensionChain } from "./document-dimension-service";
 import { geometryPrerequisites } from "./geometry-spec-builder";
+import {
+  buildArtifactSetView,
+  buildHumanInterventionView,
+  buildModelRunCostView,
+  buildProjectDashboardSummary,
+  buildProvenanceGraphView,
+} from "./query-models";
 
 const stages = [
+  { id: "tasks", label: "任务要求", icon: ClipboardList },
   { id: "evidence", label: "项目资料" },
-  { id: "candidates", label: "AI 候选" },
-  { id: "issues", label: "问题处理" },
+  { id: "measurements", label: "测量与尺寸依据", icon: Ruler },
+  { id: "objects", label: "对象与构件", icon: Boxes },
+  { id: "issues", label: "问题队列" },
   { id: "geometry", label: "三维模型" },
   { id: "drawings", label: "成组图纸" },
-  { id: "package", label: "成果交付" },
+  { id: "checks", label: "检查与资格", icon: ShieldCheck },
+  { id: "package", label: "代理交付" },
+  { id: "candidates", label: "模型运行与费用", icon: Activity },
 ] as const;
 export const LENGTH_INPUT_STEP = "any";
 type StageId = typeof stages[number]["id"];
@@ -79,6 +91,8 @@ export function App() {
   const [selectedGeometryEntityId, setSelectedGeometryEntityId] = useState<string | null>(null);
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
   const [roundTripReceipt, setRoundTripReceipt] = useState<RoundTripReceipt | null>(null);
+  const [assistantCollapsed, setAssistantCollapsed] = useState(false);
+  const [drawingPreviewUrls, setDrawingPreviewUrls] = useState<readonly { id: string; kind: "svg" | "pdf"; label: string; url: string }[]>([]);
   const importInput = useRef<HTMLInputElement>(null);
   const evidenceInput = useRef<HTMLInputElement>(null);
 
@@ -145,6 +159,21 @@ export function App() {
     .sort((left, right) => left.evaluatedAt.localeCompare(right.evaluatedAt))
     .at(-1) ?? null;
   const geometryGate = selected ? geometryPrerequisites(selected) : null;
+  const readModelInput = selected ? {
+    head: selected,
+    modelRuns: projectModelRuns,
+    ruleRuns: projectRuleRuns,
+    decisions: projectDecisions,
+    artifacts: projectArtifacts,
+    checks: projectCheckRuns,
+    evaluations: projectDeliveryEvaluations,
+    deliveries: projectDeliveries,
+  } : null;
+  const dashboard = readModelInput ? buildProjectDashboardSummary(readModelInput) : null;
+  const artifactSetView = readModelInput ? buildArtifactSetView(readModelInput) : null;
+  const modelCostView = buildModelRunCostView(projectModelRuns);
+  const humanInterventions = readModelInput ? buildHumanInterventionView(readModelInput) : null;
+  const provenance = readModelInput ? buildProvenanceGraphView(readModelInput, selectedGeometryEntity) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -159,6 +188,26 @@ export function App() {
     return () => { cancelled = true; };
   }, [geometryRevision?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const urls: string[] = [];
+    const load = async () => {
+      const previewArtifacts = drawingArtifacts.filter((artifact): artifact is ArtifactRecord & { kind: "svg" | "pdf" } => artifact.kind === "svg" || artifact.kind === "pdf");
+      const resolved = await Promise.all(previewArtifacts.slice(0, 6).map(async (artifact) => {
+        const stored = await projectRepository.getAsset(artifact.assetId);
+        const url = URL.createObjectURL(stored.content);
+        urls.push(url);
+        return { id: artifact.id, kind: artifact.kind, label: artifact.fileName, url };
+      }));
+      if (!cancelled) setDrawingPreviewUrls(resolved);
+    };
+    void load().catch(() => setDrawingPreviewUrls([]));
+    return () => {
+      cancelled = true;
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [drawingArtifacts.map((artifact) => artifact.id).join("|")]);
+
   const chooseProject = async (projectId: string) => {
     setError(null);
     setModelProgress(null);
@@ -170,7 +219,12 @@ export function App() {
     setError(null);
     setCadProgress(null);
     try {
-      const outcome = await cadJobs.startGeometry(selected, localActorId(), setCadProgress);
+      const outcome = await cadJobs.startGeometry(
+        selected,
+        localActorId(),
+        setCadProgress,
+        geometrySpec ? { mode: "existingGeometrySpec", geometrySpecId: geometrySpec.id } : { mode: "derivedFromFacts" },
+      );
       setSelected(outcome.head);
       await refresh();
       setNotice("项目驱动 GeometryRevision 已生成；仍为代理成果、未签发、L1=false");
@@ -564,7 +618,7 @@ export function App() {
   };
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${assistantCollapsed ? "assistant-collapsed" : ""}`}>
       <aside className="rail">
         <div className="brand-mark" aria-hidden="true">建</div>
         <nav aria-label="主导航">
@@ -602,6 +656,13 @@ export function App() {
               <span className="project-code">{project.projectId.slice(0, 8).toUpperCase()}</span>
               <strong>{project.name}</strong>
               <small>{project.buildingName}</small>
+              <div className="project-card-status">
+                <span>{selected?.projectId === project.projectId && dashboard ? dashboard.stage : project.status === "active" ? "进行中" : "已归档"}</span>
+                <time>{project.updatedAt.slice(0, 10)}</time>
+              </div>
+              {selected?.projectId === project.projectId && dashboard && (
+                <div className="project-card-meter"><i style={{ width: `${dashboard.evidenceCompleteness}%` }} /><small>资料解析 {dashboard.evidenceCompleteness}% · 阻断 {dashboard.blockerCodes.length}</small></div>
+              )}
             </button>
           ))}
           {!filtered.length && <p className="empty-list">还没有项目。先建立一份可追溯的项目档案。</p>}
@@ -611,7 +672,12 @@ export function App() {
       <section className="workspace-shell">
         <div className="topbar">
           <div><span className="status-dot" /><strong>{selected ? selected.snapshot.project.name : "工作台基础服务就绪"}</strong></div>
-          <span className="muted">{serverStatus?.model ?? "Kimi K2.6"} · {serverStatus?.modelConfigured ? "服务端已配置" : "等待服务端密钥"}</span>
+          <div>
+            <span className="muted">{serverStatus?.model ?? "Kimi K2.6"} · {serverStatus?.modelConfigured ? "服务端已配置" : "等待服务端密钥"}</span>
+            <button className="panel-toggle" type="button" onClick={() => setAssistantCollapsed((value) => !value)} aria-label={assistantCollapsed ? "展开助手与来源面板" : "收起助手与来源面板"}>
+              {assistantCollapsed ? <PanelRightOpen size={15} /> : <PanelRightClose size={15} />}
+            </button>
+          </div>
         </div>
         {selected ? (
           <div className="project-workspace">
@@ -620,6 +686,7 @@ export function App() {
                 <p className="eyebrow">ACTIVE PROJECT</p>
                 <h2>{selected.snapshot.buildings[0]?.name}</h2>
                 <p>{selected.snapshot.project.locationText ?? "地点尚未记录"}</p>
+                {dashboard && <div className="project-health"><span>{dashboard.stage}</span><span>资料 {dashboard.evidenceCompleteness}%</span><span>开放问题 {dashboard.openIssueCount}</span><span>成果 {dashboard.artifactCount}</span></div>}
               </div>
               <div className="project-actions">
                 <button type="button" onClick={() => void downloadProject("json")}><FileJson size={14} /> JSON</button>
@@ -627,13 +694,32 @@ export function App() {
                 <span className="revision-chip">版本 {selected.revisionId.slice(0, 8)}</span>
               </div>
             </div>
-            <div className="stage-list horizontal" aria-label="工作阶段">
+            <div className="project-stage-layout">
+            <nav className="stage-list professional" aria-label="工作阶段">
               {stages.map((stage, index) => (
                 <button className={`stage-row ${activeStage === stage.id ? "active" : ""}`} key={stage.id} type="button" onClick={() => setActiveStage(stage.id)}>
-                  <span>{String(index + 1).padStart(2, "0")}</span><strong>{stage.label}</strong>
+                  <span>{String(index + 1).padStart(2, "0")}</span><strong>{stage.label}</strong><ChevronRight size={13} />
                 </button>
               ))}
-            </div>
+              <div className="stage-qualification"><ShieldCheck size={14} /><span>{dashboard?.qualificationLabel}</span></div>
+            </nav>
+            <div className="stage-content">
+
+            {activeStage === "tasks" && (
+              <section className="evidence-board task-overview-board">
+                <header className="board-heading"><div><p className="eyebrow">TASK DEFINITION</p><h3>任务要求与成果目录</h3></div><button className="quiet-link" type="button" onClick={() => setActiveStage("issues")}>在问题流程中更新</button></header>
+                {confirmedTask ? <>
+                  <div className="summary-grid">
+                    <article><span>任务</span><strong>{confirmedTask.name}</strong><small>{confirmedTask.scope.join(" · ")}</small></article>
+                    <article><span>成果要求</span><strong>{confirmedTask.artifactRequirements?.views.length ?? 0} 个视图</strong><small>{confirmedTask.artifactRequirements?.sheets.length ?? 0} 张图纸 · 修订 {confirmedTask.artifactRequirements?.revisionLabel ?? "未定"}</small></article>
+                    <article><span>规范依据</span><strong>{confirmedTask.regulationRefs.length} 项</strong><small>{confirmedTask.regulationRefs.join(" · ") || "尚未登记"}</small></article>
+                  </div>
+                  <div className="requirements-table" role="table" aria-label="成果目录">
+                    {confirmedTask.artifactRequirements?.views.map((view) => <div role="row" key={view.key}><span>{view.drawingRef}</span><strong>{view.displayLabelZh}</strong><span>1:{view.scaleDenominator}</span><span>{view.sheetKey}</span></div>)}
+                  </div>
+                </> : <div className="panel-empty">尚未确认任务要求。系统会在问题队列中保留一次必要人工节点，不会用默认图种或版式补齐。</div>}
+              </section>
+            )}
 
             {activeStage === "evidence" && (
               <section className="evidence-board">
@@ -661,6 +747,28 @@ export function App() {
               </section>
             )}
 
+            {activeStage === "measurements" && (
+              <section className="evidence-board">
+                <header className="board-heading"><div><p className="eyebrow">MEASUREMENT BASIS</p><h3>测量记录、事实与缺失影响</h3></div><span className="board-count">{selected.snapshot.measurements.length + selected.snapshot.facts.length} 条记录</span></header>
+                <div className="record-table">
+                  {selected.snapshot.measurements.map((measurement) => <article key={measurement.id}><span className={`producer-badge ${measurement.producer.producerType}`}>{measurement.producer.producerType}</span><strong>{measurement.quantity.originalText} {measurement.quantity.originalUnit}</strong><small>{measurement.metadataStatus === "complete" ? "测量元数据完整" : "测量人、时间或方法仍缺失"}</small><code>{measurement.originalEvidenceRef}</code></article>)}
+                  {selected.snapshot.facts.map((fact) => <article key={fact.id}><span className={`producer-badge ${fact.producer.producerType}`}>{fact.producer.producerType}</span><strong>{fact.field}</strong><small>{fact.reviewStatus} · {fact.dataStatus}</small><code>{fact.evidenceRefs.join(" · ") || "无证据引用"}</code></article>)}
+                  {!selected.snapshot.measurements.length && !selected.snapshot.facts.length && <div className="panel-empty">没有可用尺寸事实。缺失时系统会阻断依赖成果，不使用默认值补齐。</div>}
+                </div>
+              </section>
+            )}
+
+            {activeStage === "objects" && (
+              <section className="evidence-board">
+                <header className="board-heading"><div><p className="eyebrow">HERITAGE OBJECTS</p><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? selected.snapshot.entities.length} 个对象</span></header>
+                <div className="object-table">
+                  {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><code>{object.stableKey}</code><small>{object.componentType} · {object.producer.producerType}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 个未知项` : "来源已绑定"}</strong></button>)}
+                  {!geometrySpec?.objects.length && selected.snapshot.entities.map((entity) => <article key={entity.id}><strong>{entity.name}</strong><span>{entity.entityType}</span><code>{entity.id}</code></article>)}
+                  {!geometrySpec?.objects.length && !selected.snapshot.entities.length && <div className="panel-empty">当前没有构件对象。对象必须从当前项目资料或已验证的项目自有 GeometrySpec 建立。</div>}
+                </div>
+              </section>
+            )}
+
             {activeStage === "candidates" && (
               <section className="evidence-board candidate-board">
                 <header className="board-heading">
@@ -683,7 +791,7 @@ export function App() {
                   ))}
                   {!selected.snapshot.candidates.length && <div className="panel-empty">模型结果只会进入候选区，不会自动成为项目事实。</div>}
                 </div>
-                {!!projectModelRuns.length && <div className="run-ledger"><strong>运行账本</strong>{projectModelRuns.map((run) => <span key={run.id}>{run.startedAt.slice(0, 19).replace("T", " ")} · {run.model} · {run.status} · {run.usage?.totalTokens ?? 0} tokens</span>)}</div>}
+                {!!modelCostView.rows.length && <div className="run-ledger"><strong>运行账本与用量</strong>{modelCostView.rows.map((run) => <span key={run.runId}><b>{run.provider} / {run.model}</b><i>{run.status} · attempt {run.attempts}</i><em>{run.totalTokens ?? "—"} tokens · {run.costLabel}</em></span>)}<small>累计 {modelCostView.totalTokens} tokens；没有可靠单价依据，因此不估算费用。</small></div>}
               </section>
             )}
 
@@ -699,6 +807,7 @@ export function App() {
                   <span className="producer-badge human">人工决定</span>
                   <span className="producer-badge demo">演示数据</span>
                 </div>
+                {humanInterventions && <div className="human-node-summary"><article><strong>{humanInterventions.missingFieldFacts.length}</strong><span>现场事实缺失</span></article><article><strong>{humanInterventions.professionalChoices.length}</strong><span>非唯一专业选择</span></article><article><strong>{humanInterventions.groupedReviewRefs.length}</strong><span>成组审核 / 交付</span></article><small>规则确定项自动执行，不增加逐项确认。</small></div>}
                 {!confirmedTask ? (
                   <form className="task-setup" onSubmit={(event) => void confirmTaskSetup(event)}>
                     <div><span className="node-label">人工节点 01</span><h4>一次确认任务设置</h4><p>范围、适用规范和责任角色只在任务开始时设置一次。满足自动条件的后续检查直接执行。</p></div>
@@ -836,11 +945,28 @@ export function App() {
                 </header>
                 <div className="transmission-note"><ShieldCheck size={15} /><span>图种、图幅和布局来自当前任务成果目录；所有结构线从当前 GeometryRevision 求交或投影生成。</span></div>
                 {drawingArtifacts.length ? (
-                  <div className="artifact-list">
+                  <><div className="drawing-preview-grid" aria-label="成组图纸预览">
+                    {drawingPreviewUrls.map((preview) => preview.kind === "svg"
+                      ? <figure key={preview.id}><img src={preview.url} alt={`${preview.label} 矢量预览`} /><figcaption>{preview.label}</figcaption></figure>
+                      : <figure key={preview.id}><object data={preview.url} type="application/pdf" aria-label={`${preview.label} PDF 预览`} /><figcaption>{preview.label}</figcaption></figure>)}
+                  </div><div className="artifact-list">
                     {drawingArtifacts.map((artifact) => <button type="button" key={artifact.id} onClick={() => void downloadArtifact(artifact)}><span>{artifact.kind}</span><strong>{artifact.fileName}</strong><small>{Math.round(artifact.byteLength / 1024)} KB · {artifact.sha256.slice(0, 12)}…</small></button>)}
-                  </div>
+                  </div></>
                 ) : <div className="panel-empty">先生成当前项目的 GeometryRevision，再按已确认成果目录生成 DXF、SVG、PDF、预览、Drawing IR 和来源映射。</div>}
                 {latestCheckRun && <div className="check-summary"><FileCheck2 size={18} /><div><strong>检查记录 {latestCheckRun.id.slice(0, 8)}</strong>{latestCheckRun.results.map((item) => <p key={item.code} className={item.outcome}>{item.outcome === "passed" ? "通过" : "阻断"} · {item.message}</p>)}</div></div>}
+              </section>
+            )}
+
+            {activeStage === "checks" && (
+              <section className="evidence-board checks-board">
+                <header className="board-heading"><div><p className="eyebrow">CHECKS & QUALIFICATION</p><h3>检查、未知项与资格边界</h3></div><span className="qualification-chip">generated-not-qualified · L1=false</span></header>
+                <div className="summary-grid">
+                  <article><span>当前几何</span><strong>{geometryRevision ? geometryRevision.id.slice(0, 8) : "未建立"}</strong><small>{geometrySpec?.unknowns.length ?? 0} 个结构化未知项</small></article>
+                  <article><span>当前成果</span><strong>{artifactSetView?.currentArtifacts.length ?? 0} 项</strong><small>{artifactSetView?.crossRevisionArtifactCount ?? 0} 项旧版本成果已隔离</small></article>
+                  <article><span>检查结论</span><strong>{latestCheckRun ? latestCheckRun.results.filter((result) => result.outcome === "blocked").length ? "存在阻断" : "技术检查完成" : "尚未检查"}</strong><small>技术通过不授予专业资格</small></article>
+                </div>
+                {latestCheckRun ? <div className="check-register">{latestCheckRun.results.map((result) => <article key={result.code} className={result.outcome}><span>{result.outcome === "passed" ? "通过" : "阻断"}</span><strong>{result.code}</strong><p>{result.message}</p><code>{result.sourceRefs.join(" · ") || "system check"}</code></article>)}</div> : <div className="panel-empty">当前 GeometryRevision 尚无绑定的检查运行。检查不会自动授予 L1 或签发状态。</div>}
+                {!!dashboard?.blockerCodes.length && <div className="delivery-blockers"><strong>当前阻断原因</strong>{dashboard.blockerCodes.map((code) => <p key={code}>{code}</p>)}</div>}
               </section>
             )}
 
@@ -878,6 +1004,8 @@ export function App() {
                 </section>
               </section>
             )}
+            </div>
+            </div>
           </div>
         ) : (
           <div className="empty-workspace">
@@ -893,8 +1021,9 @@ export function App() {
         {error && <div className="error-banner" role="alert">{error}</div>}
         {notice && <div className="notice-banner" role="status"><Download size={13} /> {notice}<button type="button" onClick={() => setNotice(null)} aria-label="关闭提示"><X size={13} /></button></div>}
       </section>
-      <aside className="assistant-shell">
-        <div className="assistant-title"><Bot size={17} /><strong>AI 项目助手</strong></div>
+      <aside className={`assistant-shell ${assistantCollapsed ? "collapsed" : ""}`}>
+        {assistantCollapsed ? <button className="assistant-open" type="button" onClick={() => setAssistantCollapsed(false)} aria-label="展开助手与来源面板"><PanelRightOpen size={17} /></button> : <>
+        <div className="assistant-title"><Bot size={17} /><strong>助手与来源</strong><button type="button" onClick={() => setAssistantCollapsed(true)} aria-label="收起助手与来源面板"><PanelRightClose size={15} /></button></div>
         <p>{selected ? "当前助手只整理已解析资料，生成结果留在候选区。" : "选中项目后，这里显示流式运行、取消和用量记录。"}</p>
         {modelProgress ? (
           <div className="live-run">
@@ -911,6 +1040,12 @@ export function App() {
             <div className="assistant-event"><span />版本写入由命令服务控制</div>
           </>
         )}
+        {provenance && <section className="provenance-track" aria-label="证据关系轨道">
+          <header><Link2 size={14} /><strong>{selectedGeometryEntity ? "所选构件来源链" : "当前项目来源链"}</strong></header>
+          <div>{provenance.nodes.map((node) => <article className={node.status} key={node.key}><i /><span><strong>{node.label}</strong><small>{node.count ? `${node.count} 项已关联` : "缺失"}</small></span></article>)}</div>
+          <footer>{provenance.unknownCount} 个未知项 · {provenance.formalBlockerCount} 个正式资格阻断</footer>
+        </section>}
+        </>}
       </aside>
       {showCreate && (
         <div className="modal-backdrop" role="presentation">

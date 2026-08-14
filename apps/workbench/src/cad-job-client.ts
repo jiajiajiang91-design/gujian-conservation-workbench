@@ -1,5 +1,5 @@
 import { ProjectCommandService, type ProjectHead } from "@gujian/application";
-import { CadJobSchema, GeometryRevisionSchema, type CadJob, type CadJobEvent, type GeometryRevision, type ProjectDrivenGeometrySpec } from "@gujian/domain";
+import { CadJobSchema, GeometryRevisionSchema, ProjectDrivenGeometrySpecSchema, type CadJob, type CadJobEvent, type GeometryRevision, type ProjectDrivenGeometrySpec } from "@gujian/domain";
 import { IndexedDbProjectRepository, sha256Hex } from "@gujian/infrastructure";
 
 import { buildProjectGeometrySpec } from "./geometry-spec-builder";
@@ -54,6 +54,36 @@ export interface CadJobProgress {
   events: readonly CadJobEvent[];
 }
 
+export type GeometryStartInput =
+  | { readonly mode: "derivedFromFacts" }
+  | { readonly mode: "existingGeometrySpec"; readonly geometrySpecId: string };
+
+export function rebindExistingGeometrySpec(head: ProjectHead, source: ProjectDrivenGeometrySpec): ProjectDrivenGeometrySpec {
+  if (source.projectId !== head.projectId) throw new Error("GEOMETRY_SPEC_PROJECT_MISMATCH");
+  const buildingIds = new Set(head.snapshot.buildings.map((building) => building.id));
+  if (!buildingIds.has(source.buildingId)) throw new Error("GEOMETRY_SPEC_BUILDING_MISMATCH");
+  const id = crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  const inputHash = sha256Hex(JSON.stringify({
+    schemaVersion: "2.0",
+    projectId: head.projectId,
+    projectRevisionId: head.revisionId,
+    buildingId: source.buildingId,
+    coordinateSystem: source.coordinateSystem,
+    tolerances: source.tolerances,
+    objects: source.objects,
+    interfaces: source.interfaces,
+    unknowns: source.unknowns,
+  }));
+  return ProjectDrivenGeometrySpecSchema.parse({
+    ...source,
+    id,
+    projectRevisionId: head.revisionId,
+    inputHash,
+    createdAt,
+  });
+}
+
 function projectEvent(event: WorkerEvent): CadJobEvent {
   const expected = sha256Hex(JSON.stringify({
     id: event.id, jobId: event.jobId, sequence: event.sequence, eventType: event.eventType,
@@ -75,7 +105,12 @@ export class CadJobClient {
     this.#fetch = input.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
 
-  async startGeometry(head: ProjectHead, actorId: string, onProgress: (value: CadJobProgress) => void): Promise<{ head: ProjectHead; revision: GeometryRevision; job: CadJob }> {
+  async startGeometry(
+    head: ProjectHead,
+    actorId: string,
+    onProgress: (value: CadJobProgress) => void,
+    input: GeometryStartInput = { mode: "derivedFromFacts" },
+  ): Promise<{ head: ProjectHead; revision: GeometryRevision; job: CadJob }> {
     if (this.#active) throw new Error("CAD_JOB_ALREADY_ACTIVE");
     const ruleRunId = crypto.randomUUID();
     const ruleStarted = new Date().toISOString();
@@ -84,13 +119,26 @@ export class CadJobClient {
       expectedRevisionId: head.revisionId, issuedAt: ruleStarted, payload: { ruleRun: {
         id: ruleRunId, projectId: head.projectId, inputRevisionId: head.revisionId, ruleSetVersion: "geometry-spec-builder/1.0",
         status: "completed", producer: { producerType: "rule", ruleRunId },
-        results: [{ ruleId: "geometry-input-closure", outcome: "passed", inputRefs: head.snapshot.facts.map((item) => item.id), issueRefs: [], message: "有证据的控制尺寸已形成受控 GeometrySpec 输入。" }],
+        results: [{
+          ruleId: "geometry-input-closure", outcome: "passed",
+          inputRefs: input.mode === "derivedFromFacts" ? head.snapshot.facts.map((item) => item.id) : [input.geometrySpecId],
+          issueRefs: [],
+          message: input.mode === "derivedFromFacts"
+            ? "有证据的控制尺寸已形成受控 GeometrySpec 输入。"
+            : "当前项目包内的 GeometrySpec 已重新绑定到当前项目版本；稳定构件 ID 保留。",
+        }],
         startedAt: ruleStarted, completedAt: ruleStarted,
       }, issues: [] },
     });
     const ruledHead = await this.#repository.getProjectHead(head.projectId);
     if (!ruledHead) throw new Error("PROJECT_NOT_FOUND_AFTER_GEOMETRY_RULE");
-    const geometrySpec = buildProjectGeometrySpec(ruledHead, ruleRunId);
+    const geometrySpec = input.mode === "derivedFromFacts"
+      ? buildProjectGeometrySpec(ruledHead, ruleRunId)
+      : rebindExistingGeometrySpec(
+        ruledHead,
+        head.snapshot.geometrySpecs.find((spec) => spec.id === input.geometrySpecId)
+          ?? (() => { throw new Error("GEOMETRY_SPEC_NOT_FOUND_IN_PROJECT"); })(),
+      );
     const jobId = crypto.randomUUID();
     const idempotencyKey = crypto.randomUUID();
     const startedAt = new Date().toISOString();
