@@ -137,8 +137,11 @@ export function App() {
   const confirmedTask = selected?.snapshot.taskDefinitions.find((task) => task.confirmedAt !== null) ?? null;
   const openIssues = selected?.snapshot.issues.filter((issue) => issue.status === "open") ?? [];
   const geometryRevision = selected?.snapshot.geometryRevisions.at(-1) ?? null;
-  const geometrySpec = selected && geometryRevision
-    ? selected.snapshot.geometrySpecs.find((item) => item.id === geometryRevision.geometrySpecId) ?? null
+  // 已有版本时取其绑定的 spec；否则取项目包导入的最新 spec（existingGeometrySpec 首次生成路径）
+  const geometrySpec = selected
+    ? (geometryRevision
+      ? selected.snapshot.geometrySpecs.find((item) => item.id === geometryRevision.geometrySpecId) ?? null
+      : selected.snapshot.geometrySpecs.at(-1) ?? null)
     : null;
   const selectedGeometryEntity = geometrySpec?.objects.find((item) => item.id === selectedGeometryEntityId) ?? null;
   const latestCheckRun = projectCheckRuns
@@ -158,7 +161,10 @@ export function App() {
     .filter((item) => item.outcome === "blocked")
     .sort((left, right) => left.evaluatedAt.localeCompare(right.evaluatedAt))
     .at(-1) ?? null;
-  const geometryGate = selected ? geometryPrerequisites(selected) : null;
+  // 项目自带 GeometrySpec 时走 existingGeometrySpec 重绑路径，不要求逐构件事实
+  const geometryGate = selected
+    ? (selected.snapshot.geometrySpecs.length ? { ready: true, missing: [] as string[] } : geometryPrerequisites(selected))
+    : null;
   const readModelInput = selected ? {
     head: selected,
     modelRuns: projectModelRuns,
