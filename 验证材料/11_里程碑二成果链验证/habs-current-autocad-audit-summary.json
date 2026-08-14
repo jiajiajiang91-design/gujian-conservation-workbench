@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "milestone-two-autocad-audit-summary-1",
+  "status": "passed",
+  "tool": {
+    "product": "AutoCAD Core Console 2024",
+    "version": "U.61.0.0 (UNICODE)"
+  },
+  "commandCategories": ["OPEN", "AUDIT"],
+  "canonicalDxfSha256": "be53818ff16a41ec8712b26981144bc3be639614ba0e51077644df9c688217b8",
+  "auditCopy": {
+    "preAuditSha256": "be53818ff16a41ec8712b26981144bc3be639614ba0e51077644df9c688217b8",
+    "postAuditSha256": "be53818ff16a41ec8712b26981144bc3be639614ba0e51077644df9c688217b8",
+    "byteIdenticalToCanonicalBefore": true,
+    "byteIdenticalToCanonicalAfter": true
+  },
+  "font": {
+    "fileName": "GujianSansSC-Regular.ttf",
+    "sha256": "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7",
+    "loadedFromIsolatedWorkingDirectory": true,
+    "substitutionDetected": false
+  },
+  "result": {
+    "exitCode": 0,
+    "errorsFound": 0,
+    "errorsFixed": 0,
+    "objectsDeleted": 0,
+    "canonicalDxfModified": false
+  },
+  "originalTemporaryLog": {
+    "sha256": "427ba1aedef740ec06179d341141b7a721bb798c962aa9414cfe03fba7aacd",
+    "retained": false,
+    "sanitization": "原始控制台日志包含本机路径，不进入 Git；仅保留可复核事实和日志哈希。"
+  },
+  "qualification": "generated-not-qualified",
+  "l1Eligible": false,
+  "formalEligibility": false
+}

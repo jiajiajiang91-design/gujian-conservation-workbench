@@ -1,37 +1,51 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "2.0",
   "canonicalDxf": {
-    "path": "apps/server/.data/acceptance/milestone-two/t10-habs/drawings-post-roundtrip-current/drawings.dxf",
-    "sha256": "e28e898b2b79f04a4098e6e3e0441d1e52c8cda7b7e2d7048bb58db6f5e79028",
+    "path": "apps/server/.data/acceptance/milestone-two/habs-final-drawings/drawings.dxf",
+    "sha256": "be53818ff16a41ec8712b26981144bc3be639614ba0e51077644df9c688217b8",
     "dxfVersion": "AC1032",
     "insunits": 4,
     "modelSpaceOneToOneMm": true,
     "layouts": ["P-01", "P-02"],
     "userViewportCount": 7,
     "lockedUserViewportCount": 7,
-    "nativeTypes": {"LINE": 256, "DIMENSION": 7, "MTEXT": 7, "HATCH": 14}
+    "nativeTypes": {
+      "LINE": 712,
+      "DIMENSION": 7,
+      "TEXT": 7,
+      "MTEXT": 14,
+      "HATCH": 15,
+      "INSERT": 2
+    }
   },
   "ezdxf": {"errors": 0, "fixes": 0},
   "autoCad": {
-    "tool": "AutoCAD 2024 Core Console U.61.0.0",
-    "input": "hash-identical temporary copy",
-    "font": "GujianSansSC-Regular.ttf loaded from isolated support path",
-    "command": "OPEN + AUDIT",
+    "summary": "habs-current-autocad-audit-summary.json",
+    "summarySha256": "253f2f5a0d6cc69c5df0b21de4b3f9c53eb27e5d66f6be9e98a4f8d9b3509f5a",
+    "tool": "AutoCAD Core Console 2024 U.61.0.0",
+    "operation": "OPEN + AUDIT on a hash-identical temporary copy",
     "exitCode": 0,
     "errors": 0,
     "fixes": 0,
-    "deletedObjects": 0
+    "deletedObjects": 0,
+    "fontSubstitution": false
   },
   "qcad": {
+    "summary": "habs-current-qcad-compatibility-summary.json",
+    "summarySha256": "be3dde5ea997f3515c81715e500bc6f3383c2000c804e470810f1239559e088f",
     "tool": "QCAD Professional Trial 3.32.9",
     "operation": "open, view and print only",
     "layoutsPrinted": ["P-01", "P-02"],
     "temporaryPdfPages": 2,
-    "temporaryPdfSha256": "31b68f430788077767ec0153c0358c67a5bc6aa543d0e4289c24cd0406fe1c9",
     "savedBackToCanonical": false,
-    "knownLimit": "QCAD save is not a lossless qualification path; its copy cannot replace canonical DXF"
+    "knownLimit": "QCAD 保存副本不得替代通过 AutoCAD 资格检查的规范 DXF。"
   },
-  "qualification": "proxy-unissued",
+  "drawingVerification": {
+    "path": "habs-current-drawing-verification.json",
+    "checkCount": 23,
+    "failedCheckCount": 0
+  },
+  "qualification": "generated-not-qualified",
   "l1Eligible": false,
   "formalEligibility": false
 }

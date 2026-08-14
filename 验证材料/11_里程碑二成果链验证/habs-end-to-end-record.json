@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "1.0",
-  "status": "completed-proxy-path",
+  "schemaVersion": "2.0",
+  "status": "passed-engineering-proxy-chain-with-professional-limitations",
   "qualification": "generated-not-qualified",
   "l1Eligible": false,
   "formalEligibility": false,
@@ -29,22 +29,44 @@
     }
   },
   "browserEvidence": {
-    "sourceGeometryVersion": "geometry-source-version",
-    "postRoundtripGeometryVersion": "geometry-post-roundtrip-version",
-    "postRoundtripCurrentDrawings": "drawings-post-roundtrip-current",
-    "latestProjectRevisionPrefix": "657c2a4e",
-    "latestDeliveryDraftPrefix": "a7e1ce78",
+    "currentGeometryRevisionId": "7fb78654-d45c-57f2-aeb5-cdb27d893fdb",
+    "currentGeometryEvidence": "screenshots-p0/01_HABS证据绑定三维模型.png",
+    "currentDrawingsEvidence": "screenshots-p0/02_HABS动态成组图纸.png",
+    "deliveryEvidence": "screenshots-p0/03_HABS代理交付_限制传播.png",
+    "jsonZipRoundtripEvidence": "screenshots-p0/04_HABS_JSON_ZIP空库回导.png",
+    "continuedAfterImportEvidence": "screenshots-p0/05_HABS回导后新版本与交付.png",
+    "gaoduBlockedEvidence": "screenshots-p0/06_高都4400冲突与交付阻断.png",
     "sourceFilesImported": 23,
-    "currentArtifactFiles": 32
+    "currentGeneratedArtifactFiles": 65
+  },
+  "validityBoundary": {
+    "modelRun": "valid",
+    "sourceAndLicenseRecords": "valid",
+    "jsonZipStructuralRoundtrip": "valid",
+    "geometryRevision": "technical-verification-passed-generated-not-qualified",
+    "drawings": "technical-verification-passed-generated-not-qualified",
+    "deliveryDraft": "proxy-only-with-open-blockers",
+    "professionalQualification": "not-granted",
+    "historicalFailedGeometryAndDrawings": "retained-as-invalidated-evidence"
   },
   "roundtrip": {
-    "json": "空库恢复结构化记录，二进制明确为 missing",
-    "zip": "空库恢复真实文件、运行、决定、GeometryRevision、成果、检查、交付与审计关系",
-    "continuedAfterImport": "已生成新的 GeometryRevision、成组图纸和代理交付草案"
+    "json": "空库恢复结构化记录；未携带的二进制明确标记为 missing。",
+    "zip": "空库恢复真实文件、运行、决定、GeometryRevision、成果要求矩阵、成果、检查、交付与审计关系。",
+    "continuedAfterImport": "回导后生成新的 GeometryRevision、成果要求矩阵、图纸、检查和代理交付草案。"
   },
   "blockers": [
     "PROFESSIONAL_REVIEW_REQUIRED",
     "FORMAL_SIGNOFF_UNAVAILABLE",
+    "FIELD_NOTES_NOT_DIGITIZED",
     "L1_ELIGIBILITY_FALSE"
-  ]
+  ],
+  "verificationRefs": {
+    "geometry": "habs-current-geometry-verification.json",
+    "drawings": "habs-current-drawing-verification.json",
+    "autocad": "habs-current-autocad-audit-summary.json",
+    "qcad": "habs-current-qcad-compatibility-summary.json",
+    "gaoduBoundary": "gaodu-redacted-ledger.json",
+    "technicalAudit": "独立技术审查.md",
+    "heritageAudit": "独立古建专业审查.md"
+  }
 }

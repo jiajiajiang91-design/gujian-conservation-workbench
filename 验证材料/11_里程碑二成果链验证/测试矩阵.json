@@ -1,22 +1,83 @@
 {
-  "schemaVersion": "1.0",
-  "status": "passed-before-independent-review",
+  "schemaVersion": "2.0",
+  "status": "p0-review-complete",
   "qualification": "generated-not-qualified",
   "formalEligibility": false,
   "runs": [
-    {"command": "pnpm run check", "outcome": "passed", "durationSeconds": 16.8, "scope": "typecheck + root/server/workbench/legacy tests"},
-    {"command": "pnpm run build", "outcome": "passed", "scope": "production build"},
-    {"command": "T8a geometry demo verification", "outcome": "passed-technical-only", "scope": "preserved v3 demo, invalidated old reports retained"},
-    {"command": "T8b project geometry tests", "outcome": "passed", "scope": "two different GeometrySpec, interface and hash attacks"},
-    {"command": "T9 project drawing tests", "outcome": "passed", "scope": "two matrices, true sections, HLR, native DXF and cross-format"},
-    {"command": "T9a HABS sample verification", "outcome": "passed-proxy-sample-only", "scope": "official source, rights note, 21 files and SHA-256"},
-    {"command": "HABS browser path", "outcome": "passed", "scope": "real Kimi, GeometryRevision, drawings, delivery, empty-db roundtrip, continue"},
-    {"command": "Gaodu browser path", "outcome": "passed-blocked", "scope": "4400 mm conflict, missing metadata, no mixed geometry"},
-    {"command": "AutoCAD 2024 Core Console OPEN + AUDIT", "outcome": "passed", "scope": "0 error / 0 fix / 0 delete on temporary current-DXF copy"},
-    {"command": "QCAD 3.32.9 open/view/print", "outcome": "passed-with-known-limit", "scope": "P-01 and P-02 printed; no save or canonical overwrite"}
+    {
+      "command": "pnpm run check",
+      "outcome": "passed",
+      "scope": "typecheck、根级、server、workbench 与旧入口回归；全部进程正常退出"
+    },
+    {
+      "command": "pnpm run build",
+      "outcome": "passed",
+      "scope": "生产构建；仅保留非阻断的 bundle size 警告"
+    },
+    {
+      "command": "python -m unittest workers.cad.project_drawings.test_verify_package -v",
+      "outcome": "passed",
+      "scope": "当前 CAD 摘要字段、哈希绑定与错配攻击负例"
+    },
+    {
+      "command": "T8a geometry demo verification",
+      "outcome": "passed-technical-only",
+      "scope": "保全 v3 demo；旧报告保持 invalidated"
+    },
+    {
+      "command": "T8b project geometry tests",
+      "outcome": "passed",
+      "scope": "不同 GeometrySpec、精确 BREP/GLB、接口与哈希攻击"
+    },
+    {
+      "command": "T9 project drawing tests",
+      "outcome": "passed",
+      "scope": "动态成果矩阵、真实剖切、HLR、原生 DXF 与跨格式"
+    },
+    {
+      "command": "T9a HABS sample verification",
+      "outcome": "passed-proxy-sample-only",
+      "scope": "官方来源、权利提示、逐文件 SHA-256；不证明中国古建语义"
+    },
+    {
+      "command": "ArtifactRequirementMatrix JSON/ZIP roundtrip",
+      "outcome": "passed",
+      "scope": "空库回导后矩阵引用可解析，并继续生成新几何、图纸、检查和交付草案"
+    },
+    {
+      "command": "HABS browser path",
+      "outcome": "passed-generated-not-qualified",
+      "scope": "真实 Kimi、证据绑定几何、任务驱动图纸、限制传播、回导后继续生成"
+    },
+    {
+      "command": "Gaodu browser and factual-boundary path",
+      "outcome": "passed-honest-block",
+      "scope": "四张照片不支持尺寸；4400 mm 仅为 demo 规则；零完整几何/成果"
+    },
+    {
+      "command": "AutoCAD 2024 Core Console OPEN + AUDIT",
+      "outcome": "passed",
+      "scope": "哈希相同临时副本 0 error / 0 fix / 0 delete，项目字体未替换"
+    },
+    {
+      "command": "QCAD 3.32.9 open/view/print",
+      "outcome": "passed-with-known-limit",
+      "scope": "打开、查看和两布局打印；未另存或覆盖规范 DXF"
+    },
+    {
+      "command": "independent technical review and targeted P0 recheck",
+      "outcome": "passed-p0-zero",
+      "scope": "P0=0，P1=2，P2=2"
+    },
+    {
+      "command": "independent heritage review and targeted P0 recheck",
+      "outcome": "passed-p0-zero",
+      "scope": "P0=0，P1=4，P2=1；不授予专业资格"
+    }
   ],
   "notes": [
     "测试数量不作为专业质量证明。",
-    "独立技术审查和古建专业审查在 T10 提交冻结后执行。"
+    "旧 HABS 默认体块和重复详图继续作为 invalidated 历史证据保留。",
+    "所有当前成果保持 generated-not-qualified、L1=false、代理成果、未签发。"
   ]
 }
