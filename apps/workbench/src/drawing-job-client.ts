@@ -67,7 +67,7 @@ export class DrawingJobClient {
       sha256: record.sha256, mimeType: record.mimeType, byteLength: record.byteLength, status: "generated-not-qualified", l1Eligible: false,
       formalEligibility: false, sourceRefs: [geometry.id, matrix.id], blockers: ["PROFESSIONAL_REVIEW_REQUIRED", "FORMAL_SIGNOFF_UNAVAILABLE"], createdAt,
     }));
-    await this.input.commands.execute({ commandType: "CommitArtifactSet", commandId: crypto.randomUUID(), projectId: head.projectId, actorId, expectedRevisionId: head.revisionId, issuedAt: createdAt, payload: { artifacts, assets: downloaded.map((item) => item.record), stagingSessionId: sessionId } });
+    await this.input.commands.execute({ commandType: "CommitArtifactSet", commandId: crypto.randomUUID(), projectId: head.projectId, actorId, expectedRevisionId: head.revisionId, issuedAt: createdAt, payload: { artifactRequirementMatrices: [matrix], artifacts, assets: downloaded.map((item) => item.record), stagingSessionId: sessionId } });
     let updated = await this.input.repository.getProjectHead(head.projectId);
     if (!updated) throw new Error("PROJECT_NOT_FOUND_AFTER_ARTIFACTS");
     const report = artifacts.find((item) => item.kind === "checkReport");

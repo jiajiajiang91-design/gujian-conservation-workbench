@@ -91,6 +91,7 @@ class MemoryRepository implements ProjectRepositoryPort {
       getCommandReceipt: async (commandId) => pending.receipts.get(commandId) ?? null,
       getProjectHead: async () => pending.head,
       getCadJob: async () => null,
+      getArtifactRequirementMatrix: async () => null,
       getArtifact: async () => null,
       getCheckRun: async () => null,
       getDeliveryEvaluation: async () => null,

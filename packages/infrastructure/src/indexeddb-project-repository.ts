@@ -20,6 +20,7 @@ import {
   type Decision,
   type CadJob,
   type ArtifactRecord,
+  type ArtifactRequirementMatrix,
   type CheckRun,
   type DeliveryEvaluation,
   type DeliveryDraft,
@@ -28,12 +29,12 @@ import {
 import { recordHash, sha256Hex } from "./hash.js";
 
 export const WORKBENCH_DB_NAME = "gujian-workbench-v3";
-export const WORKBENCH_DB_VERSION = 5;
+export const WORKBENCH_DB_VERSION = 6;
 
 const STORE_NAMES = [
   "projects", "revisions", "commandReceipts", "auditEvents", "assets",
   "importSessions", "modelRuns", "modelRunEvents", "ruleRuns", "decisions",
-  "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries",
+  "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions", "artifactRequirementMatrices", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries",
 ] as const;
 
 interface PersistedRevision {
@@ -295,6 +296,10 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return this.#getProjectRecords<ArtifactRecord>("artifacts", projectId);
   }
 
+  async getProjectArtifactRequirementMatrices(projectId: string): Promise<readonly ArtifactRequirementMatrix[]> {
+    return this.#getProjectRecords<ArtifactRequirementMatrix>("artifactRequirementMatrices", projectId);
+  }
+
   async getProjectCheckRuns(projectId: string): Promise<readonly CheckRun[]> {
     return this.#getProjectRecords<CheckRun>("checkRuns", projectId);
   }
@@ -307,7 +312,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return this.#getProjectRecords<DeliveryDraft>("deliveries", projectId);
   }
 
-  async #getProjectRecords<T>(storeName: "artifacts" | "checkRuns" | "deliveryEvaluations" | "deliveries", projectId: string): Promise<readonly T[]> {
+  async #getProjectRecords<T>(storeName: "artifactRequirementMatrices" | "artifacts" | "checkRuns" | "deliveryEvaluations" | "deliveries", projectId: string): Promise<readonly T[]> {
     const database = await this.#database;
     const transaction = database.transaction(storeName, "readonly");
     const done = transactionDone(transaction);
@@ -319,7 +324,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
   async transaction<T>(projectId: string, operation: (transaction: ProjectTransaction) => Promise<T>): Promise<T> {
     const database = await this.#database;
     const transaction = database.transaction(
-      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns", "ruleRuns", "decisions", "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries"],
+      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns", "ruleRuns", "decisions", "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions", "artifactRequirementMatrices", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries"],
       "readwrite",
     );
     const done = transactionDone(transaction);
@@ -347,6 +352,12 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
         if (!job) return null;
         if (job.projectId !== projectId) throw new Error("CAD_JOB_PROJECT_MISMATCH");
         return job;
+      },
+      getArtifactRequirementMatrix: async (matrixId) => {
+        const item = await requestResult<ArtifactRequirementMatrix | undefined>(transaction.objectStore("artifactRequirementMatrices").get(matrixId));
+        if (!item) return null;
+        if (item.projectId !== projectId) throw new Error("ARTIFACT_REQUIREMENT_MATRIX_PROJECT_MISMATCH");
+        return item;
       },
       getArtifact: async (artifactId) => {
         const item = await requestResult<ArtifactRecord | undefined>(transaction.objectStore("artifacts").get(artifactId));
@@ -441,6 +452,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
           id: decision.id,
           hash: recordHash(decision),
         })) ?? []),
+        ...(mutation.artifactRequirementMatricesToPut?.map((item) => ({ kind: "record" as const, storeName: "artifactRequirementMatrices", id: item.id, hash: recordHash(item) })) ?? []),
         ...(mutation.artifactsToPut?.map((item) => ({ kind: "record" as const, storeName: "artifacts", id: item.id, hash: recordHash(item) })) ?? []),
         ...(mutation.checkRunsToPut?.map((item) => ({ kind: "record" as const, storeName: "checkRuns", id: item.id, hash: recordHash(item) })) ?? []),
         ...(mutation.deliveryEvaluationsToPut?.map((item) => ({ kind: "record" as const, storeName: "deliveryEvaluations", id: item.id, hash: recordHash(item) })) ?? []),
@@ -496,6 +508,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     }
     for (const spec of mutation.geometrySpecsToPut ?? []) transaction.objectStore("geometrySpecs").put(spec);
     for (const revision of mutation.geometryRevisionsToPut ?? []) transaction.objectStore("geometryRevisions").put(revision);
+    for (const item of mutation.artifactRequirementMatricesToPut ?? []) transaction.objectStore("artifactRequirementMatrices").put(item);
     for (const item of mutation.artifactsToPut ?? []) transaction.objectStore("artifacts").put(item);
     for (const item of mutation.checkRunsToPut ?? []) transaction.objectStore("checkRuns").put(item);
     for (const item of mutation.deliveryEvaluationsToPut ?? []) transaction.objectStore("deliveryEvaluations").put(item);

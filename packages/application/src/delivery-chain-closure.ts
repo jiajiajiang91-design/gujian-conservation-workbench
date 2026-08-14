@@ -1,5 +1,6 @@
 import type {
   ArtifactRecord,
+  ArtifactRequirementMatrix,
   CheckRun,
   DeliveryDraft,
   DeliveryEvaluation,
@@ -11,6 +12,7 @@ import { CommandError } from "./errors.js";
 export interface DeliveryChainClosure {
   readonly projectId: string;
   readonly geometryRevisions: readonly GeometryRevision[];
+  readonly artifactRequirementMatrices: readonly ArtifactRequirementMatrix[];
   readonly artifacts: readonly ArtifactRecord[];
   readonly checkRuns: readonly CheckRun[];
   readonly deliveryEvaluations: readonly DeliveryEvaluation[];
@@ -57,6 +59,7 @@ function sameRefs(left: readonly string[], right: readonly string[]): boolean {
  */
 export function assertDeliveryChainClosure(input: DeliveryChainClosure): void {
   const geometries = uniqueById(input.geometryRevisions, "geometry revisions");
+  const matrices = uniqueById(input.artifactRequirementMatrices, "artifact requirement matrices");
   const artifacts = uniqueById(input.artifacts, "artifacts");
   const checks = uniqueById(input.checkRuns, "check runs");
   const evaluations = uniqueById(input.deliveryEvaluations, "delivery evaluations");
@@ -66,10 +69,21 @@ export function assertDeliveryChainClosure(input: DeliveryChainClosure): void {
     if (geometry.projectId !== input.projectId) fail("geometry revision belongs to another project");
   }
 
+  for (const matrix of matrices.values()) {
+    if (matrix.projectId !== input.projectId) fail("artifact requirement matrix belongs to another project");
+    if (!geometries.has(matrix.geometryRevisionId)) fail("artifact requirement matrix references a missing geometry revision");
+  }
+
   for (const artifact of artifacts.values()) {
     if (artifact.projectId !== input.projectId) fail("artifact belongs to another project");
     const geometry = geometries.get(artifact.geometryRevisionId);
     if (!geometry) fail("artifact references a missing geometry revision");
+    if (artifact.requirementMatrixId !== null) {
+      const matrix = matrices.get(artifact.requirementMatrixId);
+      if (!matrix || matrix.geometryRevisionId !== artifact.geometryRevisionId) {
+        fail("artifact references a missing or cross-geometry requirement matrix");
+      }
+    }
     if (GEOMETRY_ARTIFACT_KINDS.has(artifact.kind)) {
       const expectedKind = artifact.kind === "geometryManifest" ? "manifest"
         : artifact.kind === "geometrySourceMap" ? "sourceMap"

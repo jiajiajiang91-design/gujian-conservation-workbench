@@ -22,6 +22,7 @@ import {
   GeometryRevisionSchema,
   ProjectDrivenGeometrySpecSchema,
   ArtifactRecordSchema,
+  ArtifactRequirementMatrixSchema,
   CheckRunSchema,
   DeliveryEvaluationSchema,
   DeliveryDraftSchema,
@@ -74,6 +75,7 @@ export const ImportProjectSnapshotCommandSchema = CommandHeaderSchema.extend({
     ruleRuns: z.array(RuleRunSchema).max(100_000),
     decisions: z.array(DecisionSchema).max(100_000),
     cadJobs: z.array(CadJobSchema).max(100_000).default([]),
+    artifactRequirementMatrices: z.array(ArtifactRequirementMatrixSchema).max(100_000).default([]),
     artifacts: z.array(ArtifactRecordSchema).max(100_000).default([]),
     checkRuns: z.array(CheckRunSchema).max(100_000).default([]),
     deliveryEvaluations: z.array(DeliveryEvaluationSchema).max(100_000).default([]),
@@ -159,6 +161,7 @@ export const CommitArtifactSetCommandSchema = CommandHeaderSchema.extend({
   commandType: z.literal("CommitArtifactSet"),
   expectedRevisionId: UuidSchema,
   payload: z.object({
+    artifactRequirementMatrices: z.array(ArtifactRequirementMatrixSchema).max(10_000).default([]),
     artifacts: z.array(ArtifactRecordSchema).min(1).max(10_000),
     assets: z.array(AssetRecordSchema).max(10_000),
     stagingSessionId: UuidSchema.nullable(),

@@ -220,6 +220,61 @@ def _check(condition: bool, check_id: str, message: str, checks: list[dict[str, 
     checks.append({"id": check_id, "passed": bool(condition), "message": message})
 
 
+def _autocad_summary_matches(summary: dict[str, Any], dxf_hash: str) -> bool:
+    audit_copy = summary.get("auditCopy")
+    font = summary.get("font")
+    result = summary.get("result")
+    tool = summary.get("tool")
+    if not all(isinstance(item, dict) for item in (audit_copy, font, result, tool)):
+        return False
+    return (
+        summary.get("schemaVersion") == "milestone-two-autocad-audit-summary-1"
+        and summary.get("status") == "passed"
+        and tool.get("product") == "AutoCAD Core Console 2024"
+        and "AUDIT" in summary.get("commandCategories", [])
+        and summary.get("canonicalDxfSha256") == dxf_hash
+        and audit_copy.get("preAuditSha256") == dxf_hash
+        and audit_copy.get("postAuditSha256") == dxf_hash
+        and audit_copy.get("byteIdenticalToCanonicalBefore") is True
+        and audit_copy.get("byteIdenticalToCanonicalAfter") is True
+        and font.get("substitutionDetected") is False
+        and result.get("exitCode") == 0
+        and result.get("errorsFound") == 0
+        and result.get("errorsFixed") == 0
+        and result.get("objectsDeleted") == 0
+        and result.get("canonicalDxfModified") is False
+        and summary.get("qualification") == QUALIFICATION
+        and summary.get("l1Eligible") is False
+        and summary.get("formalEligibility") is False
+    )
+
+
+def _qcad_summary_matches(summary: dict[str, Any], dxf_hash: str, drawing_numbers: list[str]) -> bool:
+    input_summary = summary.get("input")
+    open_and_view = summary.get("openAndView")
+    print_summary = summary.get("print")
+    tool = summary.get("tool")
+    if not all(isinstance(item, dict) for item in (input_summary, open_and_view, print_summary, tool)):
+        return False
+    return (
+        summary.get("schemaVersion") == "milestone-two-qcad-compatibility-1"
+        and summary.get("status") == "passed-open-view-print-only"
+        and str(tool.get("product", "")).startswith("QCAD")
+        and input_summary.get("canonicalDxfSha256") == dxf_hash
+        and input_summary.get("temporaryCopySha256AfterCheck") == dxf_hash
+        and open_and_view.get("exitCode") == 0
+        and open_and_view.get("importSucceeded") is True
+        and print_summary.get("exitCode") == 0
+        and print_summary.get("layouts") == drawing_numbers
+        and print_summary.get("pageCount") == len(drawing_numbers)
+        and summary.get("saveBackPerformed") is False
+        and summary.get("canonicalDxfModified") is False
+        and summary.get("qualification") == QUALIFICATION
+        and summary.get("l1Eligible") is False
+        and summary.get("formalEligibility") is False
+    )
+
+
 def _visible_dxf_text(doc) -> list[str]:
     values: list[str] = []
     for layout in doc.layouts:
@@ -408,18 +463,7 @@ def verify(
     if autocad_summary_path is not None:
         autocad_summary = json.loads(autocad_summary_path.read_text(encoding="utf-8"))
         dxf_hash = _hash(output_dir / "drawings.dxf")
-        autocad_ok = (
-            autocad_summary["status"] == "passed-native-dxf-audit"
-            and autocad_summary["sourceDxfSha256"] == dxf_hash
-            and autocad_summary["temporaryCopyPreAuditSha256"] == dxf_hash
-            and autocad_summary["temporaryCopyPostAuditSha256"] == dxf_hash
-            and autocad_summary["exitCode"] == 0
-            and autocad_summary["errorsFound"] == 0
-            and autocad_summary["objectsRepaired"] == 0
-            and autocad_summary["objectsDeleted"] == 0
-            and autocad_summary["boundFontSubstituted"] is False
-            and autocad_summary["l1Eligible"] is False
-        )
+        autocad_ok = _autocad_summary_matches(autocad_summary, dxf_hash)
         _check(autocad_ok, "autocad-native-audit", "AutoCAD 2024 对隔离副本审计零错误、零修复、零删除、项目字体未替换", checks)
         autocad_summary_hash = _hash(autocad_summary_path)
 
@@ -427,18 +471,7 @@ def verify(
     if qcad_summary_path is not None:
         qcad_summary = json.loads(qcad_summary_path.read_text(encoding="utf-8"))
         dxf_hash = _hash(output_dir / "drawings.dxf")
-        qcad_ok = (
-            qcad_summary["status"] == "passed-open-view-print-only"
-            and qcad_summary["sourceDxfSha256"] == dxf_hash
-            and qcad_summary["sourceDxfPostCheckSha256"] == dxf_hash
-            and qcad_summary["openExitCode"] == 0
-            and qcad_summary["printExitCode"] == 0
-            and qcad_summary["printedLayoutNames"] == [sheet["drawingNumber"] for sheet in matrix["sheets"]]
-            and qcad_summary["printedPageCount"] == len(matrix["sheets"])
-            and qcad_summary["normativeDxfOverwritten"] is False
-            and qcad_summary["saveRoundtripAttempted"] is False
-            and qcad_summary["l1Eligible"] is False
-        )
+        qcad_ok = _qcad_summary_matches(qcad_summary, dxf_hash, [sheet["drawingNumber"] for sheet in matrix["sheets"]])
         _check(qcad_ok, "qcad-view-print-compatibility", "QCAD 仅完成打开、查看和两布局打印，未另存或覆盖规范 DXF", checks)
         qcad_summary_hash = _hash(qcad_summary_path)
 

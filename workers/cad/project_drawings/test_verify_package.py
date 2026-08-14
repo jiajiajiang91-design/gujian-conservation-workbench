@@ -14,7 +14,7 @@ from workers.cad.project_geometry.test_project_geometry import spec_a
 
 from .build_package import build_package
 from .test_project_drawings import matrix
-from .verify_package import verify
+from .verify_package import _autocad_summary_matches, _qcad_summary_matches, verify
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -40,6 +40,49 @@ class DrawingPackageVerifierTests(unittest.TestCase):
             matrix_path, geometry = self._build_package(target)
             report = verify(matrix_path, geometry, target / "drawings", FONT)
             self.assertEqual(report["failedCheckCount"], 0, report["checks"])
+
+    def test_current_autocad_summary_schema_binds_the_canonical_dxf_hash(self) -> None:
+        dxf_hash = "a" * 64
+        summary = {
+            "schemaVersion": "milestone-two-autocad-audit-summary-1",
+            "status": "passed",
+            "tool": {"product": "AutoCAD Core Console 2024"},
+            "commandCategories": ["OPEN", "AUDIT"],
+            "canonicalDxfSha256": dxf_hash,
+            "auditCopy": {
+                "preAuditSha256": dxf_hash,
+                "postAuditSha256": dxf_hash,
+                "byteIdenticalToCanonicalBefore": True,
+                "byteIdenticalToCanonicalAfter": True,
+            },
+            "font": {"substitutionDetected": False},
+            "result": {"exitCode": 0, "errorsFound": 0, "errorsFixed": 0, "objectsDeleted": 0, "canonicalDxfModified": False},
+            "qualification": "generated-not-qualified",
+            "l1Eligible": False,
+            "formalEligibility": False,
+        }
+        self.assertTrue(_autocad_summary_matches(summary, dxf_hash))
+        summary["canonicalDxfSha256"] = "b" * 64
+        self.assertFalse(_autocad_summary_matches(summary, dxf_hash))
+
+    def test_current_qcad_summary_schema_binds_source_and_print_layouts(self) -> None:
+        dxf_hash = "a" * 64
+        summary = {
+            "schemaVersion": "milestone-two-qcad-compatibility-1",
+            "status": "passed-open-view-print-only",
+            "tool": {"product": "QCAD Professional Trial"},
+            "input": {"canonicalDxfSha256": dxf_hash, "temporaryCopySha256AfterCheck": dxf_hash},
+            "openAndView": {"exitCode": 0, "importSucceeded": True},
+            "print": {"exitCode": 0, "layouts": ["P-01", "P-02"], "pageCount": 2},
+            "saveBackPerformed": False,
+            "canonicalDxfModified": False,
+            "qualification": "generated-not-qualified",
+            "l1Eligible": False,
+            "formalEligibility": False,
+        }
+        self.assertTrue(_qcad_summary_matches(summary, dxf_hash, ["P-01", "P-02"]))
+        summary["input"]["temporaryCopySha256AfterCheck"] = "b" * 64
+        self.assertFalse(_qcad_summary_matches(summary, dxf_hash, ["P-01", "P-02"]))
 
     def test_png_dimension_tamper_is_detected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

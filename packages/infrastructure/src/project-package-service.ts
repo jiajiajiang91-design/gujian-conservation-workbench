@@ -9,6 +9,7 @@ import {
   DecisionSchema,
   CadJobSchema,
   ArtifactRecordSchema,
+  ArtifactRequirementMatrixSchema,
   CheckRunSchema,
   DeliveryEvaluationSchema,
   DeliveryDraftSchema,
@@ -43,6 +44,7 @@ const ProjectDataSchema = z.object({
   ruleRuns: z.array(RuleRunSchema).max(100_000).default([]),
   decisions: z.array(DecisionSchema).max(100_000).default([]),
   cadJobs: z.array(CadJobSchema).max(100_000).default([]),
+  artifactRequirementMatrices: z.array(ArtifactRequirementMatrixSchema).max(100_000).default([]),
   artifacts: z.array(ArtifactRecordSchema).max(100_000).default([]),
   checkRuns: z.array(CheckRunSchema).max(100_000).default([]),
   deliveryEvaluations: z.array(DeliveryEvaluationSchema).max(100_000).default([]),
@@ -108,6 +110,7 @@ export class ProjectPackageService {
     const ruleRuns = await this.#repository.getProjectRuleRuns(projectId);
     const decisions = await this.#repository.getProjectDecisions(projectId);
     const cadJobs = await this.#repository.getProjectCadJobs(projectId);
+    const artifactRequirementMatrices = await this.#repository.getProjectArtifactRequirementMatrices(projectId);
     const artifacts = await this.#repository.getProjectArtifacts(projectId);
     const checkRuns = await this.#repository.getProjectCheckRuns(projectId);
     const deliveryEvaluations = await this.#repository.getProjectDeliveryEvaluations(projectId);
@@ -124,6 +127,7 @@ export class ProjectPackageService {
       ruleRuns,
       decisions,
       cadJobs,
+      artifactRequirementMatrices,
       artifacts,
       checkRuns,
       deliveryEvaluations,
@@ -266,6 +270,7 @@ export class ProjectPackageService {
         ruleRuns: data.ruleRuns,
         decisions: data.decisions,
         cadJobs: data.cadJobs,
+        artifactRequirementMatrices: data.artifactRequirementMatrices,
         artifacts: data.artifacts,
         checkRuns: data.checkRuns,
         deliveryEvaluations: data.deliveryEvaluations,

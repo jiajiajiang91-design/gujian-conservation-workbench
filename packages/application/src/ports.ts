@@ -1,4 +1,4 @@
-import type { ArtifactRecord, AssetRecord, AuditEvent, CadJob, CheckRun, Decision, DeliveryDraft, DeliveryEvaluation, GeometryRevision, ModelRun, ProjectDrivenGeometrySpec, ProjectSnapshot, RuleRun } from "@gujian/domain";
+import type { ArtifactRecord, ArtifactRequirementMatrix, AssetRecord, AuditEvent, CadJob, CheckRun, Decision, DeliveryDraft, DeliveryEvaluation, GeometryRevision, ModelRun, ProjectDrivenGeometrySpec, ProjectSnapshot, RuleRun } from "@gujian/domain";
 
 import type { ProjectCommand, ProjectCommandType } from "./commands.js";
 
@@ -45,6 +45,7 @@ export interface CommitProjectMutation {
   readonly cadJobsToPut?: readonly CadJob[];
   readonly geometrySpecsToPut?: readonly ProjectDrivenGeometrySpec[];
   readonly geometryRevisionsToPut?: readonly GeometryRevision[];
+  readonly artifactRequirementMatricesToPut?: readonly ArtifactRequirementMatrix[];
   readonly artifactsToPut?: readonly ArtifactRecord[];
   readonly checkRunsToPut?: readonly CheckRun[];
   readonly deliveryEvaluationsToPut?: readonly DeliveryEvaluation[];
@@ -55,6 +56,7 @@ export interface ProjectTransaction {
   getCommandReceipt(commandId: string): Promise<CommandReceipt | null>;
   getProjectHead(): Promise<ProjectHead | null>;
   getCadJob(jobId: string): Promise<CadJob | null>;
+  getArtifactRequirementMatrix(matrixId: string): Promise<ArtifactRequirementMatrix | null>;
   getArtifact(artifactId: string): Promise<ArtifactRecord | null>;
   getCheckRun(checkRunId: string): Promise<CheckRun | null>;
   getDeliveryEvaluation(evaluationId: string): Promise<DeliveryEvaluation | null>;

@@ -40,11 +40,11 @@ afterEach(async () => {
 });
 
 describe("IndexedDbProjectRepository", () => {
-  it("将已有 v4 数据库向前升级到 v5 并保留项目库", async () => {
+  it("将已有 v5 数据库向前升级到 v6 并保留项目库", async () => {
     const databaseName = `gujian-upgrade-${crypto.randomUUID()}`;
     databaseNames.push(databaseName);
     const legacy = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(databaseName, 4);
+      const request = indexedDB.open(databaseName, 5);
       request.onupgradeneeded = () => request.result.createObjectStore("projects", { keyPath: "projectId" });
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -52,7 +52,7 @@ describe("IndexedDbProjectRepository", () => {
     legacy.close();
     const upgraded = await openWorkbenchDatabase(databaseName);
     expect(upgraded.version).toBe(WORKBENCH_DB_VERSION);
-    expect([...upgraded.objectStoreNames]).toEqual(expect.arrayContaining(["projects", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries"]));
+    expect([...upgraded.objectStoreNames]).toEqual(expect.arrayContaining(["projects", "artifactRequirementMatrices", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries"]));
     upgraded.close();
   });
 

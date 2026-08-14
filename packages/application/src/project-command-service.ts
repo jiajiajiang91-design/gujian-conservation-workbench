@@ -1,4 +1,4 @@
-import { ProjectSnapshotSchema, type ArtifactRecord, type CheckRun, type FactEnvelope, type ProjectSnapshot } from "@gujian/domain";
+import { ProjectSnapshotSchema, type ArtifactRecord, type ArtifactRequirementMatrix, type CheckRun, type FactEnvelope, type ProjectSnapshot } from "@gujian/domain";
 
 import { ProjectCommandSchema, type ProjectCommand } from "./commands.js";
 import { assertDeliveryChainClosure } from "./delivery-chain-closure.js";
@@ -39,6 +39,7 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
   }
   if (command.commandType === "ImportProjectSnapshot" && (
     command.payload.cadJobs.some((item) => item.projectId !== command.projectId) ||
+    command.payload.artifactRequirementMatrices.some((item) => item.projectId !== command.projectId) ||
     command.payload.artifacts.some((item) => item.projectId !== command.projectId) ||
     command.payload.checkRuns.some((item) => item.projectId !== command.projectId) ||
     command.payload.deliveryEvaluations.some((item) => item.projectId !== command.projectId) ||
@@ -50,6 +51,7 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
     assertDeliveryChainClosure({
       projectId: command.projectId,
       geometryRevisions: command.payload.snapshot.geometryRevisions,
+      artifactRequirementMatrices: command.payload.artifactRequirementMatrices,
       artifacts: command.payload.artifacts,
       checkRuns: command.payload.checkRuns,
       deliveryEvaluations: command.payload.deliveryEvaluations,
@@ -122,6 +124,7 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
     assertDeliveryChainClosure({
       projectId: command.projectId,
       geometryRevisions: [revision],
+      artifactRequirementMatrices: [],
       artifacts: [],
       checkRuns: [],
       deliveryEvaluations: [],
@@ -409,6 +412,9 @@ export class ProjectCommandService {
           ...(command.commandType === "ImportProjectSnapshot" && command.payload.snapshot.geometryRevisions.length
             ? { geometryRevisionsToPut: command.payload.snapshot.geometryRevisions }
             : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.artifactRequirementMatrices.length
+            ? { artifactRequirementMatricesToPut: command.payload.artifactRequirementMatrices }
+            : {}),
           ...(command.commandType === "ImportProjectSnapshot" && command.payload.artifacts.length
             ? { artifactsToPut: command.payload.artifacts }
             : {}),
@@ -433,6 +439,16 @@ export class ProjectCommandService {
           currentRevisionId: head.revisionId,
         });
       }
+      const requirementMatricesFor = async (artifacts: readonly ArtifactRecord[], supplied: readonly ArtifactRequirementMatrix[] = []) => {
+        const matrices = new Map(supplied.map((item) => [item.id, item]));
+        for (const artifact of artifacts) {
+          if (artifact.requirementMatrixId === null || matrices.has(artifact.requirementMatrixId)) continue;
+          const matrix = await transaction.getArtifactRequirementMatrix(artifact.requirementMatrixId);
+          if (!matrix) throw new CommandError("COMMAND_INVALID", "artifact requirement matrix closure is invalid");
+          matrices.set(matrix.id, matrix);
+        }
+        return [...matrices.values()];
+      };
       const persistedCadJob = command.commandType === "StartCadJob" || command.commandType === "SyncCadJobEvents" || command.commandType === "CommitGeometryRevision"
         ? await transaction.getCadJob(command.commandType === "CommitGeometryRevision" ? command.payload.cadJobId : command.payload.job.id)
         : null;
@@ -451,12 +467,16 @@ export class ProjectCommandService {
         }
       }
       if (command.commandType === "CommitArtifactSet") {
+        for (const matrix of command.payload.artifactRequirementMatrices) {
+          if (await transaction.getArtifactRequirementMatrix(matrix.id)) throw new CommandError("COMMAND_INVALID", "artifact requirement matrix id already exists");
+        }
         for (const artifact of command.payload.artifacts) {
           if (await transaction.getArtifact(artifact.id)) throw new CommandError("COMMAND_INVALID", "artifact id already exists");
         }
         assertDeliveryChainClosure({
           projectId: command.projectId,
           geometryRevisions: head.snapshot.geometryRevisions,
+          artifactRequirementMatrices: await requirementMatricesFor(command.payload.artifacts, command.payload.artifactRequirementMatrices),
           artifacts: command.payload.artifacts,
           checkRuns: [],
           deliveryEvaluations: [],
@@ -474,6 +494,7 @@ export class ProjectCommandService {
         assertDeliveryChainClosure({
           projectId: command.projectId,
           geometryRevisions: head.snapshot.geometryRevisions,
+          artifactRequirementMatrices: await requirementMatricesFor(artifacts),
           artifacts,
           checkRuns: [command.payload.checkRun],
           deliveryEvaluations: [],
@@ -501,6 +522,7 @@ export class ProjectCommandService {
         assertDeliveryChainClosure({
           projectId: command.projectId,
           geometryRevisions: head.snapshot.geometryRevisions,
+          artifactRequirementMatrices: await requirementMatricesFor([...artifacts.values()]),
           artifacts: [...artifacts.values()],
           checkRuns,
           deliveryEvaluations: [command.payload.evaluation],
@@ -535,6 +557,7 @@ export class ProjectCommandService {
         assertDeliveryChainClosure({
           projectId: command.projectId,
           geometryRevisions: head.snapshot.geometryRevisions,
+          artifactRequirementMatrices: await requirementMatricesFor([...artifacts.values()]),
           artifacts: [...artifacts.values()],
           checkRuns,
           deliveryEvaluations: [evaluation],
@@ -588,7 +611,7 @@ export class ProjectCommandService {
                     : command.commandType === "CommitGeometryRevision"
                       ? [command.payload.cadJobId, command.payload.geometrySpec.id, command.payload.geometryRevision.id, ...command.payload.assets.map((asset) => asset.id)]
                       : command.commandType === "CommitArtifactSet"
-                        ? [...command.payload.artifacts.map((item) => item.id), ...command.payload.assets.map((item) => item.id)]
+                        ? [...command.payload.artifactRequirementMatrices.map((item) => item.id), ...command.payload.artifacts.map((item) => item.id), ...command.payload.assets.map((item) => item.id)]
                         : command.commandType === "CommitCheckRun"
                           ? [command.payload.checkRun.id]
                           : command.commandType === "EvaluateDelivery"
@@ -619,7 +642,7 @@ export class ProjectCommandService {
             }
           : {}),
         ...(command.commandType === "CommitArtifactSet"
-          ? { artifactsToPut: command.payload.artifacts, ...(command.payload.assets.length ? { assetWrites: { records: command.payload.assets, stagingSessionId: command.payload.stagingSessionId } } : {}) }
+          ? { artifactRequirementMatricesToPut: command.payload.artifactRequirementMatrices, artifactsToPut: command.payload.artifacts, ...(command.payload.assets.length ? { assetWrites: { records: command.payload.assets, stagingSessionId: command.payload.stagingSessionId } } : {}) }
           : {}),
         ...(command.commandType === "CommitCheckRun" ? { checkRunsToPut: [command.payload.checkRun] } : {}),
         ...(command.commandType === "EvaluateDelivery" ? { deliveryEvaluationsToPut: [command.payload.evaluation] } : {}),

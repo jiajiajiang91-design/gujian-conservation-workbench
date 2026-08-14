@@ -67,30 +67,36 @@ function validGraph() {
 describe("delivery chain closure", () => {
   it("accepts one immutable same-geometry delivery chain", () => {
     const graph = validGraph();
-    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifacts: graph.artifacts, checkRuns: [graph.check], deliveryEvaluations: [graph.evaluation], deliveries: [graph.draft] })).not.toThrow();
+    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifactRequirementMatrices: [], artifacts: graph.artifacts, checkRuns: [graph.check], deliveryEvaluations: [graph.evaluation], deliveries: [graph.draft] })).not.toThrow();
   });
 
   it("rejects cross-geometry check artifacts", () => {
     const graph = validGraph();
     const check = { ...graph.check, artifactRefs: [graph.other.id], reportAssetId: graph.other.assetId, reportHash: graph.other.sha256 };
-    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifacts: graph.artifacts, checkRuns: [check], deliveryEvaluations: [], deliveries: [] })).toThrow(/cross-geometry/);
+    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifactRequirementMatrices: [], artifacts: graph.artifacts, checkRuns: [check], deliveryEvaluations: [], deliveries: [] })).toThrow(/cross-geometry/);
   });
 
   it("rejects a draft based on a blocked evaluation", () => {
     const graph = validGraph();
     const evaluation = { ...graph.evaluation, outcome: "blocked" as const };
-    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifacts: graph.artifacts, checkRuns: [graph.check], deliveryEvaluations: [evaluation], deliveries: [graph.draft] })).toThrow(/proxy-ready/);
+    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifactRequirementMatrices: [], artifacts: graph.artifacts, checkRuns: [graph.check], deliveryEvaluations: [evaluation], deliveries: [graph.draft] })).toThrow(/proxy-ready/);
   });
 
   it("rejects missing artifact references", () => {
     const graph = validGraph();
     const evaluation = { ...graph.evaluation, artifactRefs: [...graph.evaluation.artifactRefs, id(999)] };
-    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifacts: graph.artifacts, checkRuns: [graph.check], deliveryEvaluations: [evaluation], deliveries: [] })).toThrow(/missing/);
+    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifactRequirementMatrices: [], artifacts: graph.artifacts, checkRuns: [graph.check], deliveryEvaluations: [evaluation], deliveries: [] })).toThrow(/missing/);
   });
 
   it("rejects replacing the evaluated artifact set in a draft", () => {
     const graph = validGraph();
     const draft = { ...graph.draft, artifactRefs: [graph.evaluation.artifactRefs[0]!, graph.draft.artifactRefs.at(-1)!] };
-    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifacts: graph.artifacts, checkRuns: [graph.check], deliveryEvaluations: [graph.evaluation], deliveries: [draft] })).toThrow(/artifact set differs/);
+    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifactRequirementMatrices: [], artifacts: graph.artifacts, checkRuns: [graph.check], deliveryEvaluations: [graph.evaluation], deliveries: [draft] })).toThrow(/artifact set differs/);
+  });
+
+  it("rejects an artifact whose requirement matrix is missing", () => {
+    const graph = validGraph();
+    const dxf = { ...graph.artifacts.find((item) => item.kind === "dxf")!, requirementMatrixId: id(998) };
+    expect(() => assertDeliveryChainClosure({ projectId, geometryRevisions: graph.geometries, artifactRequirementMatrices: [], artifacts: [dxf], checkRuns: [], deliveryEvaluations: [], deliveries: [] })).toThrow(/requirement matrix/);
   });
 });
