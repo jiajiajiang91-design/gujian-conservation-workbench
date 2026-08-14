@@ -37,15 +37,15 @@ describe("project-driven geometry contracts", () => {
     expect(ProjectDrivenGeometrySpecSchema.safeParse(value).success).toBe(false);
   });
 
-  it("requires all six geometry assets and keeps qualification false", () => {
+  it("requires all seven geometry assets and keeps qualification false", () => {
     const projectId = crypto.randomUUID();
-    const asset = (kind: "ifc" | "glb" | "manifest" | "sourceMap" | "report" | "preview") => ({
+    const asset = (kind: "ifc" | "glb" | "brepBundle" | "manifest" | "sourceMap" | "report" | "preview") => ({
       assetId: crypto.randomUUID(), kind, sha256: "a".repeat(64), mimeType: "application/octet-stream", byteLength: 1,
     });
     const revision = GeometryRevisionSchema.parse({
       id: crypto.randomUUID(), projectId, projectRevisionId: crypto.randomUUID(), geometrySpecId: crypto.randomUUID(),
       inputHash: "b".repeat(64), entityClosureHash: "c".repeat(64), interfaceClosureHash: "d".repeat(64), geometrySignature: "e".repeat(64),
-      assets: [asset("ifc"), asset("glb"), asset("manifest"), asset("sourceMap"), asset("report"), asset("preview")],
+      assets: [asset("ifc"), asset("glb"), asset("brepBundle"), asset("manifest"), asset("sourceMap"), asset("report"), asset("preview")],
       status: "generated-not-qualified", l1Eligible: false, formalEligibility: false,
       blockers: ["PROFESSIONAL_REVIEW_REQUIRED"], createdAt: new Date().toISOString(),
     });

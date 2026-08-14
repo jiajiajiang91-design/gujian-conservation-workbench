@@ -7,7 +7,10 @@ from typing import Any
 
 import numpy as np
 import trimesh
-from shapely.geometry import LineString
+import cadquery as cq
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
+from OCP.gp import gp_Dir, gp_Pln, gp_Pnt
+from shapely.geometry import LineString, box
 from shapely.ops import polygonize
 
 from .contracts import canonical_bytes, sha256_value
@@ -22,6 +25,7 @@ class SourceMesh:
     component_type: str
     vertices: np.ndarray
     faces: np.ndarray
+    shape: cq.Shape
 
 
 def load_source_meshes(glb_path, manifest: dict[str, Any]) -> list[SourceMesh]:
@@ -35,8 +39,37 @@ def load_source_meshes(glb_path, manifest: dict[str, Any]) -> list[SourceMesh]:
         value = np.asarray(mesh.vertices, dtype=float)
         # glTF Y-up/metre -> project Z-up/millimetre.
         vertices = np.column_stack((value[:, 0], -value[:, 2], value[:, 1])) * 1000.0
-        result.append(SourceMesh(entity_id, component_by_id[entity_id], vertices, np.asarray(mesh.faces, dtype=np.int64)))
+        brep_path = glb_path.parent / "brep" / f"{entity_id}.brep"
+        if not brep_path.is_file():
+            raise ValueError(f"exact BRep is missing for {entity_id}")
+        brep_sha = __import__("hashlib").sha256(brep_path.read_bytes()).hexdigest()
+        manifest_entity = next(item for item in manifest["entities"] if item["id"] == entity_id)
+        if brep_sha != manifest_entity.get("brepSha256"):
+            raise ValueError(f"BRep hash differs from geometry manifest for {entity_id}")
+        result.append(SourceMesh(entity_id, component_by_id[entity_id], vertices, np.asarray(mesh.faces, dtype=np.int64), cq.Shape.importBrep(str(brep_path))))
     return result
+
+
+def _ocp_section_segments(shape: cq.Shape, normal: np.ndarray, offset: float, tolerance_mm: float) -> list[np.ndarray]:
+    origin = normal * offset
+    section = BRepAlgoAPI_Section(
+        shape.wrapped,
+        gp_Pln(gp_Pnt(*origin.tolist()), gp_Dir(*normal.tolist())),
+        True,
+    ).Shape()
+    segments: list[np.ndarray] = []
+    for edge in cq.Shape.cast(section).Edges():
+        # Preserve exact linear section edges as one CAD segment. Sampling a
+        # straight edge at the curve tolerance creates thousands of collinear
+        # fragments without adding geometric information.
+        sample_count = 2 if edge.geomType() == "LINE" else max(
+            2,
+            int(math.ceil(edge.Length() / max(tolerance_mm, 0.05))) + 1,
+        )
+        points, _ = edge.sample(sample_count)
+        for left, right in zip(points, points[1:], strict=False):
+            segments.append(np.asarray([left.toTuple(), right.toTuple()], dtype=float))
+    return segments
 
 
 def _project(points: np.ndarray, right: np.ndarray, up: np.ndarray, direction: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -85,8 +118,21 @@ def _triangle_depth(point: np.ndarray, triangle_2d: np.ndarray, depths: np.ndarr
     return float(w1 * depths[0] + w2 * depths[1] + w3 * depths[2])
 
 
-def _visible(segment: np.ndarray, segment_depth: np.ndarray, projected_triangles: list[tuple[np.ndarray, np.ndarray]], tolerance_mm: float) -> bool:
-    for fraction in (0.12, 0.28, 0.5, 0.72, 0.88):
+def _visibility_intervals(segment: np.ndarray, segment_depth: np.ndarray, projected_triangles: list[tuple[np.ndarray, np.ndarray]], tolerance_mm: float) -> list[tuple[float, float]]:
+    events = {0.0, 1.0}
+    segment_line = LineString(segment)
+    for triangle, _ in projected_triangles:
+        boundary = LineString([triangle[0], triangle[1], triangle[2], triangle[0]])
+        intersection = segment_line.intersection(boundary)
+        candidates = []
+        if intersection.geom_type == "Point": candidates = [intersection]
+        elif intersection.geom_type in {"MultiPoint", "GeometryCollection"}: candidates = [item for item in intersection.geoms if item.geom_type == "Point"]
+        for point in candidates:
+            events.add(max(0.0, min(1.0, float(segment_line.project(point) / max(segment_line.length, 1e-12)))))
+    ordered = sorted(events)
+    visible: list[tuple[float, float]] = []
+    for left, right in zip(ordered, ordered[1:], strict=False):
+        fraction = (left + right) / 2
         point = segment[0] * (1 - fraction) + segment[1] * fraction
         depth = float(segment_depth[0] * (1 - fraction) + segment_depth[1] * fraction)
         nearest = math.inf
@@ -96,9 +142,20 @@ def _visible(segment: np.ndarray, segment_depth: np.ndarray, projected_triangles
             candidate = _triangle_depth(point, triangle, depths)
             if candidate is not None:
                 nearest = min(nearest, candidate)
-        if nearest < depth - tolerance_mm:
-            return False
-    return True
+        if nearest >= depth - tolerance_mm and right - left > 1e-9:
+            if visible and abs(visible[-1][1] - left) < 1e-9:
+                visible[-1] = (visible[-1][0], right)
+            else:
+                visible.append((left, right))
+    return visible
+
+
+def _clip_to_view(segment: np.ndarray, crop_bounds: list[float] | None) -> list[np.ndarray]:
+    if crop_bounds is None:
+        return [segment]
+    intersection = LineString(segment).intersection(box(*crop_bounds))
+    geometries = list(intersection.geoms) if hasattr(intersection, "geoms") else [intersection]
+    return [np.asarray(geometry.coords, dtype=float) for geometry in geometries if geometry.geom_type == "LineString" and geometry.length >= 0.05]
 
 
 def _line_record(view: dict[str, Any], manifest: dict[str, Any], entity: SourceMesh, points: np.ndarray, line_class: str, derivation: str, index: int) -> dict[str, Any]:
@@ -121,7 +178,13 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
     direction = np.asarray(view["direction"], dtype=float)
     right = np.asarray(view["right"], dtype=float)
     up = np.asarray(view["up"], dtype=float)
-    selected = [mesh for mesh in meshes if not view.get("sourceTypes") or mesh.component_type in view["sourceTypes"]]
+    source_entity_ids = set(view.get("sourceEntityIds", []))
+    selected = [
+        mesh for mesh in meshes
+        if (not source_entity_ids or mesh.entity_id in source_entity_ids)
+        and (not view.get("sourceTypes") or mesh.component_type in view["sourceTypes"])
+    ]
+    crop_bounds = view.get("cropBoundsMm")
     projected_triangles: list[tuple[np.ndarray, np.ndarray]] = []
     for mesh in selected:
         triangles = mesh.vertices[mesh.faces]
@@ -135,18 +198,26 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
         normal = np.asarray(plane["normal"], dtype=float)
         origin = normal * float(plane["offsetMm"])
         for mesh in selected:
-            source = trimesh.Trimesh(vertices=mesh.vertices, faces=mesh.faces, process=False)
-            segments = trimesh.intersections.mesh_plane(source, plane_normal=normal, plane_origin=origin)
+            segments = _ocp_section_segments(mesh.shape, normal, float(plane["offsetMm"]), float(manifest.get("drawingToleranceMm", 0.5)))
             projected_segments: list[np.ndarray] = []
-            for index, segment in enumerate(segments):
+            cut_line_index = 0
+            for segment in segments:
                 projected, _ = _project(segment, right, up, direction)
                 projected_segments.append(projected)
-                lines.append(_line_record(view, manifest, mesh, projected, "cut", "planeIntersection", index))
+                for clipped in _clip_to_view(projected, crop_bounds):
+                    lines.append(_line_record(view, manifest, mesh, clipped, "cut", "planeIntersection", cut_line_index))
+                    cut_line_index += 1
             for region_index, polygon in enumerate(polygonize([LineString(segment) for segment in projected_segments])):
-                coordinates = [[round(float(x), 6), round(float(y), 6)] for x, y in list(polygon.exterior.coords)]
-                if len(coordinates) >= 4 and polygon.area > 0.01:
+                clipped_region = polygon.intersection(box(*crop_bounds)) if crop_bounds is not None else polygon
+                region_geometries = list(clipped_region.geoms) if hasattr(clipped_region, "geoms") else [clipped_region]
+                for crop_index, region in enumerate(region_geometries):
+                    if region.geom_type != "Polygon" or region.area <= 0.01:
+                        continue
+                    coordinates = [[round(float(x), 6), round(float(y), 6)] for x, y in list(region.exterior.coords)]
+                    if len(coordinates) < 4:
+                        continue
                     material_regions.append({
-                        "regionId": str(uuid.uuid5(LINE_NAMESPACE, f"{manifest['geometryRevisionId']}:{view['id']}:{mesh.entity_id}:region:{region_index}:{coordinates}")),
+                        "regionId": str(uuid.uuid5(LINE_NAMESPACE, f"{manifest['geometryRevisionId']}:{view['id']}:{mesh.entity_id}:region:{region_index}:{crop_index}:{coordinates}")),
                         "viewId": view["id"], "geometryRevisionId": manifest["geometryRevisionId"],
                         "sourceEntityId": mesh.entity_id, "sourceComponentType": mesh.component_type,
                         "materialCode": next(item["materialCode"] for item in manifest["entities"] if item["id"] == mesh.entity_id),
@@ -159,10 +230,16 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
                 projected, depths = _project(np.vstack((start, end)), right, up, direction)
                 if np.linalg.norm(projected[1] - projected[0]) < 0.05:
                     continue
-                if not _visible(projected, depths, projected_triangles, 0.5):
-                    continue
-                lines.append(_line_record(view, manifest, mesh, projected, line_class, "occlusionProjection", line_index))
-                line_index += 1
+                for interval_start, interval_end in _visibility_intervals(projected, depths, projected_triangles, 0.5):
+                    clipped = np.vstack((
+                        projected[0] * (1 - interval_start) + projected[1] * interval_start,
+                        projected[0] * (1 - interval_end) + projected[1] * interval_end,
+                    ))
+                    if np.linalg.norm(clipped[1] - clipped[0]) < 0.05:
+                        continue
+                    for view_clipped in _clip_to_view(clipped, crop_bounds):
+                        lines.append(_line_record(view, manifest, mesh, view_clipped, line_class, "occlusionProjection", line_index))
+                        line_index += 1
     if not lines:
         raise ValueError(f"view {view['key']} generated no source-bound lines")
     all_points = np.asarray([point for line in lines for point in line["pointsMm"]], dtype=float)
@@ -181,6 +258,7 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
         "geometryRevisionId": manifest["geometryRevisionId"],
         "viewFrame": {"direction": view["direction"], "right": view["right"], "up": view["up"]},
         "sectionPlane": view.get("sectionPlane"),
+        "cropBoundsMm": crop_bounds,
         "boundsMm": bounds,
         "lines": sorted(lines, key=lambda item: item["lineId"]),
         "materialRegions": sorted(material_regions, key=lambda item: item["regionId"]),

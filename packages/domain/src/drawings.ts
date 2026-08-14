@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const Vec3Schema = z.tuple([z.number(), z.number(), z.number()]);
 const RectSchema = z.tuple([z.number(), z.number(), z.number().positive(), z.number().positive()]);
+const CropBoundsSchema = z.tuple([z.number(), z.number(), z.number(), z.number()])
+  .refine((value) => value[2] > value[0] && value[3] > value[1], "crop bounds must have positive width and height");
 
 export const DrawingViewKindSchema = z.enum([
   "floorPlan",
@@ -27,6 +29,9 @@ export const ArtifactViewRequirementSchema = z.object({
   up: Vec3Schema,
   sectionPlane: z.object({ normal: Vec3Schema, offsetMm: z.number() }).optional(),
   sourceTypes: z.array(z.string().min(1)).default([]),
+  sourceEntityIds: z.array(z.uuid()).default([]),
+  sourceEvidenceRefs: z.array(z.string().min(1)).default([]),
+  cropBoundsMm: CropBoundsSchema.optional(),
 }).strict();
 
 export const ArtifactSheetRequirementSchema = z.object({
@@ -75,6 +80,9 @@ export const ArtifactRequirementMatrixSchema = z.object({
     }
     if ((view.kind === "transverseSection" || view.kind === "longitudinalSection" || view.kind === "detail") && !view.sectionPlane) {
       context.addIssue({ code: "custom", message: `section view ${view.id} requires a section plane` });
+    }
+    if (view.kind === "detail" && !view.cropBoundsMm) {
+      context.addIssue({ code: "custom", message: `detail view ${view.id} requires local crop bounds` });
     }
   }
 });

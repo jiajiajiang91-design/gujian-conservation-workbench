@@ -3,7 +3,7 @@ import { z } from "zod";
 import { IsoDateTimeSchema, NonEmptyRefSchema, Sha256Schema, UuidSchema } from "./primitives.js";
 
 export const ArtifactKindSchema = z.enum([
-  "ifc", "glb", "geometryManifest", "geometrySourceMap", "geometryReport", "geometryPreview",
+  "ifc", "glb", "brepBundle", "geometryManifest", "geometrySourceMap", "geometryReport", "geometryPreview",
   "drawingIr", "viewGeometry", "dxf", "svg", "pdf", "png", "drawingSourceMap",
   "checkReport", "licenseManifest", "deliveryManifest",
 ]);
@@ -60,6 +60,13 @@ export const DeliveryEvaluationSchema = z.object({
   checkRunRefs: z.array(UuidSchema).max(10_000),
   outcome: z.enum(["proxy-ready", "blocked"]),
   blockerCodes: z.array(z.string().min(1).max(160)).max(500),
+  blockerDetails: z.array(z.object({
+    code: z.string().min(1).max(160),
+    sourceType: z.enum(["fact", "issue", "unknown", "check", "artifact", "qualification"]),
+    sourceRef: NonEmptyRefSchema,
+    message: z.string().min(1).max(2_000),
+    blocksProxyOutcome: z.boolean(),
+  }).strict()).max(5_000).optional(),
   formalEligibility: z.literal(false),
   evaluatedAt: IsoDateTimeSchema,
 }).strict();

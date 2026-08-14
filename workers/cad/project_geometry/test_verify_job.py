@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 import unittest
 from pathlib import Path
+
+import trimesh
 
 from .kernel import build_geometry_package
 from .test_project_geometry import spec_a
@@ -23,11 +26,26 @@ class ProjectGeometryVerifierTests(unittest.TestCase):
     def test_verifier_rejects_glb_source_and_qualification_tampering(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             source = spec_a()
-            for mutation in ("glb", "source", "qualification"):
+            for mutation in ("glb", "glb-geometry", "brep", "source", "qualification"):
                 output = Path(temp) / mutation
                 build_geometry_package(source, output)
                 if mutation == "glb":
                     path = output / "model.glb"
+                    path.write_bytes(path.read_bytes() + b"forged")
+                elif mutation == "glb-geometry":
+                    path = output / "model.glb"
+                    scene = trimesh.load(path, force="scene", process=False)
+                    mesh = scene.geometry[sorted(scene.geometry)[0]]
+                    mesh.vertices[0, 0] += 0.01
+                    path.write_bytes(scene.export(file_type="glb"))
+                    manifest_path = output / "manifest.json"
+                    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                    asset = next(item for item in manifest["assets"] if item["kind"] == "glb")
+                    asset["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+                    asset["byteLength"] = path.stat().st_size
+                    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+                elif mutation == "brep":
+                    path = output / "model-brep.zip"
                     path.write_bytes(path.read_bytes() + b"forged")
                 elif mutation == "source":
                     path = output / "source-map.ndjson"

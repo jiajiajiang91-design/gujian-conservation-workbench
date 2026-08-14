@@ -55,7 +55,10 @@ class NativeDxfWriter:
         self.sidecar.append(payload)
 
     def _document(self):
-        doc = ezdxf.new("R2018", setup=True)
+        # Keep the DXF resource table minimal. The full ezdxf setup adds many
+        # unused OpenSans/Liberation styles that qualification tools then report
+        # as substituted fonts even though the drawing never references them.
+        doc = ezdxf.new("R2018")
         doc.header["$INSUNITS"] = 4
         doc.header["$TDCREATE"] = FIXED_JULIAN_DATE
         doc.header["$TDUPDATE"] = FIXED_JULIAN_DATE
@@ -65,17 +68,23 @@ class NativeDxfWriter:
         doc.header["$VERSIONGUID"] = "{" + version + "}"
         doc.header["$LASTSAVEDBY"] = "GUJIAN-CAD-WORKER"
         doc.appids.add(APP_ID)
+        if "GJ-DASHED" not in doc.linetypes:
+            doc.linetypes.add("GJ-DASHED", pattern=[18.0, 12.0, -6.0], description="Gujian hidden or pending boundary")
+        if "GJ-CENTER" not in doc.linetypes:
+            doc.linetypes.add("GJ-CENTER", pattern=[39.0, 24.0, -6.0, 3.0, -6.0], description="Gujian axis centre line")
         layers = {
-            "GJ-CUT": (7, 50), "GJ-OUTLINE": (7, 35), "GJ-PROJECTION": (8, 18),
-            "GJ-DIMENSION": (2, 18), "GJ-TEXT": (7, 18), "GJ-HATCH": (9, 13),
-            "GJ-CONDITION": (1, 30), "GJ-FRAME": (7, 35),
+            "GJ-CUT": (7, 50, "Continuous"), "GJ-OUTLINE": (7, 35, "Continuous"),
+            "GJ-PROJECTION": (8, 18, "Continuous"), "GJ-HIDDEN": (8, 18, "GJ-DASHED"),
+            "GJ-AXIS": (4, 13, "GJ-CENTER"), "GJ-DIMENSION": (2, 18, "Continuous"),
+            "GJ-TEXT": (7, 18, "Continuous"), "GJ-HATCH": (9, 13, "Continuous"),
+            "GJ-CONDITION": (1, 30, "GJ-DASHED"), "GJ-FRAME": (7, 35, "Continuous"),
         }
-        for name, (color, lineweight) in layers.items():
+        for name, (color, lineweight, linetype) in layers.items():
             if name not in doc.layers:
-                doc.layers.add(name, color=color, lineweight=lineweight)
+                doc.layers.add(name, color=color, lineweight=lineweight, linetype=linetype)
         style = doc.styles.add("GJ-TEXT", font=self.font_file_name)
         style.set_extended_font_data("Gujian Sans SC", italic=False, bold=False)
-        dim = doc.dimstyles.duplicate_entry("EZDXF", "GJ-DIM")
+        dim = doc.dimstyles.duplicate_entry("Standard", "GJ-DIM")
         dim.dxf.dimtxsty = "GJ-TEXT"
         dim.dxf.dimtxt = 125
         dim.dxf.dimasz = 100
@@ -117,10 +126,21 @@ class NativeDxfWriter:
             self._register(dimension.dimension, _cad_id(self.ir["drawingIrSha256"], f"dimension:{view['viewId']}"), "annotation", {
                 "requirementId": f"dimension:{view['viewId']}", "viewId": view["viewId"], "sourceRefs": [self.ir["geometryRevisionId"]],
             })
-            label = msp.add_mtext(f"{view['displayLabelZh']}  1:{view['scaleDenominator']}", dxfattribs={"layer": "GJ-TEXT", "char_height": 150, "style": "GJ-TEXT"})
-            label.set_location((x1, y2 + 260))
+            label = msp.add_text(
+                f"{view['displayLabelZh']}  1:{view['scaleDenominator']}",
+                dxfattribs={"layer": "GJ-TEXT", "height": 150, "style": "GJ-TEXT", "insert": (x1, y2 + 260)},
+            )
             self._register(label, _cad_id(self.ir["drawingIrSha256"], f"title:{view['viewId']}"), "annotation", {
                 "requirementId": f"title:{view['viewId']}", "viewId": view["viewId"], "sourceRefs": [view["viewId"]],
+            })
+            qualification = msp.add_mtext(
+                "代理成果·未签发\n未经项目责任人员专业复核，不可用于正式交付或施工。",
+                dxfattribs={"layer": "GJ-TEXT", "char_height": 100, "style": "GJ-TEXT", "width": max(1200.0, (x2 - x1) * 0.45)},
+            )
+            qualification.set_location((x1, y2 + 520))
+            self._register(qualification, _cad_id(self.ir["drawingIrSha256"], f"qualification:{view['viewId']}"), "annotation", {
+                "requirementId": f"qualification:{view['viewId']}", "viewId": view["viewId"],
+                "geometryRevisionId": self.ir["geometryRevisionId"], "sourceRefs": [self.ir["geometryRevisionId"]],
             })
         for annotation in self.ir["annotations"]:
             if annotation["kind"] != "conditionCandidate":

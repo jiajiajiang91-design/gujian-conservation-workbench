@@ -112,7 +112,7 @@ class ProjectGeometryTests(unittest.TestCase):
                 signatures.add(result["geometrySignature"])
                 counts.append(len(result["entities"]))
                 self.assertFalse(result["l1Eligible"])
-                self.assertEqual({item["kind"] for item in result["assets"]}, {"ifc", "glb", "manifest", "sourceMap", "report", "preview"})
+                self.assertEqual({item["kind"] for item in result["assets"]}, {"ifc", "glb", "brepBundle", "manifest", "sourceMap", "report", "preview"})
                 self.assertEqual(len(ifcopenshell.open(output / "model.ifc").by_type("IfcBuildingElementProxy")), len(source["objects"]))
                 scene = trimesh.load(output / "model.glb", force="scene", process=False)
                 self.assertEqual(len(scene.geometry), len(source["objects"]))
@@ -131,7 +131,7 @@ class ProjectGeometryTests(unittest.TestCase):
             first = build_geometry_package(spec_a(), left)
             second = build_geometry_package(spec_a(), right)
             self.assertEqual(first, second)
-            for name in ("model.glb", "model.ifc", "source-map.ndjson", "geometry-report.json", "preview.png", "manifest.json"):
+            for name in ("model.glb", "model.ifc", "model-brep.zip", "source-map.ndjson", "geometry-report.json", "preview.png", "manifest.json"):
                 self.assertEqual((left / name).read_bytes(), (right / name).read_bytes(), name)
 
     def test_contract_rejects_wrong_units_and_arbitrary_external_inputs(self) -> None:

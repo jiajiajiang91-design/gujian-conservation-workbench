@@ -24,9 +24,12 @@ import { IndexedDbProjectRepository, LocalAuthorization } from "./indexeddb-proj
 
 // Large evidence packages can contain high-resolution image masters. Keep
 // per-entry and expanded-size limits strict while preserving complete sources.
-const MAX_ARCHIVE_BYTES = 240 * 1024 * 1024;
-const MAX_ENTRY_BYTES = 96 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 320 * 1024 * 1024;
+// The evidence-bound HABS benchmark contains a native DXF above 120 MiB and
+// preserves earlier generated revisions for audit. Limits therefore cover the
+// largest verified project while still bounding every entry and expansion.
+const MAX_ARCHIVE_BYTES = 640 * 1024 * 1024;
+const MAX_ENTRY_BYTES = 192 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 1024 * 1024 * 1024;
 const MAX_ENTRY_COUNT = 1_000;
 
 const ProjectDataSchema = z.object({

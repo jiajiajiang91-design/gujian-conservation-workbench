@@ -5,6 +5,7 @@ import io
 import json
 import math
 import uuid
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -126,12 +127,13 @@ def _interface_metrics(interface: dict[str, Any], objects: dict[str, BuiltObject
     }
 
 
-def _entity_record(item: BuiltObject) -> dict[str, Any]:
+def _entity_record(item: BuiltObject, brep_sha256: str) -> dict[str, Any]:
     box = item.shape.BoundingBox()
     return {
         "id": item.record["id"], "stableKey": item.record["stableKey"],
         "componentType": item.record["componentType"], "displayNameZh": item.record["displayNameZh"],
         "materialCode": item.record["materialCode"], "meshHash": item.mesh_hash,
+        "brepSha256": brep_sha256,
         "vertexCount": int(len(item.vertices)), "faceCount": int(len(item.faces)),
         "volumeMm3": round(float(item.shape.Volume()), 6),
         "boundsMm": [[round(box.xmin, 6), round(box.ymin, 6), round(box.zmin, 6)], [round(box.xmax, 6), round(box.ymax, 6), round(box.zmax, 6)]],
@@ -237,7 +239,24 @@ def build_geometry_package(spec_value: dict[str, Any], output_dir: Path) -> dict
     output_dir.mkdir(parents=True, exist_ok=False)
     objects = _build_objects(spec)
     by_id = {item.record["id"]: item for item in objects}
-    entities = [_entity_record(item) for item in objects]
+    # Keep the exact OCP BRep for downstream sections and visibility work.  GLB
+    # remains the browser preview/transport form; it is not the cutting source.
+    brep_dir = output_dir / "brep"
+    brep_dir.mkdir()
+    brep_hashes: dict[str, str] = {}
+    for item in objects:
+        brep_path = brep_dir / f"{item.record['id']}.brep"
+        item.shape.exportBrep(str(brep_path))
+        brep_hashes[item.record["id"]] = sha256_bytes(brep_path.read_bytes())
+    brep_bundle_path = output_dir / "model-brep.zip"
+    with zipfile.ZipFile(brep_bundle_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+        for brep_path in sorted(brep_dir.glob("*.brep"), key=lambda path: path.name):
+            info = zipfile.ZipInfo(f"brep/{brep_path.name}", date_time=(2000, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o100644 << 16
+            info.create_system = 3
+            archive.writestr(info, brep_path.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+    entities = [_entity_record(item, brep_hashes[item.record["id"]]) for item in objects]
     interfaces = [_interface_metrics(item, by_id) for item in spec["interfaces"]]
     entity_closure = sha256_bytes(canonical_bytes(entities))
     interface_closure = sha256_bytes(canonical_bytes(interfaces))
@@ -279,6 +298,7 @@ def build_geometry_package(spec_value: dict[str, Any], output_dir: Path) -> dict
     assets = []
     for kind, path, mime_type in [
         ("ifc", ifc_path, "application/x-step"), ("glb", glb_path, "model/gltf-binary"),
+        ("brepBundle", brep_bundle_path, "application/zip"),
         ("sourceMap", source_path, "application/x-ndjson"), ("report", report_path, "application/json"),
         ("preview", preview_path, "image/png"),
     ]:

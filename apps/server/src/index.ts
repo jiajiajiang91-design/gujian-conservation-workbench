@@ -279,6 +279,7 @@ export function createWorkbenchServer(options: {
         if (!entry || entry.job.status !== "succeeded") return writeJson(response, 404, { error: "CAD_ASSET_NOT_READY" }, origin);
         const data = cadWorker.readAsset(jobId, fileName);
         const mime = fileName.endsWith(".glb") ? "model/gltf-binary" : fileName.endsWith(".ifc") ? "application/x-step"
+          : fileName.endsWith(".zip") ? "application/zip"
           : fileName.endsWith(".png") ? "image/png" : fileName.endsWith(".ndjson") ? "application/x-ndjson" : "application/json";
         response.writeHead(200, { "content-type": mime, "content-length": data.length, "cache-control": "no-store" });
         return response.end(data);

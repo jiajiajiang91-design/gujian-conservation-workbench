@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +12,7 @@ import cadquery  # Import first: CadQuery and IfcOpenShell share OpenCascade on 
 import ifcopenshell
 import numpy as np
 import trimesh
+from scipy.spatial import cKDTree
 
 from .contracts import canonical_bytes, geometry_spec_input_hash, sha256_bytes, validate_geometry_spec
 
@@ -24,6 +27,34 @@ def _mesh_hash(vertices: np.ndarray, faces: np.ndarray) -> str:
     return sha256_bytes(canonical_bytes(sorted(canonical_faces)))
 
 
+def _mesh_coordinates_match(
+    source_vertices: np.ndarray,
+    source_faces: np.ndarray,
+    exported_vertices: np.ndarray,
+    exported_faces: np.ndarray,
+) -> bool:
+    if source_faces.shape != exported_faces.shape:
+        return False
+    source = source_vertices[source_faces.astype(np.int64)]
+    exported = exported_vertices[exported_faces.astype(np.int64)]
+    tree = cKDTree(exported.mean(axis=1))
+    used: set[int] = set()
+    for source_face in source:
+        candidates = tree.query_ball_point(source_face.mean(axis=0), r=0.001)
+        matched = None
+        for candidate in candidates:
+            if candidate in used:
+                continue
+            exported_face = exported[candidate]
+            if any(np.allclose(source_face, np.roll(exported_face, offset, axis=0), atol=0.001, rtol=0.0) for offset in range(3)):
+                matched = candidate
+                break
+        if matched is None:
+            return False
+        used.add(matched)
+    return len(used) == len(exported)
+
+
 def verify_geometry_package(spec_value: dict[str, Any], output_dir: Path) -> dict[str, Any]:
     spec = validate_geometry_spec(spec_value)
     manifest_path = output_dir / "manifest.json"
@@ -34,7 +65,7 @@ def verify_geometry_package(spec_value: dict[str, Any], output_dir: Path) -> dic
     if manifest.get("projectRevisionId") != spec["projectRevisionId"] or manifest.get("geometrySpecId") != spec["id"]:
         failures.append("project or spec revision mismatch")
     asset_by_kind = {item["kind"]: item for item in manifest.get("assets", [])}
-    for kind in ("ifc", "glb", "sourceMap", "report", "preview"):
+    for kind in ("ifc", "glb", "brepBundle", "sourceMap", "report", "preview"):
         record = asset_by_kind.get(kind)
         if not record:
             failures.append(f"missing asset record: {kind}")
@@ -49,6 +80,32 @@ def verify_geometry_package(spec_value: dict[str, Any], output_dir: Path) -> dic
     if set(source_by_id) != object_ids or len(source_by_id) != len(source_records):
         failures.append("source map entity closure mismatch")
 
+    brep_bundle = output_dir / "model-brep.zip"
+    brep_meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    if brep_bundle.is_file():
+        with zipfile.ZipFile(brep_bundle) as archive:
+            expected_names = {f"brep/{entity_id}.brep" for entity_id in object_ids}
+            if set(archive.namelist()) != expected_names:
+                failures.append("BRep bundle entity closure mismatch")
+            else:
+                with tempfile.TemporaryDirectory(prefix="gujian-brep-verify-") as temporary:
+                    for entity_id in sorted(object_ids):
+                        brep_bytes = archive.read(f"brep/{entity_id}.brep")
+                        if hashlib.sha256(brep_bytes).hexdigest() != source_by_id[entity_id].get("brepSha256"):
+                            failures.append(f"BRep hash mismatch: {entity_id}")
+                            continue
+                        brep_path = Path(temporary) / f"{entity_id}.brep"
+                        brep_path.write_bytes(brep_bytes)
+                        shape = cadquery.Shape.importBrep(str(brep_path))
+                        vertices, faces = shape.tessellate(float(spec["tolerances"]["tessellationMm"]), 0.1)
+                        points = np.asarray([[point.x, point.y, point.z] for point in vertices], dtype=np.float64)
+                        triangles = np.asarray(faces, dtype=np.int64)
+                        brep_meshes[entity_id] = (points, triangles)
+                        if _mesh_hash(points, triangles) != source_by_id[entity_id].get("meshHash"):
+                            failures.append(f"BRep source mesh mismatch: {entity_id}")
+    else:
+        failures.append("BRep bundle is missing")
+
     scene = trimesh.load(output_dir / "model.glb", force="scene", process=False)
     if set(scene.geometry) != object_ids:
         failures.append("GLB entity closure mismatch")
@@ -56,8 +113,10 @@ def verify_geometry_package(spec_value: dict[str, Any], output_dir: Path) -> dic
         for entity_id, mesh in scene.geometry.items():
             glb_vertices = np.asarray(mesh.vertices)
             source_vertices = np.column_stack((glb_vertices[:, 0], -glb_vertices[:, 2], glb_vertices[:, 1])) * 1000.0
-            actual = _mesh_hash(source_vertices, np.asarray(mesh.faces))
-            if actual != source_by_id[entity_id]["meshHash"]:
+            source_mesh = brep_meshes.get(entity_id)
+            if source_mesh is None or not _mesh_coordinates_match(
+                source_mesh[0], source_mesh[1], source_vertices, np.asarray(mesh.faces)
+            ):
                 failures.append(f"GLB mesh mismatch: {entity_id}")
 
     ifc = ifcopenshell.open(output_dir / "model.ifc")

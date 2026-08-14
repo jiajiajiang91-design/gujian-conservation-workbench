@@ -11,12 +11,15 @@ from pathlib import Path
 from typing import Any
 
 import ezdxf
+import cadquery as cq
 import numpy as np
 import trimesh
 from PIL import Image
 from fontTools.ttLib import TTFont
 from pypdf import PdfReader
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point, Polygon, box
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
+from OCP.gp import gp_Dir, gp_Pln, gp_Pnt
 from shapely.ops import unary_union
 
 
@@ -41,6 +44,27 @@ def _load_geometry_meshes(geometry_dir: Path, manifest: dict[str, Any]) -> dict[
         project_vertices = np.column_stack((vertices[:, 0], -vertices[:, 2], vertices[:, 1])) * 1000.0
         meshes[entity_id] = project_vertices, np.asarray(mesh.faces, dtype=np.int64)
     return meshes
+
+
+def _load_geometry_shapes(geometry_dir: Path, manifest: dict[str, Any]) -> dict[str, cq.Shape]:
+    shapes: dict[str, cq.Shape] = {}
+    for item in manifest["entities"]:
+        path = geometry_dir / "brep" / f"{item['id']}.brep"
+        if not path.is_file() or _hash(path) != item.get("brepSha256"):
+            raise ValueError(f"exact BRep closure failed for {item['id']}")
+        shapes[item["id"]] = cq.Shape.importBrep(str(path))
+    return shapes
+
+
+def _independent_ocp_section(shape: cq.Shape, normal: np.ndarray, offset: float) -> list[np.ndarray]:
+    origin = normal * offset
+    result = BRepAlgoAPI_Section(shape.wrapped, gp_Pln(gp_Pnt(*origin.tolist()), gp_Dir(*normal.tolist())), True).Shape()
+    segments: list[np.ndarray] = []
+    for edge in cq.Shape.cast(result).Edges():
+        points, _ = edge.sample(max(2, int(math.ceil(edge.Length() / 0.5)) + 1))
+        for left, right in zip(points, points[1:], strict=False):
+            segments.append(np.asarray([left.toTuple(), right.toTuple()], dtype=float))
+    return segments
 
 
 def _independent_candidate_edges(vertices: np.ndarray, faces: np.ndarray, direction: np.ndarray) -> list[tuple[np.ndarray, np.ndarray]]:
@@ -78,8 +102,24 @@ def _independent_triangle_depth(point: np.ndarray, triangle: np.ndarray, depths:
     return float(a * depths[0] + b * depths[1] + c * depths[2])
 
 
-def _independently_visible(segment: np.ndarray, segment_depth: np.ndarray, triangles: list[tuple[np.ndarray, np.ndarray]]) -> bool:
-    for fraction in (0.12, 0.28, 0.5, 0.72, 0.88):
+def _independent_visibility_intervals(segment: np.ndarray, segment_depth: np.ndarray, triangles: list[tuple[np.ndarray, np.ndarray]]) -> list[tuple[float, float]]:
+    line = LineString(segment)
+    events = {0.0, 1.0}
+    for triangle, _ in triangles:
+        overlap = line.intersection(Polygon(triangle))
+        geometries = list(overlap.geoms) if hasattr(overlap, "geoms") else [overlap]
+        for geometry in geometries:
+            if geometry.is_empty:
+                continue
+            if geometry.geom_type == "LineString":
+                for coordinate in (geometry.coords[0], geometry.coords[-1]):
+                    events.add(max(0.0, min(1.0, float(line.project(Point(coordinate)) / max(line.length, 1e-12)))))
+            elif geometry.geom_type == "Point":
+                events.add(max(0.0, min(1.0, float(line.project(geometry) / max(line.length, 1e-12)))))
+    ordered = sorted(events)
+    visible: list[tuple[float, float]] = []
+    for left, right in zip(ordered, ordered[1:], strict=False):
+        fraction = (left + right) / 2
         point = segment[0] * (1 - fraction) + segment[1] * fraction
         depth = float(segment_depth[0] * (1 - fraction) + segment_depth[1] * fraction)
         nearest = math.inf
@@ -91,47 +131,69 @@ def _independently_visible(segment: np.ndarray, segment_depth: np.ndarray, trian
             candidate = _independent_triangle_depth(point, triangle, depths)
             if candidate is not None:
                 nearest = min(nearest, candidate)
-        if nearest < depth - 0.5:
-            return False
-    return True
+        if nearest >= depth - 0.5 and right - left > 1e-9:
+            if visible and abs(visible[-1][1] - left) < 1e-9:
+                visible[-1] = (visible[-1][0], right)
+            else:
+                visible.append((left, right))
+    return visible
+
+
+def _independent_crop(segment: np.ndarray, crop_bounds: list[float] | None) -> list[np.ndarray]:
+    if crop_bounds is None:
+        return [segment]
+    intersection = LineString(segment).intersection(box(*crop_bounds))
+    geometries = list(intersection.geoms) if hasattr(intersection, "geoms") else [intersection]
+    return [np.asarray(geometry.coords, dtype=float) for geometry in geometries if geometry.geom_type == "LineString" and geometry.length >= 0.05]
 
 
 def _independent_view_line_sets(matrix: dict[str, Any], manifest: dict[str, Any], geometry_dir: Path) -> dict[str, set[tuple[str, tuple[float, float], tuple[float, float]]]]:
     component_type = {item["id"]: item["componentType"] for item in manifest["entities"]}
     meshes = _load_geometry_meshes(geometry_dir, manifest)
+    shapes = _load_geometry_shapes(geometry_dir, manifest)
     output: dict[str, set[tuple[str, tuple[float, float], tuple[float, float]]]] = {}
     for view in matrix["views"]:
         direction = np.asarray(view["direction"], dtype=float)
-        right = np.asarray(view["right"], dtype=float)
-        up = np.asarray(view["up"], dtype=float)
+        right_vector = np.asarray(view["right"], dtype=float)
+        up_vector = np.asarray(view["up"], dtype=float)
+        source_entity_ids = set(view.get("sourceEntityIds", []))
         selected = {
             entity_id: value
             for entity_id, value in meshes.items()
-            if not view.get("sourceTypes") or component_type[entity_id] in view["sourceTypes"]
+            if (not source_entity_ids or entity_id in source_entity_ids)
+            and (not view.get("sourceTypes") or component_type[entity_id] in view["sourceTypes"])
         }
+        crop_bounds = view.get("cropBoundsMm")
         expected: set[tuple[str, tuple[float, float], tuple[float, float]]] = set()
         if view.get("sectionPlane"):
             plane = view["sectionPlane"]
             normal = np.asarray(plane["normal"], dtype=float)
             origin = normal * float(plane["offsetMm"])
             for entity_id, (vertices, faces) in selected.items():
-                mesh = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-                for segment in trimesh.intersections.mesh_plane(mesh, plane_normal=normal, plane_origin=origin):
-                    projected = np.column_stack((segment @ right, segment @ up))
-                    expected.add(_segment_key(entity_id, projected))
+                for segment in _independent_ocp_section(shapes[entity_id], normal, float(plane["offsetMm"])):
+                    projected = np.column_stack((segment @ right_vector, segment @ up_vector))
+                    for clipped in _independent_crop(projected, crop_bounds):
+                        expected.add(_segment_key(entity_id, clipped))
         else:
             projected_triangles: list[tuple[np.ndarray, np.ndarray]] = []
             for vertices, faces in selected.values():
                 for triangle in vertices[faces]:
-                    projected_triangles.append((np.column_stack((triangle @ right, triangle @ up)), triangle @ direction))
+                    projected_triangles.append((np.column_stack((triangle @ right_vector, triangle @ up_vector)), triangle @ direction))
             for entity_id, (vertices, faces) in selected.items():
                 for start, end in _independent_candidate_edges(vertices, faces, direction):
                     segment_3d = np.vstack((start, end))
-                    segment_2d = np.column_stack((segment_3d @ right, segment_3d @ up))
+                    segment_2d = np.column_stack((segment_3d @ right_vector, segment_3d @ up_vector))
                     if np.linalg.norm(segment_2d[1] - segment_2d[0]) < 0.05:
                         continue
-                    if _independently_visible(segment_2d, segment_3d @ direction, projected_triangles):
-                        expected.add(_segment_key(entity_id, segment_2d))
+                    depths = segment_3d @ direction
+                    for left, right in _independent_visibility_intervals(segment_2d, depths, projected_triangles):
+                        clipped = np.vstack((
+                            segment_2d[0] * (1 - left) + segment_2d[1] * left,
+                            segment_2d[0] * (1 - right) + segment_2d[1] * right,
+                        ))
+                        if np.linalg.norm(clipped[1] - clipped[0]) >= 0.05:
+                            for view_clipped in _independent_crop(clipped, crop_bounds):
+                                expected.add(_segment_key(entity_id, view_clipped))
         output[view["id"]] = expected
     return output
 
@@ -220,7 +282,7 @@ def verify(
     view_ok = True
     allowed_classes = {"cut", "silhouette", "feature", "componentBoundary"}
     for view in ir["views"]:
-        source_path = output_dir / "view-geometry" / f"{view['drawingRef']}.json.gz"
+        source_path = output_dir / "view-geometry" / f"{view['viewKey']}.json.gz"
         with gzip.open(source_path, "rt", encoding="utf-8") as stream:
             exported = json.load(stream)
         view_ok = view_ok and exported == view
@@ -254,14 +316,27 @@ def verify(
 
     doc = ezdxf.readfile(output_dir / "drawings.dxf")
     audit = doc.audit()
-    model_types = {entity.dxftype() for entity in doc.modelspace()}
+    native_types = {entity.dxftype() for layout in doc.layouts for entity in layout}
     layout_names = [name for name in doc.layouts.names() if name != "Model"]
     expected_layouts = [sheet["drawingNumber"] for sheet in matrix["sheets"]]
     user_viewports = [entity for name in layout_names for entity in doc.layouts.get(name).query("VIEWPORT") if entity.dxf.id > 1]
     _check(not audit.errors and doc.header["$INSUNITS"] == 4 and doc.dxfversion == "AC1032", "native-dxf-baseline", "DXF 为 R2018、毫米、ezdxf 审计零错误", checks)
-    _check({"LINE", "HATCH", "DIMENSION", "MTEXT", "INSERT"}.issubset(model_types), "native-dxf-types", "原生结构线、填充、尺寸、文字和块均存在", checks)
+    requires_hatch = any(view.get("materialRegions") for view in ir["views"])
+    native_types_ok = {"LINE", "DIMENSION", "TEXT", "MTEXT", "INSERT"}.issubset(native_types)
+    native_types_ok = native_types_ok and (not requires_hatch or "HATCH" in native_types)
+    _check(native_types_ok, "native-dxf-types", "原生结构线、按需填充、单行/多行文字和块均存在", checks)
+    business_linetypes = {item.dxf.name for item in doc.linetypes}
+    business_layers_ok = doc.layers.get("GJ-CONDITION").dxf.linetype == "GJ-DASHED" and doc.layers.get("GJ-AXIS").dxf.linetype == "GJ-CENTER"
+    _check({"GJ-DASHED", "GJ-CENTER"}.issubset(business_linetypes) and business_layers_ok, "native-business-linetypes", "虚线与轴线为原生业务线型并绑定对应图层", checks)
     _check(layout_names == expected_layouts and len(user_viewports) == len(matrix["views"]) and all(item.dxf.flags & 0x4000 for item in user_viewports), "native-layouts", "动态图纸布局和全部锁定视口与任务矩阵一致", checks)
-    _check("GJ-CONDITION" in doc.layers and len(doc.modelspace().query('*[layer=="GJ-CONDITION"]')) > 0, "condition-layer", "演示现状候选图层非空", checks)
+    condition_count = len(doc.modelspace().query('*[layer=="GJ-CONDITION"]'))
+    expects_conditions = bool(matrix.get("observationCandidates"))
+    _check(
+        "GJ-CONDITION" in doc.layers and ((condition_count > 0) == expects_conditions),
+        "condition-layer",
+        "现状候选图层仅在当前任务存在观察候选时包含对象",
+        checks,
+    )
 
     sidecar_rows = [json.loads(line) for line in (output_dir / "drawing-source-map.ndjson").read_text(encoding="utf-8").splitlines() if line]
     handles = {entity.dxf.handle: entity for layout in doc.layouts for entity in layout if entity.dxf.handle}

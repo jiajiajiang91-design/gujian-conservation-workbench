@@ -52,6 +52,15 @@ export const CommitFactsCommandSchema = CommandHeaderSchema.extend({
   }).strict(),
 }).strict();
 
+export const ReplaceTaskDefinitionCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ReplaceTaskDefinition"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    taskDefinition: TaskDefinitionSchema,
+    supersedesTaskDefinitionId: UuidSchema,
+  }).strict(),
+}).strict();
+
 export const ImportProjectSnapshotCommandSchema = CommandHeaderSchema.extend({
   commandType: z.literal("ImportProjectSnapshot"),
   expectedRevisionId: z.null(),
@@ -182,6 +191,7 @@ export const CreateDeliveryDraftCommandSchema = CommandHeaderSchema.extend({
 export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CreateProjectCommandSchema,
   CommitFactsCommandSchema,
+  ReplaceTaskDefinitionCommandSchema,
   ImportProjectSnapshotCommandSchema,
   ImportEvidenceCommandSchema,
   CommitModelRunResultCommandSchema,

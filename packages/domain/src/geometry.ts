@@ -197,7 +197,7 @@ export const GeometrySpecSchema = z.discriminatedUnion("schemaVersion", [LegacyG
 
 const GeometryAssetRefSchema = z.object({
   assetId: UuidSchema,
-  kind: z.enum(["ifc", "glb", "manifest", "sourceMap", "report", "preview"]),
+  kind: z.enum(["ifc", "glb", "brepBundle", "manifest", "sourceMap", "report", "preview"]),
   sha256: Sha256Schema,
   mimeType: z.string().min(1).max(200),
   byteLength: z.number().int().nonnegative(),
@@ -220,6 +220,9 @@ export const GeometryRevisionSchema = z.object({
   createdAt: IsoDateTimeSchema,
 }).strict().superRefine((value, context) => {
   const kinds = new Set(value.assets.map((asset) => asset.kind));
+  // Historical revisions created before the exact-BRep migration remain
+  // readable so they can be invalidated and audited. New commits enforce the
+  // complete closure in ProjectCommandService and the worker verifier.
   for (const required of ["ifc", "glb", "manifest", "sourceMap", "report", "preview"] as const) {
     if (!kinds.has(required)) context.addIssue({ code: "custom", message: `missing geometry asset ${required}`, path: ["assets"] });
   }

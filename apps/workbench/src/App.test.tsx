@@ -21,6 +21,12 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /问题处理/ }));
     expect(await screen.findByText("问题队列与必要人工节点")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("成果目录"), { target: { value: "平面图" } });
+    fireEvent.change(screen.getByLabelText("图纸标题"), { target: { value: "山门代理成果图" } });
+    fireEvent.change(screen.getByLabelText("修订标记"), { target: { value: "P1" } });
+    fireEvent.change(screen.getByLabelText("几何目标角色"), { target: { value: "wall" } });
+    fireEvent.change(screen.getByLabelText("图纸结构 JSON"), { target: { value: '[{"key":"sheet","drawingNumber":"P-01","displayLabelZh":"平面","pageMm":[420,297]}]' } });
+    fireEvent.change(screen.getByLabelText("视图结构 JSON"), { target: { value: '[{"key":"plan","displayLabelZh":"平面","drawingRef":"平-01","kind":"floorPlan","scaleDenominator":50,"sheetKey":"sheet","viewportRectMm":[20,20,380,250],"direction":[0,0,1],"right":[1,0,0],"up":[0,1,0],"targetStableKeys":[],"sourceEvidenceRefs":[]}]' } });
     fireEvent.click(screen.getByRole("button", { name: "确认一次任务设置" }));
     expect(await screen.findByText("人工节点 01 已完成")).toBeInTheDocument();
 

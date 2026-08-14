@@ -70,7 +70,10 @@ class ProjectDrawingTests(unittest.TestCase):
                 doc = ezdxf.readfile(root / "drawings" / "drawings.dxf")
                 self.assertFalse(doc.audit().errors)
                 types = {entity.dxftype() for entity in doc.modelspace()}
-                self.assertTrue({"LINE", "DIMENSION", "MTEXT", "INSERT"}.issubset(types))
+                self.assertTrue({"LINE", "DIMENSION", "TEXT", "MTEXT", "INSERT"}.issubset(types))
+                self.assertTrue({"GJ-DASHED", "GJ-CENTER"}.issubset({item.dxf.name for item in doc.linetypes}))
+                self.assertEqual(doc.layers.get("GJ-CONDITION").dxf.linetype, "GJ-DASHED")
+                self.assertEqual(doc.layers.get("GJ-AXIS").dxf.linetype, "GJ-CENTER")
                 self.assertIn("GJ-CONDITION", doc.layers)
                 layouts = [item for item in doc.layouts.names() if item != "Model"]
                 self.assertEqual(len(layouts), record["sheetCount"])

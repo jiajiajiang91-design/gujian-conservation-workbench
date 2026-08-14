@@ -17,6 +17,8 @@ interface IssueDescriptor {
   subjectRefs: string[];
   description: string;
   impactRefs: string[];
+  blocksProxyOutcome?: boolean;
+  blocksFormalEligibility?: boolean;
 }
 
 function descriptorKey(issue: IssueDescriptor | Issue): string {
@@ -27,6 +29,8 @@ function descriptorKey(issue: IssueDescriptor | Issue): string {
     subjectRefs: [...issue.subjectRefs].sort(),
     description: issue.description,
     impactRefs: [...issue.impactRefs].sort(),
+    blocksProxyOutcome: issue.blocksProxyOutcome ?? false,
+    blocksFormalEligibility: issue.blocksFormalEligibility ?? true,
   });
 }
 
@@ -140,6 +144,8 @@ export class WorkflowService {
       sourceRef: `rule:${descriptor.ruleId}`,
       status: "open",
       impactRefs: descriptor.impactRefs,
+      blocksProxyOutcome: descriptor.blocksProxyOutcome ?? (descriptor.issueType === "ruleConflict" || descriptor.issueType === "highRisk"),
+      blocksFormalEligibility: descriptor.blocksFormalEligibility ?? true,
       producer: { producerType: "rule", ruleRunId },
       createdAt: now,
       resolvedAt: null,
@@ -190,6 +196,7 @@ export class WorkflowService {
     scope: string[];
     regulationRefs: string[];
     deliverables: string[];
+    artifactRequirements?: import("@gujian/domain").TaskArtifactRequirements;
   }): Promise<ProjectHead> {
     const now = new Date().toISOString();
     const taskDefinition = TaskDefinitionSchema.parse({
@@ -203,6 +210,7 @@ export class WorkflowService {
         { role: "professionalReviewer", actorId },
       ],
       automationPolicyRef: "policy:milestone-one-v1",
+      ...(input.artifactRequirements ? { artifactRequirements: input.artifactRequirements } : {}),
       confirmedAt: now,
     });
     await this.#commands.execute({
@@ -216,6 +224,40 @@ export class WorkflowService {
     });
     const updated = await this.#repository.getProjectHead(head.projectId);
     if (!updated) throw new Error("PROJECT_NOT_FOUND_AFTER_TASK_SETUP");
+    return this.evaluate(updated, actorId);
+  }
+
+  async replaceTaskDefinition(head: ProjectHead, actorId: string, input: {
+    taskName: string;
+    scope: string[];
+    regulationRefs: string[];
+    deliverables: string[];
+    artifactRequirements: import("@gujian/domain").TaskArtifactRequirements;
+  }): Promise<ProjectHead> {
+    const current = head.snapshot.taskDefinitions.find((task) => task.confirmedAt !== null);
+    if (!current) return this.confirmTaskSetup(head, actorId, input);
+    const now = new Date().toISOString();
+    const taskDefinition = TaskDefinitionSchema.parse({
+      ...current,
+      id: crypto.randomUUID(),
+      name: input.taskName,
+      scope: input.scope,
+      regulationRefs: input.regulationRefs,
+      deliverables: input.deliverables,
+      artifactRequirements: input.artifactRequirements,
+      confirmedAt: now,
+    });
+    await this.#commands.execute({
+      commandType: "ReplaceTaskDefinition",
+      commandId: crypto.randomUUID(),
+      projectId: head.projectId,
+      actorId,
+      expectedRevisionId: head.revisionId,
+      issuedAt: now,
+      payload: { taskDefinition, supersedesTaskDefinitionId: current.id },
+    });
+    const updated = await this.#repository.getProjectHead(head.projectId);
+    if (!updated) throw new Error("PROJECT_NOT_FOUND_AFTER_TASK_REPLACEMENT");
     return this.evaluate(updated, actorId);
   }
 

@@ -13,7 +13,7 @@ describe("artifact requirement matrix", () => {
       views: [{
         id: ids[4], key: "south", displayLabelZh: "南立面图", drawingRef: "立-01", kind: "elevation",
         scaleDenominator: 50, sheetId: ids[0], viewportRectMm: [20, 60, 360, 240],
-        direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1], sourceTypes: [],
+        direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1], sourceTypes: [], sourceEntityIds: [], sourceEvidenceRefs: [],
       }],
       sheets: [{ id: ids[0], drawingNumber: "P-01", displayLabelZh: "立面", pageMm: [841, 594], viewIds: [ids[4]] }],
     });

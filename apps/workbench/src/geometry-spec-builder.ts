@@ -1,38 +1,82 @@
 import type { ProjectHead } from "@gujian/application";
 import {
+  GeometryInterfaceSchema,
   ProjectDrivenGeometrySpecSchema,
+  ProjectGeometryObjectSchema,
   type FactEnvelope,
   type ProjectDrivenGeometrySpec,
   type ProjectGeometryObject,
 } from "@gujian/domain";
 import { recordHash } from "@gujian/infrastructure";
+import { z } from "zod";
 
-export const REQUIRED_GEOMETRY_FACTS = [
-  "geometry.overallWidthMm",
-  "geometry.overallDepthMm",
-  "geometry.baseHeightMm",
-  "geometry.wallHeightMm",
-  "geometry.ridgeHeightMm",
-] as const;
+export const EvidenceGeometryComponentValueSchema = ProjectGeometryObjectSchema.omit({
+  id: true,
+  parentId: true,
+  producer: true,
+  factRefs: true,
+  evidenceRefs: true,
+  unknownRefs: true,
+}).extend({
+  parentStableKey: z.string().min(1).max(200).nullable(),
+  sourceLocation: z.string().min(1).max(500),
+  evidenceRefs: z.array(z.string().min(1)).min(1).max(500),
+  unknowns: z.array(z.object({
+    reasonCode: z.string().min(1).max(120),
+    description: z.string().min(1).max(2_000),
+    requiredEvidence: z.array(z.string().min(1).max(300)).min(1).max(100),
+    affectedStableKeys: z.array(z.string().min(1).max(200)).min(1).max(1_000),
+    blocksProxyOutcome: z.boolean(),
+    blocksFormalEligibility: z.boolean(),
+  }).strict()).max(100),
+}).strict();
 
-function numberFact(head: ProjectHead, field: string): FactEnvelope | null {
-  const matches = head.snapshot.facts.filter((item) => item.field === field && item.reviewStatus === "confirmed" && item.dataStatus === "available");
-  const fact = matches.at(-1) ?? null;
-  return fact && typeof fact.value === "number" && Number.isFinite(fact.value) && fact.value > 0 ? fact : null;
+export const EvidenceGeometryInterfaceValueSchema = GeometryInterfaceSchema.omit({
+  id: true,
+  fromObjectId: true,
+  toObjectId: true,
+  factRefs: true,
+  evidenceRefs: true,
+}).extend({
+  fromStableKey: z.string().min(1).max(200),
+  toStableKey: z.string().min(1).max(200),
+  sourceLocation: z.string().min(1).max(500),
+  evidenceRefs: z.array(z.string().min(1)).min(1).max(500),
+}).strict();
+
+interface ParsedFact<T> {
+  fact: FactEnvelope;
+  value: T;
+}
+
+function geometryFacts<T>(head: ProjectHead, prefix: string, schema: z.ZodType<T>): ParsedFact<T>[] {
+  const latest = new Map<string, FactEnvelope>();
+  for (const fact of head.snapshot.facts) {
+    if (fact.field.startsWith(prefix) && fact.reviewStatus === "confirmed" && fact.dataStatus === "available") latest.set(fact.field, fact);
+  }
+  return [...latest.values()].map((fact) => ({ fact, value: schema.parse(fact.value) }));
+}
+
+function evidenceClosure(head: ProjectHead, fact: FactEnvelope, refs: readonly string[]): void {
+  const projectEvidence = new Set(head.snapshot.evidences.map((item) => item.id));
+  const envelopeEvidence = new Set(fact.evidenceRefs);
+  const missingFromFact = refs.filter((ref) => !envelopeEvidence.has(ref));
+  const missingFromProject = refs.filter((ref) => !projectEvidence.has(ref));
+  if (missingFromFact.length) throw new Error(`GEOMETRY_FACT_EVIDENCE_CLOSURE_MISSING:${fact.field}:${missingFromFact.join(",")}`);
+  if (missingFromProject.length) throw new Error(`GEOMETRY_PROJECT_EVIDENCE_MISSING:${fact.field}:${missingFromProject.join(",")}`);
 }
 
 export function geometryPrerequisites(head: ProjectHead): { ready: boolean; missing: string[]; facts: Map<string, FactEnvelope> } {
-  const facts = new Map<string, FactEnvelope>();
+  const task = head.snapshot.taskDefinitions.find((item) => item.confirmedAt !== null);
+  const componentFacts = geometryFacts(head, "geometry.component.", EvidenceGeometryComponentValueSchema);
+  const facts = new Map(componentFacts.map(({ fact }) => [fact.field, fact]));
   const missing: string[] = [];
-  for (const field of REQUIRED_GEOMETRY_FACTS) {
-    const fact = numberFact(head, field);
-    if (fact) facts.set(field, fact);
-    else missing.push(field);
+  if (!task?.artifactRequirements) missing.push("task.artifactRequirements");
+  if (!componentFacts.length) missing.push("geometry.component.*");
+  const availableTypes = componentFacts.map(({ value }) => value.componentType);
+  for (const role of task?.artifactRequirements?.geometryTargetRoles ?? []) {
+    if (!availableTypes.some((type) => type === role || type.startsWith(`${role}:`))) missing.push(`geometry.role.${role}`);
   }
-  const ridge = facts.get("geometry.ridgeHeightMm")?.value as number | undefined;
-  const wall = facts.get("geometry.wallHeightMm")?.value as number | undefined;
-  const base = facts.get("geometry.baseHeightMm")?.value as number | undefined;
-  if (ridge !== undefined && wall !== undefined && base !== undefined && ridge <= wall + base) missing.push("geometry.ridgeHeightMm>base+wall");
   return { ready: missing.length === 0, missing, facts };
 }
 
@@ -43,55 +87,97 @@ function priorIds(head: ProjectHead): Map<string, string> {
 
 export function buildProjectGeometrySpec(head: ProjectHead, ruleRunId: string): ProjectDrivenGeometrySpec {
   const prerequisite = geometryPrerequisites(head);
-  if (!prerequisite.ready) throw new Error(`GEOMETRY_FACTS_MISSING:${prerequisite.missing.join(",")}`);
-  const value = (field: string) => prerequisite.facts.get(field)!.value as number;
-  const width = value("geometry.overallWidthMm");
-  const depth = value("geometry.overallDepthMm");
-  const baseHeight = value("geometry.baseHeightMm");
-  const wallHeight = value("geometry.wallHeightMm");
-  const ridgeHeight = value("geometry.ridgeHeightMm");
-  const wallTop = baseHeight + wallHeight;
-  const overhang = Math.max(400, Math.min(width, depth) * 0.08);
-  const wallThickness = Math.max(160, Math.min(width, depth) * 0.025);
-  const sourceFacts = [...prerequisite.facts.values()];
-  const factRefs = sourceFacts.map((item) => item.id);
-  const evidenceRefs = [...new Set(sourceFacts.flatMap((item) => item.evidenceRefs))];
+  if (!prerequisite.ready) throw new Error(`GEOMETRY_EVIDENCE_FACTS_MISSING:${prerequisite.missing.join(",")}`);
+  const componentFacts = geometryFacts(head, "geometry.component.", EvidenceGeometryComponentValueSchema);
+  const interfaceFacts = geometryFacts(head, "geometry.interface.", EvidenceGeometryInterfaceValueSchema);
   const previous = priorIds(head);
-  const id = (stableKey: string) => previous.get(stableKey) ?? crypto.randomUUID();
+  const ids = new Map(componentFacts.map(({ value }) => [value.stableKey, previous.get(value.stableKey) ?? crypto.randomUUID()]));
+  if (ids.size !== componentFacts.length) throw new Error("GEOMETRY_STABLE_KEYS_NOT_UNIQUE");
   const producer = { producerType: "rule" as const, ruleRunId };
-  const object = (stableKey: string, componentType: string, displayNameZh: string, materialCode: string, solid: ProjectGeometryObject["solid"]): ProjectGeometryObject => ({
-    id: id(stableKey), stableKey, parentId: null, componentType, displayNameZh, materialCode, solid,
-    parameters: [], producer, factRefs, evidenceRefs, unknownRefs: [],
+  const unknowns: ProjectDrivenGeometrySpec["unknowns"] = [];
+
+  const objects: ProjectGeometryObject[] = componentFacts.map(({ fact, value }) => {
+    evidenceClosure(head, fact, value.evidenceRefs);
+    const parentId = value.parentStableKey === null ? null : ids.get(value.parentStableKey);
+    if (value.parentStableKey !== null && !parentId) throw new Error(`GEOMETRY_PARENT_COMPONENT_MISSING:${value.stableKey}:${value.parentStableKey}`);
+    const localUnknowns = value.unknowns.map((unknown) => {
+      const affectedRefs = unknown.affectedStableKeys.map((key) => ids.get(key)).filter((id): id is string => Boolean(id));
+      if (affectedRefs.length !== unknown.affectedStableKeys.length) throw new Error(`GEOMETRY_UNKNOWN_AFFECTED_COMPONENT_MISSING:${value.stableKey}`);
+      return {
+        id: crypto.randomUUID(),
+        subjectRef: ids.get(value.stableKey)!,
+        reasonCode: unknown.reasonCode,
+        description: unknown.description,
+        requiredEvidence: unknown.requiredEvidence,
+        affectedRefs,
+        evidenceRefs: value.evidenceRefs,
+        blocksProxyOutcome: unknown.blocksProxyOutcome,
+        blocksFormalEligibility: unknown.blocksFormalEligibility,
+      };
+    });
+    unknowns.push(...localUnknowns);
+    if (/unknown/i.test(value.materialCode) && !localUnknowns.length) throw new Error(`GEOMETRY_UNKNOWN_MATERIAL_NOT_DECLARED:${value.stableKey}`);
+    return {
+      id: ids.get(value.stableKey)!,
+      stableKey: value.stableKey,
+      parentId: parentId ?? null,
+      componentType: value.componentType,
+      displayNameZh: value.displayNameZh,
+      materialCode: value.materialCode,
+      solid: value.solid,
+      parameters: [
+        ...value.parameters,
+        {
+          id: crypto.randomUUID(),
+          name: "evidenceSourceLocation",
+          valueType: "text" as const,
+          value: value.sourceLocation,
+          unit: "1" as const,
+          basis: "human" as const,
+          factRefs: [fact.id],
+          evidenceRefs: value.evidenceRefs,
+        },
+      ],
+      producer,
+      factRefs: [fact.id],
+      evidenceRefs: value.evidenceRefs,
+      unknownRefs: localUnknowns.map((item) => item.id),
+    };
   });
-  const objects: ProjectGeometryObject[] = [
-    object("base", "base", "台基层代理几何", "stone-proxy", { kind: "box", sizeX: String(width + 600), sizeY: String(depth + 600), sizeZ: String(baseHeight), centerMm: [0, 0, baseHeight / 2] }),
-    object("floor", "floor", "室内地坪代理几何", "timber-proxy", { kind: "box", sizeX: String(width), sizeY: String(depth), sizeZ: "120", centerMm: [0, 0, baseHeight + 60] }),
-    object("wall:south", "wall", "南墙代理几何", "wall-proxy", { kind: "box", sizeX: String(width), sizeY: String(wallThickness), sizeZ: String(wallHeight - 120), centerMm: [0, -depth / 2 + wallThickness / 2, baseHeight + 120 + (wallHeight - 120) / 2] }),
-    object("wall:north", "wall", "北墙代理几何", "wall-proxy", { kind: "box", sizeX: String(width), sizeY: String(wallThickness), sizeZ: String(wallHeight - 120), centerMm: [0, depth / 2 - wallThickness / 2, baseHeight + 120 + (wallHeight - 120) / 2] }),
-    object("wall:west", "wall", "西墙代理几何", "wall-proxy", { kind: "box", sizeX: String(wallThickness), sizeY: String(depth - wallThickness * 2), sizeZ: String(wallHeight - 120), centerMm: [-width / 2 + wallThickness / 2, 0, baseHeight + 120 + (wallHeight - 120) / 2] }),
-    object("wall:east", "wall", "东墙代理几何", "wall-proxy", { kind: "box", sizeX: String(wallThickness), sizeY: String(depth - wallThickness * 2), sizeZ: String(wallHeight - 120), centerMm: [width / 2 - wallThickness / 2, 0, baseHeight + 120 + (wallHeight - 120) / 2] }),
-    object("roof:west", "roof", "西坡屋面代理几何", "roof-proxy", { kind: "extrudedProfile", profileMm: [[-width / 2 - overhang, wallTop], [0, ridgeHeight], [0, ridgeHeight - 120], [-width / 2 - overhang, wallTop - 120]], depth: String(depth + overhang * 2), axis: "y", originMm: [0, (depth + overhang * 2) / 2, 0] }),
-    object("roof:east", "roof", "东坡屋面代理几何", "roof-proxy", { kind: "extrudedProfile", profileMm: [[0, ridgeHeight], [width / 2 + overhang, wallTop], [width / 2 + overhang, wallTop - 120], [0, ridgeHeight - 120]], depth: String(depth + overhang * 2), axis: "y", originMm: [0, (depth + overhang * 2) / 2, 0] }),
-  ];
-  const byKey = new Map(objects.map((item) => [item.stableKey, item]));
-  const interfaces = ["south", "north", "west", "east"].map((side) => ({
-    id: crypto.randomUUID(), fromObjectId: byKey.get("floor")!.id, toObjectId: byKey.get(`wall:${side}`)!.id,
-    interfaceType: "bearing" as const, fromSurface: "zMax", toSurface: "zMin", direction: [0, 0, 1] as [number, number, number],
-    maximumGapMm: 0.01, maximumUnexpectedOverlapMm3: 0, minimumDeclaredOverlapMm3: null, factRefs, evidenceRefs,
-  }));
-  const unknowns = [{
-    id: crypto.randomUUID(), subjectRef: byKey.get("roof:west")!.id, reasonCode: "PROXY_CONSTRUCTION_DETAIL_UNRESOLVED",
-    description: "屋面构造层、连接节点和隐蔽构造没有完整证据，当前只表达有证据的外部控制尺寸。",
-    requiredEvidence: ["构造详图", "隐蔽构造调查", "专业复核"], affectedRefs: [byKey.get("roof:west")!.id, byKey.get("roof:east")!.id],
-    evidenceRefs, blocksProxyOutcome: false, blocksFormalEligibility: true,
-  }];
-  objects[objects.length - 2]!.unknownRefs = [unknowns[0]!.id];
-  objects[objects.length - 1]!.unknownRefs = [unknowns[0]!.id];
+
+  const interfaces = interfaceFacts.map(({ fact, value }) => {
+    evidenceClosure(head, fact, value.evidenceRefs);
+    const fromObjectId = ids.get(value.fromStableKey);
+    const toObjectId = ids.get(value.toStableKey);
+    if (!fromObjectId || !toObjectId) throw new Error(`GEOMETRY_INTERFACE_COMPONENT_MISSING:${value.fromStableKey}:${value.toStableKey}`);
+    return {
+      id: crypto.randomUUID(),
+      fromObjectId,
+      toObjectId,
+      interfaceType: value.interfaceType,
+      fromSurface: value.fromSurface,
+      toSurface: value.toSurface,
+      direction: value.direction,
+      maximumGapMm: value.maximumGapMm,
+      maximumUnexpectedOverlapMm3: value.maximumUnexpectedOverlapMm3,
+      minimumDeclaredOverlapMm3: value.minimumDeclaredOverlapMm3,
+      factRefs: [fact.id],
+      evidenceRefs: value.evidenceRefs,
+    };
+  });
+
   const spec: ProjectDrivenGeometrySpec = {
-    schemaVersion: "2.0", id: crypto.randomUUID(), projectId: head.projectId, projectRevisionId: head.revisionId,
-    buildingId: head.snapshot.buildings[0]!.id, inputHash: "0".repeat(64),
+    schemaVersion: "2.0",
+    id: crypto.randomUUID(),
+    projectId: head.projectId,
+    projectRevisionId: head.revisionId,
+    buildingId: head.snapshot.buildings[0]!.id,
+    inputHash: "0".repeat(64),
     coordinateSystem: { name: "项目局部坐标", axisOrder: "XYZ", upAxis: "Z", lengthUnit: "mm", origin: [0, 0, 0] },
-    tolerances: { modellingMm: 0.01, interfaceMm: 0.5, tessellationMm: 0.5 }, objects, interfaces, unknowns,
+    tolerances: { modellingMm: 0.01, interfaceMm: 0.5, tessellationMm: 0.5 },
+    objects,
+    interfaces,
+    unknowns,
     createdAt: new Date().toISOString(),
   };
   return ProjectDrivenGeometrySpecSchema.parse({ ...spec, inputHash: recordHash({ ...spec, inputHash: "0".repeat(64) }) });

@@ -140,6 +140,7 @@ describe("ProjectPackageService", () => {
 
     const geometryFiles = [
       ["ifc", "model.ifc", "application/x-step"], ["glb", "model.glb", "model/gltf-binary"],
+      ["brepBundle", "model-brep.zip", "application/zip"],
       ["manifest", "geometry-manifest.json", "application/json"], ["sourceMap", "source-map.ndjson", "application/x-ndjson"],
       ["report", "geometry-report.json", "application/json"], ["preview", "geometry-preview.png", "image/png"],
     ] as const;

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { DrawingViewKindSchema } from "./drawings.js";
 import { FactEnvelopeSchema, ProducerRefSchema } from "./provenance.js";
 import { GeometryRevisionSchema, ProjectDrivenGeometrySpecSchema } from "./geometry.js";
 import { ModelCandidateSchema } from "./records.js";
@@ -33,6 +34,57 @@ export const ResponsibilitySchema = z.object({
   actorId: UuidSchema,
 }).strict();
 
+const TaskDrawingViewRequirementSchema = z.object({
+  key: z.string().min(1).max(80),
+  displayLabelZh: z.string().min(1).max(80),
+  drawingRef: z.string().min(1).max(20),
+  kind: DrawingViewKindSchema,
+  scaleDenominator: z.number().int().positive(),
+  sheetKey: z.string().min(1).max(80),
+  viewportRectMm: z.tuple([z.number(), z.number(), z.number().positive(), z.number().positive()]),
+  direction: z.tuple([z.number(), z.number(), z.number()]),
+  right: z.tuple([z.number(), z.number(), z.number()]),
+  up: z.tuple([z.number(), z.number(), z.number()]),
+  sectionPlane: z.object({
+    normal: z.tuple([z.number(), z.number(), z.number()]),
+    offsetMm: z.number(),
+  }).strict().optional(),
+  cropBoundsMm: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
+  targetStableKeys: z.array(z.string().min(1).max(200)).max(500),
+  sourceEvidenceRefs: z.array(NonEmptyRefSchema).max(500),
+}).strict();
+
+const TaskDrawingSheetRequirementSchema = z.object({
+  key: z.string().min(1).max(80),
+  drawingNumber: z.string().min(1).max(32),
+  displayLabelZh: z.string().min(1).max(80),
+  pageMm: z.tuple([z.number().positive(), z.number().positive()]),
+}).strict();
+
+export const TaskArtifactRequirementsSchema = z.object({
+  titleZh: z.string().min(1).max(120),
+  revisionLabel: z.string().min(1).max(16),
+  geometryTargetRoles: z.array(z.string().min(1).max(120)).min(1).max(100),
+  views: z.array(TaskDrawingViewRequirementSchema).min(1).max(100),
+  sheets: z.array(TaskDrawingSheetRequirementSchema).min(1).max(50),
+}).strict().superRefine((value, context) => {
+  const sheetKeys = new Set(value.sheets.map((sheet) => sheet.key));
+  if (sheetKeys.size !== value.sheets.length) context.addIssue({ code: "custom", message: "task sheet keys must be unique" });
+  if (new Set(value.views.map((view) => view.key)).size !== value.views.length) context.addIssue({ code: "custom", message: "task view keys must be unique" });
+  for (const [index, view] of value.views.entries()) {
+    if (!sheetKeys.has(view.sheetKey)) context.addIssue({ code: "custom", message: "task view references an unknown sheet", path: ["views", index, "sheetKey"] });
+    if (["transverseSection", "longitudinalSection", "detail"].includes(view.kind) && !view.sectionPlane) {
+      context.addIssue({ code: "custom", message: "section and detail tasks require an explicit section plane", path: ["views", index, "sectionPlane"] });
+    }
+    if (view.kind === "detail" && (!view.targetStableKeys.length || !view.sourceEvidenceRefs.length)) {
+      context.addIssue({ code: "custom", message: "detail tasks require target components and local evidence", path: ["views", index] });
+    }
+    if (view.kind === "detail" && (!view.cropBoundsMm || view.cropBoundsMm[2] <= view.cropBoundsMm[0] || view.cropBoundsMm[3] <= view.cropBoundsMm[1])) {
+      context.addIssue({ code: "custom", message: "detail tasks require positive local crop bounds", path: ["views", index, "cropBoundsMm"] });
+    }
+  }
+});
+
 export const TaskDefinitionSchema = z.object({
   id: UuidSchema,
   name: z.string().min(1).max(200),
@@ -41,6 +93,7 @@ export const TaskDefinitionSchema = z.object({
   deliverables: z.array(z.string().min(1).max(120)).min(1).max(100),
   responsibilities: z.array(ResponsibilitySchema).min(1).max(100),
   automationPolicyRef: NonEmptyRefSchema.nullable(),
+  artifactRequirements: TaskArtifactRequirementsSchema.optional(),
   confirmedAt: IsoDateTimeSchema.nullable(),
 }).strict();
 
@@ -153,6 +206,8 @@ export const IssueSchema = z.object({
   sourceRef: NonEmptyRefSchema,
   status: z.enum(["open", "resolved", "rejected", "superseded"]),
   impactRefs: z.array(NonEmptyRefSchema).max(5_000),
+  blocksProxyOutcome: z.boolean().default(false),
+  blocksFormalEligibility: z.boolean().default(true),
   producer: ProducerRefSchema,
   createdAt: IsoDateTimeSchema,
   resolvedAt: IsoDateTimeSchema.nullable(),
@@ -198,6 +253,7 @@ export const ProjectSnapshotSchema = z.object({
 });
 
 export type ProjectSnapshot = z.infer<typeof ProjectSnapshotSchema>;
+export type TaskArtifactRequirements = z.infer<typeof TaskArtifactRequirementsSchema>;
 export type MeasurementRecord = z.infer<typeof MeasurementRecordSchema>;
 export type AssetRecord = z.infer<typeof AssetRecordSchema>;
 export type ParseRecord = z.infer<typeof ParseRecordSchema>;

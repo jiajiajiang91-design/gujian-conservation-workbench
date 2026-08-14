@@ -84,6 +84,8 @@ export function App() {
 
   const refresh = async () => setProjects(await listLocalProjects());
   const loadProject = async (projectId: string) => {
+    setRoundTripReceipt(null);
+    setError(null);
     const head = await projectRepository.getProjectHead(projectId);
     const [runs, rules, decisions, artifacts, checks, deliveryEvaluations, deliveryRecords] = await Promise.all([
       projectRepository.getProjectModelRuns(projectId),
@@ -125,12 +127,23 @@ export function App() {
     ? selected.snapshot.geometrySpecs.find((item) => item.id === geometryRevision.geometrySpecId) ?? null
     : null;
   const selectedGeometryEntity = geometrySpec?.objects.find((item) => item.id === selectedGeometryEntityId) ?? null;
-  const drawingArtifacts = projectArtifacts.filter((item) => item.geometryRevisionId === geometryRevision?.id && ["dxf", "svg", "pdf", "png", "drawingIr", "viewGeometry", "drawingSourceMap", "checkReport"].includes(item.kind));
-  const latestCheckRun = projectCheckRuns.filter((item) => item.geometryRevisionId === geometryRevision?.id).at(-1) ?? null;
-  const latestDelivery = projectDeliveries
+  const latestCheckRun = projectCheckRuns
     .filter((item) => item.geometryRevisionId === geometryRevision?.id)
+    .sort((left, right) => left.completedAt.localeCompare(right.completedAt))
     .at(-1) ?? null;
-  const latestBlockedDelivery = projectDeliveryEvaluations.filter((item) => item.outcome === "blocked").at(-1) ?? null;
+  const latestCheckedArtifactIds = new Set(latestCheckRun?.artifactRefs ?? []);
+  const drawingArtifacts = projectArtifacts.filter((item) => item.geometryRevisionId === geometryRevision?.id && latestCheckedArtifactIds.has(item.id));
+  const latestDeliveryEvaluationIds = new Set(projectDeliveryEvaluations
+    .filter((item) => item.geometryRevisionId === geometryRevision?.id && latestCheckRun && item.checkRunRefs.includes(latestCheckRun.id))
+    .map((item) => item.id));
+  const latestDelivery = projectDeliveries
+    .filter((item) => item.geometryRevisionId === geometryRevision?.id && latestDeliveryEvaluationIds.has(item.evaluationId))
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+    .at(-1) ?? null;
+  const latestBlockedDelivery = projectDeliveryEvaluations
+    .filter((item) => item.outcome === "blocked")
+    .sort((left, right) => left.evaluatedAt.localeCompare(right.evaluatedAt))
+    .at(-1) ?? null;
   const geometryGate = selected ? geometryPrerequisites(selected) : null;
 
   useEffect(() => {
@@ -174,9 +187,8 @@ export function App() {
       const head = await commitGeometryFacts({
         head: selected, actorId: localActorId(), repository: projectRepository, commands: projectCommands,
         values: {
-          overallWidthMm: Number(data.get("overallWidthMm")), overallDepthMm: Number(data.get("overallDepthMm")),
-          baseHeightMm: Number(data.get("baseHeightMm")), wallHeightMm: Number(data.get("wallHeightMm")), ridgeHeightMm: Number(data.get("ridgeHeightMm")),
-          evidenceRefs: selected.snapshot.evidences.map((item) => item.id),
+          components: JSON.parse(String(data.get("geometryComponents") ?? "[]")),
+          interfaces: JSON.parse(String(data.get("geometryInterfaces") ?? "[]")),
         },
       });
       setSelected(head); await refresh(); setNotice("控制尺寸已作为人工确认事实写入；来源仍指向当前项目资料");
@@ -458,6 +470,13 @@ export function App() {
         scope: split(data.get("scope")),
         regulationRefs: split(data.get("regulations")),
         deliverables: split(data.get("deliverables")),
+        artifactRequirements: {
+          titleZh: String(data.get("drawingTitle") ?? "").trim(),
+          revisionLabel: String(data.get("drawingRevision") ?? "").trim(),
+          geometryTargetRoles: split(data.get("geometryTargetRoles")),
+          sheets: JSON.parse(String(data.get("drawingSheets") ?? "[]")),
+          views: JSON.parse(String(data.get("drawingViews") ?? "[]")),
+        },
       });
       setSelected(updated);
       setProjectRuleRuns(await projectRepository.getProjectRuleRuns(selected.projectId));
@@ -466,6 +485,32 @@ export function App() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "任务设置失败");
     }
+  };
+
+  const replaceTaskSetup = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selected || !confirmedTask) return;
+    const data = new FormData(event.currentTarget);
+    const split = (value: FormDataEntryValue | null) => String(value ?? "").split(/[，\n]/).map((item) => item.trim()).filter(Boolean);
+    try {
+      const updated = await workflow.replaceTaskDefinition(selected, localActorId(), {
+        taskName: String(data.get("taskName") ?? "").trim(),
+        scope: split(data.get("scope")),
+        regulationRefs: split(data.get("regulations")),
+        deliverables: split(data.get("deliverables")),
+        artifactRequirements: {
+          titleZh: String(data.get("drawingTitle") ?? "").trim(),
+          revisionLabel: String(data.get("drawingRevision") ?? "").trim(),
+          geometryTargetRoles: split(data.get("geometryTargetRoles")),
+          sheets: JSON.parse(String(data.get("drawingSheets") ?? "[]")),
+          views: JSON.parse(String(data.get("drawingViews") ?? "[]")),
+        },
+      });
+      setSelected(updated);
+      setProjectRuleRuns(await projectRepository.getProjectRuleRuns(selected.projectId));
+      await refresh();
+      setNotice("任务成果要求已建立新版本；旧任务定义保留在审计链中。");
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "任务成果要求更新失败"); }
   };
 
   const decideCandidate = async (issueId: string, candidateId: string, outcome: "accepted" | "rejected") => {
@@ -603,7 +648,7 @@ export function App() {
                     return (
                       <article className="evidence-card" key={evidence.id}>
                         <span className="evidence-type">{evidence.evidenceType}</span>
-                        <div><strong>{evidence.title}</strong><small>{parse?.parser ?? "未解析"} · {parse?.status ?? "pending"}</small></div>
+                        <div><strong>{evidence.title}</strong><small>{parse?.parser ?? "未解析"} · {parse?.status ?? "pending"} · evidence {evidence.id}</small></div>
                         <span className={`data-status ${evidence.dataStatus}`}>{evidence.dataStatus === "available" ? "可用" : evidence.dataStatus}</span>
                         <button type="button" onClick={() => void downloadEvidence(evidence.assetId)}>原文件</button>
                       </article>
@@ -660,11 +705,33 @@ export function App() {
                     <label>任务名称<input name="taskName" required defaultValue="资料整理与项目包验证" /></label>
                     <label>任务范围<textarea name="scope" required defaultValue={"整理原始资料\n生成 AI 候选\n处理证据缺失问题\n导出与回导项目包"} /></label>
                     <label>适用规范或项目约定<textarea name="regulations" defaultValue="项目资料真实性与来源追溯要求" /></label>
-                    <label>成果目录<textarea name="deliverables" required defaultValue={"平面图\n屋顶平面图\n南立面图\n横剖面图\n纵剖面图\n轴测图\n节点详图\nIFC/GLB/DXF/SVG/PDF\n代理项目包"} /></label>
+                    <label>成果目录<textarea name="deliverables" required placeholder="逐行填写当前任务要求的成果，不从样例补齐" /></label>
+                    <label>图纸标题<input name="drawingTitle" required /></label>
+                    <label>修订标记<input name="drawingRevision" required placeholder="例如 P1" /></label>
+                    <label>几何目标角色<textarea name="geometryTargetRoles" required placeholder="逐行填写，例如 wall、support、roof；缺一项即阻断" /></label>
+                    <label>图纸结构 JSON<textarea name="drawingSheets" required placeholder='[{"key":"sheet-1","drawingNumber":"P-01","displayLabelZh":"平面与立面","pageMm":[841,594]}]' /></label>
+                    <label>视图结构 JSON<textarea name="drawingViews" required placeholder="逐项提供 kind、比例、sheetKey、viewportRectMm、方向、目标构件和局部证据；详图缺局部证据时不生成" /></label>
                     <button type="submit">确认一次任务设置</button>
                   </form>
                 ) : (
-                  <div className="task-summary"><span className="node-label complete">人工节点 01 已完成</span><strong>{confirmedTask.name}</strong><small>{confirmedTask.scope.join(" · ")}</small></div>
+                  <>
+                    <div className="task-summary"><span className="node-label complete">人工节点 01 已完成</span><strong>{confirmedTask.name}</strong><small>{confirmedTask.scope.join(" · ")}</small></div>
+                    <details className="task-setup">
+                      <summary>更新当前版本的成果要求</summary>
+                      <form onSubmit={(event) => void replaceTaskSetup(event)}>
+                        <label>任务名称<input name="taskName" required defaultValue={confirmedTask.name} /></label>
+                        <label>任务范围<textarea name="scope" required defaultValue={confirmedTask.scope.join("\n")} /></label>
+                        <label>适用规范<textarea name="regulations" defaultValue={confirmedTask.regulationRefs.join("\n")} /></label>
+                        <label>成果目录<textarea name="deliverables" required defaultValue={confirmedTask.deliverables.join("\n")} /></label>
+                        <label>图纸标题<input name="drawingTitle" required defaultValue={confirmedTask.artifactRequirements?.titleZh ?? ""} /></label>
+                        <label>修订标记<input name="drawingRevision" required defaultValue={confirmedTask.artifactRequirements?.revisionLabel ?? "P1"} /></label>
+                        <label>几何目标角色<textarea name="geometryTargetRoles" required defaultValue={confirmedTask.artifactRequirements?.geometryTargetRoles.join("\n") ?? ""} /></label>
+                        <label>图纸结构 JSON<textarea name="drawingSheets" required defaultValue={JSON.stringify(confirmedTask.artifactRequirements?.sheets ?? [], null, 2)} /></label>
+                        <label>视图结构 JSON<textarea name="drawingViews" required defaultValue={JSON.stringify(confirmedTask.artifactRequirements?.views ?? [], null, 2)} /></label>
+                        <button type="submit">保存新任务版本</button>
+                      </form>
+                    </details>
+                  </>
                 )}
                 <div className="issue-list">
                   {openIssues.filter((issue) => issue.sourceRef !== "rule:task-setup-required").map((issue) => {
@@ -718,16 +785,14 @@ export function App() {
                 <div className="transmission-note"><ShieldCheck size={15} /><span>浏览器冻结 GeometrySpec 与输入哈希；Node 只接收受限结构，Python worker 不接收 URL、提示或用户文件路径。</span></div>
                 {!geometryGate?.ready && (
                   <div className="geometry-gate">
-                    <strong>建立代理几何前，需从当前项目资料确认五项控制尺寸</strong>
-                    <p>若资料不足，请保持阻断，不得用其他项目或演示值补齐。当前缺失：{geometryGate?.missing.join("、")}</p>
+                    <strong>建立代理几何前，需从当前项目资料逐构件确认几何事实</strong>
+                    <p>每个构件和界面必须定位到当前项目具体证据；不得用百分比、固定厚度或其他项目数据补齐。当前缺失：{geometryGate?.missing.join("、")}</p>
                     {!!selected.snapshot.evidences.length && (
                       <form className="geometry-fact-form" onSubmit={(event) => void confirmGeometryFacts(event)}>
-                        <label>总面宽 mm<input name="overallWidthMm" type="number" min="1" step="any" required /></label>
-                        <label>总进深 mm<input name="overallDepthMm" type="number" min="1" step="any" required /></label>
-                        <label>台基高 mm<input name="baseHeightMm" type="number" min="1" step="any" required /></label>
-                        <label>墙高 mm<input name="wallHeightMm" type="number" min="1" step="any" required /></label>
-                        <label>屋脊高 mm<input name="ridgeHeightMm" type="number" min="1" step="any" required /></label>
-                        <button type="submit">一次确认控制尺寸</button>
+                        <label>构件事实 JSON<textarea name="geometryComponents" required placeholder="每项包含 stableKey、构件类型、可证实体、证据 ID、图号/页码位置和结构化未知项" /></label>
+                        <label>界面事实 JSON<textarea name="geometryInterfaces" required placeholder="仅填写图纸或调查资料可证明的承托、接触、包含或搭接关系；无证据可留空 []" /></label>
+                        <p>当前项目证据 ID：{selected.snapshot.evidences.map((item) => `${item.title}=${item.id}`).join("；")}</p>
+                        <button type="submit">写入逐构件证据事实</button>
                       </form>
                     )}
                   </div>

@@ -9,38 +9,43 @@ from pathlib import Path
 
 from PIL import Image
 
+from workers.cad.project_geometry.kernel import build_geometry_package
+from workers.cad.project_geometry.test_project_geometry import spec_a
+
+from .build_package import build_package
+from .test_project_drawings import matrix
 from .verify_package import verify
 
 
 ROOT = Path(__file__).resolve().parents[3]
-MATRIX = ROOT / "验证材料" / "09_T9任务驱动制图验证" / "artifact-requirement-matrix.json"
-GEOMETRY = ROOT / "apps" / "server" / ".data" / "cad-staging" / "421e97f6-1923-4a14-9ef2-3d2b200a24ed" / "output"
-OUTPUT = ROOT / "apps" / "server" / ".data" / "acceptance" / "milestone-two" / "t9-drawings"
 FONT = ROOT / "workers" / "cad" / "t0b_v2" / "assets" / "fonts" / "noto-sans-sc" / "GujianSansSC-Regular.ttf"
 
 
 class DrawingPackageVerifierTests(unittest.TestCase):
     @staticmethod
-    def _copy_package(target: Path) -> None:
-        for path in OUTPUT.iterdir():
-            if path.is_file():
-                (target / path.name).write_bytes(path.read_bytes())
-        (target / "view-geometry").mkdir()
-        for path in (OUTPUT / "view-geometry").iterdir():
-            (target / "view-geometry" / path.name).write_bytes(path.read_bytes())
+    def _build_package(target: Path) -> tuple[Path, Path]:
+        geometry = target / "geometry"
+        drawings = target / "drawings"
+        source = spec_a()
+        manifest = build_geometry_package(source, geometry)
+        requirement = matrix(source, manifest, "one-sheet")
+        matrix_path = target / "matrix.json"
+        matrix_path.write_text(json.dumps(requirement, ensure_ascii=False), encoding="utf-8")
+        build_package(requirement, geometry, FONT, drawings)
+        return matrix_path, geometry
 
     def test_current_package_passes(self) -> None:
-        if not OUTPUT.is_dir():
-            self.skipTest("acceptance output is not present")
-        report = verify(MATRIX, GEOMETRY, OUTPUT, FONT)
-        self.assertEqual(report["failedCheckCount"], 0, report["checks"])
-
-    def test_png_dimension_tamper_is_detected(self) -> None:
-        if not OUTPUT.is_dir():
-            self.skipTest("acceptance output is not present")
         with tempfile.TemporaryDirectory() as temp:
             target = Path(temp)
-            self._copy_package(target)
+            matrix_path, geometry = self._build_package(target)
+            report = verify(matrix_path, geometry, target / "drawings", FONT)
+            self.assertEqual(report["failedCheckCount"], 0, report["checks"])
+
+    def test_png_dimension_tamper_is_detected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            matrix_path, geometry = self._build_package(root)
+            target = root / "drawings"
             with Image.open(target / "P-01.png") as source:
                 source.resize((100, 100)).save(target / "P-01.png", dpi=(72, 72))
             record = json.loads((target / "drawing-build-record.json").read_text(encoding="utf-8"))
@@ -49,15 +54,14 @@ class DrawingPackageVerifierTests(unittest.TestCase):
                     asset["sha256"] = hashlib.sha256((target / "P-01.png").read_bytes()).hexdigest()
                     asset["byteLength"] = (target / "P-01.png").stat().st_size
             (target / "drawing-build-record.json").write_text(json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
-            report = verify(MATRIX, GEOMETRY, target, FONT)
+            report = verify(matrix_path, geometry, target, FONT)
             self.assertTrue(any(item["id"] == "png-closure" and not item["passed"] for item in report["checks"]))
 
     def test_source_line_tamper_is_detected_after_rehash(self) -> None:
-        if not OUTPUT.is_dir():
-            self.skipTest("acceptance output is not present")
         with tempfile.TemporaryDirectory() as temp:
-            target = Path(temp)
-            self._copy_package(target)
+            root = Path(temp)
+            matrix_path, geometry = self._build_package(root)
+            target = root / "drawings"
             view_path = next((target / "view-geometry").glob("*.json.gz"))
             with gzip.open(view_path, "rt", encoding="utf-8") as stream:
                 view = json.load(stream)
@@ -85,7 +89,7 @@ class DrawingPackageVerifierTests(unittest.TestCase):
                     asset["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
                     asset["byteLength"] = path.stat().st_size
             record_path.write_text(json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
-            report = verify(MATRIX, GEOMETRY, target, FONT)
+            report = verify(matrix_path, geometry, target, FONT)
             self.assertTrue(any(item["id"] == "source-geometry-recompute" and not item["passed"] for item in report["checks"]))
 
 

@@ -129,5 +129,10 @@ describe("WorkflowService", () => {
     const descriptions = evaluated.snapshot.issues.filter((item) => item.status === "open").map((item) => item.description);
     expect(descriptions).toContain("资料转写尺寸链不闭合：总尺寸 15800 mm，分段合计 11400 mm，差值 4400 mm。");
     expect(descriptions).toContain("尺寸记录缺少测量人、时间、方法或原始记录，不能作为正式实测事实。");
+    const conflict = evaluated.snapshot.issues.find((item) => item.sourceRef === "rule:documented-dimension-chain-conflict");
+    const metadata = evaluated.snapshot.issues.find((item) => item.sourceRef === "rule:measurement-metadata-required");
+    expect(conflict?.blocksProxyOutcome).toBe(true);
+    expect(metadata?.blocksProxyOutcome).toBe(false);
+    expect(metadata?.blocksFormalEligibility).toBe(true);
   });
 });

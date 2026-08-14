@@ -69,7 +69,7 @@ export class PythonCadWorker implements CadWorker {
   }
 
   readAsset(jobId: string, fileName: string): Buffer {
-    if (!/^(manifest\.json|model\.(?:ifc|glb)|source-map\.ndjson|geometry-report\.json|preview\.png)$/.test(fileName)) {
+    if (!/^(manifest\.json|model\.(?:ifc|glb)|model-brep\.zip|source-map\.ndjson|geometry-report\.json|preview\.png)$/.test(fileName)) {
       throw new Error("CAD_ASSET_NAME_INVALID");
     }
     const directory = resolve(stagingRoot, jobId, "output");

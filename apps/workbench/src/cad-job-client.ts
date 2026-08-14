@@ -29,7 +29,7 @@ interface StreamPayload {
 }
 
 interface WorkerManifestAsset {
-  kind: "ifc" | "glb" | "manifest" | "sourceMap" | "report" | "preview";
+  kind: "ifc" | "glb" | "brepBundle" | "manifest" | "sourceMap" | "report" | "preview";
   fileName: string;
   sha256: string;
   byteLength: number;
