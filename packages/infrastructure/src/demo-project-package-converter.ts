@@ -397,7 +397,10 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
   const buildingId = deterministicUuid(`building:${sourceSeed}`);
   const actorId = deterministicUuid(`actor:${sourceSeed}`);
   const sourceRevisionId = deterministicUuid(`revision:${sourceSeed}`);
-  const manifestEvidenceId = deterministicUuid(`evidence:manifest:${sourceSeed}`);
+  // 必须与 evidences 表中 manifest 文件的证据 ID 一致，否则图纸视图的证据引用会失配
+  const manifestFileName = input.sourceFiles.find((file) => file.fileName.endsWith("geometry-manifest.json"))?.fileName
+    ?? input.sourceFiles[0]?.fileName ?? "geometry-manifest.json";
+  const manifestEvidenceId = deterministicUuid(`evidence:${sourceSeed}:${manifestFileName}`);
   const { spec: geometrySpec, translation } = projectGeometrySpec(input, projectId, buildingId, sourceRevisionId, manifestEvidenceId);
   const representative = representativeKeys(input.manifest.entities);
   const byType = new Map<string, string[]>();
