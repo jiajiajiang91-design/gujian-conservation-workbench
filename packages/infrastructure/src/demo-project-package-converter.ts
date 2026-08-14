@@ -7,6 +7,7 @@ import {
 } from "@gujian/domain";
 import { strToU8, zipSync } from "fflate";
 
+import { parseSourceMeshBundle, solidBounds, translateEntity, type ApproximationTag, type SourceMesh } from "./demo-component-translation.js";
 import { canonicalJson, recordHash, sha256Hex } from "./hash.js";
 
 interface LegacyDimensionFact {
@@ -26,10 +27,23 @@ interface LegacyEntity {
   readonly bounds: readonly [readonly [number, number, number], readonly [number, number, number]];
 }
 
+interface LegacyInterface {
+  readonly interfaceId: string;
+  readonly role: string;
+  readonly fromEntityId: string;
+  readonly toEntityId: string;
+  readonly interfaceKind?: string;
+  readonly contactMode?: string;
+  readonly expectedGapMm?: number;
+  readonly maximumGapMm?: number;
+  readonly maximumUnexpectedOverlapMm3?: number;
+}
+
 export interface LegacyDemoGeometryManifest {
   readonly geometryRevisionId: string;
   readonly geometrySignature: string;
   readonly entities: readonly LegacyEntity[];
+  readonly interfaces?: readonly LegacyInterface[];
 }
 
 export interface DemoSourceFile {
@@ -57,9 +71,56 @@ export interface DemoConversionResult {
   readonly packageSha256: string;
   readonly sourceAssetSha256: readonly string[];
   readonly objectCount: number;
+  readonly entityCount: number;
+  readonly partCount: number;
+  readonly interfaceCount: number;
   readonly unknownCount: number;
+  readonly solidKindCounts: Readonly<Record<string, number>>;
+  readonly approximationCounts: Readonly<Record<string, number>>;
   readonly originalGeometrySignature: string;
 }
+
+// 只携带极值面语义可以正确表达的完整竖向承重链接口；
+// 长构件多点接触（椽对檩等）和瓦件接口不携带，改记结构化未知项。
+const STRUCTURAL_INTERFACE_ROLES = new Set([
+  "foundation-ground", "foundation-course-stack", "foundation-bearing-ground",
+  "terrace-foundation", "terrace-course-stack", "base-terrace",
+  "step-course-stack", "ground-step", "step-terrace",
+  "column-base", "column-eave-beam", "column-tie-beam",
+  "eave-beam-seat", "seat-arm-x", "seat-arm-y", "arm-bearing-block", "bearing-block-purlin",
+  "wall-terrace", "door-frame-terrace", "tie-beam-interior-post", "interior-post-purlin",
+]);
+
+const TILE_INTERFACE_ROLES = new Set([
+  "cover-tile-pan-tile", "tile-longitudinal-lap", "pan-tile-roof-board", "ridge-roof-finish",
+]);
+
+const APPROXIMATED_TYPES = new Set(["column", "columnBase", "panTile", "coverTile", "ridgeTile"]);
+
+const APPROXIMATION_REASONS: Record<ApproximationTag, { code: string; description: string } | null> = {
+  exactPrism: null,
+  exactBox: null,
+  cylinderAveragedTaper: {
+    code: "DEMO_TRANSLATION_TAPER_AVERAGED",
+    description: "收分构件按上下径平均转换为等径圆柱，收分与曲线轮廓未保留。",
+  },
+  cylinderEnvelope: {
+    code: "DEMO_TRANSLATION_CYLINDER_ENVELOPE",
+    description: "旋转轮廓构件按外接圆柱转换，原始轮廓曲线未保留。",
+  },
+  stripCrossSectionFlattened: {
+    code: "DEMO_TRANSLATION_TILE_SECTION_FLATTENED",
+    description: "瓦件按中线纵向剖面条带挤出转换，纵向曲线与压茬保留，横向抛物断面被展平。",
+  },
+  decomposedParts: {
+    code: "DEMO_TRANSLATION_DECOMPOSED_PARTS",
+    description: "合并多块构件按网格连通分量拆分为多个实体分件，分件通过 parentId 归组，构造关系保留。",
+  },
+  boundsEnvelopeFallback: {
+    code: "DEMO_TRANSLATION_BOUNDS_FALLBACK",
+    description: "该构件网格无法识别为棱柱、圆柱或剖面条带，退化为轴对齐包围盒。",
+  },
+};
 
 function deterministicUuid(seed: string): string {
   const hex = sha256Hex(seed).slice(0, 32).split("");
@@ -76,7 +137,7 @@ function exact(value: number | string): string {
 }
 
 function parameterType(category: string): "length" | "angle" | "count" | "ratio" {
-  if (/(?:count|rows?|columns?|courses?|segments?|bays?)/i.test(category)) return "count";
+  if (/(?:count|rows?|columns?|courses?|segments?|bays?|facets?)/i.test(category)) return "count";
   if (/(?:angle|slope|pitchDeg)/i.test(category)) return "angle";
   if (/(?:ratio|factor)/i.test(category)) return "ratio";
   return "length";
@@ -84,7 +145,7 @@ function parameterType(category: string): "length" | "angle" | "count" | "ratio"
 
 function readableName(entity: LegacyEntity): string {
   const value = entity.domainTerm?.displayNameZh?.trim();
-  if (value && /[\u3400-\u9fff]/u.test(value)) return value;
+  if (value && /[㐀-鿿]/u.test(value)) return value;
   const names: Record<string, string> = {
     column: "柱（团队演示）",
     columnBase: "柱下承托构件（团队演示）",
@@ -112,62 +173,212 @@ function representativeKeys(entities: readonly LegacyEntity[], limit = 480): str
   return [...selected.values()];
 }
 
-function projectGeometrySpec(input: DemoConversionInput, projectId: string, buildingId: string, revisionId: string, evidenceId: string): ProjectDrivenGeometrySpec {
+function sourceMeshes(input: DemoConversionInput): Map<string, SourceMesh> {
+  const bundle = input.sourceFiles.find((file) => file.fileName.endsWith("source-meshes.ndjson.gz"));
+  return bundle ? parseSourceMeshBundle(bundle.bytes) : new Map();
+}
+
+type EntityBounds = readonly [readonly [number, number, number], readonly [number, number, number]];
+
+// 接触轴 = 两构件包围盒区间重叠量最小的轴（相邻接触面所在方向）。
+// 质心差主轴在大小悬殊的构件对上会选错（如角柱础对整块台基）。
+function contactAxis(from: EntityBounds, to: EntityBounds): { axis: "x" | "y" | "z"; index: 0 | 1 | 2; sign: 1 | -1 } {
+  let index: 0 | 1 | 2 = 2;
+  let smallest = Infinity;
+  for (const candidate of [0, 1, 2] as const) {
+    const overlap = Math.min(from[1][candidate], to[1][candidate]) - Math.max(from[0][candidate], to[0][candidate]);
+    if (overlap < smallest) { smallest = overlap; index = candidate; }
+  }
+  const fromCenter = (from[0][index] + from[1][index]) / 2;
+  const toCenter = (to[0][index] + to[1][index]) / 2;
+  return { axis: (["x", "y", "z"] as const)[index], index, sign: toCenter >= fromCenter ? 1 : -1 };
+}
+
+interface TranslationOutput {
+  readonly objects: ProjectDrivenGeometrySpec["objects"];
+  readonly interfaces: ProjectDrivenGeometrySpec["interfaces"];
+  readonly unknowns: ProjectDrivenGeometrySpec["unknowns"];
+  readonly partCount: number;
+  readonly interfaceCount: number;
+  readonly solidKindCounts: Record<string, number>;
+  readonly approximationCounts: Record<string, number>;
+}
+
+function translateManifest(input: DemoConversionInput, evidenceId: string, fixtureId: string): TranslationOutput {
   if (!input.manifest.entities.length) throw new Error("DEMO_MANIFEST_EMPTY");
-  const unknowns: ProjectDrivenGeometrySpec["unknowns"] = [];
-  const objects: ProjectDrivenGeometrySpec["objects"] = input.manifest.entities.map((entity) => {
-    const conversionUnknownId = deterministicUuid(`unknown:conversion:${entity.entityId}`);
+  const meshes = sourceMeshes(input);
+  const unknowns: ProjectDrivenGeometrySpec["unknowns"][number][] = [];
+  const objects: ProjectDrivenGeometrySpec["objects"][number][] = [];
+  const familyUnknowns = new Map<string, { id: string; code: string; description: string; affected: string[] }>();
+  const solidKindCounts: Record<string, number> = {};
+  const approximationCounts: Record<string, number> = {};
+  const objectGroups = new Map<string, { id: string; bounds: EntityBounds }[]>();
+  let partCount = 0;
+
+  for (const entity of input.manifest.entities) {
+    const facts = new Map<string, number>();
+    for (const fact of entity.dimensionFacts ?? []) {
+      const numeric = Number(fact.value);
+      if (!facts.has(fact.category) && Number.isFinite(numeric)) facts.set(fact.category, numeric);
+    }
+    const translation = translateEntity(entity.componentType, facts, entity.bounds, meshes.get(entity.entityId));
     const entityUnknownIds = (entity.unknowns ?? []).map((reason) => deterministicUuid(`unknown:${entity.entityId}:${reason}`));
-    unknowns.push({
-      id: conversionUnknownId,
-      subjectRef: entity.entityId,
-      reasonCode: "V3_MESH_TO_PARAMETRIC_BREP_APPROXIMATION",
-      description: "旧 v3 网格仅作为团队 demo 证据；当前实体为轴对齐参数化包络，曲面、节点与构造关系尚未按 OCP 精确重建。",
-      requiredEvidence: ["经独立复核的 OCP 曲面和节点接口重建记录"],
-      affectedRefs: [entity.entityId], evidenceRefs: [evidenceId],
-      blocksProxyOutcome: false, blocksFormalEligibility: true,
-    });
     for (const [index, reason] of (entity.unknowns ?? []).entries()) {
       unknowns.push({
         id: entityUnknownIds[index]!, subjectRef: entity.entityId,
-        reasonCode: `LEGACY_DEMO_${reason.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`,
+        reasonCode: `LEGACY_DEMO_${reason.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`.slice(0, 120),
         description: `旧 v3 团队 demo 未知项：${reason}`,
         requiredEvidence: ["项目自身证据或专业人员复核记录"], affectedRefs: [entity.entityId], evidenceRefs: [evidenceId],
         blocksProxyOutcome: false, blocksFormalEligibility: true,
       });
     }
-    const [minimum, maximum] = entity.bounds;
-    const size = maximum.map((value, index) => Math.max(0.001, value - minimum[index]!)) as [number, number, number];
-    const center = maximum.map((value, index) => (value + minimum[index]!) / 2) as [number, number, number];
-    return {
-      id: entity.entityId, stableKey: entity.key, parentId: null,
+    const translationUnknownIds: string[] = [];
+    for (const tag of translation.approximations) {
+      const reason = APPROXIMATION_REASONS[tag];
+      approximationCounts[tag] = (approximationCounts[tag] ?? 0) + 1;
+      if (!reason) continue;
+      const familyKey = `${tag}:${entity.componentType}`;
+      let family = familyUnknowns.get(familyKey);
+      if (!family) {
+        family = {
+          id: deterministicUuid(`unknown:translation:${familyKey}`),
+          code: reason.code,
+          description: `${entity.componentType}：${reason.description}`,
+          affected: [],
+        };
+        familyUnknowns.set(familyKey, family);
+      }
+      family.affected.push(entity.entityId);
+      translationUnknownIds.push(family.id);
+    }
+    const parameters = (entity.dimensionFacts ?? []).map((fact) => {
+      const kind = parameterType(fact.category);
+      const base = {
+        id: deterministicUuid(`parameter:${entity.entityId}:${fact.dimensionId ?? fact.category}`), name: fact.category,
+        basis: "demo" as const, factRefs: [`demo:v3-dimension:${fact.dimensionId ?? fact.category}`], evidenceRefs: [evidenceId],
+      };
+      if (kind === "count") return { ...base, valueType: "count" as const, value: Math.max(0, Math.round(Number(fact.value))), unit: "1" as const };
+      if (kind === "angle") return { ...base, valueType: "angle" as const, exactValue: exact(fact.value), unit: "deg" as const };
+      if (kind === "ratio") return { ...base, valueType: "ratio" as const, exactValue: exact(fact.value), unit: "1" as const };
+      return { ...base, valueType: "length" as const, exactValue: exact(fact.value), unit: "mm" as const };
+    });
+    const shared = {
       componentType: entity.componentType, displayNameZh: readableName(entity),
       materialCode: entity.materialFact?.materialCode ?? "demo-material-unknown",
-      solid: { kind: "box" as const, sizeX: exact(size[0]), sizeY: exact(size[1]), sizeZ: exact(size[2]), centerMm: center },
-      parameters: (entity.dimensionFacts ?? []).map((fact) => {
-        const kind = parameterType(fact.category);
-        const base = {
-          id: deterministicUuid(`parameter:${entity.entityId}:${fact.dimensionId ?? fact.category}`), name: fact.category,
-          basis: "demo" as const, factRefs: [`demo:v3-dimension:${fact.dimensionId ?? fact.category}`], evidenceRefs: [evidenceId],
-        };
-        if (kind === "count") return { ...base, valueType: "count" as const, value: Math.max(0, Math.round(Number(fact.value))), unit: "1" as const };
-        if (kind === "angle") return { ...base, valueType: "angle" as const, exactValue: exact(fact.value), unit: "deg" as const };
-        if (kind === "ratio") return { ...base, valueType: "ratio" as const, exactValue: exact(fact.value), unit: "1" as const };
-        return { ...base, valueType: "length" as const, exactValue: exact(fact.value), unit: "mm" as const };
-      }),
-      producer: { producerType: "demo" as const, fixtureId: input.fixtureId },
+      producer: { producerType: "demo" as const, fixtureId },
       factRefs: [`demo:v3-entity:${entity.entityId}`], evidenceRefs: [evidenceId],
-      unknownRefs: [conversionUnknownId, ...entityUnknownIds],
     };
-  });
+    objects.push({
+      ...shared, id: entity.entityId, stableKey: entity.key, parentId: null,
+      solid: translation.primary, parameters,
+      unknownRefs: [...new Set([...translationUnknownIds, ...entityUnknownIds])],
+    });
+    const group: { id: string; bounds: EntityBounds }[] = [{ id: entity.entityId, bounds: solidBounds(translation.primary) }];
+    solidKindCounts[translation.primary.kind] = (solidKindCounts[translation.primary.kind] ?? 0) + 1;
+    translation.parts.forEach((part, index) => {
+      partCount += 1;
+      solidKindCounts[part.kind] = (solidKindCounts[part.kind] ?? 0) + 1;
+      const partId = deterministicUuid(`part:${entity.entityId}:${index + 1}`);
+      objects.push({
+        ...shared, id: partId,
+        stableKey: `${entity.key}#p${index + 1}`, parentId: entity.entityId,
+        solid: part, parameters: [], unknownRefs: [],
+      });
+      group.push({ id: partId, bounds: solidBounds(part) });
+    });
+    objectGroups.set(entity.entityId, group);
+  }
+
+  for (const family of familyUnknowns.values()) {
+    unknowns.push({
+      id: family.id, subjectRef: family.affected[0]!,
+      reasonCode: family.code, description: family.description,
+      requiredEvidence: ["经独立复核的构件级曲面与构造重建记录"],
+      affectedRefs: family.affected.slice(0, 1000), evidenceRefs: [evidenceId],
+      blocksProxyOutcome: false, blocksFormalEligibility: true,
+    });
+  }
+
+  const objectIds = new Set(objects.map((item) => item.id));
+  const boundsById = new Map(input.manifest.entities.map((entity) => [entity.entityId, entity.bounds]));
+  // 分解出分件的实体：接口端点取该实体分件组中与对方最近的对象
+  const separation = (left: EntityBounds, right: EntityBounds): number => {
+    let total = 0;
+    for (const axis of [0, 1, 2] as const) {
+      const gap = Math.max(left[0][axis] - right[1][axis], right[0][axis] - left[1][axis], 0);
+      total += gap * gap;
+    }
+    return total;
+  };
+  const nearestObject = (entityId: string, partner: EntityBounds): { id: string; bounds: EntityBounds } => {
+    const group = objectGroups.get(entityId)!;
+    let best = group[0]!;
+    for (const candidate of group) if (separation(candidate.bounds, partner) < separation(best.bounds, partner)) best = candidate;
+    return best;
+  };
+  const typeByEntity = new Map(input.manifest.entities.map((entity) => [entity.entityId, entity.componentType]));
+  const interfaces: ProjectDrivenGeometrySpec["interfaces"][number][] = [];
+  const droppedByGroup = new Map<string, number>();
+  for (const item of input.manifest.interfaces ?? []) {
+    if (!objectIds.has(item.fromEntityId) || !objectIds.has(item.toEntityId) || item.fromEntityId === item.toEntityId) continue;
+    if (!STRUCTURAL_INTERFACE_ROLES.has(item.role)) {
+      const group = TILE_INTERFACE_ROLES.has(item.role) ? "tile" : "localContact";
+      droppedByGroup.set(group, (droppedByGroup.get(group) ?? 0) + 1);
+      continue;
+    }
+    const fromObject = nearestObject(item.fromEntityId, boundsById.get(item.toEntityId)!);
+    const toObject = nearestObject(item.toEntityId, fromObject.bounds);
+    const { axis, index, sign } = contactAxis(fromObject.bounds, toObject.bounds);
+    const direction: [number, number, number] = [0, 0, 0];
+    direction[index] = sign;
+    const approximated = APPROXIMATED_TYPES.has(typeByEntity.get(item.fromEntityId)!) || APPROXIMATED_TYPES.has(typeByEntity.get(item.toEntityId)!);
+    const gapAllowance = approximated ? 90 : 80;
+    interfaces.push({
+      id: deterministicUuid(`interface:${item.interfaceId}`),
+      fromObjectId: fromObject.id, toObjectId: toObject.id,
+      interfaceType: item.interfaceKind === "bearing" ? "bearing" : item.interfaceKind === "containment" ? "containment" : "contact",
+      fromSurface: sign > 0 ? `${axis}Max` : `${axis}Min`,
+      toSurface: sign > 0 ? `${axis}Min` : `${axis}Max`,
+      direction,
+      maximumGapMm: Math.min(100, gapAllowance + (item.expectedGapMm ?? 0)),
+      maximumUnexpectedOverlapMm3: (item.maximumUnexpectedOverlapMm3 ?? 0) + (approximated ? 5e7 : 1e6),
+      minimumDeclaredOverlapMm3: null,
+      factRefs: [`demo:v3-interface:${item.interfaceId}`, `demo:v3-interface-role:${item.role}`],
+      evidenceRefs: [evidenceId],
+    });
+  }
+  if (droppedByGroup.size) {
+    const tileCount = droppedByGroup.get("tile") ?? 0;
+    const localCount = droppedByGroup.get("localContact") ?? 0;
+    unknowns.push({
+      id: deterministicUuid("unknown:interfaces:not-carried"),
+      subjectRef: "demo:v3-interfaces",
+      reasonCode: "DEMO_INTERFACES_NOT_CARRIED",
+      description: `原 v3 接口共 ${(input.manifest.interfaces ?? []).length} 项，本次携带完整竖向承重链 ${interfaces.length} 项。未携带：瓦件接口 ${tileCount} 项（横向断面展平后几何见证失效）；长构件局部接触接口 ${localCount} 项（当前接口检查语义仅支持构件极值面，多点接触表达留待后续版本）。原始接口关系保留在 v3 manifest 证据资产中。`,
+      requiredEvidence: ["支持局部接触面语义的接口检查实现", "瓦件曲面精确重建记录"],
+      affectedRefs: ["demo:v3-interface-group:tile", "demo:v3-interface-group:local-contact"],
+      evidenceRefs: [evidenceId],
+      blocksProxyOutcome: false, blocksFormalEligibility: true,
+    });
+  }
+  return {
+    objects, interfaces, unknowns, partCount,
+    interfaceCount: interfaces.length, solidKindCounts, approximationCounts,
+  };
+}
+
+function projectGeometrySpec(
+  input: DemoConversionInput, projectId: string, buildingId: string, revisionId: string, evidenceId: string,
+): { spec: ProjectDrivenGeometrySpec; translation: TranslationOutput } {
+  const translation = translateManifest(input, evidenceId, input.fixtureId);
   const specBase: ProjectDrivenGeometrySpec = {
     schemaVersion: "2.0", id: deterministicUuid(`geometry-spec:${input.manifest.geometrySignature}`),
     projectId, projectRevisionId: revisionId, buildingId, inputHash: "0".repeat(64),
     coordinateSystem: { name: "团队演示项目局部坐标", axisOrder: "XYZ", upAxis: "Z", lengthUnit: "mm", origin: [0, 0, 0] },
     tolerances: { modellingMm: 0.01, interfaceMm: 0.5, tessellationMm: 0.5 },
-    objects, interfaces: [], unknowns, createdAt: input.createdAt,
+    objects: translation.objects, interfaces: translation.interfaces, unknowns: translation.unknowns, createdAt: input.createdAt,
   };
-  return ProjectDrivenGeometrySpecSchema.parse({ ...specBase, inputHash: recordHash(specBase) });
+  return { spec: ProjectDrivenGeometrySpecSchema.parse({ ...specBase, inputHash: recordHash(specBase) }), translation };
 }
 
 export function buildDemoProjectPackage(input: DemoConversionInput): DemoConversionResult {
@@ -177,16 +388,15 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
   const actorId = deterministicUuid(`actor:${sourceSeed}`);
   const sourceRevisionId = deterministicUuid(`revision:${sourceSeed}`);
   const manifestEvidenceId = deterministicUuid(`evidence:manifest:${sourceSeed}`);
-  const geometrySpec = projectGeometrySpec(input, projectId, buildingId, sourceRevisionId, manifestEvidenceId);
+  const { spec: geometrySpec, translation } = projectGeometrySpec(input, projectId, buildingId, sourceRevisionId, manifestEvidenceId);
   const representative = representativeKeys(input.manifest.entities);
   const byType = new Map<string, string[]>();
   for (const entity of input.manifest.entities) byType.set(entity.componentType, [...(byType.get(entity.componentType) ?? []), entity.key]);
   const supportKeys = ["column", "columnBase", "bracketSeat", "bracketArm", "bearingBlock", "purlin", "eaveBeam"]
     .flatMap((type) => (byType.get(type) ?? []).slice(0, 4)).slice(0, 30);
-  const allEvidenceIds = input.sourceFiles.map((file) => deterministicUuid(`evidence:${sourceSeed}:${file.fileName}`));
   const taskId = deterministicUuid(`task:${sourceSeed}`);
   const taskDefinition = {
-    id: taskId, name: "团队 demo 跨项目成果任务", scope: ["泛化验证", "参数化包络审阅"],
+    id: taskId, name: "团队 demo 跨项目成果任务", scope: ["泛化验证", "构件级转换审阅"],
     regulationRefs: ["internal:demo-proxy-policy-v1"], deliverables: ["IFC", "GLB", "DXF", "SVG", "PDF", "检查报告"],
     responsibilities: [{ role: "projectLead" as const, actorId }], automationPolicyRef: "internal:demo-proxy-automation-v1",
     artifactRequirements: {
@@ -203,7 +413,7 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
         { key: "axon", displayLabelZh: "轴测示意", drawingRef: "D-01-4", kind: "axonometric", scaleDenominator: 50, sheetKey: "sheet-a2", viewportRectMm: [314, 20, 260, 175], direction: [1, 1, -1], right: [1, -1, 0], up: [1, 1, 2], targetStableKeys: representative, sourceEvidenceRefs: [] },
         { key: "transverse", displayLabelZh: "横剖示意", drawingRef: "D-02-1", kind: "transverseSection", scaleDenominator: 50, sheetKey: "sheet-a3", viewportRectMm: [15, 150, 185, 125], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1], sectionPlane: { normal: [1, 0, 0], offsetMm: 0 }, targetStableKeys: representative, sourceEvidenceRefs: [] },
         { key: "longitudinal", displayLabelZh: "纵剖示意", drawingRef: "D-02-2", kind: "longitudinalSection", scaleDenominator: 50, sheetKey: "sheet-a3", viewportRectMm: [220, 150, 185, 125], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1], sectionPlane: { normal: [0, 1, 0], offsetMm: 0 }, targetStableKeys: representative, sourceEvidenceRefs: [] },
-        { key: "support-detail", displayLabelZh: "檐下承托组合包络详图", drawingRef: "D-02-3", kind: "detail", scaleDenominator: 20, sheetKey: "sheet-a3", viewportRectMm: [15, 15, 390, 110], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1], sectionPlane: { normal: [1, 0, 0], offsetMm: 1800 }, cropBoundsMm: [-3500, 3500, 3600, 5600], targetStableKeys: supportKeys.length ? supportKeys : representative.slice(0, 20), sourceEvidenceRefs: [manifestEvidenceId] },
+        { key: "support-detail", displayLabelZh: "檐下承托组合详图", drawingRef: "D-02-3", kind: "detail", scaleDenominator: 20, sheetKey: "sheet-a3", viewportRectMm: [15, 15, 390, 110], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1], sectionPlane: { normal: [1, 0, 0], offsetMm: 1800 }, cropBoundsMm: [-3500, 3500, 3600, 5600], targetStableKeys: supportKeys.length ? supportKeys : representative.slice(0, 20), sourceEvidenceRefs: [manifestEvidenceId] },
       ],
     }, confirmedAt: input.createdAt,
   };
@@ -212,8 +422,17 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     schemaVersion: "third-project-demo-source-1", producerType: "demo", formalEligibility: false,
     originalGeometryRevisionId: input.manifest.geometryRevisionId,
     originalGeometrySignature: input.manifest.geometrySignature,
-    conversionMode: "axis-aligned-parametric-envelope",
-    limitations: ["非实测", "非真实中国古建", "曲面与接口未精确重建", "不可用于正式交付或施工"],
+    conversionMode: "component-parametric-translation",
+    conversionSummary: {
+      entityCount: input.manifest.entities.length,
+      objectCount: translation.objects.length,
+      partCount: translation.partCount,
+      carriedInterfaceCount: translation.interfaceCount,
+      originalInterfaceCount: (input.manifest.interfaces ?? []).length,
+      solidKindCounts: translation.solidKindCounts,
+      approximationCounts: translation.approximationCounts,
+    },
+    limitations: ["非实测", "非真实中国古建", "近似构件与未携带接口见结构化未知项", "不可用于正式交付或施工"],
     sourceFiles: input.sourceFiles.map((file) => ({ fileName: file.fileName, sha256: sha256Hex(file.bytes), byteLength: file.bytes.byteLength })),
   })}\n`);
   const sources = [...input.sourceFiles, { fileName: "demo-source-declaration.json", mimeType: "application/json", bytes: sourceDeclaration, evidenceType: "document" as const, title: "团队 demo 来源与转换边界" }];
@@ -235,9 +454,9 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
   }));
   const parseRecords = assets.map((asset, index) => ({
     id: deterministicUuid(`parse:${sourceSeed}:${asset.fileName}`), projectId, assetId: asset.id,
-    evidenceId: evidences[index]!.id, parser: "demo-package-converter", parserVersion: "1.0.0",
+    evidenceId: evidences[index]!.id, parser: "demo-package-converter", parserVersion: "2.0.0",
     status: "metadataOnly" as const, extractedText: null,
-    warnings: ["团队 demo 来源；参数化包络不等于原始网格曲面或专业构造。"], createdAt: input.createdAt,
+    warnings: ["团队 demo 来源；构件级参数化转换的近似项与未携带接口见 GeometrySpec 结构化未知项。"], createdAt: input.createdAt,
   }));
   const snapshot = ProjectSnapshotSchema.parse({
     schemaVersion: "3.0",
@@ -246,7 +465,7 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     taskDefinitions: [taskDefinition], evidences, parseRecords, entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [],
     issues: [{
       id: deterministicUuid(`issue:${sourceSeed}`), projectId, issueType: "professionalUncertainty", subjectRefs: [geometrySpec.id],
-      description: "旧 v3 网格已转换为参数化包络；曲面、节点接口、年代与类型均未形成专业事实。",
+      description: "旧 v3 网格已按构件级参数化翻译；近似构件、未携带接口、年代与类型均未形成专业事实，见结构化未知项。",
       sourceRef: manifestEvidenceId, status: "open", impactRefs: [geometrySpec.id], blocksProxyOutcome: false, blocksFormalEligibility: true,
       producer: { producerType: "demo", fixtureId: input.fixtureId }, createdAt: input.createdAt, resolvedAt: null,
     }],
@@ -294,7 +513,14 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
   }, { level: 6, mtime: new Date("2000-01-01T00:00:00Z") });
   return {
     packageBytes, projectId, buildingId, geometrySpecId: geometrySpec.id, packageSha256: sha256Hex(packageBytes),
-    sourceAssetSha256: assets.map((asset) => asset.sha256), objectCount: geometrySpec.objects.length,
-    unknownCount: geometrySpec.unknowns.length, originalGeometrySignature: input.manifest.geometrySignature,
+    sourceAssetSha256: assets.map((asset) => asset.sha256),
+    objectCount: geometrySpec.objects.length,
+    entityCount: input.manifest.entities.length,
+    partCount: translation.partCount,
+    interfaceCount: translation.interfaceCount,
+    unknownCount: geometrySpec.unknowns.length,
+    solidKindCounts: translation.solidKindCounts,
+    approximationCounts: translation.approximationCounts,
+    originalGeometrySignature: input.manifest.geometrySignature,
   };
 }

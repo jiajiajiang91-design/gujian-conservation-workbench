@@ -29,10 +29,12 @@ function sample() {
         {
           entityId: "00000000-0000-5000-8000-000000000010",
           key: "column:0", componentType: "column", domainTerm: { displayNameZh: "柱（团队演示）" },
-          materialFact: { materialCode: "timber-demo" }, bounds: [[-100, -100, 0], [100, 100, 3000]],
+          materialFact: { materialCode: "timber-demo" }, bounds: [[-100, -100, 240], [100, 100, 3000]],
           dimensionFacts: [
             { dimensionId: "count-1", category: "countPerLeaf", value: 2 },
-            { dimensionId: "length-1", category: "height", value: 3000 },
+            { dimensionId: "length-1", category: "height", value: 2760 },
+            { dimensionId: "length-2", category: "bottomDiameter", value: 200 },
+            { dimensionId: "length-3", category: "topDiameter", value: 180 },
           ], unknowns: ["actual-timber-species"],
         },
         {
@@ -44,6 +46,23 @@ function sample() {
           entityId: "00000000-0000-5000-8000-000000000012",
           key: "pan-tile:0", componentType: "panTile", bounds: [[-1000, -700, 3120], [1000, 700, 3300]],
           dimensionFacts: [], unknowns: [],
+        },
+        {
+          entityId: "00000000-0000-5000-8000-000000000013",
+          key: "column-base:0", componentType: "columnBase", bounds: [[-280, -280, 0], [280, 280, 240]],
+          dimensionFacts: [{ dimensionId: "length-4", category: "lowerDiameter", value: 560 }], unknowns: [],
+        },
+      ],
+      interfaces: [
+        {
+          interfaceId: "IF-COLUMN-BASE-0", role: "column-base",
+          fromEntityId: "00000000-0000-5000-8000-000000000010", toEntityId: "00000000-0000-5000-8000-000000000013",
+          interfaceKind: "bearing", contactMode: "surface", expectedGapMm: 0, maximumGapMm: 0.5, maximumUnexpectedOverlapMm3: 0.1,
+        },
+        {
+          interfaceId: "IF-TILE-LAP-0", role: "tile-longitudinal-lap",
+          fromEntityId: "00000000-0000-5000-8000-000000000012", toEntityId: "00000000-0000-5000-8000-000000000011",
+          interfaceKind: "lap", contactMode: "overlapZone", expectedGapMm: 0.5, maximumGapMm: 1.5, maximumUnexpectedOverlapMm3: 0.1,
         },
       ],
     },
@@ -69,8 +88,19 @@ describe("demo project package converter", () => {
     expect(column.id).toBe("00000000-0000-5000-8000-000000000010");
     expect(column.producer).toEqual({ producerType: "demo", fixtureId: "test-demo-fixture" });
     expect(column.parameters.find((item) => item.name === "countPerLeaf")).toMatchObject({ valueType: "count", value: 2, unit: "1" });
-    expect(column.parameters.find((item) => item.name === "height")).toMatchObject({ valueType: "length", exactValue: "3000", unit: "mm" });
-    expect(spec.unknowns.some((item) => item.reasonCode === "V3_MESH_TO_PARAMETRIC_BREP_APPROXIMATION" && item.blocksFormalEligibility)).toBe(true);
+    expect(column.parameters.find((item) => item.name === "height")).toMatchObject({ valueType: "length", exactValue: "2760", unit: "mm" });
+    expect(column.solid).toMatchObject({ kind: "cylinder", radius: "95", axis: "z" });
+    expect(spec.unknowns.some((item) => item.reasonCode === "DEMO_TRANSLATION_TAPER_AVERAGED" && item.blocksFormalEligibility)).toBe(true);
+    expect(spec.unknowns.some((item) => item.reasonCode === "DEMO_TRANSLATION_BOUNDS_FALLBACK")).toBe(true);
+    expect(spec.unknowns.some((item) => item.reasonCode === "DEMO_INTERFACES_NOT_CARRIED")).toBe(true);
+    expect(spec.interfaces).toHaveLength(1);
+    expect(spec.interfaces[0]).toMatchObject({
+      interfaceType: "bearing",
+      fromObjectId: "00000000-0000-5000-8000-000000000010",
+      toObjectId: "00000000-0000-5000-8000-000000000013",
+      fromSurface: "zMin", toSurface: "zMax",
+    });
+    expect(result.interfaceCount).toBe(1);
     expect(parsed.snapshot.taskDefinitions[0]?.artifactRequirements?.sheets.map((item) => item.pageMm)).toEqual([[594, 420], [420, 297]]);
 
     const importedId = await service.import(result.packageBytes, "third-project.gujian.zip", crypto.randomUUID());
