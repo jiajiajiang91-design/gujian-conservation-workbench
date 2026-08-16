@@ -44,6 +44,7 @@ const stages = [
   { id: "conditions", label: "现状记录" },
   { id: "issues", label: "问题队列" },
   { id: "geometry", label: "三维模型" },
+  { id: "sheetStyle", label: "图纸样式" },
   { id: "drawings", label: "成组图纸" },
   { id: "checks", label: "检查与资格", icon: ShieldCheck },
   { id: "package", label: "代理交付" },
@@ -53,6 +54,10 @@ export const LENGTH_INPUT_STEP = "any";
 const OBSERVATION_LABELS = {
   visibleCondition: "可见状态", damage: "残损", material: "材料", state: "整体状态",
 } as const;
+const DRAWING_KIND_LABELS: Record<string, string> = {
+  floorPlan: "平面", roofPlan: "屋顶平面", elevation: "立面",
+  transverseSection: "横剖", longitudinalSection: "纵剖", axonometric: "轴测", detail: "详图",
+};
 type StageId = typeof stages[number]["id"];
 
 interface ServerStatus {
@@ -882,6 +887,9 @@ export function App() {
     conditions: selected?.snapshot.observations.length ? { label: `${selected.snapshot.observations.length} 条记录`, tone: "done" } : { label: "无记录", tone: "idle" },
     issues: dashboard?.openIssueCount ? { label: `${dashboard.openIssueCount} 项待办`, tone: "active" } : { label: "无待办", tone: "done" },
     geometry: geometryRevision ? { label: "已生成", tone: "done" } : { label: "未生成", tone: "idle" },
+    sheetStyle: confirmedTask?.artifactRequirements
+      ? { label: `${confirmedTask.artifactRequirements.sheets.length} 张图幅`, tone: "done" }
+      : { label: "未设置", tone: "idle" },
     drawings: drawingArtifacts.length ? { label: `${drawingArtifacts.length} 项产物`, tone: "done" } : { label: "未生成", tone: "idle" },
     checks: latestCheckRun ? { label: "已检查", tone: "done" } : { label: "未检查", tone: "idle" },
     package: latestDelivery ? { label: "已建草案", tone: "done" } : { label: "未建立", tone: "idle" },
@@ -1394,6 +1402,58 @@ export function App() {
                 ) : (
                   <div className="panel-empty">尚未建立 GeometryRevision。此入口先验证通用几何内核，不宣称项目已有实测三维成果。</div>
                 )}
+              </section>
+            )}
+
+            {activeStage === "sheetStyle" && (
+              <section className="evidence-board">
+                <header className="board-heading">
+                  <div><p className="eyebrow">SHEET STYLE</p><h3>图幅、视图与图签</h3></div>
+                  <button className="quiet-link" type="button" onClick={() => setActiveStage("tasks")}>在任务要求中修改</button>
+                </header>
+                {confirmedTask?.artifactRequirements ? (() => {
+                  const requirements = confirmedTask.artifactRequirements;
+                  return (
+                    <div className="stage-split">
+                      <div className="stage-data">
+                        <div className="summary-grid">
+                          <article><span>图纸标题</span><strong>{requirements.titleZh}</strong><small>修订标记 {requirements.revisionLabel}</small></article>
+                          <article><span>图幅</span><strong>{requirements.sheets.length} 张</strong><small>{[...new Set(requirements.sheets.map((sheet) => `${sheet.pageMm[0]}×${sheet.pageMm[1]}`))].join(" · ")} mm</small></article>
+                          <article><span>视图</span><strong>{requirements.views.length} 个</strong><small>比例 {[...new Set(requirements.views.map((view) => `1:${view.scaleDenominator}`))].join(" · ")}</small></article>
+                        </div>
+                        <div className="requirements-table">
+                          {requirements.sheets.map((sheet) => (
+                            <div key={sheet.key}>
+                              <span>{sheet.drawingNumber}</span>
+                              <strong>{sheet.displayLabelZh}</strong>
+                              <span>{sheet.pageMm[0]}×{sheet.pageMm[1]}</span>
+                              <span>{requirements.views.filter((view) => view.sheetKey === sheet.key).length} 个视图</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="requirements-table">
+                          {requirements.views.map((view) => (
+                            <div key={view.key}>
+                              <span>{view.drawingRef}</span>
+                              <strong>{view.displayLabelZh}</strong>
+                              <span>{DRAWING_KIND_LABELS[view.kind] ?? view.kind}</span>
+                              <span>1:{view.scaleDenominator}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="inline-warning">构件画法与标注规则尚未形成可选项。当前每个视图固定输出一条总尺寸、图名与资格声明，轴网、标高、剖切索引与构件标注均未生成，差距与补齐方案见验证材料 15 图纸表达差距清单。在标注体系落地前，此处不提供画法与标注选择，避免出现不影响成果的空选项。</div>
+                      </div>
+                      <aside className="stage-evidence" aria-label="样式预览">
+                        <header><span className="eyebrow">STYLE PREVIEW</span>{drawingPreviewUrls.length > 0 && <small>{drawingPreviewUrls[0]!.label}</small>}</header>
+                        {drawingPreviewUrls.length > 0
+                          ? (drawingPreviewUrls[0]!.kind === "svg"
+                            ? <img src={drawingPreviewUrls[0]!.url} alt="图纸样式预览" />
+                            : <object data={drawingPreviewUrls[0]!.url} type="application/pdf" aria-label="图纸样式预览" />)
+                          : <div className="panel-empty">生成成组图纸后，这里显示应用当前版面的实际图面。</div>}
+                      </aside>
+                    </div>
+                  );
+                })() : <div className="panel-empty">尚未确认成果要求。图幅、视图与图签在任务要求中一次确认后显示在这里。</div>}
               </section>
             )}
 
