@@ -118,31 +118,95 @@ def _triangle_depth(point: np.ndarray, triangle_2d: np.ndarray, depths: np.ndarr
     return float(w1 * depths[0] + w2 * depths[1] + w3 * depths[2])
 
 
-def _visibility_intervals(segment: np.ndarray, segment_depth: np.ndarray, projected_triangles: list[tuple[np.ndarray, np.ndarray]], tolerance_mm: float) -> list[tuple[float, float]]:
+class _TrianglePool:
+    """把视图内全部投影三角形堆叠为 numpy 数组并缓存包围盒，供逐边可见性计算做向量化预筛。"""
+
+    __slots__ = ("triangles", "depths", "bounds_min", "bounds_max", "count")
+
+    def __init__(self, projected_triangles: list[tuple[np.ndarray, np.ndarray]]) -> None:
+        items = list(projected_triangles)
+        self.count = len(items)
+        if not items:
+            self.triangles = np.zeros((0, 3, 2), dtype=float)
+            self.depths = np.zeros((0, 3), dtype=float)
+            self.bounds_min = np.zeros((0, 2), dtype=float)
+            self.bounds_max = np.zeros((0, 2), dtype=float)
+            return
+        self.triangles = np.stack([np.asarray(triangle, dtype=float) for triangle, _ in items])
+        self.depths = np.stack([np.asarray(depths, dtype=float) for _, depths in items])
+        self.bounds_min = self.triangles.min(axis=1)
+        self.bounds_max = self.triangles.max(axis=1)
+
+
+def _visibility_intervals(
+    segment: np.ndarray,
+    segment_depth: np.ndarray,
+    projected_triangles: "list[tuple[np.ndarray, np.ndarray]] | _TrianglePool",
+    tolerance_mm: float,
+) -> list[tuple[float, float]]:
+    pool = projected_triangles if isinstance(projected_triangles, _TrianglePool) else _TrianglePool(projected_triangles)
     events = {0.0, 1.0}
-    segment_line = LineString(segment)
-    for triangle, _ in projected_triangles:
-        boundary = LineString([triangle[0], triangle[1], triangle[2], triangle[0]])
-        intersection = segment_line.intersection(boundary)
-        candidates = []
-        if intersection.geom_type == "Point": candidates = [intersection]
-        elif intersection.geom_type in {"MultiPoint", "GeometryCollection"}: candidates = [item for item in intersection.geoms if item.geom_type == "Point"]
-        for point in candidates:
-            events.add(max(0.0, min(1.0, float(segment_line.project(point) / max(segment_line.length, 1e-12)))))
+    start = np.asarray(segment[0], dtype=float)
+    end = np.asarray(segment[1], dtype=float)
+    if pool.count:
+        segment_min = np.minimum(start, end) - 1e-7
+        segment_max = np.maximum(start, end) + 1e-7
+        overlap = np.flatnonzero(
+            (pool.bounds_min[:, 0] <= segment_max[0]) & (pool.bounds_max[:, 0] >= segment_min[0])
+            & (pool.bounds_min[:, 1] <= segment_max[1]) & (pool.bounds_max[:, 1] >= segment_min[1])
+        )
+    else:
+        overlap = np.zeros(0, dtype=int)
+    if len(overlap):
+        triangles = pool.triangles[overlap]
+        edge_start = triangles
+        edge_end = np.roll(triangles, -1, axis=1)
+        edge_vector = edge_end - edge_start
+        direction = end - start
+        denominator = direction[0] * edge_vector[..., 1] - direction[1] * edge_vector[..., 0]
+        difference = edge_start - start
+        valid = np.abs(denominator) > 1e-12
+        safe = np.where(valid, denominator, 1.0)
+        t_parameter = (difference[..., 0] * edge_vector[..., 1] - difference[..., 1] * edge_vector[..., 0]) / safe
+        u_parameter = (difference[..., 0] * direction[1] - difference[..., 1] * direction[0]) / safe
+        hit = valid & (t_parameter >= -1e-12) & (t_parameter <= 1 + 1e-12) & (u_parameter >= -1e-12) & (u_parameter <= 1 + 1e-12)
+        for value in np.clip(t_parameter[hit], 0.0, 1.0).tolist():
+            events.add(value)
     ordered = sorted(events)
     visible: list[tuple[float, float]] = []
-    for left, right in zip(ordered, ordered[1:], strict=False):
-        fraction = (left + right) / 2
-        point = segment[0] * (1 - fraction) + segment[1] * fraction
-        depth = float(segment_depth[0] * (1 - fraction) + segment_depth[1] * fraction)
-        nearest = math.inf
-        for triangle, depths in projected_triangles:
-            if point[0] < triangle[:, 0].min() - 1e-7 or point[0] > triangle[:, 0].max() + 1e-7 or point[1] < triangle[:, 1].min() - 1e-7 or point[1] > triangle[:, 1].max() + 1e-7:
-                continue
-            candidate = _triangle_depth(point, triangle, depths)
-            if candidate is not None:
-                nearest = min(nearest, candidate)
-        if nearest >= depth - tolerance_mm and right - left > 1e-9:
+    if len(ordered) < 2:
+        return visible
+    fractions = (np.asarray(ordered[:-1]) + np.asarray(ordered[1:])) / 2
+    depths_mid = float(segment_depth[0]) * (1 - fractions) + float(segment_depth[1]) * fractions
+    if len(overlap):
+        points = start[None, :] * (1 - fractions[:, None]) + end[None, :] * fractions[:, None]
+        bounds_min = pool.bounds_min[overlap]
+        bounds_max = pool.bounds_max[overlap]
+        inside_bbox = (
+            (points[:, None, 0] >= bounds_min[None, :, 0] - 1e-7) & (points[:, None, 0] <= bounds_max[None, :, 0] + 1e-7)
+            & (points[:, None, 1] >= bounds_min[None, :, 1] - 1e-7) & (points[:, None, 1] <= bounds_max[None, :, 1] + 1e-7)
+        )
+        triangles = pool.triangles[overlap]
+        triangle_depths = pool.depths[overlap]
+        ax, ay = triangles[:, 0, 0], triangles[:, 0, 1]
+        bx, by = triangles[:, 1, 0], triangles[:, 1, 1]
+        cx, cy = triangles[:, 2, 0], triangles[:, 2, 1]
+        denominator = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+        usable = np.abs(denominator) >= 1e-9
+        safe = np.where(usable, denominator, 1.0)
+        px = points[:, 0][:, None]
+        py = points[:, 1][:, None]
+        w1 = ((by - cy)[None, :] * (px - cx[None, :]) + (cx - bx)[None, :] * (py - cy[None, :])) / safe[None, :]
+        w2 = ((cy - ay)[None, :] * (px - cx[None, :]) + (ax - cx)[None, :] * (py - cy[None, :])) / safe[None, :]
+        w3 = 1.0 - w1 - w2
+        inside = inside_bbox & usable[None, :] & (np.minimum(np.minimum(w1, w2), w3) >= -1e-7)
+        depth_grid = w1 * triangle_depths[None, :, 0] + w2 * triangle_depths[None, :, 1] + w3 * triangle_depths[None, :, 2]
+        depth_grid = np.where(inside, depth_grid, np.inf)
+        nearest_all = depth_grid.min(axis=1)
+    else:
+        nearest_all = np.full(len(fractions), np.inf)
+    for index, (left, right) in enumerate(zip(ordered, ordered[1:], strict=False)):
+        if nearest_all[index] >= depths_mid[index] - tolerance_mm and right - left > 1e-9:
             if visible and abs(visible[-1][1] - left) < 1e-9:
                 visible[-1] = (visible[-1][0], right)
             else:
@@ -191,6 +255,7 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
         for triangle in triangles:
             projected, depths = _project(triangle, right, up, direction)
             projected_triangles.append((projected, depths))
+    triangle_pool = _TrianglePool(projected_triangles)
     lines: list[dict[str, Any]] = []
     material_regions: list[dict[str, Any]] = []
     if view.get("sectionPlane"):
@@ -230,7 +295,7 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
                 projected, depths = _project(np.vstack((start, end)), right, up, direction)
                 if np.linalg.norm(projected[1] - projected[0]) < 0.05:
                     continue
-                for interval_start, interval_end in _visibility_intervals(projected, depths, projected_triangles, 0.5):
+                for interval_start, interval_end in _visibility_intervals(projected, depths, triangle_pool, 0.5):
                     clipped = np.vstack((
                         projected[0] * (1 - interval_start) + projected[1] * interval_start,
                         projected[0] * (1 - interval_end) + projected[1] * interval_end,
