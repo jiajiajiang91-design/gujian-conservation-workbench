@@ -636,7 +636,36 @@ export function createWorkbenchServer(options: {
     if (ownsLedger) ledger.close();
     if (ownsCadLedger) cadLedger.close();
   });
-  return server;
+
+  // 进程退出前收口：取消在途模型运行、终止作业子进程并等待其退出，
+  // 避免父进程先退导致 Python worker 成为孤儿进程。
+  const cancelActiveWork = async (): Promise<void> => {
+    const exits: Promise<unknown>[] = [];
+    for (const [runId, active] of activeRuns) {
+      if (active.state !== "running") continue;
+      active.state = "cancelled";
+      ledger.append(runId, "cancelled", 1, "server-shutdown");
+      ledger.complete(runId, "cancelled", null, null);
+      active.controller.abort();
+      if (!active.response.writableEnded) active.response.end();
+    }
+    for (const [jobId, active] of activeCadJobs) {
+      if (active.state !== "running") continue;
+      active.state = "cancelled";
+      active.workerRun.process.kill();
+      cadLedger.append(jobId, "cancelled", "server-shutdown");
+      cadLedger.complete(jobId, { status: "cancelled", outputManifestHash: null, outputDirectory: null });
+      exits.push(active.workerRun.result.catch(() => undefined));
+      if (!active.response.writableEnded) active.response.end();
+    }
+    for (const active of activeDrawingJobs.values()) {
+      active.workerRun.process.kill();
+      exits.push(active.workerRun.result.catch(() => undefined));
+      if (!active.response.writableEnded) active.response.end();
+    }
+    await Promise.all(exits);
+  };
+  return Object.assign(server, { cancelActiveWork });
 }
 
 if (process.env.NODE_ENV !== "test") {
@@ -644,7 +673,12 @@ if (process.env.NODE_ENV !== "test") {
   server.listen(port, host, () => {
     console.log(`古建保护成果工作台服务：http://${host}:${port}`);
   });
-  const close = () => server.close(() => process.exit(0));
+  let closing = false;
+  const close = () => {
+    if (closing) return;
+    closing = true;
+    void server.cancelActiveWork().finally(() => server.close(() => process.exit(0)));
+  };
   process.once("SIGINT", close);
   process.once("SIGTERM", close);
 }
