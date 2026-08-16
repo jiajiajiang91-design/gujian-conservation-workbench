@@ -1,4 +1,4 @@
-import { ProjectSnapshotSchema, type ArtifactRecord, type ArtifactRequirementMatrix, type CheckRun, type FactEnvelope, type ProjectSnapshot } from "@gujian/domain";
+import { ProjectSnapshotSchema, type ArtifactRecord, type ArtifactRequirementMatrix, type CheckRun, type FactEnvelope, type Observation, type ProjectSnapshot } from "@gujian/domain";
 
 import { ProjectCommandSchema, type ProjectCommand } from "./commands.js";
 import { assertDeliveryChainClosure } from "./delivery-chain-closure.js";
@@ -200,6 +200,18 @@ function appendFacts(head: ProjectHead, facts: readonly FactEnvelope[]): Project
   return ProjectSnapshotSchema.parse({
     ...head.snapshot,
     facts: [...head.snapshot.facts, ...facts],
+  });
+}
+
+function appendObservations(head: ProjectHead, observations: readonly Observation[]): ProjectSnapshot {
+  const existingIds = new Set(head.snapshot.observations.map((item) => item.id));
+  const duplicate = observations.find((item) => existingIds.has(item.id));
+  if (duplicate) {
+    throw new CommandError("COMMAND_INVALID", "observation id already exists", { observationId: duplicate.id });
+  }
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
+    observations: [...head.snapshot.observations, ...observations],
   });
 }
 
@@ -613,6 +625,8 @@ export class ProjectCommandService {
       }
       const snapshot = command.commandType === "CommitFacts"
         ? appendFacts(head, command.payload.facts)
+        : command.commandType === "CommitObservations"
+        ? appendObservations(head, command.payload.observations)
         : command.commandType === "ImportEvidence"
           ? appendEvidence(head, command)
           : command.commandType === "CommitModelRunResult"
@@ -651,6 +665,8 @@ export class ProjectCommandService {
         snapshot,
         changedRefs: command.commandType === "CommitFacts"
           ? command.payload.facts.map((fact) => fact.id)
+          : command.commandType === "CommitObservations"
+            ? command.payload.observations.map((item) => item.id)
           : command.commandType === "ImportEvidence"
             ? [command.payload.asset.id, command.payload.evidence.id, command.payload.parseRecord.id]
             : command.commandType === "CommitModelRunResult"

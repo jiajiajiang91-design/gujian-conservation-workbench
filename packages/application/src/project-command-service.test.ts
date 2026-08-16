@@ -220,4 +220,34 @@ describe("ProjectCommandService", () => {
       .rejects.toMatchObject({ code: "COMMAND_INVALID" });
     expect(repository.commitCount).toBe(2);
   });
+
+  it("现状记录写入人工来源并拒绝无证据引用的记录", async () => {
+    const { repository, service } = setup();
+    const created = await service.execute(createProjectCommand());
+    const observation = (evidenceRefs: string[]) => ({
+      commandType: "CommitObservations",
+      commandId: "00000000-0000-4000-8000-00000000000a",
+      projectId: ids.project,
+      actorId: ids.actor,
+      expectedRevisionId: created.revisionId,
+      issuedAt: "2026-08-16T00:00:00Z",
+      payload: {
+        observations: [{
+          id: "00000000-0000-4000-8000-00000000000b",
+          subjectRef: ids.building,
+          observationType: "damage",
+          text: "西侧檐柱柱脚可见糟朽",
+          producer: { producerType: "human", actorId: ids.actor, actionRef: { commandId: "00000000-0000-4000-8000-00000000000a" } },
+          evidenceRefs,
+          dataStatus: "available",
+        }],
+      },
+    });
+    // 无证据引用的现状记录必须被域模型拒绝
+    await expect(service.execute(observation([]))).rejects.toBeTruthy();
+    await service.execute(observation(["evidence:site-photo-1"]));
+    const stored = (repository.head?.snapshot as ProjectSnapshot).observations[0];
+    expect(stored?.producer.producerType).toBe("human");
+    expect(stored?.evidenceRefs).toEqual(["evidence:site-photo-1"]);
+  });
 });

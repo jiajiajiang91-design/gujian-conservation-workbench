@@ -41,6 +41,7 @@ const stages = [
   { id: "evidence", label: "项目资料" },
   { id: "measurements", label: "测量与尺寸依据", icon: Ruler },
   { id: "objects", label: "对象与构件", icon: Boxes },
+  { id: "conditions", label: "现状记录" },
   { id: "issues", label: "问题队列" },
   { id: "geometry", label: "三维模型" },
   { id: "drawings", label: "成组图纸" },
@@ -49,6 +50,9 @@ const stages = [
   { id: "candidates", label: "模型运行与费用", icon: Activity },
 ] as const;
 export const LENGTH_INPUT_STEP = "any";
+const OBSERVATION_LABELS = {
+  visibleCondition: "可见状态", damage: "残损", material: "材料", state: "整体状态",
+} as const;
 type StageId = typeof stages[number]["id"];
 
 interface ServerStatus {
@@ -805,6 +809,39 @@ export function App() {
     }
   };
 
+  // 现状记录（05 表 2）：人工判断必须绑定资料，无证据不允许记录
+  const recordObservation = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selected) return;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const evidenceRef = String(data.get("evidenceRef") ?? "").trim();
+    if (!evidenceRef) { setError("现状记录必须指向一份项目资料"); return; }
+    const commandId = crypto.randomUUID();
+    try {
+      await projectCommands.execute({
+        commandType: "CommitObservations",
+        commandId, projectId: selected.projectId, actorId: localActorId(),
+        expectedRevisionId: selected.revisionId, issuedAt: new Date().toISOString(),
+        payload: { observations: [{
+          id: crypto.randomUUID(),
+          subjectRef: String(data.get("subjectRef") ?? "").trim() || selected.snapshot.buildings[0]!.id,
+          observationType: String(data.get("observationType") ?? "visibleCondition") as "visibleCondition" | "material" | "damage" | "state",
+          text: String(data.get("text") ?? "").trim(),
+          producer: { producerType: "human", actorId: localActorId(), actionRef: { commandId } },
+          evidenceRefs: [evidenceRef],
+          dataStatus: "available",
+        }] },
+      });
+      const head = await projectRepository.getProjectHead(selected.projectId);
+      if (head) setSelected(await workflow.evaluate(head, localActorId()));
+      form.reset();
+      setNotice("现状记录已写入当前版本，来源指向所选资料");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "现状记录写入失败");
+    }
+  };
+
   const confirmDocumentedDimensionChain = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) return;
@@ -828,12 +865,21 @@ export function App() {
     }
   };
 
+  // 应然与实测超容差的差异即现状记录候选（架构 v1.4 §5.7）
+  const archetypeDifferences = (() => {
+    const archetype = projectArchetypes.at(-1);
+    if (!archetype || !selected) return [];
+    return compareWithMeasuredFacts(deriveArchetypeExpectations(archetype), selected.snapshot.facts)
+      .filter((item) => item.withinTolerance === false);
+  })();
+
   // 任务进度状态（05 图 1 左栏）：只按当前项目已有数据判断，不预设完成度
   const stageStates: Record<StageId, { label: string; tone: "done" | "active" | "idle" }> = {
     tasks: confirmedTask ? { label: "已确认", tone: "done" } : { label: "待确认", tone: "active" },
     evidence: selected?.snapshot.evidences.length ? { label: `${selected.snapshot.evidences.length} 份`, tone: "done" } : { label: "无资料", tone: "idle" },
     measurements: selected?.snapshot.facts.length ? { label: `${selected.snapshot.facts.length} 项事实`, tone: "done" } : { label: "无事实", tone: "idle" },
     objects: geometrySpec?.objects.length ? { label: `${geometrySpec.objects.length} 个对象`, tone: "done" } : { label: "无对象", tone: "idle" },
+    conditions: selected?.snapshot.observations.length ? { label: `${selected.snapshot.observations.length} 条记录`, tone: "done" } : { label: "无记录", tone: "idle" },
     issues: dashboard?.openIssueCount ? { label: `${dashboard.openIssueCount} 项待办`, tone: "active" } : { label: "无待办", tone: "done" },
     geometry: geometryRevision ? { label: "已生成", tone: "done" } : { label: "未生成", tone: "idle" },
     drawings: drawingArtifacts.length ? { label: `${drawingArtifacts.length} 项产物`, tone: "done" } : { label: "未生成", tone: "idle" },
@@ -1094,6 +1140,61 @@ export function App() {
                 </div>
                   </div>
                   {renderEvidenceView("选择资料查看构件对应的照片。")}
+                </div>
+              </section>
+            )}
+
+            {activeStage === "conditions" && (
+              <section className="evidence-board">
+                <header className="board-heading"><div><p className="eyebrow">CONDITION RECORD</p><h3>空间关系、构造连接与可见残损</h3></div><span className="board-count">{selected.snapshot.observations.length} 条记录</span></header>
+                <div className="stage-split">
+                  <div className="stage-data">
+                    <div className="record-table">
+                      {selected.snapshot.relations.map((relation) => (
+                        <article key={relation.id}>
+                          <span className={`producer-badge ${relation.producer.producerType}`}>{relation.producer.producerType}</span>
+                          <strong>{relation.relationType}</strong>
+                          <small>{relation.fromRef} 至 {relation.toRef}</small>
+                          <code>{relation.evidenceRefs.join(" · ") || "无证据引用"}</code>
+                        </article>
+                      ))}
+                      {selected.snapshot.observations.map((observation) => (
+                        <article key={observation.id}>
+                          <span className={`producer-badge ${observation.producer.producerType}`}>{observation.producer.producerType}</span>
+                          <strong>{OBSERVATION_LABELS[observation.observationType]}</strong>
+                          <small>{observation.text}</small>
+                          <code>{observation.evidenceRefs.join(" · ")}</code>
+                        </article>
+                      ))}
+                      {!selected.snapshot.relations.length && !selected.snapshot.observations.length && (
+                        <div className="panel-empty">尚无现状记录。空间关系与构造连接由识别产生并经人工确认；可见残损由人工对照资料记录，不可凭推断填写。</div>
+                      )}
+                    </div>
+                    {archetypeDifferences.length > 0 && (
+                      <div className="inline-warning">形制应然值与实测存在 {archetypeDifferences.length} 项超容差差异，属现状记录候选：{archetypeDifferences.map((item) => item.dimension).join("、")}。</div>
+                    )}
+                    <form className="task-setup" onSubmit={(event) => void recordObservation(event)}>
+                      <div><span className="node-label">人工节点</span><h4>记录一条现状判断</h4><p>只记录当前资料上可见的内容。不可见部位记为待复查，不写推断结论。</p></div>
+                      <label>判断类型
+                        <select name="observationType" defaultValue="visibleCondition">
+                          <option value="visibleCondition">可见状态</option>
+                          <option value="damage">残损</option>
+                          <option value="material">材料</option>
+                          <option value="state">整体状态</option>
+                        </select>
+                      </label>
+                      <label>对象（留空即整栋建筑）<input name="subjectRef" placeholder="构件稳定标识或对象 id" /></label>
+                      <label>依据资料
+                        <select name="evidenceRef" required defaultValue={activeEvidenceId ?? ""}>
+                          <option value="" disabled>选择一份资料</option>
+                          {selected.snapshot.evidences.map((evidence) => <option key={evidence.id} value={evidence.id}>{evidence.title}</option>)}
+                        </select>
+                      </label>
+                      <label>判断内容<textarea name="text" required placeholder="例如：西侧檐柱柱脚可见糟朽，范围约柱高下部三分之一" /></label>
+                      <button type="submit" disabled={!selected.snapshot.evidences.length}>记录并绑定来源</button>
+                    </form>
+                  </div>
+                  {renderEvidenceView("选择资料查看对应部位照片。")}
                 </div>
               </section>
             )}

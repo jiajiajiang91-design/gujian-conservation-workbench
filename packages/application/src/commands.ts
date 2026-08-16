@@ -5,6 +5,7 @@ import {
   AuditEventSchema,
   AssetRecordSchema,
   FactEnvelopeSchema,
+  ObservationSchema,
   EvidenceSchema,
   IsoDateTimeSchema,
   ProjectSnapshotSchema,
@@ -52,6 +53,15 @@ export const CommitFactsCommandSchema = CommandHeaderSchema.extend({
   expectedRevisionId: UuidSchema,
   payload: z.object({
     facts: z.array(FactEnvelopeSchema).min(1).max(1_000),
+  }).strict(),
+}).strict();
+
+// 现状记录（05 界面与交互形态 表 2）：可见残损、材料与状态判断，每条必须带证据引用
+export const CommitObservationsCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitObservations"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    observations: z.array(ObservationSchema).min(1).max(500),
   }).strict(),
 }).strict();
 
@@ -236,6 +246,7 @@ export const CreateDeliveryDraftCommandSchema = CommandHeaderSchema.extend({
 export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CreateProjectCommandSchema,
   CommitFactsCommandSchema,
+  CommitObservationsCommandSchema,
   ReplaceTaskDefinitionCommandSchema,
   ImportProjectSnapshotCommandSchema,
   ImportEvidenceCommandSchema,

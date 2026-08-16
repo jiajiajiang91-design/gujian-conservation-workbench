@@ -270,5 +270,7 @@ export const ProjectSnapshotSchema = z.object({
 export type ProjectSnapshot = z.infer<typeof ProjectSnapshotSchema>;
 export type TaskArtifactRequirements = z.infer<typeof TaskArtifactRequirementsSchema>;
 export type MeasurementRecord = z.infer<typeof MeasurementRecordSchema>;
+export type Observation = z.infer<typeof ObservationSchema>;
+export type Relation = z.infer<typeof RelationSchema>;
 export type AssetRecord = z.infer<typeof AssetRecordSchema>;
 export type ParseRecord = z.infer<typeof ParseRecordSchema>;
