@@ -161,7 +161,8 @@ export class KimiGateway {
             thinking: { type: "disabled" },
             stream: false,
             max_tokens: this.#maxOutputTokens,
-            temperature: 0.3,
+            // kimi-k2.6 仅接受 0.6，其他值返回 HTTP 400（与 execute 保持一致）
+            temperature: 0.6,
           }),
           signal,
         });
