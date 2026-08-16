@@ -27,6 +27,7 @@ import {
   DeliveryEvaluationSchema,
   DeliveryDraftSchema,
   ConceptEntrySchema,
+  ArchetypeSpecSchema,
 } from "@gujian/domain";
 
 const CommandHeaderSchema = z.object({
@@ -135,6 +136,15 @@ export const DecideCandidateCommandSchema = CommandHeaderSchema.extend({
   }),
 }).strict();
 
+// 形制参数登记（架构 v1.4 §5.7）：应然值模板，独立于 GeometrySpec
+export const CommitArchetypeSpecCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitArchetypeSpec"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    archetypeSpec: ArchetypeSpecSchema,
+  }).strict(),
+}).strict();
+
 // 词表条目提交（架构 v1.4 §5.6）：部署级词表 upsert，不改项目快照；
 // broader 可引用本批之外的既有条目，闭包完整性由词表校验与显示层兜底
 export const CommitConceptEntriesCommandSchema = CommandHeaderSchema.extend({
@@ -235,6 +245,7 @@ export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   DecideCandidateCommandSchema,
   DecideIssueOptionCommandSchema,
   CommitConceptEntriesCommandSchema,
+  CommitArchetypeSpecCommandSchema,
   StartCadJobCommandSchema,
   SyncCadJobEventsCommandSchema,
   CommitGeometryRevisionCommandSchema,

@@ -25,6 +25,7 @@ import {
   type DeliveryEvaluation,
   type DeliveryDraft,
   type ConceptEntry,
+  type ArchetypeSpec,
 } from "@gujian/domain";
 
 import { recordHash, sha256Hex } from "./hash.js";
@@ -97,7 +98,11 @@ export function openWorkbenchDatabase(databaseName = WORKBENCH_DB_NAME): Promise
         if (storeName === "projects") store.createIndex("updatedAt", "updatedAt", { unique: false });
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      // 其它页面发起升级时主动让出连接，避免旧连接永久阻塞版本升级
+      request.result.onversionchange = () => request.result.close();
+      resolve(request.result);
+    };
   });
 }
 
@@ -285,6 +290,15 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     const decisions = await requestResult<Decision[]>(transaction.objectStore("decisions").index("projectId").getAll(projectId));
     await done;
     return decisions.sort((left, right) => left.decidedAt.localeCompare(right.decidedAt));
+  }
+
+  async getProjectArchetypeSpecs(projectId: string): Promise<readonly ArchetypeSpec[]> {
+    const database = await this.#database;
+    const transaction = database.transaction("archetypeSpecs", "readonly");
+    const done = transactionDone(transaction);
+    const specs = await requestResult<ArchetypeSpec[]>(transaction.objectStore("archetypeSpecs").index("projectId").getAll(projectId));
+    await done;
+    return specs.sort((left, right) => left.createdAt.localeCompare(right.createdAt));
   }
 
   // 部署级词表 overlay（种子词表在代码内，此处只读用户提交的增量条目）

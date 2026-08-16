@@ -95,6 +95,11 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
   )) {
     throw new CommandError("COMMAND_INVALID", "candidate decision closure is invalid");
   }
+  if (command.commandType === "CommitArchetypeSpec" && (
+    command.payload.archetypeSpec.projectId !== command.projectId
+  )) {
+    throw new CommandError("PROJECT_REF_MISMATCH", "archetype spec must match command projectId");
+  }
   if (command.commandType === "DecideIssueOption" && (
     command.payload.decision.projectId !== command.projectId ||
     command.payload.decision.actorId !== command.actorId ||
@@ -277,6 +282,17 @@ function decideCandidate(
       ? { ...item, status: accepted ? "resolved" as const : "rejected" as const, resolvedAt: command.issuedAt }
       : item),
   });
+}
+
+function commitArchetypeSpec(
+  head: ProjectHead,
+  command: Extract<ProjectCommand, { commandType: "CommitArchetypeSpec" }>,
+): ProjectSnapshot {
+  const spec = command.payload.archetypeSpec;
+  if (!head.snapshot.buildings.some((building) => building.id === spec.buildingRef)) {
+    throw new CommandError("COMMAND_INVALID", "archetype building is not in this project");
+  }
+  return head.snapshot;
 }
 
 function decideIssueOption(
@@ -614,6 +630,9 @@ export class ProjectCommandService {
                     : command.commandType === "CommitConceptEntries"
                       // 词表是部署级数据：提交进入审计与词表库，项目快照不变
                       ? head.snapshot
+                      : command.commandType === "CommitArchetypeSpec"
+                        // 形制参数入独立对象库：校验建筑归属后快照不变
+                        ? commitArchetypeSpec(head, command)
                   : command.commandType === "CommitGeometryRevision"
                     ? appendGeometryRevision(head, command)
                     : command.commandType === "CommitArtifactSet"
@@ -648,6 +667,8 @@ export class ProjectCommandService {
                       ? [command.payload.decision.id, command.payload.decision.issueId]
                       : command.commandType === "CommitConceptEntries"
                         ? command.payload.entries.map((entry) => `concept:${entry.conceptId}`)
+                        : command.commandType === "CommitArchetypeSpec"
+                          ? [command.payload.archetypeSpec.id]
                     : command.commandType === "CommitGeometryRevision"
                       ? [command.payload.cadJobId, command.payload.geometrySpec.id, command.payload.geometryRevision.id, ...command.payload.assets.map((asset) => asset.id)]
                       : command.commandType === "CommitArtifactSet"
@@ -673,6 +694,9 @@ export class ProjectCommandService {
           : {}),
         ...(command.commandType === "CommitConceptEntries"
           ? { conceptEntriesToPut: command.payload.entries }
+          : {}),
+        ...(command.commandType === "CommitArchetypeSpec"
+          ? { archetypeSpecsToPut: [command.payload.archetypeSpec] }
           : {}),
         ...(command.commandType === "StartCadJob" || command.commandType === "SyncCadJobEvents"
           ? { cadJobsToPut: [command.payload.job] }

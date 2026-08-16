@@ -27,7 +27,8 @@ import {
   buildProjectDashboardSummary,
   buildProvenanceGraphView,
 } from "./query-models";
-import { conceptLabel, resolveVocabulary } from "@gujian/infrastructure";
+import { compareWithMeasuredFacts, conceptLabel, deriveArchetypeExpectations, resolveVocabulary } from "@gujian/infrastructure";
+import { ArchetypeSpecSchema, type ArchetypeSpec } from "@gujian/domain";
 
 import { AssistantExecutors, type ModificationProposal } from "./assistant/action-executors";
 import { AssistantClient } from "./assistant/assistant-client";
@@ -100,6 +101,7 @@ export function App() {
   const [roundTripReceipt, setRoundTripReceipt] = useState<RoundTripReceipt | null>(null);
   const [assistantCollapsed, setAssistantCollapsed] = useState(false);
   const [pendingProposal, setPendingProposal] = useState<ModificationProposal | null>(null);
+  const [projectArchetypes, setProjectArchetypes] = useState<readonly ArchetypeSpec[]>([]);
   const assistantChatClient = useMemo(() => new AssistantClient(), []);
   const vocabulary = useMemo(() => resolveVocabulary(), []);
   const typeLabel = (componentType: string, conceptRef?: string) =>
@@ -134,6 +136,7 @@ export function App() {
     setProjectCheckRuns(checks);
     setProjectDeliveryEvaluations(deliveryEvaluations);
     setProjectDeliveries(deliveryRecords);
+    setProjectArchetypes(await projectRepository.getProjectArchetypeSpecs(projectId));
   };
 
   useEffect(() => {
@@ -403,6 +406,72 @@ export function App() {
     },
     presentProposal: setPendingProposal,
   }, input);
+
+  const registerArchetype = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selected) return;
+    const data = new FormData(event.currentTarget);
+    const splitDims = (name: string) => String(data.get(name) ?? "").split(/[，,\s]+/).filter(Boolean);
+    try {
+      const commandId = crypto.randomUUID();
+      const archetypeSpec = ArchetypeSpecSchema.parse({
+        id: crypto.randomUUID(),
+        projectId: selected.projectId,
+        buildingRef: selected.snapshot.buildings[0]!.id,
+        baseParams: { D: String(data.get("baseD") ?? "300") },
+        bayDimensions: [
+          { direction: "x", valuesMm: splitDims("bayX") },
+          { direction: "y", valuesMm: splitDims("bayY") },
+        ],
+        liftRatioSetRef: String(data.get("liftRatioSetRef") || "qing-gongcheng-zuofa"),
+        stepCount: Number(data.get("stepCount")),
+        pillarNet: String(data.get("pillarNet") ?? "").trim(),
+        fangNet: String(data.get("fangNet") ?? "").trim() || null,
+        sourceDeclaration: String(data.get("sourceDeclaration") ?? "").trim() || "形制判断，来源未注明",
+        producer: { producerType: "human", actorId: localActorId(), actionRef: { commandId } },
+        createdAt: new Date().toISOString(),
+      });
+      await projectCommands.execute({
+        commandType: "CommitArchetypeSpec", commandId, projectId: selected.projectId, actorId: localActorId(),
+        expectedRevisionId: selected.revisionId, issuedAt: archetypeSpec.createdAt,
+        payload: { archetypeSpec },
+      });
+      // 应然值派生留痕：派生结果作为规则运行记录（producer=rule），含计算值、容差与出处
+      const afterSpec = await projectRepository.getProjectHead(selected.projectId);
+      const derivation = deriveArchetypeExpectations(archetypeSpec);
+      const ruleRunId = crypto.randomUUID();
+      const derivedAt = new Date().toISOString();
+      await projectCommands.execute({
+        commandType: "CommitRuleEvaluation", commandId: crypto.randomUUID(), projectId: selected.projectId,
+        actorId: localActorId(), expectedRevisionId: afterSpec!.revisionId, issuedAt: derivedAt,
+        payload: {
+          ruleRun: {
+            id: ruleRunId, projectId: selected.projectId, inputRevisionId: afterSpec!.revisionId,
+            ruleSetVersion: derivation.ruleSetVersion, status: "completed",
+            producer: { producerType: "rule", ruleRunId },
+            results: derivation.expected.map((item) => ({
+              ruleId: `archetype-expected-${item.dimension}`,
+              outcome: "passed" as const,
+              inputRefs: [archetypeSpec.id],
+              issueRefs: [],
+              message: item.status === "computed"
+                ? `应然 ${item.dimension} ${item.valueMm} mm（不覆盖实测，不作正式标注依据）`
+                : `应然 ${item.dimension} 按实计，无实测记录时保持未知`,
+              ...(item.valueMm !== null ? { computedValueText: `${item.valueMm} mm` } : {}),
+              ...(item.toleranceText ? { toleranceText: item.toleranceText } : {}),
+              sourceText: item.sourceText,
+            })),
+            startedAt: derivedAt, completedAt: derivedAt,
+          },
+          issues: [],
+        },
+      });
+      await loadProject(selected.projectId);
+      setNotice("形制模板已登记，应然值派生完成并入规则运行记录");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "形制模板登记失败");
+    }
+  };
 
   const adoptProposal = async () => {
     if (!selected || !pendingProposal) return;
@@ -868,6 +937,46 @@ export function App() {
             {activeStage === "measurements" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><p className="eyebrow">MEASUREMENT BASIS</p><h3>测量记录、事实与缺失影响</h3></div><span className="board-count">{selected.snapshot.measurements.length + selected.snapshot.facts.length} 条记录</span></header>
+                {projectArchetypes.length ? (() => {
+                  const archetype = projectArchetypes[projectArchetypes.length - 1]!;
+                  const derivation = deriveArchetypeExpectations(archetype);
+                  const comparisons = compareWithMeasuredFacts(derivation, selected.snapshot.facts);
+                  return (
+                    <div className="archetype-comparison">
+                      <h4>形制应然值与实测对照（R014）</h4>
+                      <p>系数组 {derivation.ruleSetId}（{derivation.ruleSetVersion.slice(0, 40)}）· 柱位 {derivation.layout.pillarCount} · 枋连接 {derivation.layout.fangCount}。应然值来源为规则推导，不覆盖实测，不作正式标注依据。</p>
+                      <div className="record-table">
+                        {comparisons.map((item) => (
+                          <article key={item.dimension}>
+                            <strong>{item.dimension}</strong>
+                            <span>应然 {item.valueMm !== null ? `${item.valueMm} mm` : "按实计"}{item.toleranceText ? ` ${item.toleranceText}` : ""}</span>
+                            <span>实测 {item.measuredMm !== null ? `${item.measuredMm} mm` : "无实测记录"}</span>
+                            <small>{item.deltaMm !== null ? `差值 ${item.deltaMm} mm${item.withinTolerance === null ? "" : item.withinTolerance ? "，容差内" : "，超容差，进入现状记录候选"}` : "无差值可算"}</small>
+                            <code>{item.sourceText}</code>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })() : (
+                  <form className="task-setup archetype-form" onSubmit={(event) => void registerArchetype(event)}>
+                    <div><span className="node-label">形制模板</span><h4>登记形制参数（R014）</h4><p>规则按模板推导应然尺寸，实测值始终覆盖应然值；两层差异进入现状记录候选。</p></div>
+                    <label>逐间面阔 mm（逗号分隔）<input name="bayX" required placeholder="例如 4800" /></label>
+                    <label>逐间进深 mm（逗号分隔）<input name="bayY" required placeholder="例如 1800,1800" /></label>
+                    <label>步架数<input name="stepCount" type="number" min="1" max="20" required placeholder="例如 3（七檩）" /></label>
+                    <label>模数基参 D mm<input name="baseD" type="number" min="1" step="any" required placeholder="例如 380" /></label>
+                    <label>举架系数组
+                      <select name="liftRatioSetRef" defaultValue="qing-gongcheng-zuofa">
+                        <option value="qing-gongcheng-zuofa">清工程做法系数组</option>
+                        <option value="liang-drawings">梁思成图纸系数组</option>
+                      </select>
+                    </label>
+                    <label>柱网坐标串<input name="pillarNet" required placeholder="例如 0/0,0/1,1/0,1/1" /></label>
+                    <label>枋连接柱对串（可选）<input name="fangNet" placeholder="例如 0/0#1/0,0/1#1/1" /></label>
+                    <label>形制判断来源<input name="sourceDeclaration" required placeholder="例如 团队演示 fixture r2 口径" /></label>
+                    <button type="submit">登记并派生应然值</button>
+                  </form>
+                )}
                 <div className="record-table">
                   {selected.snapshot.measurements.map((measurement) => <article key={measurement.id}><span className={`producer-badge ${measurement.producer.producerType}`}>{measurement.producer.producerType}</span><strong>{measurement.quantity.originalText} {measurement.quantity.originalUnit}</strong><small>{measurement.metadataStatus === "complete" ? "测量元数据完整" : "测量人、时间或方法仍缺失"}</small><code>{measurement.originalEvidenceRef}</code></article>)}
                   {selected.snapshot.facts.map((fact) => <article key={fact.id}><span className={`producer-badge ${fact.producer.producerType}`}>{fact.producer.producerType}</span><strong>{fact.field}</strong><small>{fact.reviewStatus} · {fact.dataStatus}</small><code>{fact.evidenceRefs.join(" · ") || "无证据引用"}</code></article>)}

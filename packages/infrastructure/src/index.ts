@@ -8,6 +8,7 @@ export * from "./rule-engine.js";
 export * from "./rules/heritage-baseline-v1.js";
 export * from "./vocabulary-resolver.js";
 export * from "./vocabulary/heritage-concepts-v1.js";
+export * from "./archetype-derivation.js";
 export { canonicalJson, recordHash, sha256Hex } from "./hash.js";
 
 export const INFRASTRUCTURE_VERSION = "3.0.0";

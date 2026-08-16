@@ -1,4 +1,4 @@
-import type { ArtifactRecord, ArtifactRequirementMatrix, AssetRecord, AuditEvent, CadJob, CheckRun, ConceptEntry, Decision, DeliveryDraft, DeliveryEvaluation, GeometryRevision, ModelRun, ProjectDrivenGeometrySpec, ProjectSnapshot, RuleRun } from "@gujian/domain";
+import type { ArchetypeSpec, ArtifactRecord, ArtifactRequirementMatrix, AssetRecord, AuditEvent, CadJob, CheckRun, ConceptEntry, Decision, DeliveryDraft, DeliveryEvaluation, GeometryRevision, ModelRun, ProjectDrivenGeometrySpec, ProjectSnapshot, RuleRun } from "@gujian/domain";
 
 import type { ProjectCommand, ProjectCommandType } from "./commands.js";
 
@@ -50,9 +50,9 @@ export interface CommitProjectMutation {
   readonly checkRunsToPut?: readonly CheckRun[];
   readonly deliveryEvaluationsToPut?: readonly DeliveryEvaluation[];
   readonly deliveriesToPut?: readonly DeliveryDraft[];
-  // v1.4：部署级词表条目与形制参数（archetype 具体类型在 R4 收紧）
+  // v1.4：部署级词表条目与项目形制参数
   readonly conceptEntriesToPut?: readonly ConceptEntry[];
-  readonly archetypeSpecsToPut?: readonly { readonly id: string; readonly projectId: string }[];
+  readonly archetypeSpecsToPut?: readonly ArchetypeSpec[];
 }
 
 export interface ProjectTransaction {
