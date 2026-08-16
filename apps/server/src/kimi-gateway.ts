@@ -130,4 +130,90 @@ export class KimiGateway {
     }
     throw new Error("KIMI_RETRY_EXHAUSTED");
   }
+
+  // 动作分发调用：带 tools 的非流式请求，返回工具调用或文本回复。
+  // 与 execute 相互独立，tools 只含名称、描述、参数三字段（由调用方投影保证）。
+  async executeWithTools(input: {
+    systemPrompt: string;
+    userContent: string;
+    tools: Array<{ name: string; description: string; parameters: Record<string, unknown> }>;
+    signal: AbortSignal;
+  }): Promise<ToolDispatchResult> {
+    if (!this.configured) throw new Error("KIMI_API_KEY_NOT_CONFIGURED");
+    for (let attempt = 1; attempt <= this.#maxAttempts; attempt += 1) {
+      if (input.signal.aborted) throw new RunCancelledError();
+      const timeout = AbortSignal.timeout(this.#timeoutMs);
+      const signal = AbortSignal.any([input.signal, timeout]);
+      try {
+        const response = await this.#fetch(`${this.#baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${this.#apiKey}`, "content-type": "application/json" },
+          body: JSON.stringify({
+            model: this.#model,
+            messages: [
+              { role: "system", content: input.systemPrompt },
+              { role: "user", content: input.userContent },
+            ],
+            tools: input.tools.map((tool) => ({
+              type: "function",
+              function: { name: tool.name, description: tool.description, parameters: tool.parameters },
+            })),
+            thinking: { type: "disabled" },
+            stream: false,
+            max_tokens: this.#maxOutputTokens,
+            temperature: 0.3,
+          }),
+          signal,
+        });
+        if (!response.ok) {
+          const detail = (await response.text()).slice(0, 1_000);
+          const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+          if (retryable && attempt < this.#maxAttempts) continue;
+          throw new Error(`KIMI_HTTP_${response.status}:${detail}`);
+        }
+        const raw = await response.text();
+        const parsed = JSON.parse(raw) as {
+          choices?: Array<{
+            message?: {
+              content?: string | null;
+              tool_calls?: Array<{ function?: { name?: string; arguments?: string } }>;
+            };
+          }>;
+          usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number; cached_tokens?: number };
+        };
+        const usage: ModelUsage = {
+          promptTokens: parsed.usage?.prompt_tokens ?? 0,
+          completionTokens: parsed.usage?.completion_tokens ?? 0,
+          totalTokens: parsed.usage?.total_tokens ?? 0,
+          cachedTokens: parsed.usage?.cached_tokens ?? 0,
+        };
+        const message = parsed.choices?.[0]?.message;
+        const toolCall = message?.tool_calls?.[0]?.function;
+        if (toolCall?.name) {
+          return {
+            kind: "tool_call",
+            name: toolCall.name,
+            argumentsJson: toolCall.arguments ?? "{}",
+            raw,
+            usage,
+            attempt,
+          };
+        }
+        const content = message?.content ?? "";
+        if (!content.trim()) throw new Error("KIMI_EMPTY_OUTPUT");
+        return { kind: "text", content, raw, usage, attempt };
+      } catch (error) {
+        if (input.signal.aborted) throw new RunCancelledError();
+        const retryable = timeout.aborted || error instanceof TypeError;
+        if (retryable && attempt < this.#maxAttempts) continue;
+        if (timeout.aborted) throw new Error("KIMI_TIMEOUT");
+        throw error;
+      }
+    }
+    throw new Error("KIMI_RETRY_EXHAUSTED");
+  }
 }
+
+export type ToolDispatchResult =
+  | { kind: "tool_call"; name: string; argumentsJson: string; raw: string; usage: ModelUsage; attempt: number }
+  | { kind: "text"; content: string; raw: string; usage: ModelUsage; attempt: number };
