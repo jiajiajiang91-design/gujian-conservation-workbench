@@ -69,8 +69,8 @@ export class KimiGateway {
             thinking: { type: "disabled" },
             stream: true,
             stream_options: { include_usage: true },
-            max_tokens: this.#maxOutputTokens,
-            temperature: 0.6,
+            // 架构 v1.4 §7.3 口径：max_completion_tokens，不显式设置 temperature
+            max_completion_tokens: this.#maxOutputTokens,
           }),
           signal,
         });
@@ -160,9 +160,9 @@ export class KimiGateway {
             })),
             thinking: { type: "disabled" },
             stream: false,
-            max_tokens: this.#maxOutputTokens,
-            // kimi-k2.6 仅接受 0.6，其他值返回 HTTP 400（与 execute 保持一致）
-            temperature: 0.6,
+            // 架构 v1.4 §7.3 口径：max_completion_tokens，不显式设置 temperature
+            // （kimi-k2.6 对显式 temperature 仅接受 0.6，省略由服务端取默认）
+            max_completion_tokens: this.#maxOutputTokens,
           }),
           signal,
         });

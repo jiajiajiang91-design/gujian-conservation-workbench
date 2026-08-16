@@ -49,12 +49,15 @@ describe("KimiGateway", () => {
     expect(chunks.join("")).toContain('"summary":"完成"');
     expect(result.usage).toEqual({ promptTokens: 11, completionTokens: 7, totalTokens: 18, cachedTokens: 2 });
     expect(result.attempt).toBe(2);
-    expect(JSON.parse(String(fetchImpl.mock.calls[1]?.[1]?.body))).toMatchObject({
+    const requestBody = JSON.parse(String(fetchImpl.mock.calls[1]?.[1]?.body));
+    expect(requestBody).toMatchObject({
       model: "kimi-k2.6",
-      temperature: 0.6,
       stream: true,
       thinking: { type: "disabled" },
     });
+    // 架构 v1.4 §7.3 口径：使用 max_completion_tokens，不显式设置 temperature
+    expect(requestBody.max_completion_tokens).toBeGreaterThan(0);
+    expect(requestBody.temperature).toBeUndefined();
   });
 
   it("超时后重试并给出稳定错误码", async () => {
