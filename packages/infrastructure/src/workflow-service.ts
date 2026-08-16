@@ -50,7 +50,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
       ruleId: "task-setup-required",
       issueType: "missingEvidence",
       subjectRefs: [head.projectId],
-      description: "任务范围、适用规范和责任角色尚未一次确认。",
+      description: "还没有确认任务范围、适用规范和责任人。",
       impactRefs: [head.projectId],
     });
   }
@@ -60,7 +60,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
       ruleId: "parsed-evidence-required",
       issueType: "missingEvidence",
       subjectRefs: [head.snapshot.buildings[0]?.id ?? head.projectId],
-      description: "尚无可供自动整理的已解析文本资料。",
+      description: "还没有可供助手识别的文字资料。",
       impactRefs: [head.projectId],
     });
   }
@@ -70,7 +70,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
       ruleId: "parse-failure-review",
       issueType: "missingEvidence",
       subjectRefs: failedParses.map((record) => record.evidenceId),
-      description: `${failedParses.length} 份资料解析失败；原文件已保留，需要更换格式或人工补录。`,
+      description: `${failedParses.length} 份资料无法自动读取。原文件已保留，可更换格式重传或人工录入。`,
       impactRefs: failedParses.map((record) => record.id),
     });
   }
@@ -88,7 +88,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
         ruleId: "documented-dimension-chain-conflict",
         issueType: "ruleConflict",
         subjectRefs: [head.snapshot.buildings[0]?.id ?? head.projectId],
-        description: `资料转写尺寸链不闭合：总尺寸 ${totalWidth} mm，分段合计 ${segmentTotal} mm，差值 ${difference} mm。`,
+        description: `资料上的尺寸对不上：总尺寸 ${totalWidth} mm，各段相加 ${segmentTotal} mm，相差 ${difference} mm。`,
         impactRefs: [head.projectId],
       });
     }
@@ -97,7 +97,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
         ruleId: "measurement-metadata-required",
         issueType: "missingEvidence",
         subjectRefs: [head.snapshot.buildings[0]?.id ?? head.projectId],
-        description: "尺寸记录缺少测量人、时间、方法或原始记录，不能作为正式实测事实。",
+        description: "这条尺寸缺测量人、时间、方法或原始记录，不能当作现场实测数据使用。",
         impactRefs: [head.projectId],
       });
     }
@@ -128,7 +128,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
         ruleId: "lift-ratio-selection",
         issueType: "professionalUncertainty",
         subjectRefs: [head.snapshot.buildings[0]?.id ?? head.projectId],
-        description: `举架系数存在多套有依据的规范方案（通进深 ${totalDepth} mm、步架数 ${stepCount}），需要专业人员选择适用系数组。`,
+        description: `举架做法有多种有依据的选择（通进深 ${totalDepth} mm，步架数 ${stepCount}），需要你判断本建筑适用哪一种。`,
         impactRefs: [head.projectId],
         blocksProxyOutcome: false,
         options,
@@ -141,7 +141,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
         ruleId: "model-candidate-review",
         issueType: "professionalUncertainty",
         subjectRefs: [candidate.id],
-        description: "模型候选尚未由人员接受或驳回；接受后仍保持模型来源，不转为现场实测。",
+        description: "助手的识别结果还没有确认。确认后仍标为 AI 识别，不会变成现场实测数据。",
         impactRefs: [candidate.id],
       });
     }
@@ -150,7 +150,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
         ruleId: "model-reported-missing-information",
         issueType: "missingEvidence",
         subjectRefs: [candidate.id],
-        description: `模型候选指出缺失信息：${candidate.structured.missingInformation.join("；")}`,
+        description: `助手发现资料里缺这些内容：${candidate.structured.missingInformation.join("；")}`,
         impactRefs: [candidate.id],
       });
     }

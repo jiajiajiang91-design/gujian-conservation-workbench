@@ -54,6 +54,39 @@ export const LENGTH_INPUT_STEP = "any";
 const OBSERVATION_LABELS = {
   visibleCondition: "可见状态", damage: "残损", material: "材料", state: "整体状态",
 } as const;
+// 界面只出现日常语言：来源、状态一律用中文，不显示英文枚举值
+const PRODUCER_LABELS: Record<string, string> = {
+  model: "AI 识别", human: "人工确认", rule: "自动核对", demo: "示例资料",
+};
+const REVIEW_LABELS: Record<string, string> = {
+  unreviewed: "待确认", confirmed: "已确认", rejected: "已驳回", superseded: "已被替代",
+};
+const DATA_STATUS_LABELS: Record<string, string> = {
+  available: "可用", unverified: "未核验", missing: "缺失", unknown: "待确认",
+};
+const BLOCKER_LABELS: Record<string, string> = {
+  UNVERIFIED_DIMENSION_CANDIDATES: "尺寸尚未核验",
+  MEASUREMENT_METADATA_MISSING: "测量记录缺测量人、时间或方法",
+  GEOMETRY_EVIDENCE_FACTS_MISSING: "缺少支撑三维模型的实测数据",
+  missingEvidence: "资料不足",
+  ruleConflict: "数据对不上",
+  professionalUncertainty: "需专业判断",
+  highRisk: "存在高风险项",
+};
+const PARSE_STATUS_LABELS: Record<string, string> = {
+  parsed: "已读取文字内容", failed: "无法自动读取", metadataOnly: "仅登记，未读取内容", pending: "读取中",
+};
+const EVIDENCE_TYPE_LABELS: Record<string, string> = {
+  photo: "照片", document: "文档", drawing: "图纸", measurement: "测量记录", other: "其他",
+};
+const ISSUE_TYPE_LABELS: Record<string, string> = {
+  missingEvidence: "缺资料", professionalUncertainty: "需专业判断",
+  ruleConflict: "数据对不上", highRisk: "高风险",
+};
+const LIFT_RATIO_SET_LABELS: Record<string, string> = {
+  "qing-gongcheng-zuofa": "清工程做法举架系数",
+  "liang-drawings": "梁思成图纸举架系数",
+};
 const DRAWING_KIND_LABELS: Record<string, string> = {
   floorPlan: "平面", roofPlan: "屋顶平面", elevation: "立面",
   transverseSection: "横剖", longitudinalSection: "纵剖", axonometric: "轴测", detail: "详图",
@@ -285,7 +318,7 @@ export function App() {
       );
       setSelected(outcome.head);
       await refresh();
-      setNotice("项目驱动 GeometryRevision 已生成；仍为代理成果、未签发、L1=false");
+      setNotice("三维模型已生成。成果尚未经专业复核签发，不能用于正式交付");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "几何作业失败");
     }
@@ -313,7 +346,7 @@ export function App() {
     try {
       const matrix = buildArtifactMatrix(selected, geometryRevision, geometrySpec);
       const outcome = await drawingJobs.generate(selected, localActorId(), geometryRevision, matrix, setDrawingProgress);
-      setSelected(outcome.head); await loadProject(selected.projectId); await refresh(); setNotice("同一 GeometryRevision 的成组图纸已生成并完成哈希检查");
+      setSelected(outcome.head); await loadProject(selected.projectId); await refresh(); setNotice("成组图纸已生成，各图与同一版三维模型一致");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "图纸作业失败"); }
   };
 
@@ -322,7 +355,7 @@ export function App() {
     setError(null);
     try {
       const outcome = await deliveries.createProxyDraft(selected, localActorId(), geometryRevision, drawingArtifacts, latestCheckRun);
-      setSelected(outcome.head); await loadProject(selected.projectId); await refresh(); setNotice("代理交付草案已建立：未签发、L1=false、不可正式使用");
+      setSelected(outcome.head); await loadProject(selected.projectId); await refresh(); setNotice("交付草案已建立。尚未签发，不能用于正式交付或施工");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "代理交付草案建立失败"); }
   };
 
@@ -333,8 +366,8 @@ export function App() {
       await deliveries.recordBlockedEvaluation(selected, localActorId());
       await loadProject(selected.projectId);
       await refresh();
-      setNotice("已记录正式交付阻断；未生成空成果或默认模型");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "交付阻断记录失败"); }
+      setNotice("已记录本次无法正式交付的原因。系统没有生成空成果，也没有用默认数据补齐");
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "记录失败"); }
   };
 
   const downloadArtifact = async (artifact: ArtifactRecord) => {
@@ -422,8 +455,8 @@ export function App() {
     },
     jobProgressSummary: () => {
       const lines = [
-        modelProgress && `模型运行 ${modelProgress.runId.slice(0, 8)}：${modelProgress.phase}`,
-        cadProgress && `三维作业 ${cadProgress.jobId.slice(0, 8)}：${cadProgress.phase}`,
+        modelProgress && "助手正在识别资料",
+        cadProgress && "正在生成三维模型",
         drawingProgress && `图纸作业：${drawingProgress}`,
       ].filter(Boolean);
       return lines.length ? lines.join("；") : "当前没有进行中的作业";
@@ -542,7 +575,7 @@ export function App() {
     setProjectDecisions([]);
     setProjectArtifacts([]); setProjectCheckRuns([]); setProjectDeliveries([]);
     await refresh();
-    setNotice("本地项目库已清空，可以验证空库回导");
+    setNotice("本机项目已清空");
   };
 
   const verifyEmptyLibraryRoundTrip = async () => {
@@ -651,7 +684,7 @@ export function App() {
       });
       setNotice("已用当前项目依次完成 JSON 结构回导和 ZIP 完整资料回导");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "空库回导校验失败");
+      setError(reason instanceof Error ? reason.message : "导出与恢复检验未通过");
       await refresh();
     }
   };
@@ -699,7 +732,7 @@ export function App() {
       setProjectModelRuns(await projectRepository.getProjectModelRuns(selected.projectId));
       setProjectRuleRuns(await projectRepository.getProjectRuleRuns(selected.projectId));
       setActiveStage("candidates");
-      setNotice(outcome.candidate ? "Kimi 运行完成，结果已进入候选区" : `模型运行已记录：${outcome.run.status}`);
+      setNotice(outcome.candidate ? "助手已给出识别结果，请在待确认区逐条核对" : "本次识别没有产生可用结果");
       await refresh();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "模型运行失败");
@@ -878,6 +911,26 @@ export function App() {
       .filter((item) => item.withinTolerance === false);
   })();
 
+  // 引用一律显示资料名称，不显示内部编号
+  const evidenceTitle = (ref: string) => {
+    const evidence = selected?.snapshot.evidences.find((item) => item.id === ref || ref.endsWith(item.id));
+    return evidence?.title ?? "关联资料";
+  };
+  // 字段名转成测绘人员熟悉的说法
+  const factFieldLabel = (field: string) => {
+    const named: Record<string, string> = {
+      "documentedDimension.totalWidthMm": "资料记载总尺寸",
+      "documentedDimension.segmentWidthsMm": "资料记载分段尺寸",
+      "documentedDimension.measurementMetadataComplete": "测量记录完整性",
+      "roofFrame.totalDepthMm": "通进深",
+      "roofFrame.stepCount": "步架数",
+    };
+    if (named[field]) return named[field];
+    const measured = field.match(/^archetype\.measured\.(.+)$/);
+    if (measured) return `${measured[1]}（实测）`;
+    return field;
+  };
+
   // 数据来源构成（05 表 7）：实测依据、AI 推测、人工确认分别可见
   const basisCounts = (() => {
     const counts = { model: 0, human: 0, rule: 0, demo: 0 };
@@ -891,14 +944,14 @@ export function App() {
   // 当前状态条（05 表 3）：说明系统正在做什么与进度，不用静态文案顶替
   const currentStatusText = (() => {
     if (!selected) return "选中项目后，可在这里对助手下达操作指令。";
-    if (modelRunning && modelProgress) return `正在运行模型任务 ${modelProgress.runId.slice(0, 8)}，已收到 ${modelProgress.events.length} 条事件`;
-    if (cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase)) return `正在生成三维几何，当前阶段 ${cadProgress.phase}`;
+    if (modelRunning && modelProgress) return "助手正在识别资料，稍后给出结果";
+    if (cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase)) return "正在生成三维模型";
     const openCount = dashboard?.openIssueCount ?? 0;
-    if (openCount > 0) return `等待处理 ${openCount} 项停靠；其余分支照常推进`;
-    return `当前停在${stages.find((item) => item.id === activeStage)?.label ?? "工作区"}，无待处理停靠`;
+    if (openCount > 0) return `有 ${openCount} 项等你处理，其余部分照常推进`;
+    return `当前在${stages.find((item) => item.id === activeStage)?.label ?? "工作区"}，没有需要你处理的事项`;
   })();
 
-  // 待办（05 图 1 左栏）：按停靠原因分条列出，不合并成一个数字
+  // 待办（05 图 1 左栏）：按原因分条列出，不合并成一个数字
   const pendingItems = (() => {
     const open = selected?.snapshot.issues.filter((issue) => issue.status === "open") ?? [];
     const groups: { label: string; count: number; hint: string; stage: StageId }[] = [
@@ -1018,7 +1071,7 @@ export function App() {
         <div className="project-list" aria-label="项目列表">
           {filtered.map((project) => (
             <button className="project-card" key={project.projectId} type="button" onClick={() => void chooseProject(project.projectId)}>
-              <span className="project-code">{project.projectId.slice(0, 8).toUpperCase()}</span>
+              
               <strong>{project.name}</strong>
               <small>{project.buildingName}</small>
               <div className="project-card-status">
@@ -1031,7 +1084,7 @@ export function App() {
         </div>
         </>}
         </div>
-        <footer><span>本地优先 · IndexedDB v3</span><button type="button" onClick={() => void clearLibrary()}><Trash2 size={12} /> 清空本地库</button></footer>
+        <footer><span>项目保存在本机</span><button type="button" onClick={() => void clearLibrary()}><Trash2 size={12} /> 清空本机项目</button></footer>
       </section>
       <section className="workspace-shell">
         <div className="topbar">
@@ -1045,9 +1098,8 @@ export function App() {
             <span className="basis-tag demo">示例资料 {basisCounts.demo}</span></>}
           </div>
           <div>
-            {selected && <span className="revision-chip">版本 {selected.revisionId.slice(0, 8)}</span>}
-            {selected && <button className="panel-toggle" type="button" onClick={() => void downloadProject("json")} aria-label="导出 JSON"><FileJson size={14} /></button>}
-            {selected && <button className="panel-toggle" type="button" onClick={() => void downloadProject("zip")} aria-label="导出 ZIP"><PackageOpen size={14} /></button>}
+            {selected && <button className="panel-toggle" type="button" onClick={() => void downloadProject("json")} aria-label="导出项目记录"><FileJson size={14} /></button>}
+            {selected && <button className="panel-toggle" type="button" onClick={() => void downloadProject("zip")} aria-label="导出完整项目包"><PackageOpen size={14} /></button>}
             <button className="panel-toggle" type="button" onClick={() => setAssistantCollapsed((value) => !value)} aria-label={assistantCollapsed ? "展开助手与来源面板" : "收起助手与来源面板"}>
               {assistantCollapsed ? <PanelRightOpen size={15} /> : <PanelRightClose size={15} />}
             </button>
@@ -1067,7 +1119,7 @@ export function App() {
 
             {activeStage === "tasks" && (
               <section className="evidence-board task-overview-board">
-                <header className="board-heading"><div><p className="eyebrow">TASK DEFINITION</p><h3>任务要求与成果目录</h3></div><button className="quiet-link" type="button" onClick={() => setActiveStage("issues")}>在问题流程中更新</button></header>
+                <header className="board-heading"><div><h3>任务要求与成果目录</h3></div><button className="quiet-link" type="button" onClick={() => setActiveStage("issues")}>在问题流程中更新</button></header>
                 <div className="pane-body">
                 {confirmedTask ? <>
                   <div className="summary-grid">
@@ -1086,7 +1138,7 @@ export function App() {
             {activeStage === "evidence" && (
               <section className="evidence-board">
                 <header className="board-heading">
-                  <div><p className="eyebrow">PROJECT EVIDENCE</p><h3>原始资料与解析记录</h3></div>
+                  <div><h3>原始资料与解析记录</h3></div>
                   <button className="upload-evidence" type="button" onClick={() => evidenceInput.current?.click()}><Upload size={14} /> 上传原始资料</button>
                   <input ref={evidenceInput} className="sr-only" type="file" multiple onChange={(event) => { const files = Array.from(event.target.files ?? []); if (files.length) void uploadEvidenceFiles(files); }} />
                 </header>
@@ -1097,8 +1149,8 @@ export function App() {
                         return (
                           <article className={`evidence-card ${activeEvidenceId === evidence.id ? "active" : ""}`} key={evidence.id}
                             onClick={() => setActiveEvidenceId(evidence.id)}>
-                            <span className="evidence-type">{evidence.evidenceType}</span>
-                            <div><strong>{evidence.title}</strong><small>{parse?.parser ?? "未解析"} · {parse?.status ?? "pending"}</small></div>
+                            <span className="evidence-type">{EVIDENCE_TYPE_LABELS[evidence.evidenceType] ?? evidence.evidenceType}</span>
+                            <div><strong>{evidence.title}</strong><small>{parse ? PARSE_STATUS_LABELS[parse.status] ?? "尚未读取" : "尚未读取"}</small></div>
                             <span className={`data-status ${evidence.dataStatus}`}>{evidence.dataStatus === "available" ? "可用" : evidence.dataStatus}</span>
                             <button type="button" onClick={(event) => { event.stopPropagation(); void downloadEvidence(evidence.assetId); }}>原文件</button>
                           </article>
@@ -1115,7 +1167,7 @@ export function App() {
 
             {activeStage === "measurements" && (
               <section className="evidence-board">
-                <header className="board-heading"><div><p className="eyebrow">MEASUREMENT BASIS</p><h3>测量记录、事实与缺失影响</h3></div><span className="board-count">{selected.snapshot.measurements.length + selected.snapshot.facts.length} 条记录</span></header>
+                <header className="board-heading"><div><h3>测量记录、事实与缺失影响</h3></div><span className="board-count">{selected.snapshot.measurements.length + selected.snapshot.facts.length} 条记录</span></header>
                 <div className="pane-body">
                 {projectArchetypes.length ? (() => {
                   const archetype = projectArchetypes[projectArchetypes.length - 1]!;
@@ -1123,16 +1175,16 @@ export function App() {
                   const comparisons = compareWithMeasuredFacts(derivation, selected.snapshot.facts);
                   return (
                     <div className="archetype-comparison">
-                      <h4>形制应然值与实测对照（R014）</h4>
-                      <p>系数组 {derivation.ruleSetId}（{derivation.ruleSetVersion.slice(0, 40)}）· 柱位 {derivation.layout.pillarCount} · 枋连接 {derivation.layout.fangCount}。应然值来源为规则推导，不覆盖实测，不作正式标注依据。</p>
+                      <h4>按形制推算的尺寸与实测对照</h4>
+                      <p>采用{LIFT_RATIO_SET_LABELS[derivation.ruleSetId] ?? derivation.ruleSetId}，柱位 {derivation.layout.pillarCount} 处，枋连接 {derivation.layout.fangCount} 处。推算值只作核对参考，实测记录始终优先，也不能作为图纸标注依据。</p>
                       <div className="record-table">
                         {comparisons.map((item) => (
                           <article key={item.dimension}>
                             <strong>{item.dimension}</strong>
-                            <span>应然 {item.valueMm !== null ? `${item.valueMm} mm` : "按实计"}{item.toleranceText ? ` ${item.toleranceText}` : ""}</span>
-                            <span>实测 {item.measuredMm !== null ? `${item.measuredMm} mm` : "无实测记录"}</span>
-                            <small>{item.deltaMm !== null ? `差值 ${item.deltaMm} mm${item.withinTolerance === null ? "" : item.withinTolerance ? "，容差内" : "，超容差，进入现状记录候选"}` : "无差值可算"}</small>
-                            <code>{item.sourceText}</code>
+                            <span>推算 {item.valueMm !== null ? `${item.valueMm} mm` : "按实际测量"}{item.toleranceText ? `，允许偏差 ${item.toleranceText}` : ""}</span>
+                            <span>实测 {item.measuredMm !== null ? `${item.measuredMm} mm` : "尚无实测记录"}</span>
+                            <small>{item.deltaMm !== null ? `相差 ${item.deltaMm} mm${item.withinTolerance === null ? "" : item.withinTolerance ? "，在允许偏差内" : "，超出允许偏差，建议记入现状"}` : "缺实测，无法比较"}</small>
+                            <small>{item.sourceText}</small>
                           </article>
                         ))}
                       </div>
@@ -1140,27 +1192,27 @@ export function App() {
                   );
                 })() : (
                   <form className="task-setup archetype-form" onSubmit={(event) => void registerArchetype(event)}>
-                    <div><span className="node-label">形制模板</span><h4>登记形制参数（R014）</h4><p>规则按模板推导应然尺寸，实测值始终覆盖应然值；两层差异进入现状记录候选。</p></div>
+                    <div><span className="node-label">人工节点</span><h4>登记形制，用于核对实测</h4><p>填写开间、进深和举架做法后，系统按形制推算各处尺寸，供你与实测比对。实测记录始终优先，差异较大的项会提示记入现状。</p></div>
                     <label>逐间面阔 mm（逗号分隔）<input name="bayX" required placeholder="例如 4800" /></label>
                     <label>逐间进深 mm（逗号分隔）<input name="bayY" required placeholder="例如 1800,1800" /></label>
-                    <label>步架数<input name="stepCount" type="number" min="1" max="20" required placeholder="例如 3（七檩）" /></label>
-                    <label>模数基参 D mm<input name="baseD" type="number" min="1" step="any" required placeholder="例如 380" /></label>
-                    <label>举架系数组
+                    <label>步架数<input name="stepCount" type="number" min="1" max="20" required placeholder="七檩填 3" /></label>
+                    <label>斗口或材宽 mm<input name="baseD" type="number" min="1" step="any" required placeholder="例如 380" /></label>
+                    <label>举架做法
                       <select name="liftRatioSetRef" defaultValue="qing-gongcheng-zuofa">
-                        <option value="qing-gongcheng-zuofa">清工程做法系数组</option>
-                        <option value="liang-drawings">梁思成图纸系数组</option>
+                        <option value="qing-gongcheng-zuofa">清工程做法举架系数</option>
+                        <option value="liang-drawings">梁思成图纸举架系数</option>
                       </select>
                     </label>
-                    <label>柱网坐标串<input name="pillarNet" required placeholder="例如 0/0,0/1,1/0,1/1" /></label>
-                    <label>枋连接柱对串（可选）<input name="fangNet" placeholder="例如 0/0#1/0,0/1#1/1" /></label>
-                    <label>形制判断来源<input name="sourceDeclaration" required placeholder="例如 团队演示 fixture r2 口径" /></label>
-                    <button type="submit">登记并派生应然值</button>
+                    <label>柱位（列/行，逗号分隔）<input name="pillarNet" required placeholder="例如 0/0,0/1,1/0,1/1" /></label>
+                    <label>枋连接的两根柱（可选）<input name="fangNet" placeholder="例如 0/0#1/0,0/1#1/1" /></label>
+                    <label>形制判断依据<input name="sourceDeclaration" required placeholder="例如 现场踏勘并对照同期实例" /></label>
+                    <button type="submit">登记并推算尺寸</button>
                   </form>
                 )}
                 <div className="record-table">
-                  {selected.snapshot.measurements.map((measurement) => <article key={measurement.id}><span className={`producer-badge ${measurement.producer.producerType}`}>{measurement.producer.producerType}</span><strong>{measurement.quantity.originalText} {measurement.quantity.originalUnit}</strong><small>{measurement.metadataStatus === "complete" ? "测量元数据完整" : "测量人、时间或方法仍缺失"}</small><code>{measurement.originalEvidenceRef}</code></article>)}
-                  {selected.snapshot.facts.map((fact) => <article key={fact.id}><span className={`producer-badge ${fact.producer.producerType}`}>{fact.producer.producerType}</span><strong>{fact.field}</strong><small>{fact.reviewStatus} · {fact.dataStatus}</small><code>{fact.evidenceRefs.join(" · ") || "无证据引用"}</code></article>)}
-                  {!selected.snapshot.measurements.length && !selected.snapshot.facts.length && <div className="panel-empty">没有可用尺寸事实。缺失时系统会阻断依赖成果，不使用默认值补齐。</div>}
+                  {selected.snapshot.measurements.map((measurement) => <article key={measurement.id}><span className={`producer-badge ${measurement.producer.producerType}`}>{PRODUCER_LABELS[measurement.producer.producerType]}</span><strong>{measurement.quantity.originalText} {measurement.quantity.originalUnit}</strong><small>{measurement.metadataStatus === "complete" ? "已记录测量人、时间和方法" : "缺测量人、时间或方法"}</small><small>{evidenceTitle(measurement.originalEvidenceRef)}</small></article>)}
+                  {selected.snapshot.facts.map((fact) => <article key={fact.id}><span className={`producer-badge ${fact.producer.producerType}`}>{PRODUCER_LABELS[fact.producer.producerType]}</span><strong>{factFieldLabel(fact.field)}</strong><small>{REVIEW_LABELS[fact.reviewStatus] ?? fact.reviewStatus} · {DATA_STATUS_LABELS[fact.dataStatus] ?? fact.dataStatus}</small><small>{fact.evidenceRefs.map(evidenceTitle).join("、") || "未指明资料"}</small></article>)}
+                  {!selected.snapshot.measurements.length && !selected.snapshot.facts.length && <div className="panel-empty">还没有可用的尺寸。尺寸缺失时，依赖它的成果不会生成，系统也不会用默认值补齐。</div>}
                 </div>
                   {renderEvidenceView("选择资料查看手写草图或测量记录原件。")}
                 </div>
@@ -1169,12 +1221,12 @@ export function App() {
 
             {activeStage === "objects" && (
               <section className="evidence-board">
-                <header className="board-heading"><div><p className="eyebrow">HERITAGE OBJECTS</p><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? selected.snapshot.entities.length} 个对象</span></header>
+                <header className="board-heading"><div><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? selected.snapshot.entities.length} 个对象</span></header>
                 <div className="pane-body">
                 <div className="object-table">
-                  {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><code>{object.stableKey}</code><small>{typeLabel(object.componentType, object.conceptRef)} · {object.producer.producerType}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 个未知项` : "来源已绑定"}</strong></button>)}
-                  {!geometrySpec?.objects.length && selected.snapshot.entities.map((entity) => <article key={entity.id}><strong>{entity.name}</strong><span>{entity.entityType}</span><code>{entity.id}</code></article>)}
-                  {!geometrySpec?.objects.length && !selected.snapshot.entities.length && <div className="panel-empty">当前没有构件对象。对象必须从当前项目资料或已验证的项目自有 GeometrySpec 建立。</div>}
+                  {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><small>{typeLabel(object.componentType, object.conceptRef)}</small><small>{PRODUCER_LABELS[object.producer.producerType]}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 项待确认` : "来源已记录"}</strong></button>)}
+                  {!geometrySpec?.objects.length && selected.snapshot.entities.map((entity) => <article key={entity.id}><strong>{entity.name}</strong><span>{entity.entityType}</span></article>)}
+                  {!geometrySpec?.objects.length && !selected.snapshot.entities.length && <div className="panel-empty">还没有构件。构件只能来自本项目的资料，或本项目已核对过的三维模型。</div>}
                 </div>
                   {renderEvidenceView("选择资料查看构件对应的照片。")}
                 </div>
@@ -1183,31 +1235,31 @@ export function App() {
 
             {activeStage === "conditions" && (
               <section className="evidence-board">
-                <header className="board-heading"><div><p className="eyebrow">CONDITION RECORD</p><h3>空间关系、构造连接与可见残损</h3></div><span className="board-count">{selected.snapshot.observations.length} 条记录</span></header>
+                <header className="board-heading"><div><h3>空间关系、构造连接与可见残损</h3></div><span className="board-count">{selected.snapshot.observations.length} 条记录</span></header>
                 <div className="pane-body">
                     <div className="record-table">
                       {selected.snapshot.relations.map((relation) => (
                         <article key={relation.id}>
-                          <span className={`producer-badge ${relation.producer.producerType}`}>{relation.producer.producerType}</span>
+                          <span className={`producer-badge ${relation.producer.producerType}`}>{PRODUCER_LABELS[relation.producer.producerType]}</span>
                           <strong>{relation.relationType}</strong>
                           <small>{relation.fromRef} 至 {relation.toRef}</small>
-                          <code>{relation.evidenceRefs.join(" · ") || "无证据引用"}</code>
+                          <small>{relation.evidenceRefs.map(evidenceTitle).join("、") || "未指明资料"}</small>
                         </article>
                       ))}
                       {selected.snapshot.observations.map((observation) => (
                         <article key={observation.id}>
-                          <span className={`producer-badge ${observation.producer.producerType}`}>{observation.producer.producerType}</span>
+                          <span className={`producer-badge ${observation.producer.producerType}`}>{PRODUCER_LABELS[observation.producer.producerType]}</span>
                           <strong>{OBSERVATION_LABELS[observation.observationType]}</strong>
                           <small>{observation.text}</small>
-                          <code>{observation.evidenceRefs.join(" · ")}</code>
+                          <small>{observation.evidenceRefs.map(evidenceTitle).join("、")}</small>
                         </article>
                       ))}
                       {!selected.snapshot.relations.length && !selected.snapshot.observations.length && (
-                        <div className="panel-empty">尚无现状记录。空间关系与构造连接由识别产生并经人工确认；可见残损由人工对照资料记录，不可凭推断填写。</div>
+                        <div className="panel-empty">还没有现状记录。构件之间的关系由助手识别、再由人工确认；残损情况需要对照资料逐条记录，不能凭推断填写。</div>
                       )}
                     </div>
                     {archetypeDifferences.length > 0 && (
-                      <div className="inline-warning">形制应然值与实测存在 {archetypeDifferences.length} 项超容差差异，属现状记录候选：{archetypeDifferences.map((item) => item.dimension).join("、")}。</div>
+                      <div className="inline-warning">有 {archetypeDifferences.length} 项实测尺寸超出按形制推算的允许偏差，建议记入现状：{archetypeDifferences.map((item) => item.dimension).join("、")}。</div>
                     )}
                     <form className="task-setup" onSubmit={(event) => void recordObservation(event)}>
                       <div><span className="node-label">人工节点</span><h4>记录一条现状判断</h4><p>只记录当前资料上可见的内容。不可见部位记为待复查，不写推断结论。</p></div>
@@ -1237,25 +1289,25 @@ export function App() {
             {activeStage === "candidates" && (
               <section className="evidence-board candidate-board">
                 <header className="board-heading">
-                  <div><p className="eyebrow">MODEL CANDIDATES</p><h3>AI 候选与真实运行记录</h3></div>
+                  <div><h3>AI 候选与真实运行记录</h3></div>
                   <button className="upload-evidence" type="button" disabled={!parsedEvidenceCount || Boolean(modelRunning) || !serverStatus?.modelConfigured} onClick={() => void runModel()}>
                     <Play size={14} /> {modelRunning ? "运行中" : "生成资料候选"}
                   </button>
                 </header>
                 <div className="pane-body">
-                <div className="transmission-note"><ShieldCheck size={15} /><span>仅发送当前项目内已解析的文本和内容哈希；原文件、浏览器存储和密钥不会发送给模型。</span></div>
+                <div className="transmission-note"><ShieldCheck size={15} /><span>只把本项目已识别出的文字发给助手核对。照片、图纸等原文件保存在本机，不会上传。</span></div>
                 {!serverStatus?.modelConfigured && <p className="inline-warning">服务端尚未配置 KIMI_API_KEY，真实运行按钮已锁定。</p>}
                 {!parsedEvidenceCount && <p className="inline-warning">先上传一份可解析的 UTF-8 文本或 JSON 资料。</p>}
                 <div className="candidate-list">
                   {selected.snapshot.candidates.map((candidate) => (
                     <article className="candidate-card" key={candidate.id}>
-                      <div className="candidate-meta"><span className="producer-badge model">模型</span><span>run {candidate.runId.slice(0, 8)}</span><span>{candidate.reviewStatus === "unreviewed" ? "待处理" : candidate.reviewStatus}</span></div>
+                      <div className="candidate-meta"><span className="producer-badge model">模型</span><span>{candidate.reviewStatus === "unreviewed" ? "待处理" : candidate.reviewStatus}</span></div>
                       <h4>{candidate.structured?.summary ?? "模型返回了未结构化候选"}</h4>
                       {!!candidate.structured?.findings.length && <div><strong>资料发现</strong><ul>{candidate.structured.findings.map((item) => <li key={item}>{item}</li>)}</ul></div>}
                       {!!candidate.structured?.missingInformation.length && <div><strong>缺失信息</strong><ul>{candidate.structured.missingInformation.map((item) => <li key={item}>{item}</li>)}</ul></div>}
                     </article>
                   ))}
-                  {!selected.snapshot.candidates.length && <div className="panel-empty">模型结果只会进入候选区，不会自动成为项目事实。</div>}
+                  {!selected.snapshot.candidates.length && <div className="panel-empty">助手的识别结果只进入待确认区，需要你确认后才写入项目。</div>}
                 </div>
                 {!!modelCostView.rows.length && <div className="run-ledger"><strong>运行账本与用量</strong>{modelCostView.rows.map((run) => <span key={run.runId}><b>{run.provider} / {run.model}</b><i>{run.status} · attempt {run.attempts}</i><em>{run.totalTokens ?? "—"} tokens · {run.costLabel}</em></span>)}<small>累计 {modelCostView.totalTokens} tokens；没有可靠单价依据，因此不估算费用。</small></div>}
                 </div>
@@ -1265,7 +1317,7 @@ export function App() {
             {activeStage === "issues" && (
               <section className="evidence-board issue-board">
                 <header className="board-heading">
-                  <div><p className="eyebrow">ISSUE QUEUE</p><h3>问题队列与必要人工节点</h3></div>
+                  <div><h3>问题队列与必要人工节点</h3></div>
                   <span className="issue-count">{openIssues.length} 个待处理</span>
                 </header>
                 <div className="pane-body">
@@ -1278,21 +1330,21 @@ export function App() {
                 {humanInterventions && <div className="human-node-summary"><article><strong>{humanInterventions.missingFieldFacts.length}</strong><span>现场事实缺失</span></article><article><strong>{humanInterventions.professionalChoices.length}</strong><span>非唯一专业选择</span></article><article><strong>{humanInterventions.groupedReviewRefs.length}</strong><span>成组审核 / 交付</span></article><small>规则确定项自动执行，不增加逐项确认。</small></div>}
                 {!confirmedTask ? (
                   <form className="task-setup" onSubmit={(event) => void confirmTaskSetup(event)}>
-                    <div><span className="node-label">人工节点 01</span><h4>一次确认任务设置</h4><p>范围、适用规范和责任角色只在任务开始时设置一次。满足自动条件的后续检查直接执行。</p></div>
-                    <label>任务名称<input name="taskName" required defaultValue="资料整理与项目包验证" /></label>
-                    <label>任务范围<textarea name="scope" required defaultValue={"整理原始资料\n生成 AI 候选\n处理证据缺失问题\n导出与回导项目包"} /></label>
-                    <label>适用规范或项目约定<textarea name="regulations" defaultValue="项目资料真实性与来源追溯要求" /></label>
-                    <label>成果目录<textarea name="deliverables" required placeholder="逐行填写当前任务要求的成果，不从样例补齐" /></label>
+                    <div><span className="node-label">人工节点</span><h4>确认任务要求</h4><p>成果范围、适用规范和责任人只在任务开始时确认一次。之后能自动判断的检查会直接执行，不再逐项打扰你。</p></div>
+                    <label>任务名称<input name="taskName" required defaultValue="资料整理与成果核对" /></label>
+                    <label>任务范围（每行一项）<textarea name="scope" required defaultValue={"整理原始资料\n核对构件\n处理资料缺失\n导出成果"} /></label>
+                    <label>适用规范或项目约定<textarea name="regulations" defaultValue="资料需注明来源，可追溯到原件" /></label>
+                    <label>成果目录（每行一项）<textarea name="deliverables" required placeholder="按本次任务要求逐行填写，不套用模板" /></label>
                     <label>图纸标题<input name="drawingTitle" required /></label>
                     <label>修订标记<input name="drawingRevision" required placeholder="例如 P1" /></label>
-                    <label>几何目标角色<textarea name="geometryTargetRoles" required placeholder="逐行填写，例如 wall、support、roof；缺一项即阻断" /></label>
-                    <label>图纸结构 JSON<textarea name="drawingSheets" required placeholder='[{"key":"sheet-1","drawingNumber":"P-01","displayLabelZh":"平面与立面","pageMm":[841,594]}]' /></label>
-                    <label>视图结构 JSON<textarea name="drawingViews" required placeholder="逐项提供 kind、比例、sheetKey、viewportRectMm、方向、目标构件和局部证据；详图缺局部证据时不生成" /></label>
-                    <button type="submit">确认一次任务设置</button>
+                    <label>需要出图的构件类型（每行一项）<textarea name="geometryTargetRoles" required placeholder="例如 柱、墙、屋面；缺一项该图就不生成" /></label>
+                    <label>图幅设置<textarea name="drawingSheets" required placeholder='逐张图填写图号、图名和图幅尺寸，例如：[{"key":"sheet-1","drawingNumber":"P-01","displayLabelZh":"平面与立面","pageMm":[841,594]}]' /></label>
+                    <label>视图设置<textarea name="drawingViews" required placeholder="逐个视图填写图种、比例、所在图幅、在图上的位置、朝向和对应构件。详图还需指明依据的资料，缺依据则不生成" /></label>
+                    <button type="submit">确认任务要求，开始整理资料</button>
                   </form>
                 ) : (
                   <>
-                    <div className="task-summary"><span className="node-label complete">人工节点 01 已完成</span><strong>{confirmedTask.name}</strong><small>{confirmedTask.scope.join(" · ")}</small></div>
+                    <div className="task-summary"><span className="node-label complete">任务要求已确认</span><strong>{confirmedTask.name}</strong><small>{confirmedTask.scope.join(" · ")}</small></div>
                     <details className="task-setup">
                       <summary>更新当前版本的成果要求</summary>
                       <form onSubmit={(event) => void replaceTaskSetup(event)}>
@@ -1316,11 +1368,11 @@ export function App() {
                     const canDecide = issue.sourceRef === "rule:model-candidate-review" && candidate?.reviewStatus === "unreviewed";
                     return (
                       <article className="issue-card" key={issue.id}>
-                        <div className="issue-meta"><span className={`issue-severity ${issue.issueType}`}>{issue.issueType}</span><span className="producer-badge rule">规则</span><span>{issue.sourceRef.replace("rule:", "")}</span></div>
+                        <div className="issue-meta"><span className={`issue-severity ${issue.issueType}`}>{ISSUE_TYPE_LABELS[issue.issueType] ?? issue.issueType}</span><span className="producer-badge rule">自动核对</span></div>
                         <h4>{issue.description}</h4>
                         {issue.options?.length ? (
                           <div className="decision-actions option-decision">
-                            <p>存在多套有依据的规范方案，选择其一并记录出处；此选择可在后续版本中变更。</p>
+                            <p>下面几种做法都有依据。选定一种并写明理由，后续版本仍可改。</p>
                             {issue.options.map((option) => (
                               <label className="option-row" key={option.optionId}>
                                 <input
@@ -1387,20 +1439,20 @@ export function App() {
             {activeStage === "geometry" && (
               <section className="evidence-board geometry-board">
                 <header className="board-heading">
-                  <div><p className="eyebrow">GEOMETRY REVISION</p><h3>项目驱动三维模型</h3></div>
+                  <div><h3>项目驱动三维模型</h3></div>
                   <button className="upload-evidence" type="button" disabled={!geometryGate?.ready || Boolean(cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase))} onClick={() => void generateDemoGeometry()}>
                     <Play size={14} /> {geometryRevision ? "生成新代理版本" : "生成代理几何"}
                   </button>
                 </header>
                 <div className="pane-body">
-                <div className="transmission-note"><ShieldCheck size={15} /><span>浏览器冻结 GeometrySpec 与输入哈希；Node 只接收受限结构，Python worker 不接收 URL、提示或用户文件路径。</span></div>
+                <div className="transmission-note"><ShieldCheck size={15} /><span>生成三维只使用本项目已确认的构件数据，不读取项目以外的文件。</span></div>
                 {!geometryGate?.ready && (
                   <div className="geometry-gate">
                     <strong>建立代理几何前，需从当前项目资料逐构件确认几何事实</strong>
                     <p>每个构件和界面必须定位到当前项目具体证据；不得用百分比、固定厚度或其他项目数据补齐。当前缺失：{geometryGate?.missing.join("、")}</p>
                     {!!selected.snapshot.evidences.length && (
                       <form className="geometry-fact-form" onSubmit={(event) => void confirmGeometryFacts(event)}>
-                        <label>构件事实 JSON<textarea name="geometryComponents" required placeholder="每项包含 stableKey、构件类型、可证实体、证据 ID、图号/页码位置和结构化未知项" /></label>
+                        <label>构件数据<textarea name="geometryComponents" required placeholder="逐个构件填写：名称、类型、尺寸、依据的资料，以及尚未确认的部分" /></label>
                         <label>界面事实 JSON<textarea name="geometryInterfaces" required placeholder="仅填写图纸或调查资料可证明的承托、接触、包含或搭接关系；无证据可留空 []" /></label>
                         <p>当前项目证据 ID：{selected.snapshot.evidences.map((item) => `${item.title}=${item.id}`).join("；")}</p>
                         <button type="submit">写入逐构件证据事实</button>
@@ -1412,27 +1464,27 @@ export function App() {
                   <div className="geometry-workspace">
                     <GlbViewer blob={geometryBlob} onSelect={setSelectedGeometryEntityId} />
                     <aside className="geometry-inspector">
-                      <span className="qualification-chip">代理成果 · 未签发 · L1=false</span>
+                      <span className="qualification-chip">未签发，不能用于正式交付</span>
                       <h4>{selectedGeometryEntity?.displayNameZh ?? "选择模型构件查看来源"}</h4>
                       {selectedGeometryEntity ? <>
                         <dl>
                           <div><dt>稳定键</dt><dd>{selectedGeometryEntity.stableKey}</dd></div>
                           <div><dt>构件类型</dt><dd>{typeLabel(selectedGeometryEntity.componentType, selectedGeometryEntity.conceptRef)}（{selectedGeometryEntity.componentType}）</dd></div>
-                          <div><dt>来源</dt><dd>{selectedGeometryEntity.producer.producerType}</dd></div>
+                          <div><dt>来源</dt><dd>{PRODUCER_LABELS[selectedGeometryEntity.producer.producerType]}</dd></div>
                           <div><dt>证据</dt><dd>{selectedGeometryEntity.evidenceRefs.length} 项</dd></div>
                         </dl>
                         {selectedGeometryEntity.unknownRefs.map((id) => {
                           const unknown = geometrySpec?.unknowns.find((item) => item.id === id);
-                          return unknown ? <div className="unknown-card" key={id}><strong>{unknown.reasonCode}</strong><p>{unknown.description}</p><small>正式资格阻断：{unknown.blocksFormalEligibility ? "是" : "否"}</small></div> : null;
+                          return unknown ? <div className="unknown-card" key={id}><p>{unknown.description}</p><small>{unknown.blocksFormalEligibility ? "影响正式交付" : "不影响正式交付"}</small></div> : null;
                         })}
                       </> : <p>点击模型中的构件，查看稳定 ID、证据引用、未知项和资格影响。</p>}
                       <hr />
-                      <small>GeometryRevision {geometryRevision.id.slice(0, 8)} · {geometryRevision.geometrySignature.slice(0, 12)}…</small>
+                      <small>共 {geometrySpec?.objects.length ?? 0} 个构件</small>
                       <small>{geometrySpec?.objects.length ?? 0} 个实体 · {geometrySpec?.interfaces.length ?? 0} 个界面 · {geometrySpec?.unknowns.length ?? 0} 个未知项</small>
                     </aside>
                   </div>
                 ) : (
-                  <div className="panel-empty">尚未建立 GeometryRevision。此入口先验证通用几何内核，不宣称项目已有实测三维成果。</div>
+                  <div className="panel-empty">还没有三维模型。生成后可在这里查看构件并核对来源。</div>
                 )}
                 </div>
               </section>
@@ -1441,7 +1493,7 @@ export function App() {
             {activeStage === "sheetStyle" && (
               <section className="evidence-board">
                 <header className="board-heading">
-                  <div><p className="eyebrow">SHEET STYLE</p><h3>图幅、视图与图签</h3></div>
+                  <div><h3>图幅、视图与图签</h3></div>
                   <button className="quiet-link" type="button" onClick={() => setActiveStage("tasks")}>在任务要求中修改</button>
                 </header>
                 {confirmedTask?.artifactRequirements ? (() => {
@@ -1473,9 +1525,9 @@ export function App() {
                             </div>
                           ))}
                         </div>
-                        <div className="inline-warning">构件画法与标注规则尚未形成可选项。当前每个视图固定输出一条总尺寸、图名与资格声明，轴网、标高、剖切索引与构件标注均未生成，差距与补齐方案见验证材料 15 图纸表达差距清单。在标注体系落地前，此处不提供画法与标注选择，避免出现不影响成果的空选项。</div>
+                        <div className="inline-warning">构件画法与标注规则暂时不能选择。当前每张图只标注一道总尺寸和图名，轴线、标高、剖切索引和构件名称都还没有生成。等这部分做好后，这里会开放画法与标注的选项。</div>
                       <aside className="stage-evidence" aria-label="样式预览">
-                        <header><span className="eyebrow">STYLE PREVIEW</span>{drawingPreviewUrls.length > 0 && <small>{drawingPreviewUrls[0]!.label}</small>}</header>
+                        <header><strong>图面预览</strong>{drawingPreviewUrls.length > 0 && <small>{drawingPreviewUrls[0]!.label}</small>}</header>
                         {drawingPreviewUrls.length > 0
                           ? (drawingPreviewUrls[0]!.kind === "svg"
                             ? <img src={drawingPreviewUrls[0]!.url} alt="图纸样式预览" />
@@ -1491,62 +1543,62 @@ export function App() {
             {activeStage === "drawings" && (
               <section className="evidence-board drawing-board">
                 <header className="board-heading">
-                  <div><p className="eyebrow">SOURCE-BOUND DRAWINGS</p><h3>成组平立剖与节点详图</h3></div>
+                  <div><h3>成组平立剖与节点详图</h3></div>
                   <button className="upload-evidence" type="button" disabled={!geometryRevision || !confirmedTask || Boolean(drawingProgress && !["succeeded", "failed"].includes(drawingProgress))} onClick={() => void generateDrawings()}>
                     <Images size={14} /> {drawingProgress && !["succeeded", "failed"].includes(drawingProgress) ? "生成中" : "按成果目录生成"}
                   </button>
                 </header>
                 <div className="pane-body">
-                <div className="transmission-note"><ShieldCheck size={15} /><span>图种、图幅和布局来自当前任务成果目录；所有结构线从当前 GeometryRevision 求交或投影生成。</span></div>
+                <div className="transmission-note"><ShieldCheck size={15} /><span>图种、图幅和版面来自任务要求；图上每条线都由当前三维模型剖切或投影得到，不另外描画。</span></div>
                 {drawingArtifacts.length ? (
                   <><div className="drawing-preview-grid" aria-label="成组图纸预览">
                     {drawingPreviewUrls.map((preview) => preview.kind === "svg"
                       ? <figure key={preview.id}><img src={preview.url} alt={`${preview.label} 矢量预览`} /><figcaption>{preview.label}</figcaption></figure>
                       : <figure key={preview.id}><object data={preview.url} type="application/pdf" aria-label={`${preview.label} PDF 预览`} /><figcaption>{preview.label}</figcaption></figure>)}
                   </div><div className="artifact-list">
-                    {drawingArtifacts.map((artifact) => <button type="button" key={artifact.id} onClick={() => void downloadArtifact(artifact)}><span>{artifact.kind}</span><strong>{artifact.fileName}</strong><small>{Math.round(artifact.byteLength / 1024)} KB · {artifact.sha256.slice(0, 12)}…</small></button>)}
+                    {drawingArtifacts.map((artifact) => <button type="button" key={artifact.id} onClick={() => void downloadArtifact(artifact)}><span>{artifact.kind}</span><strong>{artifact.fileName}</strong><small>{Math.round(artifact.byteLength / 1024)} KB</small></button>)}
                   </div></>
-                ) : <div className="panel-empty">先生成当前项目的 GeometryRevision，再按已确认成果目录生成 DXF、SVG、PDF、预览、Drawing IR 和来源映射。</div>}
-                {latestCheckRun && <div className="check-summary"><FileCheck2 size={18} /><div><strong>检查记录 {latestCheckRun.id.slice(0, 8)}</strong>{latestCheckRun.results.map((item) => <p key={item.code} className={item.outcome}>{item.outcome === "passed" ? "通过" : "阻断"} · {item.message}</p>)}</div></div>}
+                ) : <div className="panel-empty">先生成三维模型，再按任务要求出图。图纸会同时导出 DXF、PDF 和预览图。</div>}
+                {latestCheckRun && <div className="check-summary"><FileCheck2 size={18} /><div><strong>检查结果</strong>{latestCheckRun.results.map((item) => <p key={item.code} className={item.outcome}>{item.outcome === "passed" ? "通过" : "不通过"} · {item.message}</p>)}</div></div>}
                 </div>
               </section>
             )}
 
             {activeStage === "checks" && (
               <section className="evidence-board checks-board">
-                <header className="board-heading"><div><p className="eyebrow">CHECKS & QUALIFICATION</p><h3>检查、未知项与资格边界</h3></div><span className="qualification-chip">generated-not-qualified · L1=false</span></header>
+                <header className="board-heading"><div><h3>检查结果与待确认项</h3></div><span className="qualification-chip">未签发，不能用于正式交付</span></header>
                 <div className="pane-body">
                 <div className="summary-grid">
-                  <article><span>当前几何</span><strong>{geometryRevision ? geometryRevision.id.slice(0, 8) : "未建立"}</strong><small>{geometrySpec?.unknowns.length ?? 0} 个结构化未知项</small></article>
+                  <article><span>三维模型</span><strong>{geometryRevision ? "已生成" : "未生成"}</strong><small>{geometrySpec?.unknowns.length ?? 0} 项待确认</small></article>
                   <article><span>当前成果</span><strong>{artifactSetView?.currentArtifacts.length ?? 0} 项</strong><small>{artifactSetView?.crossRevisionArtifactCount ?? 0} 项旧版本成果已隔离</small></article>
-                  <article><span>检查结论</span><strong>{latestCheckRun ? latestCheckRun.results.filter((result) => result.outcome === "blocked").length ? "存在阻断" : "技术检查完成" : "尚未检查"}</strong><small>技术通过不授予专业资格</small></article>
+                  <article><span>检查结论</span><strong>{latestCheckRun ? latestCheckRun.results.filter((result) => result.outcome === "blocked").length ? "有不通过项" : "全部通过" : "尚未检查"}</strong><small>技术检查通过不等于专业复核通过</small></article>
                 </div>
-                {latestCheckRun ? <div className="check-register">{latestCheckRun.results.map((result) => <article key={result.code} className={result.outcome}><span>{result.outcome === "passed" ? "通过" : "阻断"}</span><strong>{result.code}</strong><p>{result.message}</p><code>{result.sourceRefs.join(" · ") || "system check"}</code></article>)}</div> : <div className="panel-empty">当前 GeometryRevision 尚无绑定的检查运行。检查不会自动授予 L1 或签发状态。</div>}
-                {!!dashboard?.blockerCodes.length && <div className="delivery-blockers"><strong>当前阻断原因</strong>{dashboard.blockerCodes.map((code) => <p key={code}>{code}</p>)}</div>}
+                {latestCheckRun ? <div className="check-register">{latestCheckRun.results.map((result) => <article key={result.code} className={result.outcome}><span>{result.outcome === "passed" ? "通过" : "不通过"}</span><strong>{result.code}</strong><p>{result.message}</p></article>)}</div> : <div className="panel-empty">还没有检查记录。检查通过不等于专业复核通过，签发仍需责任人操作。</div>}
+                {!!dashboard?.blockerCodes.length && <div className="delivery-blockers"><strong>暂时不能正式交付</strong>{dashboard.blockerCodes.map((code) => <p key={code}>{BLOCKER_LABELS[code] ?? code}</p>)}</div>}
                 </div>
               </section>
             )}
 
             {activeStage === "package" && (
               <section className="evidence-board package-board">
-                <header className="board-heading"><div><p className="eyebrow">PROXY DELIVERY</p><h3>代理成果交付与项目包</h3></div><button className="upload-evidence" type="button" disabled={!geometryRevision || !latestCheckRun || !drawingArtifacts.length || Boolean(latestDelivery)} onClick={() => void createProxyDelivery()}><PackageOpen size={14} /> 建立代理交付草案</button></header>
+                <header className="board-heading"><div><h3>代理成果交付与项目包</h3></div><button className="upload-evidence" type="button" disabled={!geometryRevision || !latestCheckRun || !drawingArtifacts.length || Boolean(latestDelivery)} onClick={() => void createProxyDelivery()}><PackageOpen size={14} /> 建立代理交付草案</button></header>
                 <div className="pane-body">
-                {latestDelivery ? <div className="delivery-status"><span className="qualification-chip">代理成果 · 未签发 · L1=false</span><strong>交付草案 {latestDelivery.id.slice(0, 8)}</strong><p>{latestDelivery.restrictions.join(" · ")}</p></div> : deliveries.blockers(selected).length ? <div className="delivery-blockers"><strong>当前阻断</strong>{deliveries.blockers(selected).map((item) => <p key={item}>{item}</p>)}<button type="button" disabled={Boolean(latestBlockedDelivery)} onClick={() => void recordBlockedDelivery()}>{latestBlockedDelivery ? "已记录正式交付阻断" : "记录正式交付阻断"}</button></div> : null}
+                {latestDelivery ? <div className="delivery-status"><span className="qualification-chip">未签发，不能用于正式交付</span><strong>交付草案 {latestDelivery.id.slice(0, 8)}</strong><p>{latestDelivery.restrictions.join(" · ")}</p></div> : deliveries.blockers(selected).length ? <div className="delivery-blockers"><strong>暂时不能正式交付</strong>{deliveries.blockers(selected).map((item) => <p key={item}>{item}</p>)}<button type="button" disabled={Boolean(latestBlockedDelivery)} onClick={() => void recordBlockedDelivery()}>{latestBlockedDelivery ? "已记录原因" : "记录无法交付的原因"}</button></div> : null}
                 <div className="package-grid">
                   <article><FileJson /><strong>project.json</strong><p>适合检查结构化记录，不包含二进制文件本体。</p><button type="button" onClick={() => void downloadProject("json")}>导出 JSON</button></article>
-                  <article><PackageOpen /><strong>project.gujian.zip</strong><p>包含资料、许可、模型/规则/人工记录、GeometryRevision、图纸成果、检查、交付草案和审计事件。</p><button type="button" onClick={() => void downloadProject("zip")}>导出代理 ZIP</button></article>
+                  <article><PackageOpen /><strong>project.gujian.zip</strong><p>包含全部资料原件、识别与核对记录、人工决定、三维模型、图纸、检查结果和交付草案。</p><button type="button" onClick={() => void downloadProject("zip")}>导出代理 ZIP</button></article>
                 </div>
                 <section className="roundtrip-check">
                   <div>
                     <ShieldCheck size={17} />
-                    <span><strong>空库回导验证</strong><small>以当前项目、当前版本实时生成 JSON 与 ZIP。先校验 JSON 结构回导，再由原 ZIP 恢复完整资料；不使用预置项目。</small></span>
+                    <span><strong>导出后能否完整恢复</strong><small>用当前项目实时导出一份，再在空白环境里恢复，检查资料、记录和成果是否都在。不使用预置数据。</small></span>
                   </div>
-                  <button type="button" onClick={() => void verifyEmptyLibraryRoundTrip()}>验证 JSON 与 ZIP 空库回导</button>
+                  <button type="button" onClick={() => void verifyEmptyLibraryRoundTrip()}>检验导出与恢复</button>
                   {roundTripReceipt && (
-                    <dl aria-label="空库回导结果">
-                      <div><dt>项目</dt><dd>{roundTripReceipt.projectId.slice(0, 8).toUpperCase()}</dd></div>
-                      <div><dt>来源版本</dt><dd>{roundTripReceipt.sourceRevisionId.slice(0, 8)}</dd></div>
-                      <div><dt>回导版本</dt><dd>{roundTripReceipt.importedRevisionId.slice(0, 8)}</dd></div>
+                    <dl aria-label="恢复检验结果">
+                      
+                      
+                      
                       <div><dt>资料</dt><dd>{roundTripReceipt.evidenceCount}</dd></div>
                       <div><dt>规则</dt><dd>{roundTripReceipt.ruleRunCount}</dd></div>
                       <div><dt>人工决定</dt><dd>{roundTripReceipt.decisionCount}</dd></div>
@@ -1554,9 +1606,9 @@ export function App() {
                       <div><dt>成果</dt><dd>{roundTripReceipt.artifactCount}</dd></div>
                       <div><dt>检查</dt><dd>{roundTripReceipt.checkRunCount}</dd></div>
                       <div><dt>交付</dt><dd>{roundTripReceipt.deliveryCount}</dd></div>
-                      <div><dt>JSON 结构</dt><dd>{roundTripReceipt.jsonEvidenceCount} 份资料 · {roundTripReceipt.jsonMissingAssetCount} 个文件待补</dd></div>
-                      <div><dt>JSON SHA-256</dt><dd>{roundTripReceipt.jsonSha256.slice(0, 12)}…</dd></div>
-                      <div><dt>ZIP SHA-256</dt><dd>{roundTripReceipt.zipSha256.slice(0, 12)}…</dd></div>
+                      <div><dt>项目记录</dt><dd>{roundTripReceipt.jsonEvidenceCount} 份资料，其中 {roundTripReceipt.jsonMissingAssetCount} 份缺原文件</dd></div>
+                      
+                      
                     </dl>
                   )}
                 </section>
@@ -1570,7 +1622,7 @@ export function App() {
           <div className="empty-workspace">
             <div className="trace-spine" aria-hidden="true"><span /><span /><span /><span /></div>
             <div className="empty-copy">
-              <p className="eyebrow">MILESTONE ONE</p>
+              
               <h2>从一份原始资料开始</h2>
               <p>新建项目后，资料、模型候选、人工决定和导出包会在同一条证据链中显示。</p>
               <button type="button" onClick={() => setShowCreate(true)}><Plus size={16} /> 建立项目档案</button>
@@ -1604,22 +1656,20 @@ export function App() {
         {modelProgress ? (
           <div className="live-run">
             <span className={`run-state ${modelProgress.phase}`}>{modelProgress.phase}</span>
-            <strong>运行 {modelProgress.runId.slice(0, 8)}</strong>
+            <strong>助手正在识别</strong>
             <p>{modelProgress.streamedText || "正在建立受控运行……"}</p>
-            {modelRunning && <button type="button" onClick={() => void modelRuns.cancel()}><CircleStop size={14} /> 取消运行</button>}
-            <small>{modelProgress.events.length} 条运行事件</small>
+            {modelRunning && <button type="button" onClick={() => void modelRuns.cancel()}><CircleStop size={14} /> 停止识别</button>}
           </div>
         ) : (
           <>
-            <div className="assistant-event"><span />密钥不进入浏览器</div>
-            <div className="assistant-event"><span />模型结果只进入候选区</div>
-            <div className="assistant-event"><span />版本写入由命令服务控制</div>
+            <div className="assistant-event"><span />助手的识别结果先进入待确认区，确认后才写入项目</div>
+            <div className="assistant-event"><span />资料原件保存在本机，不会上传</div>
           </>
         )}
-        {provenance && <section className="provenance-track" aria-label="证据关系轨道">
-          <header><Link2 size={14} /><strong>{selectedGeometryEntity ? "所选构件来源链" : "当前项目来源链"}</strong></header>
-          <div>{provenance.nodes.map((node) => <article className={node.status} key={node.key}><i /><span><strong>{node.label}</strong><small>{node.count ? `${node.count} 项已关联` : "缺失"}</small></span></article>)}</div>
-          <footer>{provenance.unknownCount} 个未知项 · {provenance.formalBlockerCount} 个正式资格阻断</footer>
+        {provenance && <section className="provenance-track" aria-label="来源关系">
+          <header><Link2 size={14} /><strong>{selectedGeometryEntity ? "所选构件的来源" : "本项目的来源"}</strong></header>
+          <div>{provenance.nodes.map((node) => <article className={node.status} key={node.key}><i /><span><strong>{node.label}</strong><small>{node.count ? `${node.count} 项已关联` : "尚无"}</small></span></article>)}</div>
+          <footer>{provenance.unknownCount} 项待确认 · {provenance.formalBlockerCount} 项影响正式交付</footer>
         </section>}
         </div>
         </>}
@@ -1629,7 +1679,7 @@ export function App() {
           <form className="create-dialog" onSubmit={(event) => void handleCreate(event)}>
             <button className="close-dialog" type="button" onClick={() => setShowCreate(false)} aria-label="关闭"><X size={17} /></button>
             <Building2 size={20} />
-            <p className="eyebrow">NEW PROJECT</p>
+            
             <h2>建立项目档案</h2>
             <label>项目名称<input name="name" required maxLength={200} placeholder="例如：城隍庙山门保护记录" /></label>
             <label>建筑名称<input name="buildingName" required maxLength={200} placeholder="例如：山门" /></label>

@@ -19,9 +19,9 @@ const result = buildDemoProjectPackage({
   buildingName: "团队演示构造样本",
   fixtureId: "v3-r2-proportioned-team-demo-2026-08-14",
   sourceFiles: [
-    { fileName: "v3-geometry-manifest.json", mimeType: "application/json", bytes: new TextEncoder().encode(manifestText), evidenceType: "document", title: "旧 v3 几何 manifest（团队 demo）" },
-    { fileName: "v3-source-meshes.ndjson.gz", mimeType: "application/gzip", bytes: sourceMeshes, evidenceType: "other", title: "旧 v3 source mesh bundle（团队 demo）" },
-    { fileName: "v3-local-construction-sample.glb", mimeType: "model/gltf-binary", bytes: glb, evidenceType: "other", title: "旧 v3 GLB（团队 demo）" },
+    { fileName: "v3-geometry-manifest.json", mimeType: "application/json", bytes: new TextEncoder().encode(manifestText), evidenceType: "document", title: "示例构件清单" },
+    { fileName: "v3-source-meshes.ndjson.gz", mimeType: "application/gzip", bytes: sourceMeshes, evidenceType: "other", title: "示例三维网格数据" },
+    { fileName: "v3-local-construction-sample.glb", mimeType: "model/gltf-binary", bytes: glb, evidenceType: "other", title: "示例三维模型" },
   ],
 });
 await mkdir(output, { recursive: true });

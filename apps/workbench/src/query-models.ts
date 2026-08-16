@@ -25,7 +25,7 @@ export interface ProjectDashboardSummary {
   readonly geometryRevisionCount: number;
   readonly artifactCount: number;
   readonly blockerCodes: readonly string[];
-  readonly qualificationLabel: "代理成果 · 未签发 · L1=false";
+  readonly qualificationLabel: "未签发，不能用于正式交付";
 }
 
 export interface ProvenanceNode {
@@ -118,7 +118,7 @@ export function buildProjectDashboardSummary(input: ReadModelInput): ProjectDash
     geometryRevisionCount: snapshot.geometryRevisions.length,
     artifactCount: currentArtifacts.length,
     blockerCodes: [...blockers],
-    qualificationLabel: "代理成果 · 未签发 · L1=false",
+    qualificationLabel: "未签发，不能用于正式交付",
   };
 }
 
@@ -196,13 +196,13 @@ export function buildProvenanceGraphView(input: ReadModelInput, selectedObject: 
     selectedObjectId: selectedObject?.id ?? null,
     nodes: [
       node("evidence", "原始资料", objectEvidenceRefs),
-      node("fact", "事实与尺寸", objectFactRefs),
-      node("run", "模型 / 规则运行", [...input.modelRuns.map((run) => run.id), ...input.ruleRuns.map((run) => run.id)]),
+      node("fact", "尺寸与事实", objectFactRefs),
+      node("run", "识别与自动核对", [...input.modelRuns.map((run) => run.id), ...input.ruleRuns.map((run) => run.id)]),
       node("decision", "人工决定", input.decisions.map((decision) => decision.id)),
-      node("geometry", "GeometryRevision", geometryRevision ? [geometryRevision.id] : [], objectUnknowns.some((item) => item.blocksProxyOutcome)),
-      node("artifact", "ViewGeometry / 成果", currentArtifacts.map((artifact) => artifact.id)),
-      node("check", "检查与资格", currentChecks.map((check) => check.id), currentChecks.some((check) => check.results.some((result) => result.outcome === "blocked"))),
-      node("delivery", "代理交付", currentDeliveries.map((delivery) => delivery.id)),
+      node("geometry", "三维模型", geometryRevision ? [geometryRevision.id] : [], objectUnknowns.some((item) => item.blocksProxyOutcome)),
+      node("artifact", "图纸与成果", currentArtifacts.map((artifact) => artifact.id)),
+      node("check", "检查记录", currentChecks.map((check) => check.id), currentChecks.some((check) => check.results.some((result) => result.outcome === "blocked"))),
+      node("delivery", "交付草案", currentDeliveries.map((delivery) => delivery.id)),
     ],
     unknownCount: objectUnknowns.length,
     formalBlockerCount: objectUnknowns.filter((unknown) => unknown.blocksFormalEligibility).length,

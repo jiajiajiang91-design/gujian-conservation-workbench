@@ -154,23 +154,24 @@ function parameterType(category: string): "length" | "angle" | "count" | "ratio"
 }
 
 function readableName(entity: LegacyEntity): string {
-  const value = entity.domainTerm?.displayNameZh?.trim();
+  // 源数据的名称带有内部标注，界面只显示构件本身的名称
+  const value = entity.domainTerm?.displayNameZh?.trim().replace(/（[^）]*演示[^）]*）/g, "").trim();
   if (value && /[㐀-鿿]/u.test(value)) return value;
   const names: Record<string, string> = {
-    column: "柱（团队演示）",
-    columnBase: "柱下承托构件（团队演示）",
-    bracketSeat: "承托座（团队演示）",
-    bracketArm: "承托臂（团队演示）",
-    bearingBlock: "檩下承块（团队演示）",
-    panTile: "凹面瓦件（团队演示）",
-    coverTile: "盖瓦件（团队演示）",
-    ridgeTile: "屋脊构件（团队演示）",
-    roofBoard: "屋面板（团队演示）",
-    rafter: "椽（团队演示）",
-    flyRafter: "檐端续接椽（团队演示）",
-    wall: "墙体（团队演示）",
+    column: "柱",
+    columnBase: "柱下承托构件",
+    bracketSeat: "承托座",
+    bracketArm: "承托臂",
+    bearingBlock: "檩下承块",
+    panTile: "凹面瓦件",
+    coverTile: "盖瓦件",
+    ridgeTile: "屋脊构件",
+    roofBoard: "屋面板",
+    rafter: "椽",
+    flyRafter: "檐端续接椽",
+    wall: "墙体",
   };
-  return names[entity.componentType] ?? `${entity.componentType}（团队演示）`;
+  return names[entity.componentType] ?? `${entity.componentType}`;
 }
 
 function representativeKeys(entities: readonly LegacyEntity[], limit = 480): string[] {
@@ -237,7 +238,7 @@ function translateManifest(input: DemoConversionInput, evidenceId: string, fixtu
       unknowns.push({
         id: entityUnknownIds[index]!, subjectRef: entity.entityId,
         reasonCode: `LEGACY_DEMO_${unknownKey(item).toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`.slice(0, 120),
-        description: `旧 v3 团队 demo 未知项：${unknownLabel(item)}`,
+        description: `示例数据待确认项：${unknownLabel(item)}`,
         requiredEvidence: ["项目自身证据或专业人员复核记录"], affectedRefs: [entity.entityId], evidenceRefs: [evidenceId],
         blocksProxyOutcome: false, blocksFormalEligibility: true,
       });
@@ -384,7 +385,7 @@ function projectGeometrySpec(
   const specBase: ProjectDrivenGeometrySpec = {
     schemaVersion: "2.0", id: deterministicUuid(`geometry-spec:${input.manifest.geometrySignature}`),
     projectId, projectRevisionId: revisionId, buildingId, inputHash: "0".repeat(64),
-    coordinateSystem: { name: "团队演示项目局部坐标", axisOrder: "XYZ", upAxis: "Z", lengthUnit: "mm", origin: [0, 0, 0] },
+    coordinateSystem: { name: "项目局部坐标", axisOrder: "XYZ", upAxis: "Z", lengthUnit: "mm", origin: [0, 0, 0] },
     tolerances: { modellingMm: 0.01, interfaceMm: 0.5, tessellationMm: 0.5 },
     objects: translation.objects, interfaces: translation.interfaces, unknowns: translation.unknowns, createdAt: input.createdAt,
   };
@@ -409,11 +410,11 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     .flatMap((type) => (byType.get(type) ?? []).slice(0, 4)).slice(0, 30);
   const taskId = deterministicUuid(`task:${sourceSeed}`);
   const taskDefinition = {
-    id: taskId, name: "团队 demo 跨项目成果任务", scope: ["泛化验证", "构件级转换审阅"],
-    regulationRefs: ["internal:demo-proxy-policy-v1"], deliverables: ["IFC", "GLB", "DXF", "SVG", "PDF", "检查报告"],
+    id: taskId, name: "示例项目：构件核对与出图", scope: ["核对构件转换结果", "生成成组图纸"],
+    regulationRefs: ["示例项目约定：成果需注明来源，未签发不得正式使用"], deliverables: ["IFC", "GLB", "DXF", "SVG", "PDF", "检查报告"],
     responsibilities: [{ role: "projectLead" as const, actorId }], automationPolicyRef: "internal:demo-proxy-automation-v1",
     artifactRequirements: {
-      titleZh: "团队演示构造样本代理图纸", revisionLabel: "D1",
+      titleZh: "示例建筑测绘图", revisionLabel: "D1",
       geometryTargetRoles: ["column", "roofBoard", "panTile"].filter((type) => byType.has(type)),
       sheets: [
         { key: "sheet-a2", drawingNumber: "D-01", displayLabelZh: "总体与立面", pageMm: [594, 420] },
@@ -448,7 +449,7 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     limitations: ["非实测", "非真实中国古建", "近似构件与未携带接口见结构化未知项", "不可用于正式交付或施工"],
     sourceFiles: input.sourceFiles.map((file) => ({ fileName: file.fileName, sha256: sha256Hex(file.bytes), byteLength: file.bytes.byteLength })),
   })}\n`);
-  const sources = [...input.sourceFiles, { fileName: "demo-source-declaration.json", mimeType: "application/json", bytes: sourceDeclaration, evidenceType: "document" as const, title: "团队 demo 来源与转换边界" }];
+  const sources = [...input.sourceFiles, { fileName: "demo-source-declaration.json", mimeType: "application/json", bytes: sourceDeclaration, evidenceType: "document" as const, title: "示例数据的来源说明" }];
   const assets = sources.map((file) => {
     const id = deterministicUuid(`asset:${sourceSeed}:${file.fileName}`);
     return {
@@ -473,12 +474,12 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
   }));
   const snapshot = ProjectSnapshotSchema.parse({
     schemaVersion: "3.0",
-    project: { id: projectId, name: input.projectName, status: "active", locationText: "团队演示坐标，不对应真实地点", createdAt: input.createdAt },
+    project: { id: projectId, name: input.projectName, status: "active", locationText: "示例数据，不对应真实地点", createdAt: input.createdAt },
     buildings: [{ id: buildingId, projectId, name: input.buildingName, periodText: null, addressText: null, status: "uncertain" }],
     taskDefinitions: [taskDefinition], evidences, parseRecords, entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [],
     issues: [{
       id: deterministicUuid(`issue:${sourceSeed}`), projectId, issueType: "professionalUncertainty", subjectRefs: [geometrySpec.id],
-      description: "旧 v3 网格已按构件级参数化翻译；近似构件、未携带接口、年代与类型均未形成专业事实，见结构化未知项。",
+      description: "示例三维数据已按构件拆分。部分构件为近似形状，构件之间的连接、年代和类型都还没有确认，需要专业人员逐项核对。",
       sourceRef: manifestEvidenceId, status: "open", impactRefs: [geometrySpec.id], blocksProxyOutcome: false, blocksFormalEligibility: true,
       producer: { producerType: "demo", fixtureId: input.fixtureId }, createdAt: input.createdAt, resolvedAt: null,
     }],

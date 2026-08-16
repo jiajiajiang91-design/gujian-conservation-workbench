@@ -19,7 +19,7 @@ describe("workbench query models", () => {
     });
     expect(summary.stage).toBe("资料整理");
     expect(summary.evidenceCompleteness).toBe(0);
-    expect(summary.qualificationLabel).toContain("L1=false");
+    expect(summary.qualificationLabel).toContain("不能用于正式交付");
     expect(snapshot.evidences).toHaveLength(0);
   });
 
