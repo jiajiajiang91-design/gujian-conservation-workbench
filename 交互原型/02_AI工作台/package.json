@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "dev": "concurrently --kill-others-on-fail \"node server.mjs\" \"vite --host 127.0.0.1 --port 5173\"",
+    "dev": "concurrently --kill-others-on-fail \"node server.mjs\" \"vite --host 127.0.0.1 --port 5175\"",
     "dev:test": "vite --host 127.0.0.1 --port 5174 --strictPort",
     "build": "tsc -b && vite build",
     "check": "npm run check:legacy && npm run typecheck",

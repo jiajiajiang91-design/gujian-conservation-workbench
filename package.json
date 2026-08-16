@@ -10,6 +10,8 @@
     "build": "pnpm -r --filter @gujian/domain --filter @gujian/application --filter @gujian/infrastructure --filter @gujian/server --filter @gujian/workbench build",
     "check": "pnpm run typecheck && pnpm run test && pnpm run test:legacy",
     "dev": "pnpm --parallel --filter @gujian/server --filter @gujian/workbench dev",
+    "start": "pnpm run build && pnpm --parallel --filter @gujian/server --filter @gujian/workbench start",
+    "stop": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/release-ports.ps1",
     "test": "vitest run && pnpm --filter @gujian/server test && pnpm --filter @gujian/workbench test",
     "test:legacy": "npm run test --prefix \"\u4ea4\u4e92\u539f\u578b/02_AI\u5de5\u4f5c\u53f0\"",
     "typecheck": "tsc -b --pretty false"
