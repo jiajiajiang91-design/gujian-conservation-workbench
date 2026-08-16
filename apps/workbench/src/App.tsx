@@ -111,6 +111,9 @@ export function App() {
     [],
   );
   const [drawingPreviewUrls, setDrawingPreviewUrls] = useState<readonly { id: string; kind: "svg" | "pdf"; label: string; url: string }[]>([]);
+  // 证据半区（05 界面与交互形态 §三）：中栏右半区显示选中资料原件，数据与证据并置
+  const [activeEvidenceId, setActiveEvidenceId] = useState<string | null>(null);
+  const [evidencePreview, setEvidencePreview] = useState<{ evidenceId: string; url: string; mimeType: string; fileName: string } | null>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const evidenceInput = useRef<HTMLInputElement>(null);
 
@@ -233,9 +236,30 @@ export function App() {
     };
   }, [drawingArtifacts.map((artifact) => artifact.id).join("|")]);
 
+  // 选中资料后读取原件生成预览地址；切换或卸载时释放
+  useEffect(() => {
+    if (!activeEvidenceId) { setEvidencePreview(null); return; }
+    let cancelled = false;
+    let created: string | null = null;
+    const evidence = selected?.snapshot.evidences.find((item) => item.id === activeEvidenceId);
+    const load = async () => {
+      if (!evidence) return;
+      const stored = await projectRepository.getAsset(evidence.assetId);
+      if (cancelled) return;
+      created = URL.createObjectURL(stored.content);
+      setEvidencePreview({ evidenceId: evidence.id, url: created, mimeType: stored.record.mimeType, fileName: stored.record.fileName });
+    };
+    void load().catch(() => setEvidencePreview(null));
+    return () => {
+      cancelled = true;
+      if (created) URL.revokeObjectURL(created);
+    };
+  }, [activeEvidenceId, selected?.projectId]);
+
   const chooseProject = async (projectId: string) => {
     setError(null);
     setModelProgress(null);
+    setActiveEvidenceId(null);
     await loadProject(projectId);
   };
 
@@ -804,6 +828,45 @@ export function App() {
     }
   };
 
+  // 任务进度状态（05 图 1 左栏）：只按当前项目已有数据判断，不预设完成度
+  const stageStates: Record<StageId, { label: string; tone: "done" | "active" | "idle" }> = {
+    tasks: confirmedTask ? { label: "已确认", tone: "done" } : { label: "待确认", tone: "active" },
+    evidence: selected?.snapshot.evidences.length ? { label: `${selected.snapshot.evidences.length} 份`, tone: "done" } : { label: "无资料", tone: "idle" },
+    measurements: selected?.snapshot.facts.length ? { label: `${selected.snapshot.facts.length} 项事实`, tone: "done" } : { label: "无事实", tone: "idle" },
+    objects: geometrySpec?.objects.length ? { label: `${geometrySpec.objects.length} 个对象`, tone: "done" } : { label: "无对象", tone: "idle" },
+    issues: dashboard?.openIssueCount ? { label: `${dashboard.openIssueCount} 项待办`, tone: "active" } : { label: "无待办", tone: "done" },
+    geometry: geometryRevision ? { label: "已生成", tone: "done" } : { label: "未生成", tone: "idle" },
+    drawings: drawingArtifacts.length ? { label: `${drawingArtifacts.length} 项产物`, tone: "done" } : { label: "未生成", tone: "idle" },
+    checks: latestCheckRun ? { label: "已检查", tone: "done" } : { label: "未检查", tone: "idle" },
+    package: latestDelivery ? { label: "已建草案", tone: "done" } : { label: "未建立", tone: "idle" },
+    candidates: projectModelRuns.length ? { label: `${projectModelRuns.length} 次运行`, tone: "done" } : { label: "未运行", tone: "idle" },
+  };
+
+  // 证据视图（05 §三）：八种视图统一的右半区，显示当前选中资料的原件
+  const renderEvidenceView = (emptyHint: string) => (
+    <aside className="stage-evidence" aria-label="证据视图">
+      <header>
+        <span className="eyebrow">EVIDENCE VIEW</span>
+        {evidencePreview && <small>{evidencePreview.fileName}</small>}
+      </header>
+      {selected && selected.snapshot.evidences.length > 1 && (
+        <div className="evidence-switch">
+          {selected.snapshot.evidences.map((evidence) => (
+            <button key={evidence.id} type="button" className={activeEvidenceId === evidence.id ? "active" : ""}
+              onClick={() => setActiveEvidenceId(evidence.id)}>{evidence.title}</button>
+          ))}
+        </div>
+      )}
+      {evidencePreview ? (
+        evidencePreview.mimeType.startsWith("image/")
+          ? <img src={evidencePreview.url} alt={`${evidencePreview.fileName} 原件`} />
+          : evidencePreview.mimeType === "application/pdf"
+            ? <object data={evidencePreview.url} type="application/pdf" aria-label={`${evidencePreview.fileName} 原件`} />
+            : <div className="panel-empty">该类型（{evidencePreview.mimeType}）无法在页内显示，可下载原文件核对。</div>
+      ) : <div className="panel-empty">{selected?.snapshot.evidences.length ? emptyHint : "上传资料后在此并置显示原件。"}</div>}
+    </aside>
+  );
+
   return (
     <main className={`app-shell ${assistantCollapsed ? "assistant-collapsed" : ""}`}>
       <aside className="rail">
@@ -854,6 +917,30 @@ export function App() {
           ))}
           {!filtered.length && <p className="empty-list">还没有项目。先建立一份可追溯的项目档案。</p>}
         </div>
+        {selected && (
+          <>
+            <p className="panel-label">任务进度</p>
+            <nav className="stage-list professional" aria-label="任务进度">
+              {stages.map((stage) => {
+                const state = stageStates[stage.id];
+                return (
+                  <button className={`stage-row ${activeStage === stage.id ? "active" : ""}`} key={stage.id} type="button" onClick={() => setActiveStage(stage.id)}>
+                    <span className={`stage-state ${state.tone}`} aria-hidden="true" />
+                    <strong>{stage.label}</strong>
+                    <small>{state.label}</small>
+                  </button>
+                );
+              })}
+              <div className="stage-qualification"><ShieldCheck size={14} /><span>{dashboard?.qualificationLabel}</span></div>
+            </nav>
+            {dashboard && dashboard.openIssueCount > 0 && (
+              <button className="pending-summary" type="button" onClick={() => setActiveStage("issues")}>
+                <strong>待办 {dashboard.openIssueCount}</strong>
+                <small>{dashboard.blockerCodes.length ? `${dashboard.blockerCodes.length} 项阻断正式资格` : "无正式资格阻断"}</small>
+              </button>
+            )}
+          </>
+        )}
         <footer><span>本地优先 · IndexedDB v3</span><button type="button" onClick={() => void clearLibrary()}><Trash2 size={12} /> 清空本地库</button></footer>
       </section>
       <section className="workspace-shell">
@@ -882,13 +969,12 @@ export function App() {
               </div>
             </div>
             <div className="project-stage-layout">
-            <nav className="stage-list professional" aria-label="工作阶段">
-              {stages.map((stage, index) => (
-                <button className={`stage-row ${activeStage === stage.id ? "active" : ""}`} key={stage.id} type="button" onClick={() => setActiveStage(stage.id)}>
-                  <span>{String(index + 1).padStart(2, "0")}</span><strong>{stage.label}</strong><ChevronRight size={13} />
+            <nav className="stage-tabs" aria-label="工作区视图">
+              {stages.map((stage) => (
+                <button className={activeStage === stage.id ? "active" : ""} key={stage.id} type="button" onClick={() => setActiveStage(stage.id)}>
+                  {stage.label}
                 </button>
               ))}
-              <div className="stage-qualification"><ShieldCheck size={14} /><span>{dashboard?.qualificationLabel}</span></div>
             </nav>
             <div className="stage-content">
 
@@ -915,21 +1001,27 @@ export function App() {
                   <button className="upload-evidence" type="button" onClick={() => evidenceInput.current?.click()}><Upload size={14} /> 上传原始资料</button>
                   <input ref={evidenceInput} className="sr-only" type="file" multiple onChange={(event) => { const files = Array.from(event.target.files ?? []); if (files.length) void uploadEvidenceFiles(files); }} />
                 </header>
-                <div className="evidence-list">
-                  {selected.snapshot.evidences.map((evidence) => {
-                    const parse = selected.snapshot.parseRecords.find((record) => record.evidenceId === evidence.id);
-                    return (
-                      <article className="evidence-card" key={evidence.id}>
-                        <span className="evidence-type">{evidence.evidenceType}</span>
-                        <div><strong>{evidence.title}</strong><small>{parse?.parser ?? "未解析"} · {parse?.status ?? "pending"} · evidence {evidence.id}</small></div>
-                        <span className={`data-status ${evidence.dataStatus}`}>{evidence.dataStatus === "available" ? "可用" : evidence.dataStatus}</span>
-                        <button type="button" onClick={() => void downloadEvidence(evidence.assetId)}>原文件</button>
-                      </article>
-                    );
-                  })}
-                  {!selected.snapshot.evidences.length && (
-                    <div className="evidence-empty"><div className="trace-spine" aria-hidden="true"><span /><span /><span /><span /></div><p>上传任务书、照片、测量记录或已有图纸。文件本体、证据记录和解析结果会一起进入项目版本。</p></div>
-                  )}
+                <div className="stage-split">
+                  <div className="stage-data">
+                    <div className="evidence-list">
+                      {selected.snapshot.evidences.map((evidence) => {
+                        const parse = selected.snapshot.parseRecords.find((record) => record.evidenceId === evidence.id);
+                        return (
+                          <article className={`evidence-card ${activeEvidenceId === evidence.id ? "active" : ""}`} key={evidence.id}
+                            onClick={() => setActiveEvidenceId(evidence.id)}>
+                            <span className="evidence-type">{evidence.evidenceType}</span>
+                            <div><strong>{evidence.title}</strong><small>{parse?.parser ?? "未解析"} · {parse?.status ?? "pending"}</small></div>
+                            <span className={`data-status ${evidence.dataStatus}`}>{evidence.dataStatus === "available" ? "可用" : evidence.dataStatus}</span>
+                            <button type="button" onClick={(event) => { event.stopPropagation(); void downloadEvidence(evidence.assetId); }}>原文件</button>
+                          </article>
+                        );
+                      })}
+                      {!selected.snapshot.evidences.length && (
+                        <div className="evidence-empty"><div className="trace-spine" aria-hidden="true"><span /><span /><span /><span /></div><p>上传任务书、照片、测量记录或已有图纸。文件本体、证据记录和解析结果会一起进入项目版本。</p></div>
+                      )}
+                    </div>
+                  </div>
+                  {renderEvidenceView("选择左侧资料查看原件。")}
                 </div>
               </section>
             )}
@@ -937,6 +1029,8 @@ export function App() {
             {activeStage === "measurements" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><p className="eyebrow">MEASUREMENT BASIS</p><h3>测量记录、事实与缺失影响</h3></div><span className="board-count">{selected.snapshot.measurements.length + selected.snapshot.facts.length} 条记录</span></header>
+                <div className="stage-split">
+                  <div className="stage-data">
                 {projectArchetypes.length ? (() => {
                   const archetype = projectArchetypes[projectArchetypes.length - 1]!;
                   const derivation = deriveArchetypeExpectations(archetype);
@@ -982,16 +1076,24 @@ export function App() {
                   {selected.snapshot.facts.map((fact) => <article key={fact.id}><span className={`producer-badge ${fact.producer.producerType}`}>{fact.producer.producerType}</span><strong>{fact.field}</strong><small>{fact.reviewStatus} · {fact.dataStatus}</small><code>{fact.evidenceRefs.join(" · ") || "无证据引用"}</code></article>)}
                   {!selected.snapshot.measurements.length && !selected.snapshot.facts.length && <div className="panel-empty">没有可用尺寸事实。缺失时系统会阻断依赖成果，不使用默认值补齐。</div>}
                 </div>
+                  </div>
+                  {renderEvidenceView("选择资料查看手写草图或测量记录原件。")}
+                </div>
               </section>
             )}
 
             {activeStage === "objects" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><p className="eyebrow">HERITAGE OBJECTS</p><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? selected.snapshot.entities.length} 个对象</span></header>
+                <div className="stage-split">
+                  <div className="stage-data">
                 <div className="object-table">
                   {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><code>{object.stableKey}</code><small>{typeLabel(object.componentType, object.conceptRef)} · {object.producer.producerType}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 个未知项` : "来源已绑定"}</strong></button>)}
                   {!geometrySpec?.objects.length && selected.snapshot.entities.map((entity) => <article key={entity.id}><strong>{entity.name}</strong><span>{entity.entityType}</span><code>{entity.id}</code></article>)}
                   {!geometrySpec?.objects.length && !selected.snapshot.entities.length && <div className="panel-empty">当前没有构件对象。对象必须从当前项目资料或已验证的项目自有 GeometrySpec 建立。</div>}
+                </div>
+                  </div>
+                  {renderEvidenceView("选择资料查看构件对应的照片。")}
                 </div>
               </section>
             )}

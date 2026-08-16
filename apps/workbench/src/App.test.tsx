@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { App, LENGTH_INPUT_STEP } from "./App";
@@ -19,7 +19,9 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "山门" })).toBeInTheDocument();
     expect(screen.getByText(/^版本 /)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /问题队列/ }));
+    // 左栏任务进度与中栏视图标签是两套导航，测试指定中栏标签
+    const viewTabs = screen.getByRole("navigation", { name: "工作区视图" });
+    fireEvent.click(within(viewTabs).getByRole("button", { name: "问题队列" }));
     expect(await screen.findByText("问题队列与必要人工节点")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("成果目录"), { target: { value: "平面图" } });
     fireEvent.change(screen.getByLabelText("图纸标题"), { target: { value: "山门代理成果图" } });
@@ -30,7 +32,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "确认一次任务设置" }));
     expect(await screen.findByText("人工节点 01 已完成")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /代理交付/ }));
+    fireEvent.click(within(viewTabs).getByRole("button", { name: "代理交付" }));
     expect(screen.getByRole("button", { name: "验证 JSON 与 ZIP 空库回导" })).toBeInTheDocument();
   });
 
