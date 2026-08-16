@@ -95,6 +95,13 @@ function requireMatchingProjectRefs(command: ProjectCommand): void {
   )) {
     throw new CommandError("COMMAND_INVALID", "candidate decision closure is invalid");
   }
+  if (command.commandType === "DecideIssueOption" && (
+    command.payload.decision.projectId !== command.projectId ||
+    command.payload.decision.actorId !== command.actorId ||
+    command.payload.decision.commandId !== command.commandId
+  )) {
+    throw new CommandError("COMMAND_INVALID", "issue option decision closure is invalid");
+  }
   if (command.commandType === "StartCadJob" && (
     command.payload.job.projectId !== command.projectId ||
     command.payload.job.inputRevisionId !== command.expectedRevisionId ||
@@ -266,6 +273,27 @@ function decideCandidate(
     candidates: head.snapshot.candidates.map((item) => item.id === candidate.id
       ? { ...item, reviewStatus: accepted ? "confirmed" as const : "rejected" as const }
       : item),
+    issues: head.snapshot.issues.map((item) => item.id === issue.id
+      ? { ...item, status: accepted ? "resolved" as const : "rejected" as const, resolvedAt: command.issuedAt }
+      : item),
+  });
+}
+
+function decideIssueOption(
+  head: ProjectHead,
+  command: Extract<ProjectCommand, { commandType: "DecideIssueOption" }>,
+): ProjectSnapshot {
+  const decision = command.payload.decision;
+  const issue = head.snapshot.issues.find((item) => item.id === decision.issueId);
+  if (!issue || issue.status !== "open" || !issue.options?.length) {
+    throw new CommandError("COMMAND_INVALID", "issue is not open for option decision");
+  }
+  const accepted = decision.outcome === "accepted";
+  if (accepted && !issue.options.some((option) => option.optionId === decision.selectedOptionId)) {
+    throw new CommandError("COMMAND_INVALID", "selected option is not among issue options");
+  }
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
     issues: head.snapshot.issues.map((item) => item.id === issue.id
       ? { ...item, status: accepted ? "resolved" as const : "rejected" as const, resolvedAt: command.issuedAt }
       : item),
@@ -578,6 +606,8 @@ export class ProjectCommandService {
                 ? appendRuleEvaluation(head, command)
                 : command.commandType === "DecideCandidate"
                   ? decideCandidate(head, command)
+                  : command.commandType === "DecideIssueOption"
+                    ? decideIssueOption(head, command)
                   : command.commandType === "CommitGeometryRevision"
                     ? appendGeometryRevision(head, command)
                     : command.commandType === "CommitArtifactSet"
@@ -608,6 +638,8 @@ export class ProjectCommandService {
                   ? [command.payload.ruleRun.id, ...command.payload.issues.map((issue) => issue.id)]
                   : command.commandType === "DecideCandidate"
                     ? [command.payload.candidateId, command.payload.decision.id, command.payload.decision.issueId]
+                    : command.commandType === "DecideIssueOption"
+                      ? [command.payload.decision.id, command.payload.decision.issueId]
                     : command.commandType === "CommitGeometryRevision"
                       ? [command.payload.cadJobId, command.payload.geometrySpec.id, command.payload.geometryRevision.id, ...command.payload.assets.map((asset) => asset.id)]
                       : command.commandType === "CommitArtifactSet"
@@ -628,7 +660,7 @@ export class ProjectCommandService {
         ...(command.commandType === "CommitRuleEvaluation"
           ? { ruleRunsToPut: [command.payload.ruleRun] }
           : {}),
-        ...(command.commandType === "DecideCandidate"
+        ...(command.commandType === "DecideCandidate" || command.commandType === "DecideIssueOption"
           ? { decisionsToPut: [command.payload.decision] }
           : {}),
         ...(command.commandType === "StartCadJob" || command.commandType === "SyncCadJobEvents"

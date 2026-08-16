@@ -135,4 +135,34 @@ describe("WorkflowService", () => {
     expect(metadata?.blocksProxyOutcome).toBe(false);
     expect(metadata?.blocksFormalEligibility).toBe(true);
   });
+
+  it("规范选择停靠生成并列方案，选定后关闭且不重建", async () => {
+    const current = await setup();
+    const commandId = crypto.randomUUID();
+    await current.commands.execute({
+      commandType: "CommitFacts", commandId, projectId: current.projectId, actorId: current.actorId,
+      expectedRevisionId: current.head.revisionId, issuedAt: "2026-08-16T00:00:00Z", payload: { facts: [
+        { id: crypto.randomUUID(), subjectRef: current.head.snapshot.buildings[0]!.id, field: "roofFrame.totalDepthMm", value: 6000, producer: { producerType: "human", actorId: current.actorId, actionRef: { commandId } }, evidenceRefs: ["evidence:frame-note"], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
+        { id: crypto.randomUUID(), subjectRef: current.head.snapshot.buildings[0]!.id, field: "roofFrame.stepCount", value: 3, producer: { producerType: "human", actorId: current.actorId, actionRef: { commandId } }, evidenceRefs: ["evidence:frame-note"], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
+      ] },
+    });
+    const head = await current.repository.getProjectHead(current.projectId) as ProjectHead;
+    const evaluated = await current.workflow.evaluate(head, current.actorId);
+    const issue = evaluated.snapshot.issues.find((item) => item.sourceRef === "rule:lift-ratio-selection");
+    expect(issue?.status).toBe("open");
+    expect(issue?.options).toHaveLength(2);
+    expect(issue?.options?.map((option) => option.ruleSetRef).sort()).toEqual(["liang-drawings", "qing-gongcheng-zuofa"]);
+    expect(issue?.options?.[0]?.sourceText.length).toBeGreaterThan(0);
+    expect(issue?.options?.[0]?.valueText).toContain("mm");
+
+    const decided = await current.workflow.decideIssueOption(evaluated, current.actorId, {
+      issueId: issue!.id, outcome: "accepted", selectedOptionId: "qing-gongcheng-zuofa", reason: "小式做法更接近本样本",
+    });
+    const closed = decided.snapshot.issues.find((item) => item.id === issue!.id);
+    expect(closed?.status).toBe("resolved");
+    expect(decided.snapshot.issues.filter((item) => item.sourceRef === "rule:lift-ratio-selection")).toHaveLength(1);
+    const decisions = await current.repository.getProjectDecisions(current.projectId);
+    const optionDecision = decisions.find((item) => item.issueId === issue!.id);
+    expect(optionDecision).toMatchObject({ outcome: "accepted", selectedOptionId: "qing-gongcheng-zuofa" });
+  });
 });

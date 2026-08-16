@@ -8,7 +8,7 @@ import {
 import type { z } from "zod";
 
 import { IndexedDbProjectRepository, LocalAuthorization } from "./indexeddb-project-repository.js";
-import { loadRuleData } from "./rule-engine.js";
+import { evaluateOptionSets, loadRuleData } from "./rule-engine.js";
 import { HERITAGE_BASELINE_RULE_DATA } from "./rules/heritage-baseline-v1.js";
 
 // 规则数据在模块加载时校验一次；ruleSetVersion 绑定数据内容哈希（架构 v1.4 §5.5）
@@ -25,6 +25,7 @@ interface IssueDescriptor {
   impactRefs: string[];
   blocksProxyOutcome?: boolean;
   blocksFormalEligibility?: boolean;
+  options?: NonNullable<Issue["options"]>;
 }
 
 function descriptorKey(issue: IssueDescriptor | Issue): string {
@@ -37,6 +38,7 @@ function descriptorKey(issue: IssueDescriptor | Issue): string {
     impactRefs: [...issue.impactRefs].sort(),
     blocksProxyOutcome: issue.blocksProxyOutcome ?? false,
     blocksFormalEligibility: issue.blocksFormalEligibility ?? true,
+    options: (issue.options ?? []).map((option) => option.optionId).sort(),
   });
 }
 
@@ -100,6 +102,39 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
       });
     }
   }
+  // 规范选择停靠（R2）：进深与步架数就绪且尚未做过举架系数选择时，
+  // 按并存规则集分别计算并列方案，每案附系数出处（架构 v1.4 §5.5、§10）。
+  const liftDecided = head.snapshot.issues.some((issue) =>
+    issue.sourceRef === "rule:lift-ratio-selection" && issue.status !== "open");
+  const totalDepth = latestFact("roofFrame.totalDepthMm")?.value;
+  const stepCount = latestFact("roofFrame.stepCount")?.value;
+  if (!liftDecided && typeof totalDepth === "number" && typeof stepCount === "number" && stepCount > 0) {
+    const optionSets = evaluateOptionSets(RULE_DATA.data, { totalDepthMm: totalDepth, stepCount });
+    const options = optionSets
+      .map((set) => {
+        const lifts = set.results.filter((item) => item.status === "computed" && item.ruleId.startsWith("lift"));
+        if (!lifts.length) return null;
+        return {
+          optionId: set.ruleSetId,
+          labelZh: set.ruleSetId === "liang-drawings" ? "梁思成图纸系数组" : "清工程做法系数组",
+          valueText: lifts.map((item) => `${item.dimension} ${item.valueMm} mm`).join("；"),
+          ruleSetRef: set.ruleSetId,
+          sourceText: set.sourceText,
+        };
+      })
+      .filter((option): option is NonNullable<typeof option> => option !== null);
+    if (options.length >= 2) {
+      result.push({
+        ruleId: "lift-ratio-selection",
+        issueType: "professionalUncertainty",
+        subjectRefs: [head.snapshot.buildings[0]?.id ?? head.projectId],
+        description: `举架系数存在多套有依据的规范方案（通进深 ${totalDepth} mm、步架数 ${stepCount}），需要专业人员选择适用系数组。`,
+        impactRefs: [head.projectId],
+        blocksProxyOutcome: false,
+        options,
+      });
+    }
+  }
   for (const candidate of head.snapshot.candidates) {
     if (candidate.reviewStatus === "unreviewed") {
       result.push({
@@ -155,6 +190,7 @@ export class WorkflowService {
       producer: { producerType: "rule", ruleRunId },
       createdAt: now,
       resolvedAt: null,
+      ...(descriptor.options ? { options: descriptor.options } : {}),
     }));
     const issueRefsFor = (ruleId: string) => issues.filter((issue) => issue.sourceRef === `rule:${ruleId}`).map((issue) => issue.id);
     const ruleDefinitions = [
@@ -165,6 +201,7 @@ export class WorkflowService {
       { id: "model-reported-missing-information", message: "模型报告缺失信息检查" },
       { id: "documented-dimension-chain-conflict", message: "文档尺寸链一致性检查" },
       { id: "measurement-metadata-required", message: "测量元数据完整性检查" },
+      { id: "lift-ratio-selection", message: "举架系数规范选择检查（多规则集并列方案）" },
     ];
     const ruleRun = RuleRunSchema.parse({
       id: ruleRunId,
@@ -297,6 +334,41 @@ export class WorkflowService {
     });
     const updated = await this.#repository.getProjectHead(head.projectId);
     if (!updated) throw new Error("PROJECT_NOT_FOUND_AFTER_DECISION");
+    return this.evaluate(updated, actorId);
+  }
+
+  // 规范选择类停靠的方案决定：接受必须带所选方案，拒绝必须给理由（封闭集合不变）
+  async decideIssueOption(head: ProjectHead, actorId: string, input: {
+    issueId: string;
+    outcome: "accepted" | "rejected";
+    selectedOptionId: string | null;
+    reason: string | null;
+  }): Promise<ProjectHead> {
+    const now = new Date().toISOString();
+    const commandId = crypto.randomUUID();
+    const decision = DecisionSchema.parse({
+      id: crypto.randomUUID(),
+      projectId: head.projectId,
+      issueId: input.issueId,
+      actorId,
+      commandId,
+      outcome: input.outcome,
+      reason: input.reason?.trim() || (input.outcome === "accepted" ? null : "未说明理由"),
+      impactRefs: [head.projectId],
+      decidedAt: now,
+      ...(input.outcome === "accepted" && input.selectedOptionId ? { selectedOptionId: input.selectedOptionId } : {}),
+    });
+    await this.#commands.execute({
+      commandType: "DecideIssueOption",
+      commandId,
+      projectId: head.projectId,
+      actorId,
+      expectedRevisionId: head.revisionId,
+      issuedAt: now,
+      payload: { decision },
+    });
+    const updated = await this.#repository.getProjectHead(head.projectId);
+    if (!updated) throw new Error("PROJECT_NOT_FOUND_AFTER_OPTION_DECISION");
     return this.evaluate(updated, actorId);
   }
 }

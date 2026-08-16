@@ -133,6 +133,22 @@ export const DecideCandidateCommandSchema = CommandHeaderSchema.extend({
   }),
 }).strict();
 
+// 规范选择类问题的方案决定（架构 v1.4 §10）：接受时必须带所选方案
+export const DecideIssueOptionCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("DecideIssueOption"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    decision: DecisionSchema,
+  }).strict().superRefine((value, context) => {
+    if (value.decision.outcome === "accepted" && value.decision.selectedOptionId === undefined) {
+      context.addIssue({ code: "custom", message: "accepted option decision requires selectedOptionId", path: ["decision", "selectedOptionId"] });
+    }
+    if (!(["accepted", "rejected"] as const).includes(value.decision.outcome as "accepted" | "rejected")) {
+      context.addIssue({ code: "custom", message: "option decision must accept or reject", path: ["decision", "outcome"] });
+    }
+  }),
+}).strict();
+
 export const StartCadJobCommandSchema = CommandHeaderSchema.extend({
   commandType: z.literal("StartCadJob"),
   expectedRevisionId: UuidSchema,
@@ -201,6 +217,7 @@ export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   ConfirmTaskSetupCommandSchema,
   CommitRuleEvaluationCommandSchema,
   DecideCandidateCommandSchema,
+  DecideIssueOptionCommandSchema,
   StartCadJobCommandSchema,
   SyncCadJobEventsCommandSchema,
   CommitGeometryRevisionCommandSchema,

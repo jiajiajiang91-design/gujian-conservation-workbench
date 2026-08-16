@@ -197,6 +197,15 @@ export const MeasurementRecordSchema = z.object({
   }
 });
 
+// 规范选择类问题的并列方案（架构 v1.4 §10）：每个方案含数值、规则集引用与系数出处
+export const IssueOptionSchema = z.object({
+  optionId: z.string().min(1).max(120),
+  labelZh: z.string().min(1).max(200),
+  valueText: z.string().min(1).max(500),
+  ruleSetRef: z.string().min(1).max(120),
+  sourceText: z.string().min(1).max(500),
+}).strict();
+
 export const IssueSchema = z.object({
   id: UuidSchema,
   projectId: UuidSchema,
@@ -211,7 +220,13 @@ export const IssueSchema = z.object({
   producer: ProducerRefSchema,
   createdAt: IsoDateTimeSchema,
   resolvedAt: IsoDateTimeSchema.nullable(),
-}).strict();
+  // v1.4 增补（可选，旧记录不受影响）：规范选择类问题的并列方案
+  options: z.array(IssueOptionSchema).min(2).max(20).optional(),
+}).strict().superRefine((value, context) => {
+  if (value.options && new Set(value.options.map((option) => option.optionId)).size !== value.options.length) {
+    context.addIssue({ code: "custom", message: "option ids must be unique", path: ["options"] });
+  }
+});
 
 export const DependencyEdgeSchema = z.object({
   id: UuidSchema,

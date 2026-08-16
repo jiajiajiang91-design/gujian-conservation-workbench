@@ -43,9 +43,14 @@ export const DecisionSchema = z.object({
   reason: z.string().min(1).max(5_000).nullable(),
   impactRefs: z.array(NonEmptyRefSchema),
   decidedAt: IsoDateTimeSchema,
+  // v1.4 增补（可选，旧记录不受影响）：选择型决定记录所选方案；封闭结果集合不变
+  selectedOptionId: z.string().min(1).max(120).optional(),
 }).strict().superRefine((value, context) => {
   if (value.outcome !== "accepted" && value.reason === null) {
     context.addIssue({ code: "custom", message: "reason is required for this outcome", path: ["reason"] });
+  }
+  if (value.selectedOptionId !== undefined && value.outcome !== "accepted") {
+    context.addIssue({ code: "custom", message: "selected option requires accepted outcome", path: ["selectedOptionId"] });
   }
 });
 

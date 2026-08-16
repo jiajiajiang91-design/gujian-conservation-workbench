@@ -680,6 +680,33 @@ export function App() {
     }
   };
 
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const decideIssueOption = async (issueId: string, outcome: "accepted" | "rejected") => {
+    if (!selected) return;
+    const selectedOptionId = selectedOptions[issueId] ?? null;
+    const typedReason = decisionReasons[issueId]?.trim() ?? "";
+    if (outcome === "accepted" && !selectedOptionId) {
+      setError("请先选择一个方案再确认");
+      return;
+    }
+    if (outcome === "rejected" && !typedReason) {
+      setError("暂不选择时需要填写理由");
+      return;
+    }
+    try {
+      const updated = await workflow.decideIssueOption(selected, localActorId(), {
+        issueId, outcome, selectedOptionId, reason: typedReason || null,
+      });
+      setSelected(updated);
+      setProjectRuleRuns(await projectRepository.getProjectRuleRuns(selected.projectId));
+      setProjectDecisions(await projectRepository.getProjectDecisions(selected.projectId));
+      setDecisionReasons((current) => ({ ...current, [issueId]: "" }));
+      setNotice(outcome === "accepted" ? "方案已选定并记录出处，问题关闭" : "已记录暂不选择的理由");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "方案决定失败");
+    }
+  };
+
   const confirmDocumentedDimensionChain = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) return;
@@ -936,7 +963,27 @@ export function App() {
                       <article className="issue-card" key={issue.id}>
                         <div className="issue-meta"><span className={`issue-severity ${issue.issueType}`}>{issue.issueType}</span><span className="producer-badge rule">规则</span><span>{issue.sourceRef.replace("rule:", "")}</span></div>
                         <h4>{issue.description}</h4>
-                        {canDecide ? (
+                        {issue.options?.length ? (
+                          <div className="decision-actions option-decision">
+                            <p>存在多套有依据的规范方案，选择其一并记录出处；此选择可在后续版本中变更。</p>
+                            {issue.options.map((option) => (
+                              <label className="option-row" key={option.optionId}>
+                                <input
+                                  type="radio"
+                                  name={`issue-option-${issue.id}`}
+                                  checked={selectedOptions[issue.id] === option.optionId}
+                                  onChange={() => setSelectedOptions((current) => ({ ...current, [issue.id]: option.optionId }))}
+                                />
+                                <span><strong>{option.labelZh}</strong><small>{option.valueText}</small><em>{option.sourceText}</em></span>
+                              </label>
+                            ))}
+                            <label>理由或备注<textarea value={decisionReasons[issue.id] ?? ""} onChange={(event) => setDecisionReasons((current) => ({ ...current, [issue.id]: event.target.value }))} placeholder="选定时可选填；暂不选择时必填" /></label>
+                            <div>
+                              <button type="button" className="accept-decision" onClick={() => void decideIssueOption(issue.id, "accepted")}>选定该方案</button>
+                              <button type="button" className="reject-decision" onClick={() => void decideIssueOption(issue.id, "rejected")}>暂不选择</button>
+                            </div>
+                          </div>
+                        ) : canDecide ? (
                           <div className="decision-actions">
                             <p>这是非唯一的专业取舍，需要一次人工决定。接受只改变候选核对状态，不改变数据来源。</p>
                             <label>驳回理由<textarea value={decisionReasons[issue.id] ?? ""} onChange={(event) => setDecisionReasons((current) => ({ ...current, [issue.id]: event.target.value }))} placeholder="仅在驳回时必填" /></label>
