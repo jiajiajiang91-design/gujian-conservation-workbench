@@ -89,10 +89,12 @@ describe("快照构造", () => {
     const snapshot = buildWorkspaceSnapshot({
       projectId: HEAD.projectId, currentStage: "objects", openIssueCount: 2, entityCount: 42,
       geometryRevisionCount: 1, artifactCount: 0, deliveryCount: 0, serverModelConfigured: true,
+      unparsedEvidenceCount: 3,
     });
     expect(snapshot).toMatchObject({
       openDockItems: 2, componentCount: 42,
       hasGeometryRevision: true, hasDrawings: false, hasDeliverable: false,
+      unparsedEvidenceCount: 3,
     });
   });
 });

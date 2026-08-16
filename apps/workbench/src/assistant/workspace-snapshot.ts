@@ -9,6 +9,7 @@ export interface WorkspaceSnapshot {
   hasDrawings: boolean;
   hasDeliverable: boolean;
   modelRouteAvailable: boolean;
+  unparsedEvidenceCount: number;
 }
 
 export interface SnapshotInput {
@@ -20,6 +21,7 @@ export interface SnapshotInput {
   artifactCount: number;
   deliveryCount: number;
   serverModelConfigured: boolean;
+  unparsedEvidenceCount: number;
 }
 
 export function buildWorkspaceSnapshot(input: SnapshotInput): WorkspaceSnapshot {
@@ -32,5 +34,6 @@ export function buildWorkspaceSnapshot(input: SnapshotInput): WorkspaceSnapshot 
     hasDrawings: input.artifactCount > 0,
     hasDeliverable: input.deliveryCount > 0,
     modelRouteAvailable: input.serverModelConfigured,
+    unparsedEvidenceCount: Math.max(0, input.unparsedEvidenceCount),
   };
 }

@@ -27,6 +27,11 @@ import {
   buildProjectDashboardSummary,
   buildProvenanceGraphView,
 } from "./query-models";
+import { AssistantExecutors, type ModificationProposal } from "./assistant/action-executors";
+import { AssistantClient } from "./assistant/assistant-client";
+import { ChatPanel } from "./assistant/ChatPanel";
+import { runClientOp } from "./assistant/client-op-adapter";
+import { buildWorkspaceSnapshot } from "./assistant/workspace-snapshot";
 
 const stages = [
   { id: "tasks", label: "任务要求", icon: ClipboardList },
@@ -92,6 +97,12 @@ export function App() {
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
   const [roundTripReceipt, setRoundTripReceipt] = useState<RoundTripReceipt | null>(null);
   const [assistantCollapsed, setAssistantCollapsed] = useState(false);
+  const [pendingProposal, setPendingProposal] = useState<ModificationProposal | null>(null);
+  const assistantChatClient = useMemo(() => new AssistantClient(), []);
+  const assistantExecutors = useMemo(
+    () => new AssistantExecutors({ commands: projectCommands, workflow, actorId: localActorId }),
+    [],
+  );
   const [drawingPreviewUrls, setDrawingPreviewUrls] = useState<readonly { id: string; kind: "svg" | "pdf"; label: string; url: string }[]>([]);
   const importInput = useRef<HTMLInputElement>(null);
   const evidenceInput = useRef<HTMLInputElement>(null);
@@ -329,6 +340,75 @@ export function App() {
     anchor.click();
     URL.revokeObjectURL(url);
     setNotice(`已导出 ${type.toUpperCase()} 项目包`);
+  };
+
+  const buildAssistantSnapshot = () => buildWorkspaceSnapshot({
+    projectId: selected?.projectId ?? null,
+    currentStage: activeStage,
+    openIssueCount: openIssues.length,
+    entityCount: geometrySpec?.objects.length ?? selected?.snapshot.entities.length ?? 0,
+    geometryRevisionCount: selected?.snapshot.geometryRevisions.length ?? 0,
+    artifactCount: projectArtifacts.length,
+    deliveryCount: projectDeliveries.length,
+    serverModelConfigured: serverStatus?.modelConfigured ?? false,
+    unparsedEvidenceCount: Math.max(0, (selected?.snapshot.evidences.length ?? 0) - parsedEvidenceCount),
+  });
+
+  const handleAssistantClientOp = (input: { clientOp: string; actionName: string; args: unknown }) => runClientOp({
+    executors: assistantExecutors,
+    getHead: () => selected,
+    getOpenDockItems: () => openIssues.length,
+    knownRefs: () => [
+      ...(geometrySpec?.objects.flatMap((object) => [object.stableKey, object.displayNameZh]) ?? []),
+      ...(selected?.snapshot.entities.map((entity) => entity.name) ?? []),
+    ],
+    measurements: () => (selected?.snapshot.measurements ?? [])
+      .filter((measurement) => measurement.quantity.normalizedUnit === "mm")
+      .map((measurement) => ({
+        part: measurement.subjectRef,
+        valueMm: Number(measurement.quantity.normalizedValue),
+        measured: measurement.metadataStatus === "complete",
+      })),
+    switchStage: (stageId) => {
+      if (stages.some((stage) => stage.id === stageId)) setActiveStage(stageId as StageId);
+    },
+    advanceStage: () => {
+      const index = stages.findIndex((stage) => stage.id === activeStage);
+      const next = stages[index + 1];
+      if (!next) return null;
+      setActiveStage(next.id);
+      return next.label;
+    },
+    jobProgressSummary: () => {
+      const lines = [
+        modelProgress && `模型运行 ${modelProgress.runId.slice(0, 8)}：${modelProgress.phase}`,
+        cadProgress && `三维作业 ${cadProgress.jobId.slice(0, 8)}：${cadProgress.phase}`,
+        drawingProgress && `图纸作业：${drawingProgress}`,
+      ].filter(Boolean);
+      return lines.length ? lines.join("；") : "当前没有进行中的作业";
+    },
+    startGeometryJob: async () => { await generateDemoGeometry(); },
+    startDrawingJob: async () => { await generateDrawings(); },
+    startModelJob: async () => { await runModel(); },
+    exportPackage: async (format) => { await downloadProject(format === "json" ? "json" : "zip"); },
+    runDataCheck: async () => {
+      if (!selected) return;
+      await assistantExecutors.runDataCheck(selected);
+      await loadProject(selected.projectId);
+    },
+    presentProposal: setPendingProposal,
+  }, input);
+
+  const adoptProposal = async () => {
+    if (!selected || !pendingProposal) return;
+    try {
+      await assistantExecutors.commitConfirmedModification(selected, pendingProposal);
+      setPendingProposal(null);
+      await loadProject(selected.projectId);
+      setNotice("修改建议已确认生效");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "修改建议生效失败");
+    }
   };
 
   const importProject = async (file: File) => {
@@ -1030,7 +1110,20 @@ export function App() {
       <aside className={`assistant-shell ${assistantCollapsed ? "collapsed" : ""}`}>
         {assistantCollapsed ? <button className="assistant-open" type="button" onClick={() => setAssistantCollapsed(false)} aria-label="展开助手与来源面板"><PanelRightOpen size={17} /></button> : <>
         <div className="assistant-title"><Bot size={17} /><strong>助手与来源</strong><button type="button" onClick={() => setAssistantCollapsed(true)} aria-label="收起助手与来源面板"><PanelRightClose size={15} /></button></div>
-        <p>{selected ? "当前助手只整理已解析资料，生成结果留在候选区。" : "选中项目后，这里显示流式运行、取消和用量记录。"}</p>
+        <p>{selected ? "对助手下达操作指令，写入与作业类动作需逐条确认后生效。" : "选中项目后，可在这里对助手下达操作指令。"}</p>
+        {selected && <ChatPanel client={assistantChatClient} buildSnapshot={buildAssistantSnapshot} onClientOp={handleAssistantClientOp} />}
+        {pendingProposal && (
+          <div className="assistant-pending-confirm">
+            <strong>修改建议待确认</strong>
+            <p>{pendingProposal.subjectName} 的 {pendingProposal.field}：{pendingProposal.oldValueText} → {pendingProposal.newValueText}</p>
+            <small>{pendingProposal.rationaleZh}</small>
+            {pendingProposal.warnings.map((warning) => <p className="inline-warning" key={warning}>{warning}</p>)}
+            <div className="proposal-actions">
+              <button type="button" onClick={() => void adoptProposal()}>采纳生效</button>
+              <button type="button" onClick={() => { setPendingProposal(null); setNotice("修改建议已拒绝，未生效"); }}>拒绝</button>
+            </div>
+          </div>
+        )}
         {modelProgress ? (
           <div className="live-run">
             <span className={`run-state ${modelProgress.phase}`}>{modelProgress.phase}</span>

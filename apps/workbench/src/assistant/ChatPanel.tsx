@@ -5,15 +5,14 @@ import type { AssistantClient, AssistantTurnEvent } from "./assistant-client";
 import { ConfirmBar } from "./ConfirmBar";
 import { MessageList } from "./MessageList";
 import { newMessage, type AssistantMessage } from "./messages";
-import type { UiIntent } from "./action-executors";
+import type { ClientOpResult } from "./client-op-adapter";
 import type { WorkspaceSnapshot } from "./workspace-snapshot";
 
-// 助手对话面板。阶段 3 挂载进 App.tsx；此前不被任何文件引用。
-// 依赖全部经 props 注入：回合客户端、快照供给、界面意图回调。
+// 助手对话面板。依赖全部经 props 注入：回合客户端、快照供给、clientOp 执行回调。
 export interface ChatPanelProps {
   client: AssistantClient;
   buildSnapshot: () => WorkspaceSnapshot;
-  onUiIntent: (intent: UiIntent) => void;
+  onClientOp: (input: { clientOp: string; actionName: string; args: unknown }) => Promise<ClientOpResult>;
 }
 
 interface PendingConfirm {
@@ -21,13 +20,13 @@ interface PendingConfirm {
   card: ActionCardData;
 }
 
-export function ChatPanel({ client, buildSnapshot, onUiIntent }: ChatPanelProps) {
+export function ChatPanel({ client, buildSnapshot, onClientOp }: ChatPanelProps) {
   const [messages, setMessages] = useState<readonly AssistantMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
-  const uiIntentRef = useRef(onUiIntent);
-  uiIntentRef.current = onUiIntent;
+  const clientOpRef = useRef(onClientOp);
+  clientOpRef.current = onClientOp;
 
   const append = useCallback((message: AssistantMessage) => {
     setMessages((existing) => [...existing, message]);
@@ -48,8 +47,19 @@ export function ChatPanel({ client, buildSnapshot, onUiIntent }: ChatPanelProps)
           text: String(event.text ?? ""),
           ...(typeof event.actionName === "string" ? { actionName: event.actionName } : {}),
         }));
-        const intent = event.uiIntent as UiIntent | undefined;
-        if (intent) uiIntentRef.current(intent);
+        if (typeof event.clientOp === "string") {
+          void clientOpRef.current({
+            clientOp: event.clientOp,
+            actionName: String(event.actionName ?? ""),
+            args: event.args,
+          }).then(
+            (result) => append(newMessage({ who: "assistant", kind: result.tone === "risk" ? "risk" : "result", text: result.text })),
+            (error: unknown) => append(newMessage({
+              who: "assistant", kind: "risk",
+              text: `执行失败：${error instanceof Error ? error.message : "未知错误"}`,
+            })),
+          );
+        }
         break;
       }
       case "ask": {
