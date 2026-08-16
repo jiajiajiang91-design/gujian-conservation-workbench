@@ -1125,7 +1125,19 @@ export function App() {
                 )}
                 <div className="workflow-ledgers">
                   <section><strong>规则运行</strong>{projectRuleRuns.slice(-4).reverse().map((run) => <span key={run.id}><b className="producer-badge rule">规则</b>{run.ruleSetVersion} · {run.results.filter((result) => result.outcome === "issue").length} 项异常</span>)}</section>
-                  <section><strong>人工决定</strong>{projectDecisions.slice(-4).reverse().map((decision) => <span key={decision.id}><b className="producer-badge human">人工</b>{decision.outcome} · {decision.decidedAt.slice(0, 19).replace("T", " ")}</span>)}{!projectDecisions.length && <small>尚无人工决定</small>}</section>
+                  <section><strong>人工决定</strong>{projectDecisions.slice(-4).reverse().map((decision) => {
+                    const issue = selected.snapshot.issues.find((item) => item.id === decision.issueId);
+                    const candidate = selected.snapshot.candidates.find((item) => decision.impactRefs.includes(item.id));
+                    const target = candidate
+                      ? `模型候选 ${candidate.taskType}`
+                      : decision.selectedOptionId ? `所选方案 ${decision.selectedOptionId}` : issue?.sourceRef ?? "项目";
+                    return (
+                      <span key={decision.id}>
+                        <b className="producer-badge human">人工</b>{decision.outcome} · {decision.decidedAt.slice(0, 19).replace("T", " ")}
+                        <small>对象：{target}{issue ? ` · 问题：${issue.description.slice(0, 24)}` : ""}</small>
+                      </span>
+                    );
+                  })}{!projectDecisions.length && <small>尚无人工决定</small>}</section>
                 </div>
               </section>
             )}
