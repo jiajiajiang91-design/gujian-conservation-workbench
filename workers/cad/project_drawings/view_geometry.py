@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import math
+import os
 import uuid
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from typing import Any
 
@@ -119,9 +121,9 @@ def _triangle_depth(point: np.ndarray, triangle_2d: np.ndarray, depths: np.ndarr
 
 
 class _TrianglePool:
-    """把视图内全部投影三角形堆叠为 numpy 数组并缓存包围盒，供逐边可见性计算做向量化预筛。"""
+    """把视图内全部投影三角形堆叠为 numpy 数组并缓存包围盒与均匀网格索引，供逐边可见性计算做向量化预筛。"""
 
-    __slots__ = ("triangles", "depths", "bounds_min", "bounds_max", "count")
+    __slots__ = ("triangles", "depths", "bounds_min", "bounds_max", "count", "grid", "grid_origin", "grid_cell", "grid_shape")
 
     def __init__(self, projected_triangles: list[tuple[np.ndarray, np.ndarray]]) -> None:
         items = list(projected_triangles)
@@ -131,11 +133,48 @@ class _TrianglePool:
             self.depths = np.zeros((0, 3), dtype=float)
             self.bounds_min = np.zeros((0, 2), dtype=float)
             self.bounds_max = np.zeros((0, 2), dtype=float)
+            self.grid = None
             return
         self.triangles = np.stack([np.asarray(triangle, dtype=float) for triangle, _ in items])
         self.depths = np.stack([np.asarray(depths, dtype=float) for _, depths in items])
         self.bounds_min = self.triangles.min(axis=1)
         self.bounds_max = self.triangles.max(axis=1)
+        self._build_grid()
+
+    def _build_grid(self) -> None:
+        # 单元尺寸取三角形包围盒中位跨度的 4 倍，网格规模限制在 64×64 以内
+        extents = self.bounds_max - self.bounds_min
+        cell = max(float(np.median(extents)) * 4.0, 1.0)
+        origin = self.bounds_min.min(axis=0)
+        span = self.bounds_max.max(axis=0) - origin
+        shape = np.maximum(1, np.minimum(64, np.ceil(span / cell + 1))).astype(int)
+        cell_size = np.maximum(span / shape, 1e-6)
+        low = np.clip(((self.bounds_min - origin) / cell_size).astype(int), 0, shape - 1)
+        high = np.clip(((self.bounds_max - origin) / cell_size).astype(int), 0, shape - 1)
+        buckets: dict[tuple[int, int], list[int]] = {}
+        for index in range(self.count):
+            for ix in range(low[index, 0], high[index, 0] + 1):
+                for iy in range(low[index, 1], high[index, 1] + 1):
+                    buckets.setdefault((ix, iy), []).append(index)
+        self.grid = {key: np.asarray(value, dtype=int) for key, value in buckets.items()}
+        self.grid_origin = origin
+        self.grid_cell = cell_size
+        self.grid_shape = shape
+
+    def candidates(self, segment_min: np.ndarray, segment_max: np.ndarray) -> np.ndarray:
+        if self.grid is None:
+            return np.zeros(0, dtype=int)
+        low = np.clip(((segment_min - self.grid_origin) / self.grid_cell).astype(int), 0, self.grid_shape - 1)
+        high = np.clip(((segment_max - self.grid_origin) / self.grid_cell).astype(int), 0, self.grid_shape - 1)
+        gathered = [
+            self.grid[(ix, iy)]
+            for ix in range(low[0], high[0] + 1)
+            for iy in range(low[1], high[1] + 1)
+            if (ix, iy) in self.grid
+        ]
+        if not gathered:
+            return np.zeros(0, dtype=int)
+        return np.unique(np.concatenate(gathered))
 
 
 def _visibility_intervals(
@@ -151,10 +190,13 @@ def _visibility_intervals(
     if pool.count:
         segment_min = np.minimum(start, end) - 1e-7
         segment_max = np.maximum(start, end) + 1e-7
-        overlap = np.flatnonzero(
-            (pool.bounds_min[:, 0] <= segment_max[0]) & (pool.bounds_max[:, 0] >= segment_min[0])
-            & (pool.bounds_min[:, 1] <= segment_max[1]) & (pool.bounds_max[:, 1] >= segment_min[1])
-        )
+        scope = pool.candidates(segment_min, segment_max)
+        subset_min = pool.bounds_min[scope]
+        subset_max = pool.bounds_max[scope]
+        overlap = scope[
+            (subset_min[:, 0] <= segment_max[0]) & (subset_max[:, 0] >= segment_min[0])
+            & (subset_min[:, 1] <= segment_max[1]) & (subset_max[:, 1] >= segment_min[1])
+        ]
     else:
         overlap = np.zeros(0, dtype=int)
     if len(overlap):
@@ -212,6 +254,47 @@ def _visibility_intervals(
             else:
                 visible.append((left, right))
     return visible
+
+
+# 多进程工作区：每个子进程持有一份三角形池，避免逐任务重复序列化
+_WORKER_POOL: dict[str, _TrianglePool] = {}
+
+
+def _init_visibility_worker(triangles: np.ndarray, depths: np.ndarray) -> None:
+    pool = _TrianglePool.__new__(_TrianglePool)
+    pool.count = len(triangles)
+    pool.triangles = triangles
+    pool.depths = depths
+    pool.bounds_min = triangles.min(axis=1) if len(triangles) else np.zeros((0, 2), dtype=float)
+    pool.bounds_max = triangles.max(axis=1) if len(triangles) else np.zeros((0, 2), dtype=float)
+    if pool.count:
+        pool._build_grid()
+    else:
+        pool.grid = None
+    _WORKER_POOL["pool"] = pool
+
+
+def _visibility_chunk(jobs: list[tuple[list[list[float]], list[float]]]) -> list[list[tuple[float, float]]]:
+    pool = _WORKER_POOL["pool"]
+    return [
+        _visibility_intervals(np.asarray(segment, dtype=float), np.asarray(depths, dtype=float), pool, 0.5)
+        for segment, depths in jobs
+    ]
+
+
+def _parallel_visibility(edge_jobs: list[tuple[np.ndarray, np.ndarray]], pool: _TrianglePool) -> list[list[tuple[float, float]]]:
+    """按边分块并行计算可见区间；小规模任务保持单进程以避免进程启动开销。"""
+    workers = max(1, min((os.cpu_count() or 2) - 1, 12))
+    if workers < 2 or len(edge_jobs) * max(pool.count, 1) < 50_000_000:
+        return [_visibility_intervals(segment, depths, pool, 0.5) for segment, depths in edge_jobs]
+    payload = [(segment.tolist(), depths.tolist()) for segment, depths in edge_jobs]
+    chunk_size = max(64, len(payload) // (workers * 4))
+    chunks = [payload[index:index + chunk_size] for index in range(0, len(payload), chunk_size)]
+    results: list[list[tuple[float, float]]] = []
+    with ProcessPoolExecutor(max_workers=workers, initializer=_init_visibility_worker, initargs=(pool.triangles, pool.depths)) as executor:
+        for chunk_result in executor.map(_visibility_chunk, chunks):
+            results.extend(chunk_result)
+    return results
 
 
 def _clip_to_view(segment: np.ndarray, crop_bounds: list[float] | None) -> list[np.ndarray]:
@@ -289,22 +372,28 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
                         "derivation": "planeIntersection", "boundaryMm": coordinates,
                     })
     else:
-        line_index = 0
+        edge_meta: list[tuple[SourceMesh, str, np.ndarray]] = []
+        edge_jobs: list[tuple[np.ndarray, np.ndarray]] = []
         for mesh in selected:
             for start, end, line_class in _candidate_edges(mesh, direction):
                 projected, depths = _project(np.vstack((start, end)), right, up, direction)
                 if np.linalg.norm(projected[1] - projected[0]) < 0.05:
                     continue
-                for interval_start, interval_end in _visibility_intervals(projected, depths, triangle_pool, 0.5):
-                    clipped = np.vstack((
-                        projected[0] * (1 - interval_start) + projected[1] * interval_start,
-                        projected[0] * (1 - interval_end) + projected[1] * interval_end,
-                    ))
-                    if np.linalg.norm(clipped[1] - clipped[0]) < 0.05:
-                        continue
-                    for view_clipped in _clip_to_view(clipped, crop_bounds):
-                        lines.append(_line_record(view, manifest, mesh, view_clipped, line_class, "occlusionProjection", line_index))
-                        line_index += 1
+                edge_meta.append((mesh, line_class, projected))
+                edge_jobs.append((projected, depths))
+        interval_results = _parallel_visibility(edge_jobs, triangle_pool)
+        line_index = 0
+        for (mesh, line_class, projected), intervals in zip(edge_meta, interval_results, strict=True):
+            for interval_start, interval_end in intervals:
+                clipped = np.vstack((
+                    projected[0] * (1 - interval_start) + projected[1] * interval_start,
+                    projected[0] * (1 - interval_end) + projected[1] * interval_end,
+                ))
+                if np.linalg.norm(clipped[1] - clipped[0]) < 0.05:
+                    continue
+                for view_clipped in _clip_to_view(clipped, crop_bounds):
+                    lines.append(_line_record(view, manifest, mesh, view_clipped, line_class, "occlusionProjection", line_index))
+                    line_index += 1
     if not lines:
         raise ValueError(f"view {view['key']} generated no source-bound lines")
     all_points = np.asarray([point for line in lines for point in line["pointsMm"]], dtype=float)
