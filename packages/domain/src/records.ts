@@ -55,6 +55,11 @@ export const RuleResultSchema = z.object({
   inputRefs: z.array(NonEmptyRefSchema).max(5_000),
   issueRefs: z.array(UuidSchema).max(5_000),
   message: z.string().min(1).max(5_000),
+  // v1.4 增补（可选，旧记录不受影响）：计算值、容差带、规范出处与方案组引用
+  computedValueText: z.string().min(1).max(200).optional(),
+  toleranceText: z.string().min(1).max(200).optional(),
+  sourceText: z.string().min(1).max(500).optional(),
+  optionSetRef: z.string().min(1).max(200).optional(),
 }).strict();
 
 export const RuleRunSchema = z.object({

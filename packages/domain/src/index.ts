@@ -6,3 +6,4 @@ export * from "./project.js";
 export * from "./provenance.js";
 export * from "./records.js";
 export * from "./assistant-records.js";
+export * from "./rule-spec.js";

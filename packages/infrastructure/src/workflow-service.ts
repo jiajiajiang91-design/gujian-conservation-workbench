@@ -8,6 +8,12 @@ import {
 import type { z } from "zod";
 
 import { IndexedDbProjectRepository, LocalAuthorization } from "./indexeddb-project-repository.js";
+import { loadRuleData } from "./rule-engine.js";
+import { HERITAGE_BASELINE_RULE_DATA } from "./rules/heritage-baseline-v1.js";
+
+// 规则数据在模块加载时校验一次；ruleSetVersion 绑定数据内容哈希（架构 v1.4 §5.5）
+const RULE_DATA = loadRuleData(HERITAGE_BASELINE_RULE_DATA);
+const DIMENSION_CHAIN_TOLERANCE_MM = Number(RULE_DATA.data.programParams.dimensionChainToleranceMm);
 
 type Issue = z.infer<typeof IssueSchema>;
 
@@ -75,7 +81,7 @@ function desiredIssues(head: ProjectHead): IssueDescriptor[] {
       segmentWidths.every((value) => typeof value === "number" && Number.isFinite(value))) {
     const segmentTotal = segmentWidths.reduce((sum, value) => sum + value, 0);
     const difference = totalWidth - segmentTotal;
-    if (Math.abs(difference) > 1) {
+    if (Math.abs(difference) > DIMENSION_CHAIN_TOLERANCE_MM) {
       result.push({
         ruleId: "documented-dimension-chain-conflict",
         issueType: "ruleConflict",
@@ -164,7 +170,7 @@ export class WorkflowService {
       id: ruleRunId,
       projectId: head.projectId,
       inputRevisionId: head.revisionId,
-      ruleSetVersion: "milestone-one-v1",
+      ruleSetVersion: RULE_DATA.ruleSetVersion,
       status: "completed",
       producer: { producerType: "rule", ruleRunId },
       results: ruleDefinitions.map((rule) => ({
