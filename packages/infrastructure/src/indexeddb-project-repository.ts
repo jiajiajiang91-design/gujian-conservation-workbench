@@ -24,17 +24,20 @@ import {
   type CheckRun,
   type DeliveryEvaluation,
   type DeliveryDraft,
+  type ConceptEntry,
 } from "@gujian/domain";
 
 import { recordHash, sha256Hex } from "./hash.js";
 
 export const WORKBENCH_DB_NAME = "gujian-workbench-v3";
-export const WORKBENCH_DB_VERSION = 6;
+// v7（架构 v1.4 §6.2）：一次新增词表条目、形制参数与助手动作层三库
+export const WORKBENCH_DB_VERSION = 7;
 
 const STORE_NAMES = [
   "projects", "revisions", "commandReceipts", "auditEvents", "assets",
   "importSessions", "modelRuns", "modelRunEvents", "ruleRuns", "decisions",
   "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions", "artifactRequirementMatrices", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries",
+  "conceptEntries", "archetypeSpecs", "componentLibraryEntries", "exclusionRecords", "returnRecords",
 ] as const;
 
 interface PersistedRevision {
@@ -85,9 +88,10 @@ export function openWorkbenchDatabase(databaseName = WORKBENCH_DB_NAME): Promise
       const database = request.result;
       for (const storeName of STORE_NAMES) {
         if (database.objectStoreNames.contains(storeName)) continue;
-        const keyPath = storeName === "projects" ? "projectId" : "id";
+        const keyPath = storeName === "projects" ? "projectId" : storeName === "conceptEntries" ? "conceptId" : "id";
         const store = database.createObjectStore(storeName, { keyPath });
-        if (storeName !== "projects" && storeName !== "importSessions") {
+        // conceptEntries 是部署级词表（跨项目共享），不建 projectId 索引
+        if (storeName !== "projects" && storeName !== "importSessions" && storeName !== "conceptEntries") {
           store.createIndex("projectId", "projectId", { unique: false });
         }
         if (storeName === "projects") store.createIndex("updatedAt", "updatedAt", { unique: false });
@@ -283,6 +287,16 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return decisions.sort((left, right) => left.decidedAt.localeCompare(right.decidedAt));
   }
 
+  // 部署级词表 overlay（种子词表在代码内，此处只读用户提交的增量条目）
+  async getConceptEntries(): Promise<readonly ConceptEntry[]> {
+    const database = await this.#database;
+    const transaction = database.transaction("conceptEntries", "readonly");
+    const done = transactionDone(transaction);
+    const entries = await requestResult<ConceptEntry[]>(transaction.objectStore("conceptEntries").getAll());
+    await done;
+    return entries.sort((left, right) => left.conceptId.localeCompare(right.conceptId));
+  }
+
   async getProjectCadJobs(projectId: string): Promise<readonly CadJob[]> {
     const database = await this.#database;
     const transaction = database.transaction("cadJobs", "readonly");
@@ -324,7 +338,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
   async transaction<T>(projectId: string, operation: (transaction: ProjectTransaction) => Promise<T>): Promise<T> {
     const database = await this.#database;
     const transaction = database.transaction(
-      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns", "ruleRuns", "decisions", "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions", "artifactRequirementMatrices", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries"],
+      ["projects", "revisions", "commandReceipts", "auditEvents", "assets", "importSessions", "modelRuns", "ruleRuns", "decisions", "cadJobs", "cadJobEvents", "geometrySpecs", "geometryRevisions", "artifactRequirementMatrices", "artifacts", "checkRuns", "deliveryEvaluations", "deliveries", "conceptEntries", "archetypeSpecs"],
       "readwrite",
     );
     const done = transactionDone(transaction);
@@ -457,6 +471,8 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
         ...(mutation.checkRunsToPut?.map((item) => ({ kind: "record" as const, storeName: "checkRuns", id: item.id, hash: recordHash(item) })) ?? []),
         ...(mutation.deliveryEvaluationsToPut?.map((item) => ({ kind: "record" as const, storeName: "deliveryEvaluations", id: item.id, hash: recordHash(item) })) ?? []),
         ...(mutation.deliveriesToPut?.map((item) => ({ kind: "record" as const, storeName: "deliveries", id: item.id, hash: recordHash(item) })) ?? []),
+        ...(mutation.conceptEntriesToPut?.map((item) => ({ kind: "record" as const, storeName: "conceptEntries", id: item.conceptId, hash: recordHash(item) })) ?? []),
+        ...(mutation.archetypeSpecsToPut?.map((item) => ({ kind: "record" as const, storeName: "archetypeSpecs", id: item.id, hash: recordHash(item) })) ?? []),
       ];
       const eventBase = {
         id: auditEventId,
@@ -513,6 +529,8 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     for (const item of mutation.checkRunsToPut ?? []) transaction.objectStore("checkRuns").put(item);
     for (const item of mutation.deliveryEvaluationsToPut ?? []) transaction.objectStore("deliveryEvaluations").put(item);
     for (const item of mutation.deliveriesToPut ?? []) transaction.objectStore("deliveries").put(item);
+    for (const item of mutation.conceptEntriesToPut ?? []) transaction.objectStore("conceptEntries").put(item);
+    for (const item of mutation.archetypeSpecsToPut ?? []) transaction.objectStore("archetypeSpecs").put(item);
     const assetWrite = mutation.assetWrites;
     if (assetWrite) {
       for (const record of assetWrite.records) {

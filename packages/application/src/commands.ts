@@ -26,6 +26,7 @@ import {
   CheckRunSchema,
   DeliveryEvaluationSchema,
   DeliveryDraftSchema,
+  ConceptEntrySchema,
 } from "@gujian/domain";
 
 const CommandHeaderSchema = z.object({
@@ -80,6 +81,7 @@ export const ImportProjectSnapshotCommandSchema = CommandHeaderSchema.extend({
     checkRuns: z.array(CheckRunSchema).max(100_000).default([]),
     deliveryEvaluations: z.array(DeliveryEvaluationSchema).max(100_000).default([]),
     deliveries: z.array(DeliveryDraftSchema).max(100_000).default([]),
+    conceptEntries: z.array(ConceptEntrySchema).max(2_000).default([]),
     assetSessionId: UuidSchema.nullable(),
     packageHash: Sha256Schema,
   }).strict(),
@@ -129,6 +131,20 @@ export const DecideCandidateCommandSchema = CommandHeaderSchema.extend({
   }).strict().superRefine((value, context) => {
     if (!(["accepted", "rejected"] as const).includes(value.decision.outcome as "accepted" | "rejected")) {
       context.addIssue({ code: "custom", message: "candidate decision must accept or reject", path: ["decision", "outcome"] });
+    }
+  }),
+}).strict();
+
+// 词表条目提交（架构 v1.4 §5.6）：部署级词表 upsert，不改项目快照；
+// broader 可引用本批之外的既有条目，闭包完整性由词表校验与显示层兜底
+export const CommitConceptEntriesCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitConceptEntries"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    entries: z.array(ConceptEntrySchema).min(1).max(500),
+  }).strict().superRefine((value, context) => {
+    if (new Set(value.entries.map((entry) => entry.conceptId)).size !== value.entries.length) {
+      context.addIssue({ code: "custom", message: "concept ids must be unique", path: ["entries"] });
     }
   }),
 }).strict();
@@ -218,6 +234,7 @@ export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CommitRuleEvaluationCommandSchema,
   DecideCandidateCommandSchema,
   DecideIssueOptionCommandSchema,
+  CommitConceptEntriesCommandSchema,
   StartCadJobCommandSchema,
   SyncCadJobEventsCommandSchema,
   CommitGeometryRevisionCommandSchema,

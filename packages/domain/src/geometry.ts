@@ -130,6 +130,8 @@ export const ProjectGeometryObjectSchema = z.object({
   stableKey: z.string().min(1).max(200),
   parentId: UuidSchema.nullable(),
   componentType: z.string().min(1).max(120),
+  // v1.4 双写迁移（§5.6）：可选词表引用；componentType 字符串保留，worker 侧照旧消费
+  conceptRef: z.string().min(1).max(120).optional(),
   displayNameZh: z.string().min(1).max(200),
   materialCode: z.string().min(1).max(120),
   solid: z.discriminatedUnion("kind", [BoxSolidSchema, CylinderSolidSchema, ExtrudedProfileSolidSchema]),

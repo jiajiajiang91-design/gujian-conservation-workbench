@@ -431,6 +431,9 @@ export class ProjectCommandService {
           ...(command.commandType === "ImportProjectSnapshot" && command.payload.decisions.length
             ? { decisionsToPut: command.payload.decisions }
             : {}),
+          ...(command.commandType === "ImportProjectSnapshot" && command.payload.conceptEntries.length
+            ? { conceptEntriesToPut: command.payload.conceptEntries }
+            : {}),
           ...(command.commandType === "ImportProjectSnapshot" && command.payload.cadJobs.length
             ? { cadJobsToPut: command.payload.cadJobs }
             : {}),
@@ -608,6 +611,9 @@ export class ProjectCommandService {
                   ? decideCandidate(head, command)
                   : command.commandType === "DecideIssueOption"
                     ? decideIssueOption(head, command)
+                    : command.commandType === "CommitConceptEntries"
+                      // 词表是部署级数据：提交进入审计与词表库，项目快照不变
+                      ? head.snapshot
                   : command.commandType === "CommitGeometryRevision"
                     ? appendGeometryRevision(head, command)
                     : command.commandType === "CommitArtifactSet"
@@ -640,6 +646,8 @@ export class ProjectCommandService {
                     ? [command.payload.candidateId, command.payload.decision.id, command.payload.decision.issueId]
                     : command.commandType === "DecideIssueOption"
                       ? [command.payload.decision.id, command.payload.decision.issueId]
+                      : command.commandType === "CommitConceptEntries"
+                        ? command.payload.entries.map((entry) => `concept:${entry.conceptId}`)
                     : command.commandType === "CommitGeometryRevision"
                       ? [command.payload.cadJobId, command.payload.geometrySpec.id, command.payload.geometryRevision.id, ...command.payload.assets.map((asset) => asset.id)]
                       : command.commandType === "CommitArtifactSet"
@@ -662,6 +670,9 @@ export class ProjectCommandService {
           : {}),
         ...(command.commandType === "DecideCandidate" || command.commandType === "DecideIssueOption"
           ? { decisionsToPut: [command.payload.decision] }
+          : {}),
+        ...(command.commandType === "CommitConceptEntries"
+          ? { conceptEntriesToPut: command.payload.entries }
           : {}),
         ...(command.commandType === "StartCadJob" || command.commandType === "SyncCadJobEvents"
           ? { cadJobsToPut: [command.payload.job] }

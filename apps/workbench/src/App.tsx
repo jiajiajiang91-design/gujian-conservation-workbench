@@ -27,6 +27,8 @@ import {
   buildProjectDashboardSummary,
   buildProvenanceGraphView,
 } from "./query-models";
+import { conceptLabel, resolveVocabulary } from "@gujian/infrastructure";
+
 import { AssistantExecutors, type ModificationProposal } from "./assistant/action-executors";
 import { AssistantClient } from "./assistant/assistant-client";
 import { ChatPanel } from "./assistant/ChatPanel";
@@ -99,6 +101,9 @@ export function App() {
   const [assistantCollapsed, setAssistantCollapsed] = useState(false);
   const [pendingProposal, setPendingProposal] = useState<ModificationProposal | null>(null);
   const assistantChatClient = useMemo(() => new AssistantClient(), []);
+  const vocabulary = useMemo(() => resolveVocabulary(), []);
+  const typeLabel = (componentType: string, conceptRef?: string) =>
+    conceptLabel(vocabulary, conceptRef ?? componentType) ?? componentType;
   const assistantExecutors = useMemo(
     () => new AssistantExecutors({ commands: projectCommands, workflow, actorId: localActorId }),
     [],
@@ -875,7 +880,7 @@ export function App() {
               <section className="evidence-board">
                 <header className="board-heading"><div><p className="eyebrow">HERITAGE OBJECTS</p><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? selected.snapshot.entities.length} 个对象</span></header>
                 <div className="object-table">
-                  {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><code>{object.stableKey}</code><small>{object.componentType} · {object.producer.producerType}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 个未知项` : "来源已绑定"}</strong></button>)}
+                  {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><code>{object.stableKey}</code><small>{typeLabel(object.componentType, object.conceptRef)} · {object.producer.producerType}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 个未知项` : "来源已绑定"}</strong></button>)}
                   {!geometrySpec?.objects.length && selected.snapshot.entities.map((entity) => <article key={entity.id}><strong>{entity.name}</strong><span>{entity.entityType}</span><code>{entity.id}</code></article>)}
                   {!geometrySpec?.objects.length && !selected.snapshot.entities.length && <div className="panel-empty">当前没有构件对象。对象必须从当前项目资料或已验证的项目自有 GeometrySpec 建立。</div>}
                 </div>
@@ -1048,7 +1053,7 @@ export function App() {
                       {selectedGeometryEntity ? <>
                         <dl>
                           <div><dt>稳定键</dt><dd>{selectedGeometryEntity.stableKey}</dd></div>
-                          <div><dt>构件类型</dt><dd>{selectedGeometryEntity.componentType}</dd></div>
+                          <div><dt>构件类型</dt><dd>{typeLabel(selectedGeometryEntity.componentType, selectedGeometryEntity.conceptRef)}（{selectedGeometryEntity.componentType}）</dd></div>
                           <div><dt>来源</dt><dd>{selectedGeometryEntity.producer.producerType}</dd></div>
                           <div><dt>证据</dt><dd>{selectedGeometryEntity.evidenceRefs.length} 项</dd></div>
                         </dl>

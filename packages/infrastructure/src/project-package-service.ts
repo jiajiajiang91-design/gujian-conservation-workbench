@@ -13,6 +13,7 @@ import {
   CheckRunSchema,
   DeliveryEvaluationSchema,
   DeliveryDraftSchema,
+  ConceptEntrySchema,
   Sha256Schema,
   UuidSchema,
   type AuditEvent,
@@ -22,6 +23,7 @@ import { z } from "zod";
 
 import { canonicalJson, recordHash, sha256Hex } from "./hash.js";
 import { IndexedDbProjectRepository, LocalAuthorization } from "./indexeddb-project-repository.js";
+import { resolveVocabulary } from "./vocabulary-resolver.js";
 
 // Large evidence packages can contain high-resolution image masters. Keep
 // per-entry and expanded-size limits strict while preserving complete sources.
@@ -49,6 +51,8 @@ const ProjectDataSchema = z.object({
   checkRuns: z.array(CheckRunSchema).max(100_000).default([]),
   deliveryEvaluations: z.array(DeliveryEvaluationSchema).max(100_000).default([]),
   deliveries: z.array(DeliveryDraftSchema).max(100_000).default([]),
+  // v1.4：项目引用的词表条目快照；旧包缺省为空按原格式兼容导入
+  conceptEntries: z.array(ConceptEntrySchema).max(2_000).default([]),
   assets: z.array(AssetRecordSchema.extend({
     path: z.string().min(1).max(500),
   }).strict()).max(MAX_ENTRY_COUNT),
@@ -115,6 +119,12 @@ export class ProjectPackageService {
     const checkRuns = await this.#repository.getProjectCheckRuns(projectId);
     const deliveryEvaluations = await this.#repository.getProjectDeliveryEvaluations(projectId);
     const deliveries = await this.#repository.getProjectDeliveries(projectId);
+    // 项目引用的词表条目随包携带快照（v1.4 §6.3）：按几何对象引用过滤当前词表
+    const vocabulary = resolveVocabulary(await this.#repository.getConceptEntries());
+    const referencedConcepts = new Set(closure.head.snapshot.geometrySpecs.flatMap((spec) =>
+      spec.objects.map((object) => object.conceptRef ?? object.componentType)));
+    const conceptEntries = vocabulary.filter((entry) =>
+      referencedConcepts.has(entry.conceptId) || entry.altLabels.some((label) => referencedConcepts.has(label)));
     const artifactByAsset = new Map(artifacts.map((item) => [item.assetId, item]));
     return ProjectDataSchema.parse({
       format: "gujian-project-package",
@@ -132,6 +142,7 @@ export class ProjectPackageService {
       checkRuns,
       deliveryEvaluations,
       deliveries,
+      conceptEntries,
       assets: assets.map(({ record, content }) => ({
         ...record,
         contentStatus: includeBinary && content !== null ? "available" : "missing",
@@ -275,6 +286,7 @@ export class ProjectPackageService {
         checkRuns: data.checkRuns,
         deliveryEvaluations: data.deliveryEvaluations,
         deliveries: data.deliveries,
+        conceptEntries: data.conceptEntries,
         assetSessionId: sessionId,
         packageHash: sha256Hex(bytes),
       },

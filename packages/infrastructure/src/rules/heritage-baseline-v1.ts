@@ -32,7 +32,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
       rules: [
         {
           ruleId: "stepSpan",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "均分步架",
           formula: "totalDepthMm / 2 / stepCount",
           baseParams: ["totalDepthMm", "stepCount"],
@@ -43,7 +43,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "liftFirst",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "檐步举高",
           formula: "stepSpan * 0.5",
           baseParams: [],
@@ -54,7 +54,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "liftSecond",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "金步举高",
           formula: "stepSpan * 0.7",
           baseParams: [],
@@ -65,7 +65,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "liftThird",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "上金步举高",
           formula: "stepSpan * 0.8",
           baseParams: [],
@@ -76,7 +76,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "liftFourth",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "脊步举高",
           formula: "stepSpan * 0.9",
           baseParams: [],
@@ -95,7 +95,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
       rules: [
         {
           ruleId: "stepSpan",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "均分步架",
           formula: "totalDepthMm / 2 / stepCount",
           baseParams: ["totalDepthMm", "stepCount"],
@@ -106,7 +106,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "liftFirst",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "檐步举高",
           formula: "stepSpan * 0.5",
           baseParams: [],
@@ -117,7 +117,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "liftSecond",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "金步举高",
           formula: "stepSpan * 0.65",
           baseParams: [],
@@ -128,7 +128,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "liftThird",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "上金步举高",
           formula: "stepSpan * 0.75",
           baseParams: [],
@@ -139,7 +139,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "liftFourth",
-          subjectConceptRef: "concept:roof-frame",
+          subjectConceptRef: "roof-frame",
           dimension: "脊步举高",
           formula: "stepSpan * 0.9",
           baseParams: [],
@@ -150,7 +150,7 @@ export const HERITAGE_BASELINE_RULE_DATA = {
         },
         {
           ruleId: "eaveColumnHeight",
-          subjectConceptRef: "concept:eave-column",
+          subjectConceptRef: "eave-column",
           dimension: "檐柱高",
           formula: "byMeasurement",
           baseParams: [],

@@ -22,7 +22,8 @@ export const AuditEventSchema = z.object({
   writeSet: z.array(z.object({
     kind: z.enum(["record", "asset"]),
     storeName: z.string().min(1).max(80),
-    id: UuidSchema,
+    // v1.4：词表条目以语义 conceptId 为主键，写集标识放宽为非空引用（旧记录不受影响）
+    id: NonEmptyRefSchema,
     hash: Sha256Schema,
   }).strict()).max(10_000),
   writeSetHash: Sha256Schema,

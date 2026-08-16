@@ -7,7 +7,7 @@ import {
   type ProjectDrivenGeometrySpec,
   type ProjectGeometryObject,
 } from "@gujian/domain";
-import { recordHash } from "@gujian/infrastructure";
+import { matchesGeometryRole, recordHash, resolveVocabulary } from "@gujian/infrastructure";
 import { z } from "zod";
 
 export const EvidenceGeometryComponentValueSchema = ProjectGeometryObjectSchema.omit({
@@ -74,8 +74,10 @@ export function geometryPrerequisites(head: ProjectHead): { ready: boolean; miss
   if (!task?.artifactRequirements) missing.push("task.artifactRequirements");
   if (!componentFacts.length) missing.push("geometry.component.*");
   const availableTypes = componentFacts.map(({ value }) => value.componentType);
+  const vocabulary = resolveVocabulary();
   for (const role of task?.artifactRequirements?.geometryTargetRoles ?? []) {
-    if (!availableTypes.some((type) => type === role || type.startsWith(`${role}:`))) missing.push(`geometry.role.${role}`);
+    // 精确与前缀匹配为既有约定；词表上位概念闭包为 v1.4 新能力（如角色写"柱类"命中檐柱）
+    if (!availableTypes.some((type) => matchesGeometryRole(vocabulary, type, undefined, role))) missing.push(`geometry.role.${role}`);
   }
   return { ready: missing.length === 0, missing, facts };
 }
