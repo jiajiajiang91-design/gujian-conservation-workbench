@@ -878,6 +878,37 @@ export function App() {
       .filter((item) => item.withinTolerance === false);
   })();
 
+  // 数据来源构成（05 表 7）：实测依据、AI 推测、人工确认分别可见
+  const basisCounts = (() => {
+    const counts = { model: 0, human: 0, rule: 0, demo: 0 };
+    for (const fact of selected?.snapshot.facts ?? []) {
+      const type = fact.producer.producerType as keyof typeof counts;
+      if (type in counts) counts[type] += 1;
+    }
+    return counts;
+  })();
+
+  // 当前状态条（05 表 3）：说明系统正在做什么与进度，不用静态文案顶替
+  const currentStatusText = (() => {
+    if (!selected) return "选中项目后，可在这里对助手下达操作指令。";
+    if (modelRunning && modelProgress) return `正在运行模型任务 ${modelProgress.runId.slice(0, 8)}，已收到 ${modelProgress.events.length} 条事件`;
+    if (cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase)) return `正在生成三维几何，当前阶段 ${cadProgress.phase}`;
+    const openCount = dashboard?.openIssueCount ?? 0;
+    if (openCount > 0) return `等待处理 ${openCount} 项停靠；其余分支照常推进`;
+    return `当前停在${stages.find((item) => item.id === activeStage)?.label ?? "工作区"}，无待处理停靠`;
+  })();
+
+  // 待办（05 图 1 左栏）：按停靠原因分条列出，不合并成一个数字
+  const pendingItems = (() => {
+    const open = selected?.snapshot.issues.filter((issue) => issue.status === "open") ?? [];
+    const groups: { label: string; count: number; hint: string; stage: StageId }[] = [
+      { label: "存疑构件", count: open.filter((i) => i.issueType === "professionalUncertainty").length, hint: "非唯一专业选择，需要人工判断", stage: "issues" },
+      { label: "缺现场事实", count: open.filter((i) => i.issueType === "missingEvidence").length, hint: "补资料或补录后规则自动复检", stage: "evidence" },
+      { label: "规则冲突", count: open.filter((i) => i.issueType === "ruleConflict").length, hint: "尺寸链或规则核对不通过", stage: "issues" },
+    ];
+    return groups.filter((item) => item.count > 0);
+  })();
+
   // 任务进度状态（05 图 1 左栏）：只按当前项目已有数据判断，不预设完成度
   const stageStates: Record<StageId, { label: string; tone: "done" | "active" | "idle" }> = {
     tasks: confirmedTask ? { label: "已确认", tone: "done" } : { label: "待确认", tone: "active" },
@@ -896,11 +927,11 @@ export function App() {
     candidates: projectModelRuns.length ? { label: `${projectModelRuns.length} 次运行`, tone: "done" } : { label: "未运行", tone: "idle" },
   };
 
-  // 证据视图（05 §三）：八种视图统一的右半区，显示当前选中资料的原件
+  // 证据在中栏内联展示：选中资料后原件显示在数据下方，中栏不再拆分为并列子栏
   const renderEvidenceView = (emptyHint: string) => (
-    <aside className="stage-evidence" aria-label="证据视图">
+    <aside className="stage-evidence" aria-label="资料原件">
       <header>
-        <span className="eyebrow">EVIDENCE VIEW</span>
+        <strong>资料原件</strong>
         {evidencePreview && <small>{evidencePreview.fileName}</small>}
       </header>
       {selected && selected.snapshot.evidences.length > 1 && (
@@ -923,18 +954,53 @@ export function App() {
 
   return (
     <main className={`app-shell ${assistantCollapsed ? "assistant-collapsed" : ""}`}>
-      <aside className="rail">
-        <div className="brand-mark" aria-hidden="true">建</div>
-        <nav aria-label="主导航">
-          <button className="rail-button active" type="button" aria-label="项目"><FolderKanban /></button>
-          <button className="rail-button" type="button" aria-label="归档"><Archive /></button>
-        </nav>
-      </aside>
       <section className="catalog-panel">
         <header>
-          <p className="eyebrow">PROJECT RECORD DESK</p>
-          <h1>古建保护<br />成果工作台</h1>
+          <div className="brand-mark" aria-hidden="true">建</div>
+          <h1>古建保护成果工作台</h1>
         </header>
+        <div className="left-body">
+        {selected && (
+          <div className="active-project">
+            <p className="panel-label">项目</p>
+            <h2>{selected.snapshot.buildings[0]?.name}</h2>
+            <small>{confirmedTask?.name ?? selected.snapshot.project.name}</small>
+            <small>{selected.snapshot.project.locationText ?? "地点尚未记录"}</small>
+            <button type="button" onClick={() => { setSelected(null); setActiveEvidenceId(null); }}>← 返回项目列表</button>
+          </div>
+        )}
+        {selected && (
+          <div>
+            <p className="panel-label">任务进度</p>
+            <nav className="stage-list" aria-label="任务进度">
+              {stages.map((stage) => {
+                const state = stageStates[stage.id];
+                return (
+                  <button className={`stage-row ${activeStage === stage.id ? "active" : ""}`} key={stage.id} type="button" onClick={() => setActiveStage(stage.id)}>
+                    <span className={`stage-state ${state.tone}`} aria-hidden="true" />
+                    <strong>{stage.label}</strong>
+                    <small>{state.label}</small>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        )}
+        {selected && pendingItems.length > 0 && (
+          <div>
+            <p className="panel-label">待办 {pendingItems.reduce((sum, item) => sum + item.count, 0)}</p>
+            <div className="pending-list">
+              {pendingItems.map((item) => (
+                <button key={item.label} type="button" onClick={() => setActiveStage(item.stage)}>
+                  <strong>{item.label} {item.count}</strong>
+                  <small>{item.hint}</small>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {selected && dashboard && <div className="stage-qualification"><ShieldCheck size={13} /><span>{dashboard.qualificationLabel}</span></div>}
+        {!selected && <>
         <button className="new-project" type="button" onClick={() => setShowCreate(true)}><Plus size={15} /> 新建项目</button>
         <button className="secondary-action" type="button" onClick={() => importInput.current?.click()}><Upload size={14} /> 导入 JSON / ZIP</button>
         <input
@@ -951,57 +1017,37 @@ export function App() {
         </label>
         <div className="project-list" aria-label="项目列表">
           {filtered.map((project) => (
-            <button
-              className={`project-card ${selected?.projectId === project.projectId ? "selected" : ""}`}
-              key={project.projectId}
-              type="button"
-              onClick={() => void chooseProject(project.projectId)}
-            >
+            <button className="project-card" key={project.projectId} type="button" onClick={() => void chooseProject(project.projectId)}>
               <span className="project-code">{project.projectId.slice(0, 8).toUpperCase()}</span>
               <strong>{project.name}</strong>
               <small>{project.buildingName}</small>
               <div className="project-card-status">
-                <span>{selected?.projectId === project.projectId && dashboard ? dashboard.stage : project.status === "active" ? "进行中" : "已归档"}</span>
+                <span>{project.status === "active" ? "进行中" : "已归档"}</span>
                 <time>{project.updatedAt.slice(0, 10)}</time>
               </div>
-              {selected?.projectId === project.projectId && dashboard && (
-                <div className="project-card-meter"><i style={{ width: `${dashboard.evidenceCompleteness}%` }} /><small>资料解析 {dashboard.evidenceCompleteness}% · 阻断 {dashboard.blockerCodes.length}</small></div>
-              )}
             </button>
           ))}
           {!filtered.length && <p className="empty-list">还没有项目。先建立一份可追溯的项目档案。</p>}
         </div>
-        {selected && (
-          <>
-            <p className="panel-label">任务进度</p>
-            <nav className="stage-list professional" aria-label="任务进度">
-              {stages.map((stage) => {
-                const state = stageStates[stage.id];
-                return (
-                  <button className={`stage-row ${activeStage === stage.id ? "active" : ""}`} key={stage.id} type="button" onClick={() => setActiveStage(stage.id)}>
-                    <span className={`stage-state ${state.tone}`} aria-hidden="true" />
-                    <strong>{stage.label}</strong>
-                    <small>{state.label}</small>
-                  </button>
-                );
-              })}
-              <div className="stage-qualification"><ShieldCheck size={14} /><span>{dashboard?.qualificationLabel}</span></div>
-            </nav>
-            {dashboard && dashboard.openIssueCount > 0 && (
-              <button className="pending-summary" type="button" onClick={() => setActiveStage("issues")}>
-                <strong>待办 {dashboard.openIssueCount}</strong>
-                <small>{dashboard.blockerCodes.length ? `${dashboard.blockerCodes.length} 项阻断正式资格` : "无正式资格阻断"}</small>
-              </button>
-            )}
-          </>
-        )}
+        </>}
+        </div>
         <footer><span>本地优先 · IndexedDB v3</span><button type="button" onClick={() => void clearLibrary()}><Trash2 size={12} /> 清空本地库</button></footer>
       </section>
       <section className="workspace-shell">
         <div className="topbar">
-          <div><span className="status-dot" /><strong>{selected ? selected.snapshot.project.name : "工作台基础服务就绪"}</strong></div>
+          {/* 三种状态的可见区分（05 表 7）：每条数据标明来源，此处给出全项目构成 */}
           <div>
-            <span className="muted">{serverStatus?.model ?? "Kimi K2.6"} · {serverStatus?.modelConfigured ? "服务端已配置" : "等待服务端密钥"}</span>
+            <span className="status-dot" />
+            <span className="muted">{serverStatus?.modelConfigured ? "在线识别已连接" : "等待服务端密钥"}</span>
+            {selected && <><span className="basis-tag measured">实测依据 {basisCounts.human}</span>
+            <span className="basis-tag inferred">AI 推测 {basisCounts.model}</span>
+            <span className="basis-tag ruled">规则推导 {basisCounts.rule}</span>
+            <span className="basis-tag demo">示例资料 {basisCounts.demo}</span></>}
+          </div>
+          <div>
+            {selected && <span className="revision-chip">版本 {selected.revisionId.slice(0, 8)}</span>}
+            {selected && <button className="panel-toggle" type="button" onClick={() => void downloadProject("json")} aria-label="导出 JSON"><FileJson size={14} /></button>}
+            {selected && <button className="panel-toggle" type="button" onClick={() => void downloadProject("zip")} aria-label="导出 ZIP"><PackageOpen size={14} /></button>}
             <button className="panel-toggle" type="button" onClick={() => setAssistantCollapsed((value) => !value)} aria-label={assistantCollapsed ? "展开助手与来源面板" : "收起助手与来源面板"}>
               {assistantCollapsed ? <PanelRightOpen size={15} /> : <PanelRightClose size={15} />}
             </button>
@@ -1009,20 +1055,6 @@ export function App() {
         </div>
         {selected ? (
           <div className="project-workspace">
-            <div className="project-heading">
-              <div>
-                <p className="eyebrow">ACTIVE PROJECT</p>
-                <h2>{selected.snapshot.buildings[0]?.name}</h2>
-                <p>{selected.snapshot.project.locationText ?? "地点尚未记录"}</p>
-                {dashboard && <div className="project-health"><span>{dashboard.stage}</span><span>资料 {dashboard.evidenceCompleteness}%</span><span>开放问题 {dashboard.openIssueCount}</span><span>成果 {dashboard.artifactCount}</span></div>}
-              </div>
-              <div className="project-actions">
-                <button type="button" onClick={() => void downloadProject("json")}><FileJson size={14} /> JSON</button>
-                <button type="button" onClick={() => void downloadProject("zip")}><PackageOpen size={14} /> ZIP</button>
-                <span className="revision-chip">版本 {selected.revisionId.slice(0, 8)}</span>
-              </div>
-            </div>
-            <div className="project-stage-layout">
             <nav className="stage-tabs" aria-label="工作区视图">
               {stages.map((stage) => (
                 <button className={activeStage === stage.id ? "active" : ""} key={stage.id} type="button" onClick={() => setActiveStage(stage.id)}>
@@ -1030,11 +1062,13 @@ export function App() {
                 </button>
               ))}
             </nav>
+            <div className="project-stage-layout">
             <div className="stage-content">
 
             {activeStage === "tasks" && (
               <section className="evidence-board task-overview-board">
                 <header className="board-heading"><div><p className="eyebrow">TASK DEFINITION</p><h3>任务要求与成果目录</h3></div><button className="quiet-link" type="button" onClick={() => setActiveStage("issues")}>在问题流程中更新</button></header>
+                <div className="pane-body">
                 {confirmedTask ? <>
                   <div className="summary-grid">
                     <article><span>任务</span><strong>{confirmedTask.name}</strong><small>{confirmedTask.scope.join(" · ")}</small></article>
@@ -1045,6 +1079,7 @@ export function App() {
                     {confirmedTask.artifactRequirements?.views.map((view) => <div role="row" key={view.key}><span>{view.drawingRef}</span><strong>{view.displayLabelZh}</strong><span>1:{view.scaleDenominator}</span><span>{view.sheetKey}</span></div>)}
                   </div>
                 </> : <div className="panel-empty">尚未确认任务要求。系统会在问题队列中保留一次必要人工节点，不会用默认图种或版式补齐。</div>}
+                </div>
               </section>
             )}
 
@@ -1055,8 +1090,7 @@ export function App() {
                   <button className="upload-evidence" type="button" onClick={() => evidenceInput.current?.click()}><Upload size={14} /> 上传原始资料</button>
                   <input ref={evidenceInput} className="sr-only" type="file" multiple onChange={(event) => { const files = Array.from(event.target.files ?? []); if (files.length) void uploadEvidenceFiles(files); }} />
                 </header>
-                <div className="stage-split">
-                  <div className="stage-data">
+                <div className="pane-body">
                     <div className="evidence-list">
                       {selected.snapshot.evidences.map((evidence) => {
                         const parse = selected.snapshot.parseRecords.find((record) => record.evidenceId === evidence.id);
@@ -1074,7 +1108,6 @@ export function App() {
                         <div className="evidence-empty"><div className="trace-spine" aria-hidden="true"><span /><span /><span /><span /></div><p>上传任务书、照片、测量记录或已有图纸。文件本体、证据记录和解析结果会一起进入项目版本。</p></div>
                       )}
                     </div>
-                  </div>
                   {renderEvidenceView("选择左侧资料查看原件。")}
                 </div>
               </section>
@@ -1083,8 +1116,7 @@ export function App() {
             {activeStage === "measurements" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><p className="eyebrow">MEASUREMENT BASIS</p><h3>测量记录、事实与缺失影响</h3></div><span className="board-count">{selected.snapshot.measurements.length + selected.snapshot.facts.length} 条记录</span></header>
-                <div className="stage-split">
-                  <div className="stage-data">
+                <div className="pane-body">
                 {projectArchetypes.length ? (() => {
                   const archetype = projectArchetypes[projectArchetypes.length - 1]!;
                   const derivation = deriveArchetypeExpectations(archetype);
@@ -1130,7 +1162,6 @@ export function App() {
                   {selected.snapshot.facts.map((fact) => <article key={fact.id}><span className={`producer-badge ${fact.producer.producerType}`}>{fact.producer.producerType}</span><strong>{fact.field}</strong><small>{fact.reviewStatus} · {fact.dataStatus}</small><code>{fact.evidenceRefs.join(" · ") || "无证据引用"}</code></article>)}
                   {!selected.snapshot.measurements.length && !selected.snapshot.facts.length && <div className="panel-empty">没有可用尺寸事实。缺失时系统会阻断依赖成果，不使用默认值补齐。</div>}
                 </div>
-                  </div>
                   {renderEvidenceView("选择资料查看手写草图或测量记录原件。")}
                 </div>
               </section>
@@ -1139,14 +1170,12 @@ export function App() {
             {activeStage === "objects" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><p className="eyebrow">HERITAGE OBJECTS</p><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? selected.snapshot.entities.length} 个对象</span></header>
-                <div className="stage-split">
-                  <div className="stage-data">
+                <div className="pane-body">
                 <div className="object-table">
                   {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><code>{object.stableKey}</code><small>{typeLabel(object.componentType, object.conceptRef)} · {object.producer.producerType}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 个未知项` : "来源已绑定"}</strong></button>)}
                   {!geometrySpec?.objects.length && selected.snapshot.entities.map((entity) => <article key={entity.id}><strong>{entity.name}</strong><span>{entity.entityType}</span><code>{entity.id}</code></article>)}
                   {!geometrySpec?.objects.length && !selected.snapshot.entities.length && <div className="panel-empty">当前没有构件对象。对象必须从当前项目资料或已验证的项目自有 GeometrySpec 建立。</div>}
                 </div>
-                  </div>
                   {renderEvidenceView("选择资料查看构件对应的照片。")}
                 </div>
               </section>
@@ -1155,8 +1184,7 @@ export function App() {
             {activeStage === "conditions" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><p className="eyebrow">CONDITION RECORD</p><h3>空间关系、构造连接与可见残损</h3></div><span className="board-count">{selected.snapshot.observations.length} 条记录</span></header>
-                <div className="stage-split">
-                  <div className="stage-data">
+                <div className="pane-body">
                     <div className="record-table">
                       {selected.snapshot.relations.map((relation) => (
                         <article key={relation.id}>
@@ -1201,7 +1229,6 @@ export function App() {
                       <label>判断内容<textarea name="text" required placeholder="例如：西侧檐柱柱脚可见糟朽，范围约柱高下部三分之一" /></label>
                       <button type="submit" disabled={!selected.snapshot.evidences.length}>记录并绑定来源</button>
                     </form>
-                  </div>
                   {renderEvidenceView("选择资料查看对应部位照片。")}
                 </div>
               </section>
@@ -1215,6 +1242,7 @@ export function App() {
                     <Play size={14} /> {modelRunning ? "运行中" : "生成资料候选"}
                   </button>
                 </header>
+                <div className="pane-body">
                 <div className="transmission-note"><ShieldCheck size={15} /><span>仅发送当前项目内已解析的文本和内容哈希；原文件、浏览器存储和密钥不会发送给模型。</span></div>
                 {!serverStatus?.modelConfigured && <p className="inline-warning">服务端尚未配置 KIMI_API_KEY，真实运行按钮已锁定。</p>}
                 {!parsedEvidenceCount && <p className="inline-warning">先上传一份可解析的 UTF-8 文本或 JSON 资料。</p>}
@@ -1230,6 +1258,7 @@ export function App() {
                   {!selected.snapshot.candidates.length && <div className="panel-empty">模型结果只会进入候选区，不会自动成为项目事实。</div>}
                 </div>
                 {!!modelCostView.rows.length && <div className="run-ledger"><strong>运行账本与用量</strong>{modelCostView.rows.map((run) => <span key={run.runId}><b>{run.provider} / {run.model}</b><i>{run.status} · attempt {run.attempts}</i><em>{run.totalTokens ?? "—"} tokens · {run.costLabel}</em></span>)}<small>累计 {modelCostView.totalTokens} tokens；没有可靠单价依据，因此不估算费用。</small></div>}
+                </div>
               </section>
             )}
 
@@ -1239,6 +1268,7 @@ export function App() {
                   <div><p className="eyebrow">ISSUE QUEUE</p><h3>问题队列与必要人工节点</h3></div>
                   <span className="issue-count">{openIssues.length} 个待处理</span>
                 </header>
+                <div className="pane-body">
                 <div className="provenance-legend" aria-label="来源图例">
                   <span className="producer-badge model">模型候选</span>
                   <span className="producer-badge rule">规则结果</span>
@@ -1350,6 +1380,7 @@ export function App() {
                     );
                   })}{!projectDecisions.length && <small>尚无人工决定</small>}</section>
                 </div>
+                </div>
               </section>
             )}
 
@@ -1361,6 +1392,7 @@ export function App() {
                     <Play size={14} /> {geometryRevision ? "生成新代理版本" : "生成代理几何"}
                   </button>
                 </header>
+                <div className="pane-body">
                 <div className="transmission-note"><ShieldCheck size={15} /><span>浏览器冻结 GeometrySpec 与输入哈希；Node 只接收受限结构，Python worker 不接收 URL、提示或用户文件路径。</span></div>
                 {!geometryGate?.ready && (
                   <div className="geometry-gate">
@@ -1402,6 +1434,7 @@ export function App() {
                 ) : (
                   <div className="panel-empty">尚未建立 GeometryRevision。此入口先验证通用几何内核，不宣称项目已有实测三维成果。</div>
                 )}
+                </div>
               </section>
             )}
 
@@ -1414,8 +1447,7 @@ export function App() {
                 {confirmedTask?.artifactRequirements ? (() => {
                   const requirements = confirmedTask.artifactRequirements;
                   return (
-                    <div className="stage-split">
-                      <div className="stage-data">
+                    <div className="pane-body">
                         <div className="summary-grid">
                           <article><span>图纸标题</span><strong>{requirements.titleZh}</strong><small>修订标记 {requirements.revisionLabel}</small></article>
                           <article><span>图幅</span><strong>{requirements.sheets.length} 张</strong><small>{[...new Set(requirements.sheets.map((sheet) => `${sheet.pageMm[0]}×${sheet.pageMm[1]}`))].join(" · ")} mm</small></article>
@@ -1442,7 +1474,6 @@ export function App() {
                           ))}
                         </div>
                         <div className="inline-warning">构件画法与标注规则尚未形成可选项。当前每个视图固定输出一条总尺寸、图名与资格声明，轴网、标高、剖切索引与构件标注均未生成，差距与补齐方案见验证材料 15 图纸表达差距清单。在标注体系落地前，此处不提供画法与标注选择，避免出现不影响成果的空选项。</div>
-                      </div>
                       <aside className="stage-evidence" aria-label="样式预览">
                         <header><span className="eyebrow">STYLE PREVIEW</span>{drawingPreviewUrls.length > 0 && <small>{drawingPreviewUrls[0]!.label}</small>}</header>
                         {drawingPreviewUrls.length > 0
@@ -1465,6 +1496,7 @@ export function App() {
                     <Images size={14} /> {drawingProgress && !["succeeded", "failed"].includes(drawingProgress) ? "生成中" : "按成果目录生成"}
                   </button>
                 </header>
+                <div className="pane-body">
                 <div className="transmission-note"><ShieldCheck size={15} /><span>图种、图幅和布局来自当前任务成果目录；所有结构线从当前 GeometryRevision 求交或投影生成。</span></div>
                 {drawingArtifacts.length ? (
                   <><div className="drawing-preview-grid" aria-label="成组图纸预览">
@@ -1476,12 +1508,14 @@ export function App() {
                   </div></>
                 ) : <div className="panel-empty">先生成当前项目的 GeometryRevision，再按已确认成果目录生成 DXF、SVG、PDF、预览、Drawing IR 和来源映射。</div>}
                 {latestCheckRun && <div className="check-summary"><FileCheck2 size={18} /><div><strong>检查记录 {latestCheckRun.id.slice(0, 8)}</strong>{latestCheckRun.results.map((item) => <p key={item.code} className={item.outcome}>{item.outcome === "passed" ? "通过" : "阻断"} · {item.message}</p>)}</div></div>}
+                </div>
               </section>
             )}
 
             {activeStage === "checks" && (
               <section className="evidence-board checks-board">
                 <header className="board-heading"><div><p className="eyebrow">CHECKS & QUALIFICATION</p><h3>检查、未知项与资格边界</h3></div><span className="qualification-chip">generated-not-qualified · L1=false</span></header>
+                <div className="pane-body">
                 <div className="summary-grid">
                   <article><span>当前几何</span><strong>{geometryRevision ? geometryRevision.id.slice(0, 8) : "未建立"}</strong><small>{geometrySpec?.unknowns.length ?? 0} 个结构化未知项</small></article>
                   <article><span>当前成果</span><strong>{artifactSetView?.currentArtifacts.length ?? 0} 项</strong><small>{artifactSetView?.crossRevisionArtifactCount ?? 0} 项旧版本成果已隔离</small></article>
@@ -1489,12 +1523,14 @@ export function App() {
                 </div>
                 {latestCheckRun ? <div className="check-register">{latestCheckRun.results.map((result) => <article key={result.code} className={result.outcome}><span>{result.outcome === "passed" ? "通过" : "阻断"}</span><strong>{result.code}</strong><p>{result.message}</p><code>{result.sourceRefs.join(" · ") || "system check"}</code></article>)}</div> : <div className="panel-empty">当前 GeometryRevision 尚无绑定的检查运行。检查不会自动授予 L1 或签发状态。</div>}
                 {!!dashboard?.blockerCodes.length && <div className="delivery-blockers"><strong>当前阻断原因</strong>{dashboard.blockerCodes.map((code) => <p key={code}>{code}</p>)}</div>}
+                </div>
               </section>
             )}
 
             {activeStage === "package" && (
               <section className="evidence-board package-board">
                 <header className="board-heading"><div><p className="eyebrow">PROXY DELIVERY</p><h3>代理成果交付与项目包</h3></div><button className="upload-evidence" type="button" disabled={!geometryRevision || !latestCheckRun || !drawingArtifacts.length || Boolean(latestDelivery)} onClick={() => void createProxyDelivery()}><PackageOpen size={14} /> 建立代理交付草案</button></header>
+                <div className="pane-body">
                 {latestDelivery ? <div className="delivery-status"><span className="qualification-chip">代理成果 · 未签发 · L1=false</span><strong>交付草案 {latestDelivery.id.slice(0, 8)}</strong><p>{latestDelivery.restrictions.join(" · ")}</p></div> : deliveries.blockers(selected).length ? <div className="delivery-blockers"><strong>当前阻断</strong>{deliveries.blockers(selected).map((item) => <p key={item}>{item}</p>)}<button type="button" disabled={Boolean(latestBlockedDelivery)} onClick={() => void recordBlockedDelivery()}>{latestBlockedDelivery ? "已记录正式交付阻断" : "记录正式交付阻断"}</button></div> : null}
                 <div className="package-grid">
                   <article><FileJson /><strong>project.json</strong><p>适合检查结构化记录，不包含二进制文件本体。</p><button type="button" onClick={() => void downloadProject("json")}>导出 JSON</button></article>
@@ -1524,6 +1560,7 @@ export function App() {
                     </dl>
                   )}
                 </section>
+                </div>
               </section>
             )}
             </div>
@@ -1545,8 +1582,12 @@ export function App() {
       </section>
       <aside className={`assistant-shell ${assistantCollapsed ? "collapsed" : ""}`}>
         {assistantCollapsed ? <button className="assistant-open" type="button" onClick={() => setAssistantCollapsed(false)} aria-label="展开助手与来源面板"><PanelRightOpen size={17} /></button> : <>
-        <div className="assistant-title"><Bot size={17} /><strong>助手与来源</strong><button type="button" onClick={() => setAssistantCollapsed(true)} aria-label="收起助手与来源面板"><PanelRightClose size={15} /></button></div>
-        <p>{selected ? "对助手下达操作指令，写入与作业类动作需逐条确认后生效。" : "选中项目后，可在这里对助手下达操作指令。"}</p>
+        {/* 当前状态条（05 图 1、表 3）：显示正在做什么与进度 */}
+        <div className="assistant-status">
+          <div className="assistant-title"><Bot size={17} /><strong>助手与来源</strong><button type="button" onClick={() => setAssistantCollapsed(true)} aria-label="收起助手与来源面板"><PanelRightClose size={15} /></button></div>
+          <p>{currentStatusText}</p>
+        </div>
+        <div className="assistant-body">
         {selected && <ChatPanel client={assistantChatClient} buildSnapshot={buildAssistantSnapshot} onClientOp={handleAssistantClientOp} />}
         {pendingProposal && (
           <div className="assistant-pending-confirm">
@@ -1580,6 +1621,7 @@ export function App() {
           <div>{provenance.nodes.map((node) => <article className={node.status} key={node.key}><i /><span><strong>{node.label}</strong><small>{node.count ? `${node.count} 项已关联` : "缺失"}</small></span></article>)}</div>
           <footer>{provenance.unknownCount} 个未知项 · {provenance.formalBlockerCount} 个正式资格阻断</footer>
         </section>}
+        </div>
         </>}
       </aside>
       {showCreate && (
