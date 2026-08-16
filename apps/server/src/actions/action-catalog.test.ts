@@ -7,15 +7,15 @@ import {
 } from "./action-catalog.js";
 
 describe("动作目录", () => {
-  it("共 13 个动作且名称唯一", () => {
-    expect(ACTION_DEFINITIONS).toHaveLength(13);
+  it("共 14 个动作且名称唯一", () => {
+    expect(ACTION_DEFINITIONS).toHaveLength(14);
     const names = ACTION_DEFINITIONS.map((a) => a.name);
-    expect(new Set(names).size).toBe(13);
+    expect(new Set(names).size).toBe(14);
   });
 
   it("模型侧目录只含名称、描述、参数三字段", () => {
     const catalog = modelFacingCatalog();
-    expect(catalog).toHaveLength(13);
+    expect(catalog).toHaveLength(14);
     for (const entry of catalog) {
       expect(Object.keys(entry).sort()).toEqual(["description", "name", "parameters"]);
       const serialized = JSON.stringify(entry);

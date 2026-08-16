@@ -15,7 +15,7 @@ export interface ActionDefinition {
   confirmLevel: ConfirmLevel;
   preconditionCode: string | null;
   costly: boolean;
-  generation: 1 | 2;
+  generation: 1 | 2 | 3;
 }
 
 const VIEW_NAMES = [
@@ -262,6 +262,26 @@ export const ACTION_DEFINITIONS: readonly ActionDefinition[] = [
     preconditionCode: "DELIVERABLE_EXISTS",
     costly: false,
     generation: 2,
+  },
+  {
+    // 第 3 代提前项（D1 决策 2026-08-16）：解析任务书与盘点资料。
+    name: "parse_task_brief",
+    displayNameZh: "解析任务书与盘点资料",
+    description: "解析项目内的任务书与资料并盘点，产出候选事实清单供逐条确认。用户说解析任务书、盘点资料、整理资料时使用。",
+    parameters: z.object({
+      scope: z.array(z.string().min(1).max(200)).max(200).optional(),
+    }).strict(),
+    parametersJsonSchema: {
+      type: "object",
+      properties: {
+        scope: { type: "array", items: { type: "string" }, description: "可选，资料 ID 列表，缺省解析全部未解析资料" },
+      },
+      required: [],
+    },
+    confirmLevel: "per_item",
+    preconditionCode: "EVIDENCE_EXISTS",
+    costly: false,
+    generation: 3,
   },
 ];
 

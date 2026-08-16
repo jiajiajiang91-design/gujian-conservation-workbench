@@ -53,6 +53,7 @@ const CLIENT_OPS: Record<string, string> = {
   generate_geometry: "job:cad",
   generate_drawings: "job:drawing",
   export_deliverable: "ui:export",
+  parse_task_brief: "job:model-parse",
 };
 
 function argsHash(args: unknown): string {
@@ -83,8 +84,8 @@ export class AssistantRuntime {
   readonly #gateway: ToolGateway;
   readonly #ledger: ActionLedger;
   readonly #tokens: ConfirmationTokenStore;
-  // 待确认动作的参数暂存：确认令牌兑付后按 confirmId 取回执行参数。
-  readonly #pendingArgs = new Map<string, { action: ActionDefinition; args: unknown }>();
+  // 待确认动作的参数暂存：确认令牌兑付后按 confirmId 取回执行参数与分发来源。
+  readonly #pendingArgs = new Map<string, { action: ActionDefinition; args: unknown; source: "model" | "keyword" }>();
 
   constructor(options: {
     gateway: ToolGateway;
@@ -157,7 +158,7 @@ export class AssistantRuntime {
       const confirmId = crypto.randomUUID();
       const digest = argsHash(args);
       this.#ledger.recordAsk(confirmId, action.name, digest);
-      this.#pendingArgs.set(confirmId, { action, args });
+      this.#pendingArgs.set(confirmId, { action, args, source: decision.source });
       const confirmToken = this.#tokens.issue({ confirmId, actionName: action.name, argsHash: digest });
       this.#ledger.recordInvocation({
         sessionRef, actionName: action.name, argsHash: digest,
@@ -221,7 +222,7 @@ export class AssistantRuntime {
     }
     this.#ledger.recordInvocation({
       sessionRef, actionName: pending.action.name, argsHash: grant.argsHash,
-      source: "model", resultCode: "CONFIRMED_DISPATCHED", modelRawOutput: null,
+      source: pending.source, resultCode: "CONFIRMED_DISPATCHED", modelRawOutput: null,
     });
     emit({
       type: "action",

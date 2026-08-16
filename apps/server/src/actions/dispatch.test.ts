@@ -98,6 +98,8 @@ describe("关键词退路表", () => {
     ["检查一下数据", "run_data_check"],
     ["现在进度怎么样", "query_job_progress"],
     ["重新识别一遍", "rerun_recognition"],
+    ["解析任务书", "parse_task_brief"],
+    ["帮我盘点资料", "parse_task_brief"],
     ["切到实测基准", "switch_view"],
     ["这个雀替的尺寸合理吗", "answer_question"],
   ];

@@ -4,6 +4,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { ArtifactRequirementMatrixSchema, ProjectDrivenGeometrySpecSchema } from "@gujian/domain";
 import { z } from "zod";
 
+import { ActionLedger } from "./actions/action-ledger.js";
+import { AssistantRuntime } from "./actions/assistant-routes.js";
 import { CadJobLedger } from "./cad-ledger.js";
 import { PythonCadWorker, type CadWorker, type CadWorkerRun } from "./cad-worker.js";
 import { KimiGateway, RunCancelledError, type GatewayResult } from "./kimi-gateway.js";
@@ -65,6 +67,9 @@ interface SessionRecord {
   cadCapabilityUsed: boolean;
   drawingCapabilityToken: string;
   drawingCapabilityUsed: boolean;
+  // 助手回合是多次调用，令牌不用后即焚；防护由 cookie + CSRF + 令牌比对承担。
+  // confirm 端点不查此令牌：confirmToken 本身即一次性能力凭证（取即删）。
+  assistantCapabilityToken: string;
   expiresAt: number;
   lastRunStartedAt: number;
 }
@@ -96,6 +101,16 @@ export interface ModelGateway {
     onStatus: (type: "running" | "retrying", attempt: number, detail: string | null) => void;
     onChunk: (content: string, attempt: number) => void;
   }): Promise<GatewayResult>;
+  // 可选：助手动作层的函数调用入口。缺失时助手自动走关键词退路。
+  executeWithTools?(input: {
+    systemPrompt: string;
+    userContent: string;
+    tools: Array<{ name: string; description: string; parameters: Record<string, unknown> }>;
+    signal: AbortSignal;
+  }): Promise<
+    | { kind: "tool_call"; name: string; argumentsJson: string; raw: string }
+    | { kind: "text"; content: string; raw: string }
+  >;
 }
 
 function canonicalHash(value: unknown): string {
@@ -202,6 +217,18 @@ export function createWorkbenchServer(options: {
   allowedOrigin?: string;
 } = {}) {
   const gateway = options.gateway ?? new KimiGateway();
+  const assistantRuntime = new AssistantRuntime({
+    gateway: {
+      get configured() { return gateway.configured && typeof gateway.executeWithTools === "function"; },
+      executeWithTools: (input) => {
+        if (!gateway.executeWithTools) throw new Error("KIMI_TOOLS_UNAVAILABLE");
+        return gateway.executeWithTools(input);
+      },
+    },
+    ledger: new ActionLedger(process.env.NODE_ENV === "test" ? ":memory:" : undefined),
+  });
+  const reconciledAsks = assistantRuntime.reconcileOrphanAsks();
+  if (reconciledAsks > 0) console.log(`助手确认账本：${reconciledAsks} 条孤儿询问已按通道不可用补记决定`);
   const ownsLedger = options.ledger === undefined;
   const ledger = options.ledger ?? new ModelRunLedger(process.env.NODE_ENV === "test" ? ":memory:" : undefined);
   const ownsCadLedger = options.cadLedger === undefined;
@@ -257,6 +284,7 @@ export function createWorkbenchServer(options: {
           csrfToken: randomToken(), capabilityToken: randomToken(), capabilityUsed: false,
           cadCapabilityToken: randomToken(), cadCapabilityUsed: false,
           drawingCapabilityToken: randomToken(), drawingCapabilityUsed: false,
+          assistantCapabilityToken: randomToken(),
           expiresAt: Date.now() + sessionLifetimeMs, lastRunStartedAt: 0,
         };
         sessions.set(sessionId, record);
@@ -266,6 +294,7 @@ export function createWorkbenchServer(options: {
           capabilityToken: record.capabilityToken,
           cadCapabilityToken: record.cadCapabilityToken,
           drawingCapabilityToken: record.drawingCapabilityToken,
+          assistantCapabilityToken: record.assistantCapabilityToken,
           expiresAt: new Date(record.expiresAt).toISOString(),
         }, origin);
       }
@@ -305,6 +334,47 @@ export function createWorkbenchServer(options: {
       const session = sessionId ? sessions.get(sessionId) : undefined;
       if (!session || session.expiresAt < Date.now() || request.headers["x-csrf-token"] !== session.csrfToken) {
         return writeJson(response, 403, { error: "SESSION_OR_CSRF_INVALID" }, origin);
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/assistant/turn") {
+        if (request.headers["x-capability-token"] !== session.assistantCapabilityToken) {
+          return writeJson(response, 403, { error: "ASSISTANT_CAPABILITY_INVALID" }, origin);
+        }
+        const body = await readJsonBody(request);
+        response.writeHead(200, {
+          "content-type": "text/event-stream; charset=utf-8",
+          "cache-control": "no-store, no-transform",
+          connection: "keep-alive",
+          "x-content-type-options": "nosniff",
+          ...(origin ? { "access-control-allow-origin": origin, vary: "origin" } : {}),
+        });
+        const controller = new AbortController();
+        response.once("close", () => controller.abort());
+        const sessionRef = createHash("sha256").update(sessionId ?? "").digest("hex").slice(0, 32);
+        try {
+          await assistantRuntime.handleTurn(body, sessionRef, (event) => sendSse(response, event), controller.signal);
+        } catch (error) {
+          sendSse(response, { type: "failed", text: "助手服务处理失败，本次未执行任何动作", detail: error instanceof Error ? error.message.slice(0, 200) : "unknown" });
+        }
+        return response.end();
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/assistant/confirm") {
+        const body = await readJsonBody(request);
+        response.writeHead(200, {
+          "content-type": "text/event-stream; charset=utf-8",
+          "cache-control": "no-store, no-transform",
+          connection: "keep-alive",
+          "x-content-type-options": "nosniff",
+          ...(origin ? { "access-control-allow-origin": origin, vary: "origin" } : {}),
+        });
+        const sessionRef = createHash("sha256").update(sessionId ?? "").digest("hex").slice(0, 32);
+        try {
+          await assistantRuntime.handleConfirm(body, sessionRef, (event) => sendSse(response, event));
+        } catch (error) {
+          sendSse(response, { type: "failed", text: "确认处理失败，该动作未执行", detail: error instanceof Error ? error.message.slice(0, 200) : "unknown" });
+        }
+        return response.end();
       }
 
       if (request.method === "POST" && url.pathname === "/api/model-runs") {

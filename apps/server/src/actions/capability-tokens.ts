@@ -42,6 +42,8 @@ export class ConfirmationTokenStore {
     return { ok: true, grant };
   }
 
+  // 当前 user_withdrawn 走 redeem 后记决定的路径，本方法暂无调用点；
+  // 保留给后续服务端主动作废场景（如会话过期批量回收），勿删。
   withdraw(confirmId: string): void {
     for (const [token, grant] of this.#grants) {
       if (grant.confirmId === confirmId) this.#grants.delete(token);

@@ -23,6 +23,7 @@ describe("前置条件求值", () => {
       hasDrawings: true,
       hasDeliverable: true,
       modelRouteAvailable: true,
+      unparsedEvidenceCount: 3,
     });
     for (const code of KNOWN_PRECONDITION_CODES) {
       expect(evaluatePrecondition(code, snapshot).satisfied, code).toBe(true);

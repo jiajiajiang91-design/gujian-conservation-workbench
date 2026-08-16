@@ -30,6 +30,8 @@ const evaluators: Record<string, (s: WorkspaceSnapshot) => PreconditionResult> =
     s.hasDrawings === true ? ok : no("还没有图纸，请先生成图纸"),
   DELIVERABLE_EXISTS: (s) =>
     s.hasDeliverable === true ? ok : no("还没有可交付内容"),
+  EVIDENCE_EXISTS: (s) =>
+    (s.unparsedEvidenceCount ?? 0) > 0 ? ok : no("项目内没有待解析的资料，请先上传任务书或其他资料"),
 };
 
 export function evaluatePrecondition(

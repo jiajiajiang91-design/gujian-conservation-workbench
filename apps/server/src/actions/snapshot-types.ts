@@ -12,6 +12,7 @@ export const WorkspaceSnapshotSchema = z.object({
   hasDrawings: z.boolean().optional(),
   hasDeliverable: z.boolean().optional(),
   modelRouteAvailable: z.boolean().optional(),
+  unparsedEvidenceCount: z.number().int().nonnegative().optional(),
 }).strict();
 
 export type WorkspaceSnapshot = z.infer<typeof WorkspaceSnapshotSchema>;

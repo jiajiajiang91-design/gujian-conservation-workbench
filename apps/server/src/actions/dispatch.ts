@@ -47,6 +47,7 @@ export function keywordFallback(text: string): { name: string; args: unknown } {
   if (/出图|开始画|画图/.test(text)) return { name: "generate_drawings", args: {} };
   if (/生成三维|三维模型|建模/.test(text)) return { name: "generate_geometry", args: {} };
   if (/交付|组包|导出/.test(text)) return { name: "export_deliverable", args: { format: "zip" } };
+  if (/解析任务书|盘点资料|解析资料/.test(text)) return { name: "parse_task_brief", args: {} };
   if (/检查/.test(text)) return { name: "run_data_check", args: {} };
   if (/进度|还要多久|跑完/.test(text)) return { name: "query_job_progress", args: {} };
   for (const [re, view] of VIEW_JUMP) {

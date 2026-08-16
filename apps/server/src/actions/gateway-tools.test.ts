@@ -52,7 +52,7 @@ describe("executeWithTools", () => {
       signal: new AbortController().signal,
     });
     const body = bodies[0] as { tools: Array<{ type: string; function: Record<string, unknown> }> };
-    expect(body.tools).toHaveLength(13);
+    expect(body.tools).toHaveLength(14);
     for (const tool of body.tools) {
       expect(tool.type).toBe("function");
       expect(Object.keys(tool.function).sort()).toEqual(["description", "name", "parameters"]);
