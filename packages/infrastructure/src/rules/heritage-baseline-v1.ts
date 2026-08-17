@@ -4,7 +4,7 @@ import type { RuleDataFile } from "@gujian/domain";
 // 加载入口 rule-engine.ts 的 loadRuleData 在运行时做 Zod 校验并计算内容哈希。
 // 公式中的标识符先取基准参数，再取同规则集内其他规则的 ruleId 结果。
 // 举架系数出处：两套并存规则集转引自 ACA-Builder const.py 对文献的整理
-// （见 笔记/代码技术借鉴整合_给执行会话_20260815.md 第 3.1 节），
+// （见 文档/01_产品/04_开源代码借鉴与现状评估.md 第 3.1 节），
 // 仅作规范选择停靠的方案生成演示，未验证对本项目样本的适用性。
 
 export const HERITAGE_BASELINE_RULE_DATA = {

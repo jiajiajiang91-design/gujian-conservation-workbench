@@ -44,7 +44,7 @@ if (!issue || issue.status !== "open" || (issue.options ?? []).length !== 2) {
 
 const packages = new ProjectPackageService(repository);
 const bytes = await packages.exportJson(projectId);
-const output = resolve(import.meta.dirname, "../../../验证材料/14_规则层与词表验证/fixtures");
+const output = resolve(import.meta.dirname, "../../../文档/05_验证证据/11_规则层与词表验证/fixtures");
 await mkdir(output, { recursive: true });
 await writeFile(resolve(output, "lift-ratio-demo.project.json"), bytes);
 console.log(JSON.stringify({ projectId, issueId: issue.id, options: issue.options.map((o) => o.optionId), bytes: bytes.length }));

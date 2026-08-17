@@ -3,7 +3,7 @@ import type { ConceptEntriesFile } from "@gujian/domain";
 // 种子词表：单一对象字面量，专业人员逐条审阅，不含任何逻辑。
 // 覆盖 v3 团队 demo 的 27 个构件类型（conceptId 与 componentType 字符串一致，
 // 双写迁移零成本映射）加族层级与规则层引用的概念。
-// 同物异名实证转引自 jiangshu aliases.json（见 笔记/代码技术借鉴整合 3.5 节）；
+// 同物异名实证转引自 jiangshu aliases.json（见 文档/01_产品/04_开源代码借鉴与现状评估.md 第 3.5 节）；
 // demo 构件沿用 v3 合同的中性术语，未经专业确认不补类型学名称。
 
 export const HERITAGE_CONCEPTS_V1 = {
