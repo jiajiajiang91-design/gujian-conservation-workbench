@@ -162,7 +162,7 @@ export function App() {
   // 证据半区（05 界面与交互形态 §三）：中栏右半区显示选中资料原件，数据与证据并置
   const [activeEvidenceId, setActiveEvidenceId] = useState<string | null>(null);
   const [evidencePreview, setEvidencePreview] = useState<{ evidenceId: string; url: string; mimeType: string; fileName: string } | null>(null);
-  // 数据与证据双半区默认各占一半，分隔条可拖动，比例限制在 30% 至 70%（09 第 6 节）
+  // 数据与证据双半区默认各占一半，分隔条可拖动，比例限制在 30% 至 70%（07 第 6 节）
   const [dataPaneRatio, setDataPaneRatio] = useState(50);
   const splitRef = useRef<HTMLDivElement | null>(null);
   const importInput = useRef<HTMLInputElement>(null);
@@ -1020,14 +1020,14 @@ export function App() {
     window.addEventListener("pointerup", stop);
   };
 
-  // 键盘可达：方向键以 5% 步进调整（09 第 7 节）
+  // 键盘可达：方向键以 5% 步进调整（07 第 7 节）
   const nudgeSplit = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
     setDataPaneRatio((current) => Math.min(70, Math.max(30, current + (event.key === "ArrowRight" ? 5 : -5))));
   };
 
-  // 数据与证据双半区（07 表 2、09 第 6 节）：左数据、右证据，中间分隔条
+  // 数据与证据双半区（05 表 2、07 第 6 节）：左数据、右证据，中间分隔条
   const renderSplit = (data: ReactNode, emptyHint: string) => (
     <div className="stage-split" ref={splitRef} style={{ gridTemplateColumns: `${dataPaneRatio}% 8px minmax(0, 1fr)` }}>
       <div className="pane-data">{data}</div>

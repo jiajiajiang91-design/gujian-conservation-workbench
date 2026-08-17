@@ -28,7 +28,7 @@ export const ComponentLibraryEntrySchema = z.object({
   sourceRefs: z.array(NonEmptyRefSchema).max(100),
 }).strict();
 
-// 排除记录：删除误识别时写入，识别任务读取以过滤同类误报（13-1 问题 47）。
+// 排除记录：删除误识别时写入，识别任务读取以过滤同类误报（旧原型问题清单第 47 项，见历史归档）。
 export const ExclusionRecordSchema = z.object({
   id: UuidSchema,
   projectId: UuidSchema,

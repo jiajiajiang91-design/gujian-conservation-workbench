@@ -48,7 +48,7 @@ const CHECK_CODE_ZH: Record<string, string> = {
 };
 
 // 阻断原因：交付评估写的是 CODE 或 CODE:细节:UUID 形态，直出会把
-// 内部码和 UUID 漏到界面（05 界面与交互形态 5.6）。
+// 内部码和 UUID 漏到界面（07 界面视觉规范 5.6）。
 export function describeBlocker(code: string): string {
   const direct = CHECK_CODE_ZH[code] ?? ISSUE_TYPE_ZH[code];
   if (direct) return direct;

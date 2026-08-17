@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-// 09 界面视觉规范第 8 节自检清单里可自动化的条目。
+// 07 界面视觉规范第 8 节自检清单里可自动化的条目。
 // 目的是防回归：色值、字号与圆角一旦绕过令牌，测试立即失败。
 
 const SOURCE_ROOT = import.meta.dirname;
@@ -13,7 +13,7 @@ const TOKENS = read("tokens.css");
 const COMPONENTS = read("components.css");
 const PAGES = read("styles.css");
 
-describe("界面视觉规范自检（09 第 8 节）", () => {
+describe("界面视觉规范自检（07 第 8 节）", () => {
   it("令牌覆盖第 2 节色板与第 6 节布局尺寸", () => {
     const required = [
       "--bg-page", "--bg-panel", "--bg-subtle",

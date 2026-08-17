@@ -1,7 +1,7 @@
 import { WORKSPACE_VIEW_NAMES } from "@gujian/domain";
 import { z } from "zod";
 
-// 动作目录：13-6 表 10 修订稿（2026-08-15）的代码形态。
+// 动作目录：05 界面与交互形态表 11、表 12 的代码形态。
 // 模型可见字段只有 name/description/parameters 三项（见 modelFacingCatalog），
 // 确认级别、前置条件等执行字段绝不进入模型请求。
 

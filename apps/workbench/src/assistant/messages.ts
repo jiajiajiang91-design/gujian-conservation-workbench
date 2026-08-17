@@ -1,4 +1,4 @@
-// 助手消息模型：13-6 表 4 的四类消息。停靠提问未回答前该分支不继续，
+// 助手消息模型：05 界面与交互形态表 5 的四类消息。停靠提问未回答前该分支不继续，
 // 风险提示与提问同级且不可折叠，由渲染层保证。
 export type AssistantMessageKind = "progress" | "result" | "dock-question" | "risk";
 

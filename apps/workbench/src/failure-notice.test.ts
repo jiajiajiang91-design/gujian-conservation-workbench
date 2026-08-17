@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { describeFailure, inputError } from "./failure-notice";
 
-// 05 界面与交互形态 5.6：失败状态不显示错误码原文。
+// 07 界面视觉规范 5.6：失败状态显示原因与恢复操作，不显示错误码原文。
 // 代码里的错误抛的是 CODE 或 CODE:detail，本测试把这条规定钉死。
 
 const CODE_TOKEN = /\b[A-Z][A-Z0-9]*(_[A-Z0-9]+)+\b/;
