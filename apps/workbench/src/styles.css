@@ -180,7 +180,11 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .evidence-card > div { display: grid; gap: 4px; }
 .evidence-card strong { font-size: 12px; }
 .evidence-card small { color: var(--text-secondary); font-size: 12px; }
+/* 资料可用性属状态，四个取值各有颜色，存疑与已过期须与可用明显不同 */
 .data-status { padding: 3px 8px; border-radius: var(--radius-pill); color: var(--success); background: var(--success-soft); font: var(--text-label); }
+.data-status.uncertain { color: var(--warning); background: var(--warning-soft); }
+.data-status.missing { color: var(--danger); background: var(--danger-soft); }
+.data-status.stale { color: var(--text-secondary); background: var(--bg-subtle); }
 .evidence-card > button { border: 0; background: transparent; color: var(--accent); font-size: 12px; text-decoration: underline; }
 .evidence-empty { min-height: 220px; display: grid; grid-template-columns: 72px minmax(260px, 480px); align-items: center; justify-content: center; gap: 20px; }
 .evidence-empty p { color: var(--text-secondary); font-size: 12px; line-height: 1.8; }

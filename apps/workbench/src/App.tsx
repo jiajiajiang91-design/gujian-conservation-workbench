@@ -61,15 +61,18 @@ export const LENGTH_INPUT_STEP = "any";
 const OBSERVATION_LABELS = {
   visibleCondition: "可见状态", damage: "残损", material: "材料", state: "整体状态",
 } as const;
-// 界面只出现日常语言：来源、状态一律用中文，不显示英文枚举值
-const PRODUCER_LABELS: Record<string, string> = {
+// 界面只出现日常语言：来源、状态一律用中文，不显示英文枚举值。
+// 三张表的键必须与领域 schema 的取值一一对应，缺键会让英文原值漏到界面，
+// 由 label-coverage.test.ts 锁住。
+export const PRODUCER_LABELS: Record<string, string> = {
   model: "AI 识别", human: "人工确认", rule: "自动核对", demo: "示例资料",
 };
-const REVIEW_LABELS: Record<string, string> = {
+export const REVIEW_LABELS: Record<string, string> = {
   unreviewed: "待确认", confirmed: "已确认", rejected: "已驳回", superseded: "已被替代",
 };
-const DATA_STATUS_LABELS: Record<string, string> = {
-  available: "可用", unverified: "未核验", missing: "缺失", unknown: "待确认",
+// 存疑是本产品最需要显性表达的状态，缺它等于把不确定当成可用
+export const DATA_STATUS_LABELS: Record<string, string> = {
+  available: "可用", uncertain: "存疑", missing: "缺失", stale: "已过期",
 };
 const BLOCKER_LABELS: Record<string, string> = {
   UNVERIFIED_DIMENSION_CANDIDATES: "尺寸尚未核验",
@@ -1216,7 +1219,7 @@ export function App() {
                             onClick={() => setActiveEvidenceId(evidence.id)}>
                             <span className="evidence-type">{EVIDENCE_TYPE_LABELS[evidence.evidenceType] ?? evidence.evidenceType}</span>
                             <div><strong>{evidence.title}</strong><small>{parse ? PARSE_STATUS_LABELS[parse.status] ?? "尚未读取" : "尚未读取"}</small></div>
-                            <span className={`data-status ${evidence.dataStatus}`}>{evidence.dataStatus === "available" ? "可用" : evidence.dataStatus}</span>
+                            <span className={`data-status ${evidence.dataStatus}`}>{DATA_STATUS_LABELS[evidence.dataStatus] ?? evidence.dataStatus}</span>
                             <button className="gj-btn gj-btn--text" type="button" onClick={(event) => { event.stopPropagation(); void downloadEvidence(evidence.assetId); }}>原文件</button>
                           </article>
                         );
