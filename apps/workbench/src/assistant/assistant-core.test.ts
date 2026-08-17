@@ -17,15 +17,32 @@ const HEAD = {
   revisionId: "9f8e7d6c-5b4a-4392-8170-fedcba987654",
 } as unknown as ProjectHead;
 
+// 07 表 2 的十个工作区视图，加表 3 的模型运行与费用
+const DESIGN_VIEWS = [
+  "任务卡", "资料清单", "实测基准", "构件清单", "现状记录",
+  "三维模型", "问题队列", "图纸样式", "图纸与检查", "交付包",
+  "模型运行与费用",
+];
+
 describe("视图映射", () => {
-  it("八个设计视图全部有映射，未实现的带说明", () => {
-    expect(ALL_VIEW_MAPPINGS).toHaveLength(8);
+  it("设计视图全部有映射，未实现的带说明", () => {
+    expect(ALL_VIEW_MAPPINGS.map((mapping) => mapping.view)).toEqual(DESIGN_VIEWS);
     for (const mapping of ALL_VIEW_MAPPINGS) {
       expect(mapping.stageId.length).toBeGreaterThan(0);
       if (!mapping.implemented) expect(mapping.noteZh).toBeTruthy();
     }
-    expect(resolveView("现状记录")?.implemented).toBe(false);
     expect(resolveView("不存在")).toBeNull();
+  });
+
+  it("映射指向工作台实际存在的视图", () => {
+    // stage 标识与 App.tsx 的 stages 常量保持一致，避免助手切到不存在的视图
+    const stageIds = new Set([
+      "tasks", "evidence", "measurements", "objects", "conditions", "issues",
+      "geometry", "sheetStyle", "drawings", "checks", "package", "candidates",
+    ]);
+    for (const mapping of ALL_VIEW_MAPPINGS) {
+      expect(stageIds.has(mapping.stageId), `${mapping.view} 指向未知视图 ${mapping.stageId}`).toBe(true);
+    }
   });
 });
 
@@ -106,14 +123,19 @@ describe("动作执行体", () => {
     actorId: () => "7c9e6679-7425-40de-944b-e07fc1f90ae7",
   });
 
-  it("切换视图返回界面意图，未实现视图带说明", () => {
+  it("切换视图返回界面意图", () => {
     const executors = new AssistantExecutors(deps([]));
     const outcome = executors.switchView("现状记录");
     expect(outcome.kind).toBe("ui");
     if (outcome.kind === "ui") {
-      expect(outcome.intent).toMatchObject({ op: "switchStage", stageId: "objects" });
-      expect(outcome.messageZh).toContain("尚未实现");
+      expect(outcome.intent).toMatchObject({ op: "switchStage", stageId: "conditions" });
     }
+  });
+
+  it("目录外的视图名不切换并说明", () => {
+    const executors = new AssistantExecutors(deps([]));
+    const outcome = executors.switchView("不存在的视图");
+    expect(outcome.kind).not.toBe("ui");
   });
 
   it("推进流程在停靠未清时拒绝并说明", () => {
