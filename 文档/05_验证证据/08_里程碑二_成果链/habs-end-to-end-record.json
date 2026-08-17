@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "2.0",
+  "status": "passed-engineering-proxy-chain-with-professional-limitations",
+  "qualification": "generated-not-qualified",
+  "l1Eligible": false,
+  "formalEligibility": false,
+  "projectId": "ab103b54-3fd2-4124-8fd0-72f478d6ead0",
+  "realModelRun": {
+    "runId": "3d902f69-56b7-4d31-8b6c-94de4dec8ef5",
+    "projectRevisionId": "96e95de6-b666-48d5-b0a3-d12370a8e712",
+    "inputHash": "52f9d4e5686501ae7456e630cc9c79521a72456b5da6a0653c3f99200aad1fe4",
+    "provider": "moonshot",
+    "model": "kimi-k2.6",
+    "status": "succeeded",
+    "attempt": 1,
+    "outputHash": "7dc096a1735eb96df1e27f77c4aabad1687d074b461411c687b72a78cb3e63f5",
+    "usage": {
+      "promptTokens": 4144,
+      "completionTokens": 534,
+      "totalTokens": 4678,
+      "cachedTokens": 0
+    },
+    "eventCount": 531,
+    "eventTypeCounts": {
+      "queued": 1,
+      "running": 1,
+      "stream": 528,
+      "succeeded": 1
+    }
+  },
+  "browserEvidence": {
+    "currentGeometryRevisionId": "7fb78654-d45c-57f2-aeb5-cdb27d893fdb",
+    "currentGeometryEvidence": "screenshots-p0/01_HABS证据绑定三维模型.png",
+    "currentDrawingsEvidence": "screenshots-p0/02_HABS动态成组图纸.png",
+    "deliveryEvidence": "screenshots-p0/03_HABS代理交付_限制传播.png",
+    "jsonZipRoundtripEvidence": "screenshots-p0/04_HABS_JSON_ZIP空库回导.png",
+    "continuedAfterImportEvidence": "screenshots-p0/05_HABS回导后新版本与交付.png",
+    "gaoduBlockedEvidence": "screenshots-p0/06_高都4400冲突与交付阻断.png",
+    "sourceFilesImported": 23,
+    "currentGeneratedArtifactFiles": 65
+  },
+  "validityBoundary": {
+    "modelRun": "valid",
+    "sourceAndLicenseRecords": "valid",
+    "jsonZipStructuralRoundtrip": "valid",
+    "geometryRevision": "technical-verification-passed-generated-not-qualified",
+    "drawings": "technical-verification-passed-generated-not-qualified",
+    "deliveryDraft": "proxy-only-with-open-blockers",
+    "professionalQualification": "not-granted",
+    "historicalFailedGeometryAndDrawings": "retained-as-invalidated-evidence"
+  },
+  "roundtrip": {
+    "json": "空库恢复结构化记录；未携带的二进制明确标记为 missing。",
+    "zip": "空库恢复真实文件、运行、决定、GeometryRevision、成果要求矩阵、成果、检查、交付与审计关系。",
+    "continuedAfterImport": "回导后生成新的 GeometryRevision、成果要求矩阵、图纸、检查和代理交付草案。"
+  },
+  "blockers": [
+    "PROFESSIONAL_REVIEW_REQUIRED",
+    "FORMAL_SIGNOFF_UNAVAILABLE",
+    "FIELD_NOTES_NOT_DIGITIZED",
+    "L1_ELIGIBILITY_FALSE"
+  ],
+  "verificationRefs": {
+    "geometry": "habs-current-geometry-verification.json",
+    "drawings": "habs-current-drawing-verification.json",
+    "autocad": "habs-current-autocad-audit-summary.json",
+    "qcad": "habs-current-qcad-compatibility-summary.json",
+    "gaoduBoundary": "gaodu-redacted-ledger.json",
+    "technicalAudit": "独立技术审查.md",
+    "heritageAudit": "独立古建专业审查.md"
+  }
+}

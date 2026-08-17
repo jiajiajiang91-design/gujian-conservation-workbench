@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "t0b-v2-blender-preview-1",
+  "status": "passed",
+  "qualification": "preview-only-not-quality-pass",
+  "blenderVersion": "5.0.1",
+  "meshObjects": 1166,
+  "mode": "assembly",
+  "bounds": {
+    "min": [
+      -3.5999999046325684,
+      -5.179999828338623,
+      -0.800000011920929
+    ],
+    "max": [
+      3.5999999046325684,
+      4.800000190734863,
+      8.451388359069824
+    ]
+  },
+  "input": {
+    "path": "resolved-local-assembly.glb",
+    "sha256": "48b1b3da1641fb116ce48ae3adcfcf52e31d50fdf2ba4c9b7d712310fdfbe431"
+  },
+  "renderer": {
+    "script": "blender_verify.py",
+    "scriptSha256": "b9ec7a444323f4d3dd61fe1f75762014006ae25b934eba5eb1f3a98824e35d19",
+    "engine": "BLENDER_EEVEE",
+    "resolution": [
+      1400,
+      900
+    ],
+    "cameraLocation": [
+      16.31694984436035,
+      -20.27239990234375,
+      18.887495040893555
+    ],
+    "cameraRotationEuler": [
+      1.0436533689498901,
+      -3.019119532154946e-08,
+      0.6823166012763977
+    ],
+    "orthographicScale": 16.466999053955078
+  },
+  "preview": {
+    "path": "t0b-v2-blender-preview.png",
+    "sha256": "e3ae103a5d405f6f46af44425c716cf84421f58dfb2e466a07071cc439eb1c7c"
+  }
+}

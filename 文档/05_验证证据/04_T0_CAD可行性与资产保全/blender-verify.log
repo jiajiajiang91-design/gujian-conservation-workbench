@@ -1,0 +1,35 @@
+00:45:09 | INFO: Data are loaded, start creating Blender stuff
+00:45:09 | INFO: Blender create Mesh node cb118595-0a66-558c-9d43-b08f1a3afaa6
+00:45:09 | INFO: Blender create Mesh node 5a87ed12-c51c-5ad1-825a-4a9172d7a5d4
+00:45:09 | INFO: Blender create Mesh node 4bf1f513-cae8-5767-9acb-9d7bcace9bfa
+00:45:09 | INFO: Blender create Mesh node a0c292b8-d3e1-5bbd-9d42-b255d6325215
+00:45:09 | INFO: Blender create Mesh node 988e0b1b-c390-5532-a4fe-5c723a5c6cb1
+00:45:09 | INFO: Blender create Mesh node 09a18580-369b-5922-b620-8dc03ed91b97
+00:45:09 | INFO: Blender create Mesh node a439eedc-a258-561d-9a71-cb19945be0db
+00:45:09 | INFO: Blender create Mesh node ca44273e-fe70-5984-b6a3-aaad0492e68c
+00:45:09 | INFO: Blender create Mesh node 8d598ec1-0499-533f-9642-1435732ed39b
+00:45:09 | INFO: Blender create Mesh node 414fcee6-fea9-5aa7-81f7-56689d233260
+00:45:09 | INFO: Blender create Mesh node e04dfb06-8cb2-50c9-abef-cf4392d55100
+00:45:09 | INFO: Blender create Mesh node 8a9fc849-75e8-52dd-8ca8-6fc4c1eab8d7
+00:45:09 | INFO: Blender create Mesh node cefb7234-6ea7-55f8-901e-8ea649b1e3dc
+00:45:09 | INFO: Blender create Mesh node 0335f500-7699-597a-9f4c-87fe9bfd9625
+00:45:09 | INFO: Blender create Mesh node 5438a422-86c4-5e0c-83f5-477b07df9ba0
+00:45:09 | INFO: Blender create Mesh node 5c7341c3-8e6b-5ae4-b9f2-97d19413d4be
+00:45:09 | INFO: Blender create Mesh node 5b1eb1e3-5e55-55f3-9622-8e85bf75f314
+00:45:09 | INFO: Blender create Mesh node d05b4086-7257-5c2b-881e-dcdd8e7e7fdd
+00:45:09 | INFO: Blender create Mesh node 18562773-207f-5e1f-8f55-e01d6696855e
+00:45:09 | INFO: Blender create Mesh node 0f3f4255-9b63-5cf9-91e1-c8c61974e583
+00:45:09 | INFO: Blender create Mesh node 83faece0-43b7-559b-b9df-a58848f5d487
+00:45:09 | INFO: Blender create Mesh node 3ee26b2f-7891-5bf8-aa5d-fff405e55325
+00:45:09 | INFO: Blender create Mesh node 51600ed9-f0ff-5fc6-8ba5-32b3fcc620de
+00:45:09 | INFO: Blender create Mesh node 6ead74ea-eae9-5a42-ad6a-a17a79b0c19a
+00:45:09 | INFO: Blender create Mesh node d53685d0-2269-58df-97f8-5bcbbfae66a6
+00:45:09 | INFO: Blender create Mesh node 22808c68-f9a5-5403-81b5-763d6153800b
+00:45:09 | INFO: Blender create Mesh node dca88a6b-3fa1-5032-a8f7-d0e48a7130f9
+00:45:09 | INFO: Blender create Mesh node 7a08726d-4c58-507e-b062-44bd3444e713
+00:45:09 | INFO: Blender create Mesh node 8b72b5a9-1ed4-5a4f-9178-f8567219224f
+00:45:09 | INFO: Blender create Mesh node 2a626a4f-156f-5602-8273-154c31bc7731
+00:45:09 | INFO: glTF import finished in 0.02s
+00:04.062  render           | Saved: 'D:\Claude_jiajia\06_古建保护归档\验证材料\06_T0_CAD可行性验证\blender-preview.png'
+Blender 5.0.1 (hash a3db93c5b259 built 2025-12-16 01:32:30)
+{"status": "passed", "meshObjects": 30, "bounds": {"min": [-0.6000000238418579, -6.78000020980835, -0.6000000238418579], "max": [12.0, 0.0, 7.800000190734863]}, "preview": "D:\\Claude_jiajia\\06_\u53e4\u5efa\u4fdd\u62a4\u5f52\u6863\\\u9a8c\u8bc1\u6750\u6599\\06_T0_CAD\u53ef\u884c\u6027\u9a8c\u8bc1\\blender-preview.png"}

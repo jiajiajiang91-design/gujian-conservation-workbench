@@ -1,0 +1,307 @@
+{
+  "schemaVersion": "t0b-qcad-verification-1",
+  "status": "passed",
+  "gate": "T0-B",
+  "qualityLevel": "L1",
+  "tool": {
+    "name": "QCAD Professional Trial",
+    "version": "3.32.9",
+    "usage": "external compatibility validation only",
+    "productionDependency": false
+  },
+  "limitations": [
+    "This validates L1 import, edit, export, printing, Unicode and CAD semantics; it is not an L2 professional deliverable review.",
+    "The trial binary is not committed and is not licensed as a production runtime dependency.",
+    "QCAD omits cached DXF dimension graphics on save. QCAD and AutoCAD regenerate them, but the QCAD-saved copy is validation evidence, not a canonical delivery artifact.",
+    "AutoCAD substitutes QCAD auxiliary text styles in the validation copy. The canonical generator DXF remains the delivery candidate and passes AutoCAD without font substitution."
+  ],
+  "summary": {
+    "checks": 24,
+    "entities": 669,
+    "dimensions": 13,
+    "hatches": 5,
+    "blockInserts": 11,
+    "sourceReferences": 104,
+    "chineseLabels": 18,
+    "pdfDarkFraction": 0.07011720544986674,
+    "cachedDimensionBlocks": 0,
+    "crossAuditFontSubstitutions": 3
+  },
+  "artifacts": {
+    "sourceDxf": {
+      "path": "t0b-professional-sheet.dxf",
+      "sha256": "fef4b0aa256a48f600537299336e5988350afeb7eadcdf02211181a289a996a8"
+    },
+    "roundtripDxf": {
+      "path": "t0b-qcad-roundtrip.dxf",
+      "sha256": "2bc87c5145e8e824c3d9aee67fc68b1d1a8bfae64d18a902344e6d0de7a38c20",
+      "canonicalArtifact": false
+    },
+    "printedPdf": {
+      "path": "t0b-qcad-roundtrip.pdf",
+      "sha256": "ffa0f1f8b414fd3566fea8d3e3499c518342ba66eb52e481b06b5278c948968f"
+    },
+    "render": {
+      "path": "t0b-qcad-print.png",
+      "sha256": "e10f2d4f1e86555df358146ae166978c6889bb76daa19821e65ba1a24c821b40"
+    },
+    "autocadCrossAudit": {
+      "path": "t0b-qcad-roundtrip-autocad-audit.log",
+      "sha256": "ad19efa03c535af3c2adfb5f4e38eb685e3688707e410243a907735b647d90ac"
+    }
+  },
+  "checks": [
+    {
+      "name": "source DXF exists",
+      "passed": true,
+      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-outputs\\t0b-professional-sheet.dxf"
+    },
+    {
+      "name": "QCAD roundtrip DXF exists",
+      "passed": true,
+      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip.dxf"
+    },
+    {
+      "name": "QCAD PDF exists",
+      "passed": true,
+      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip.pdf"
+    },
+    {
+      "name": "QCAD PDF render exists",
+      "passed": true,
+      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-print.png"
+    },
+    {
+      "name": "AutoCAD cross-audit log exists",
+      "passed": true,
+      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip-autocad-audit.log"
+    },
+    {
+      "name": "source DXF audit clean",
+      "passed": true,
+      "evidence": {
+        "errors": 0,
+        "fixes": 0
+      }
+    },
+    {
+      "name": "entity types retained plus one validation line",
+      "passed": true,
+      "evidence": {
+        "source": {
+          "LINE": 443,
+          "LWPOLYLINE": 71,
+          "HATCH": 5,
+          "INSERT": 11,
+          "MTEXT": 27,
+          "CIRCLE": 98,
+          "DIMENSION": 13
+        },
+        "roundtrip": {
+          "LINE": 444,
+          "LWPOLYLINE": 71,
+          "HATCH": 5,
+          "INSERT": 11,
+          "MTEXT": 27,
+          "CIRCLE": 98,
+          "DIMENSION": 13
+        }
+      }
+    },
+    {
+      "name": "QCAD edit persisted",
+      "passed": true,
+      "evidence": 1
+    },
+    {
+      "name": "professional layers retained",
+      "passed": true,
+      "evidence": [
+        "0",
+        "A-AXIS",
+        "A-CUT",
+        "A-DAMAGE",
+        "A-DIM",
+        "A-EXIST",
+        "A-FRAME",
+        "A-HATCH",
+        "A-HIDDEN",
+        "A-OPEN",
+        "A-OUTLINE",
+        "A-PROJ",
+        "A-REPAIR",
+        "A-ROOF",
+        "A-TEXT",
+        "A-TIMBER",
+        "Defpoints",
+        "VIEWPORTS"
+      ]
+    },
+    {
+      "name": "source layers retained",
+      "passed": true,
+      "evidence": [
+        "VIEWPORTS"
+      ]
+    },
+    {
+      "name": "all CAD text retained",
+      "passed": true,
+      "evidence": {
+        "source": 27,
+        "roundtrip": 27
+      }
+    },
+    {
+      "name": "Chinese labels retained",
+      "passed": true,
+      "evidence": 18
+    },
+    {
+      "name": "editable dimensions retained",
+      "passed": true,
+      "evidence": [
+        {
+          "text": "11200",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 1
+        },
+        {
+          "text": "12000",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 2
+        },
+        {
+          "text": "1400",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 1
+        },
+        {
+          "text": "14800",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 1
+        },
+        {
+          "text": "2500",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 1
+        },
+        {
+          "text": "3600",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 2
+        },
+        {
+          "text": "4800",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 1
+        },
+        {
+          "text": "8400",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 2
+        },
+        {
+          "text": "9000",
+          "layer": "A-DIM",
+          "dimtype": 32,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "name": "hatches retained",
+      "passed": true,
+      "evidence": 5
+    },
+    {
+      "name": "block inserts retained",
+      "passed": true,
+      "evidence": 11
+    },
+    {
+      "name": "reusable bracket block retained",
+      "passed": true,
+      "evidence": [
+        "*Model_Space",
+        "*Paper_Space",
+        "*Paper_Space1",
+        "_CLOSEDFILLED",
+        "BRACKET"
+      ]
+    },
+    {
+      "name": "source XDATA retained",
+      "passed": true,
+      "evidence": {
+        "source": 104,
+        "roundtrip": 104
+      }
+    },
+    {
+      "name": "layout names retained",
+      "passed": true,
+      "evidence": [
+        "A1-T0B",
+        "Layout1",
+        "Model"
+      ]
+    },
+    {
+      "name": "A1 viewport layout retained",
+      "passed": true,
+      "evidence": 5
+    },
+    {
+      "name": "QCAD dimensions are directly renderable",
+      "passed": true,
+      "evidence": {
+        "dimensions": 13,
+        "cachedGeometryBlocks": 0
+      }
+    },
+    {
+      "name": "AutoCAD cross-audit reports zero errors",
+      "passed": true,
+      "evidence": {
+        "auditZero": true,
+        "deletedZero": true,
+        "fontSubstitutions": [
+          "正在用 [simplex.shx] 替换 [qcadshp.shx]。",
+          "正在用 [simplex.shx] 替换 [STANDARD]。",
+          "正在用 [simplex.shx] 替换 [ltypeshp.shx]。"
+        ]
+      }
+    },
+    {
+      "name": "QCAD PDF structure",
+      "passed": true,
+      "evidence": 129457
+    },
+    {
+      "name": "QCAD PDF nontrivial size",
+      "passed": true,
+      "evidence": 129457
+    },
+    {
+      "name": "QCAD PDF render is nonblank",
+      "passed": true,
+      "evidence": {
+        "darkFraction": 0.07011720544986674,
+        "contrast": 55.475146037831436,
+        "shape": [
+          992,
+          1404
+        ]
+      }
+    }
+  ]
+}

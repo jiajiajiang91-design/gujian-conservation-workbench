@@ -1,0 +1,202 @@
+{
+  "schemaVersion": "2.0",
+  "qualification": "blocked-source-boundary-evidence",
+  "sourceScope": "gaodu-only",
+  "assets": [
+    {
+      "redactedAssetId": "asset-b9449230f085a86e",
+      "contentHash": "b9449230f085a86e0560502a74ebad9712a689497ee970cdff570c930ae1a92f",
+      "byteLength": 2325705,
+      "mimeType": "image/jpeg",
+      "sourceScope": "gaodu-only",
+      "relativeSource": "验证材料/02_PoC工作流验证/盲测素材/高都玉皇庙_01.jpg"
+    },
+    {
+      "redactedAssetId": "asset-6100602bcdc7115a",
+      "contentHash": "6100602bcdc7115a84d0107687b071fe33f7b4f886aa88a2dd87a0b29ba1e765",
+      "byteLength": 2276383,
+      "mimeType": "image/jpeg",
+      "sourceScope": "gaodu-only",
+      "relativeSource": "验证材料/02_PoC工作流验证/盲测素材/高都玉皇庙_02.jpg"
+    },
+    {
+      "redactedAssetId": "asset-5e4e2bfe7dc922a4",
+      "contentHash": "5e4e2bfe7dc922a41f9da4a96062c9ffe2615a9a7e9a5d57ee6a456c8799872d",
+      "byteLength": 2732885,
+      "mimeType": "image/jpeg",
+      "sourceScope": "gaodu-only",
+      "relativeSource": "验证材料/02_PoC工作流验证/盲测素材/高都玉皇庙_04.jpg"
+    },
+    {
+      "redactedAssetId": "asset-91ef1b6c3e0d09b7",
+      "contentHash": "91ef1b6c3e0d09b7858116fd70592bda057c58136f063afd7723190139152ea6",
+      "byteLength": 2631784,
+      "mimeType": "image/jpeg",
+      "sourceScope": "gaodu-only",
+      "relativeSource": "验证材料/02_PoC工作流验证/盲测素材/高都玉皇庙_05.jpg"
+    }
+  ],
+  "evidences": [
+    {
+      "redactedEvidenceId": "evidence-1",
+      "assetHash": "b9449230f085a86e0560502a74ebad9712a689497ee970cdff570c930ae1a92f",
+      "evidenceType": "building-photo",
+      "dataStatus": "available",
+      "producerType": "human-catalogue",
+      "sourceScope": "gaodu-only",
+      "supportedFields": [
+        "visual-observation",
+        "asset-identity"
+      ],
+      "explicitlyDoesNotSupport": [
+        "overallWidthMm",
+        "bayWidthsMm",
+        "measurementMetadata"
+      ],
+      "recordHash": "b9341aa78c4d0bfb00d755ee80462a4f91781c8b8e698222456c1df155211a02"
+    },
+    {
+      "redactedEvidenceId": "evidence-2",
+      "assetHash": "6100602bcdc7115a84d0107687b071fe33f7b4f886aa88a2dd87a0b29ba1e765",
+      "evidenceType": "designation-stele-photo",
+      "dataStatus": "available",
+      "producerType": "human-catalogue",
+      "sourceScope": "gaodu-only",
+      "supportedFields": [
+        "visual-observation",
+        "asset-identity"
+      ],
+      "explicitlyDoesNotSupport": [
+        "overallWidthMm",
+        "bayWidthsMm",
+        "measurementMetadata"
+      ],
+      "recordHash": "aba7f38752598f3b9883f2629475efe8696e988e4e3ea6827763771f4e380934"
+    },
+    {
+      "redactedEvidenceId": "evidence-3",
+      "assetHash": "5e4e2bfe7dc922a41f9da4a96062c9ffe2615a9a7e9a5d57ee6a456c8799872d",
+      "evidenceType": "building-photo",
+      "dataStatus": "available",
+      "producerType": "human-catalogue",
+      "sourceScope": "gaodu-only",
+      "supportedFields": [
+        "visual-observation",
+        "asset-identity"
+      ],
+      "explicitlyDoesNotSupport": [
+        "overallWidthMm",
+        "bayWidthsMm",
+        "measurementMetadata"
+      ],
+      "recordHash": "eeff19cadf2239d4aa5e0eba4275e718a7047f70fa2230d09b95249c58defa1c"
+    },
+    {
+      "redactedEvidenceId": "evidence-4",
+      "assetHash": "91ef1b6c3e0d09b7858116fd70592bda057c58136f063afd7723190139152ea6",
+      "evidenceType": "building-photo",
+      "dataStatus": "available",
+      "producerType": "human-catalogue",
+      "sourceScope": "gaodu-only",
+      "supportedFields": [
+        "visual-observation",
+        "asset-identity"
+      ],
+      "explicitlyDoesNotSupport": [
+        "overallWidthMm",
+        "bayWidthsMm",
+        "measurementMetadata"
+      ],
+      "recordHash": "87ab83af08288a01f2358ebe681ec111b323e1713a4449a35fadeec726f8da17"
+    }
+  ],
+  "facts": [
+    {
+      "redactedFactId": "candidate-overall-width",
+      "field": "historicalDemoCandidate.overallWidthMm",
+      "value": 15800,
+      "unit": "mm",
+      "evidenceRefs": [],
+      "producerType": "demo",
+      "dataStatus": "unverified",
+      "sourceStatus": "original-registration-record-unavailable",
+      "blocksProxyOutcome": true,
+      "blocksFormalEligibility": true,
+      "recordHash": "151ba1b7db2d3fe9b203dd70232b85e1cd41fbb613f029f5a2cc60b8c85a4ef3"
+    },
+    {
+      "redactedFactId": "candidate-bay-chain",
+      "field": "historicalDemoCandidate.bayWidthsMm",
+      "value": [
+        4200,
+        3600,
+        3600
+      ],
+      "unit": "mm",
+      "evidenceRefs": [],
+      "producerType": "demo",
+      "dataStatus": "unverified",
+      "sourceStatus": "original-registration-record-unavailable",
+      "blocksProxyOutcome": true,
+      "blocksFormalEligibility": true,
+      "recordHash": "ddfc65dd0b703d8f589119f0ee187134dbfe0653cb35d2aebf3751824e15f9b7"
+    }
+  ],
+  "ruleRuns": [
+    {
+      "redactedRuleRunId": "rule-demo-dimension-chain",
+      "ruleId": "historical-demo-dimension-chain-conflict",
+      "inputs": [
+        "candidate-overall-width",
+        "candidate-bay-chain"
+      ],
+      "calculation": {
+        "candidateTotalMm": 15800,
+        "candidateSegmentSumMm": 11400,
+        "differenceMm": 4400
+      },
+      "outcome": "demonstration-only",
+      "producerType": "rule",
+      "qualificationBoundary": "输入均为未核验 demo 候选；4400 mm 仅用于展示规则和阻断流程，不是现场事实结论。",
+      "recordHash": "b1991b10dc3bdcb1e3b8e8b69ae4a01af40e7c090842d609c003b19347cb9fed"
+    }
+  ],
+  "deliveryEvaluations": [
+    {
+      "redactedDeliveryEvaluationId": "delivery-gaodu-blocked",
+      "outcome": "blocked",
+      "blockerCodes": [
+        "UNVERIFIED_DIMENSION_CANDIDATES",
+        "MEASUREMENT_METADATA_MISSING",
+        "GEOMETRY_EVIDENCE_FACTS_MISSING"
+      ],
+      "artifactRefs": [],
+      "formalEligibility": false,
+      "l1Eligible": false,
+      "producerType": "rule",
+      "recordHash": "ae286efa8d9e004a16df4a6077a42db9672faf3e5ee713b8b71d0584c461f05f"
+    }
+  ],
+  "factualBoundary": {
+    "photoSupportedExactDimensions": 0,
+    "verifiedMeasurementFacts": 0,
+    "historicalDemoCandidates": 2,
+    "geometryRevisionCount": 0,
+    "completeArtifactCount": 0
+  },
+  "crossContaminationScan": {
+    "prohibitedTokens": [
+      "HABS",
+      "Badin",
+      "Dai Loy",
+      "东呈",
+      "南禅寺",
+      "team-demo-geometry",
+      "t0b_v3",
+      "gaodu.proxy-input"
+    ],
+    "matches": [],
+    "passed": true,
+    "scannedRecordHash": "d464811fca94ca98603cb706aeebb404ad83b2f17e18c76353404b03555a38e6"
+  }
+}

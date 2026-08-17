@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "milestone-two-qcad-compatibility-1",
+  "status": "passed-open-view-print-only",
+  "tool": {
+    "product": "QCAD Professional Trial",
+    "version": "3.32.9",
+    "executableSha256": "644dd04a1f11283460c846cafe6d44ab992962f3ab136e469bc97ce384385da7",
+    "licenseBoundary": "本轮使用官方试用版，仅作兼容检查；生产使用需另行取得适用许可。"
+  },
+  "input": {
+    "canonicalDxfSha256": "be53818ff16a41ec8712b26981144bc3be639614ba0e51077644df9c688217b8",
+    "temporaryCopySha256AfterCheck": "be53818ff16a41ec8712b26981144bc3be639614ba0e51077644df9c688217b8"
+  },
+  "openAndView": {
+    "command": "dwginfo",
+    "exitCode": 0,
+    "importSucceeded": true
+  },
+  "print": {
+    "command": "dwg2pdf",
+    "exitCode": 0,
+    "layouts": ["P-01", "P-02"],
+    "pageCount": 2,
+    "temporaryPdfSha256": "77a352a57dba4028da03d6dce328329868450b756fd32d99eebe906c3b81e8bd",
+    "temporaryPdfRetained": false,
+    "pageSize": "A4 compatibility print"
+  },
+  "saveBackPerformed": false,
+  "canonicalDxfModified": false,
+  "qualificationBoundary": "QCAD 仅证明打开、查看和打印兼容；其保存副本不得替代通过 AutoCAD 资格检查的规范 DXF。",
+  "qualification": "generated-not-qualified",
+  "l1Eligible": false,
+  "formalEligibility": false
+}

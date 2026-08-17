@@ -1,0 +1,112 @@
+{
+  "L1": false,
+  "autocadCompatibility": {
+    "defaultPaperViewportLayer": "0",
+    "earthPatternId": "GJ_EARTH_V1",
+    "earthPatternLineOffsetsMm": [
+      [
+        0,
+        24
+      ],
+      [
+        24,
+        0
+      ]
+    ],
+    "parallelPatternOffsetRejected": true,
+    "userViewportLayer": "GJ-FRAME"
+  },
+  "crossFormatOutputs": {
+    "sourceIrRequired": true,
+    "status": "generated-by-separate-ir-consumer"
+  },
+  "generatedAt": "2000-01-01T00:00:00Z",
+  "inputs": {
+    "contract": {
+      "name": "t0b-v2-drawing-package-contract.json",
+      "revisionId": "965dd6d3-29c9-59fb-b922-9c0ae56e16f2",
+      "sha256": "132e23a6523906fbe79bff8d54dc229764956c9e36a618a2449a6e7f39dde739",
+      "signature": "4e27aabfb80bba82bc92c965b06b4f820f743d35838717d9fbf47e48488f7eaf"
+    },
+    "drawingPackageIr": {
+      "drawingPackageIrSha256": "5b3ede93f4d6071b0a126cacdf4e6cf868fd41e39939435df4898d9b2f6b39dc",
+      "name": "drawing-package.ir.json.gz",
+      "sha256": "c463edca1eb1c2d76fc649adb6e9d76ff6753f54403c30f28a3f960f1a253a60"
+    },
+    "logicalFont": {
+      "assetStatus": "bound-licensed-static-instance",
+      "family": "Gujian Sans SC",
+      "fontAssetRelativePath": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/GujianSansSC-Regular.ttf",
+      "fontFileName": "GujianSansSC-Regular.ttf",
+      "fontManifestRelativePath": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/font-manifest.json",
+      "fontManifestSha256": "7bdbbb65a02ba0f8f76bf67d392f9926045f0a375b8e78192d8ad45caee29751",
+      "fontSha256": "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7",
+      "fsType": 0,
+      "instanceWeight": 400,
+      "licenseSpdx": "OFL-1.1",
+      "name": "logical_font_config.json",
+      "pdfEmbeddingEligible": true,
+      "postScriptName": "GujianSansSC-Regular",
+      "qualificationBlocker": null,
+      "releaseAssetIncluded": true,
+      "schemaVersion": "t0b-v2-logical-font-config-2",
+      "sha256": "03b8dbe63468f6006237943b0767623e64fb42b370fe9c12ca5d9bff5d3e7f7b",
+      "source": "google-fonts-pinned-derived-instance",
+      "sourceCommit": "038b637da7b3fd956a4ed93ffc607c3d5e4ce172",
+      "sourceFontSha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+      "styleName": "GJ-GUJIAN-SANS-SC"
+    },
+    "manifest": {
+      "name": "geometry-manifest.json",
+      "producerType": "demo",
+      "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+    }
+  },
+  "outputs": {
+    "dxf": {
+      "dxfVersion": "AC1032",
+      "insunits": 4,
+      "modelSpaceScale": "1:1",
+      "name": "T0B.dxf",
+      "sha256": "60122094fc43183e235724cfa1a6b48e629e19126c21d0d1167ac515421e358f"
+    },
+    "provenanceSidecar": {
+      "name": "T0B-source-map.ndjson",
+      "rowCount": 51636,
+      "sha256": "6389b786339d48e2617708980e753dbd4c68906631027096c21525b7eb9cea9c"
+    }
+  },
+  "qualification": {
+    "fontAssetStatus": "bound-licensed-static-instance",
+    "generatorMaySetEligible": false,
+    "requiredBlockers": [
+      "BRACKET_DETAIL_SIMPLIFIED_GEOMETRY",
+      "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED",
+      "AUTOCAD_REAUDIT_REQUIRED",
+      "CROSS_FORMAT_INDEPENDENT_VERIFICATION_PENDING",
+      "PROFESSIONAL_REVIEW_PENDING"
+    ]
+  },
+  "readback": {
+    "defaultViewportLayerZeroCount": 2,
+    "ezdxfAuditErrors": 0,
+    "layoutCount": 2,
+    "lockedUserViewportCount": 10,
+    "materialHatchCount": 315,
+    "modelSpaceTypeCounts": {
+      "DIMENSION": 33,
+      "HATCH": 315,
+      "INSERT": 70,
+      "LINE": 50835,
+      "LWPOLYLINE": 279,
+      "MTEXT": 21
+    },
+    "structuralXdataCoverage": 1.0
+  },
+  "schemaVersion": "t0b-v2-native-dxf-build-1",
+  "status": "generated-not-qualified",
+  "useBoundary": [
+    "demo-only",
+    "not-for-formal-signoff"
+  ]
+}

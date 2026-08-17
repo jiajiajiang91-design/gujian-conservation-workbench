@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "t0-cold-install-verification-1",
+  "status": "passed",
+  "verifiedAt": "2026-08-11",
+  "platform": "Windows x86-64",
+  "python": "3.12.13",
+  "requirementsLock": {
+    "path": "workers/cad/requirements.lock",
+    "sha256": "04877f27654303a8618e56ec0e680bcb0b1683c7ce5d98cb41a2417a1b023d67",
+    "requireHashes": true,
+    "onlyBinary": true
+  },
+  "installation": {
+    "source": "local wheelhouse downloaded from PyPI",
+    "networkDisabledDuringInstall": true,
+    "packages": 16,
+    "exitCode": 0
+  },
+  "tests": {
+    "command": "python -m unittest discover -s workers/cad -p test_*.py -v",
+    "passed": 7,
+    "failed": 0,
+    "exitCode": 0
+  },
+  "cleanup": {
+    "temporaryEnvironmentRemoved": true,
+    "projectDataRemoved": false
+  }
+}

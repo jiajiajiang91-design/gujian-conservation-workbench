@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "status": "passed-project-geometry-technical-only",
+  "qualification": "generated-not-qualified",
+  "l1Eligible": false,
+  "formalEligibility": false,
+  "jobId": "421e97f6-1923-4a14-9ef2-3d2b200a24ed",
+  "projectRevisionId": "b7c474dd-d9c9-4a71-84b6-dbed1e637c88",
+  "geometryRevisionId": "0d14b417-b785-5408-8b27-06a052932619",
+  "geometrySignature": "650b032e0d5057f5d1aa61e929675b0f6347a6499f07ce47ea1117584031cd69",
+  "inputHash": "56f60a021bcdb321afdca2d216a6beb0f8eb204951fc8550befba3d62bc208d2",
+  "entityClosureHash": "60d22869f2c528baf8a7ea2d83819542042eb9e6c4eacf390ee721e17d347f7d",
+  "interfaceClosureHash": "7ab807197fac45cc88c80148bf7c35e6cd21c35cd953da6922918af547dc445b",
+  "assets": [
+    {
+      "kind": "ifc",
+      "fileName": "model.ifc",
+      "byteLength": 33347,
+      "sha256": "5bdc24bf6e800b9c1542aa1073841bb9acea1444f9daf0ca746f17453e26b57d"
+    },
+    {
+      "kind": "glb",
+      "fileName": "model.glb",
+      "byteLength": 14868,
+      "sha256": "45c7196254258b76dcdcf7aa5d3dec68a3ea06e1b3e1d47842c111ea26aeab5e"
+    },
+    {
+      "kind": "sourceMap",
+      "fileName": "source-map.ndjson",
+      "byteLength": 1584,
+      "sha256": "dff2434997c76edd574a7d749d4f2a955cf0b88b2161be9376110ee67d8df259"
+    },
+    {
+      "kind": "report",
+      "fileName": "geometry-report.json",
+      "byteLength": 994,
+      "sha256": "34373afaafbcb5e343383bbcad8b1468118c3946b214e0e1a21c836e4489a0d8"
+    },
+    {
+      "kind": "preview",
+      "fileName": "preview.png",
+      "byteLength": 13508,
+      "sha256": "248df279022e2a2f6573048145800503c20fe1f701465b99ee9ff5485c5bcd35"
+    }
+  ],
+  "evidence": {
+    "technicalVerificationSha256": "1d2813e0346842b9398cd6f1b76d2e3afefdbe675b3b1972751512897600bf5a",
+    "environmentProbeSha256": "c8a3f51578a96d5384a6eceec4bf68ea6e0652365fa96b21d60c472dde11d48a",
+    "browserScreenshotSha256": "c4ccf8a099962ee14f7c0c8293c208b0308fe237f9ba2efc3165d2f7f24fa445"
+  }
+}

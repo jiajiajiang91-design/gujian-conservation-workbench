@@ -1,0 +1,180 @@
+{
+  "schemaVersion": "t0b-manifest-1",
+  "generatorVersion": "t0b-professional-1",
+  "gate": "T0-B",
+  "qualityLevel": "L1",
+  "localProfessionalSampleEligible": true,
+  "professionalDeliverableEligible": false,
+  "formalEligibility": false,
+  "producerType": "demo",
+  "projectId": "59330d29-b313-5f0f-bbe1-89ab8911b432",
+  "fixtureId": "team-professional-hall-v1",
+  "specHash": "f82962cfc520cf8916b1dfd1d29ddb74e5358931529e3e92c178ecbf090f9be8",
+  "sourceRefs": [
+    "demo:team-professional-hall-v1"
+  ],
+  "objectCount": 86,
+  "entityMap": {
+    "terrace:main": "38301c4e-3ece-5a39-ac41-3ed7353cde3f",
+    "terrace:step:0": "862a474e-14d9-590d-ba5f-2dd8412668a0",
+    "terrace:step:1": "8c061032-0b9e-5406-a2be-b19eab01c9e0",
+    "terrace:step:2": "5add251d-b33d-56ca-b783-834997a6d405",
+    "column:0:0": "e3187c1c-5e4c-5129-aebf-9a0cc43268ba",
+    "foundation:0:0": "c6a56527-5e35-5d15-8759-a143e171034c",
+    "column:0:1": "074ea479-1cd5-57d3-952f-2f587724e722",
+    "foundation:0:1": "72b77512-c615-5dea-b49b-c4fb7eb4cca7",
+    "column:0:2": "289347c7-a40b-5a4b-a1f2-cad0d3ba59a6",
+    "foundation:0:2": "69ebeb19-41c1-58d7-a819-b187099f7f4d",
+    "column:0:3": "185653d7-d04e-5b12-bd36-7a8528f05069",
+    "foundation:0:3": "6a7b7560-1d51-5f79-af71-e3936a2b9ee3",
+    "column:1:0": "1766d540-b688-58b7-b377-0d915006069e",
+    "foundation:1:0": "b293f865-659d-5861-a151-a38a4eae69d5",
+    "column:1:1": "70cc7f9b-68ca-5acb-92fc-d6f15900cc4d",
+    "foundation:1:1": "740b114b-81d7-5b32-8d24-ea9db1840174",
+    "column:1:2": "dffb3f03-d6e8-5e22-a68e-38566ed3a547",
+    "foundation:1:2": "a7633ecf-6dfb-5ab2-916a-8892399af604",
+    "column:1:3": "a7cd1c9f-55a7-5d58-a8ca-213f993c7ca2",
+    "foundation:1:3": "68e938e8-9d9d-5c8a-9fcb-229d7c0c7c35",
+    "beam:eave:0": "491bd467-c50b-5422-8ea5-9ddc0569cc2a",
+    "bracket:0:0": "16ab7b6a-11c1-58e6-9e02-54cec0508ff6",
+    "bracket:0:1": "94da40db-39d5-5edc-b2ff-2a0fd9e73a25",
+    "bracket:0:2": "504ab404-53a7-565a-aaa6-c65eafb80702",
+    "bracket:0:3": "0ff7bc91-f596-58cd-83a9-6a11ea533b25",
+    "beam:eave:1": "5349d5ca-cdd7-5043-b71b-7646fda65dd3",
+    "bracket:1:0": "96d4821f-2d69-5eb8-9551-45963bae28d3",
+    "bracket:1:1": "3094ce3a-de91-5f4b-b162-74f0d2a682ac",
+    "bracket:1:2": "30fdc90d-de15-5994-9085-29ff33675d6e",
+    "bracket:1:3": "37affc44-b013-5a41-8804-61d01f4de2d6",
+    "purlin:-1:0": "bb82315d-5ef3-53c4-8a97-2b46523a846f",
+    "purlin:-1:1": "368d5e60-6f6f-589c-9933-661a92413c59",
+    "purlin:-1:2": "d8e75e2f-afda-58f8-abc7-b8153c07d70e",
+    "purlin:-1:3": "c323583c-1688-524a-a88c-32a51af6823b",
+    "purlin:1:0": "c8e6bb1e-743f-5b69-9a5a-6dc9a8201213",
+    "purlin:1:1": "b523ea90-cb99-5dac-89c8-5bd4320772d9",
+    "purlin:1:2": "1c553b64-6fc0-5951-bd2b-d06ce3d5cc12",
+    "purlin:1:3": "425db65c-f6e3-5209-8173-a683329943e3",
+    "rafter:-1:0": "4d2f94a8-8718-5a7b-beb6-ccc8c20429e2",
+    "rafter:-1:1": "b5360654-0bf8-569b-857b-a98c1ba6293c",
+    "rafter:-1:2": "7475fa8f-22d8-53a9-aa0e-a0e723d8746f",
+    "rafter:-1:3": "7b688434-0988-5cf6-b761-5596bb545fa8",
+    "rafter:-1:4": "3b5eab24-286b-57a9-9f9b-afa06436c5b5",
+    "rafter:-1:5": "f7ae1ba2-db89-55c4-b87f-5ec3626c8587",
+    "rafter:-1:6": "bc9d1735-d4bd-5429-b06b-c696e43d8813",
+    "rafter:-1:7": "77781e73-af65-58aa-9e94-d6c6220d6f42",
+    "rafter:-1:8": "859f489d-decd-591c-91fe-485b3c5af1e0",
+    "rafter:-1:9": "9cf03537-61a0-589e-98a7-9147ea7c4d68",
+    "rafter:-1:10": "5c2efd41-8272-5ddb-a8a7-b5f4a65d7617",
+    "rafter:-1:11": "be11798d-6dd4-5fc3-a8b2-7b682a0ab176",
+    "rafter:-1:12": "9dbbc2a2-da7a-520a-83dc-070ca84df5e8",
+    "rafter:-1:13": "abbc0abd-0e95-5496-98dc-48cc57413ee6",
+    "rafter:-1:14": "176671a7-148c-546b-bb1e-e116b5899360",
+    "rafter:-1:15": "33a91809-f61f-50ef-aae2-d32a0acf466b",
+    "rafter:-1:16": "0bc484d2-21cb-5d50-8d0a-c354fff0146f",
+    "rafter:1:0": "d42c7168-7a2a-5151-8184-c52a95c9af49",
+    "rafter:1:1": "f4dfe515-859a-5375-9446-4d3abbb676c0",
+    "rafter:1:2": "0ec9cfd4-883c-5cca-bb3a-385e28209569",
+    "rafter:1:3": "f46db7e4-55d9-50b9-a207-49cb903849ab",
+    "rafter:1:4": "04b6468e-6e17-5418-a3b5-764c8bd2305e",
+    "rafter:1:5": "d4818da8-5160-5de4-bca0-92c3a7746206",
+    "rafter:1:6": "f2d18960-a005-53bc-9f38-8eb9ac5ada4a",
+    "rafter:1:7": "f9758a21-65b4-5c38-b74a-a3b3a310e83d",
+    "rafter:1:8": "eb319ebf-1a7e-529d-b2fa-ee7a817e5786",
+    "rafter:1:9": "ddad2254-b3cb-5c08-a185-aaec069324f1",
+    "rafter:1:10": "a3b57612-b16b-5ce5-9c8a-df68a959d4bc",
+    "rafter:1:11": "d654ec34-bd16-5e1e-9910-e2ef9be3349f",
+    "rafter:1:12": "2572b0bb-4997-5675-b14c-137dac2ad42c",
+    "rafter:1:13": "d4299b17-f09d-566d-8399-92dcaf402d45",
+    "rafter:1:14": "22eaa2b3-eafe-510c-862e-460b55a43b77",
+    "rafter:1:15": "7a968862-d291-551f-bdfe-57baa158489e",
+    "rafter:1:16": "4002bbe9-b2ba-57eb-b5cc-eacf10351cd4",
+    "roof:surface:south": "fc2f8704-77f3-5a6f-8d21-662c7000b674",
+    "roof:surface:north": "fee6303b-43f7-5001-8420-078df8264ae6",
+    "tiles:-1": "a05d3dec-23cd-58d4-bb3d-d4b5b0e4ddd2",
+    "tiles:1": "bb80c64a-5035-57bc-afa4-e424f806794e",
+    "ridge:main": "528508c5-e906-51af-a5ce-83d479e7f61f",
+    "ridge:hip:-1:-1": "4da4c44e-d3df-55c1-9245-1e6aa7c12526",
+    "ridge:hip:-1:1": "8e088025-804d-588c-9733-d5d81107dc98",
+    "ridge:hip:1:-1": "7c9af611-b493-5dc3-8faf-b827e0da4c57",
+    "ridge:hip:1:1": "98525c35-4f72-5c91-9c2a-f74fab2702f3",
+    "eave:-1": "268530ca-e098-5c98-88a2-4e3e3c93a799",
+    "eave:1": "39a5df71-3d05-5463-b5dd-b3f052edd542",
+    "opening:0": "93526130-8dd2-561a-aa8b-6431ae9d1cf0",
+    "opening:1": "72cba1e7-e593-5193-a369-d2d1b46377d1",
+    "opening:2": "5fc5ae0d-2193-5667-8e39-9902207ab7b6"
+  },
+  "glb": {
+    "meshObjects": 86,
+    "categories": {
+      "terrace": 4,
+      "column": 8,
+      "foundation": 8,
+      "beam": 2,
+      "bracket": 8,
+      "purlin": 8,
+      "rafter": 34,
+      "roofSurface": 2,
+      "tiles": 2,
+      "ridge": 5,
+      "eave": 2,
+      "latticeWindow": 2,
+      "door": 1
+    },
+    "bounds": [
+      [
+        -7.493311482994589,
+        -1.2,
+        -5.685595086466564
+      ],
+      [
+        7.493311482994589,
+        9.38,
+        6.0
+      ]
+    ]
+  },
+  "dxf": {
+    "entities": 668,
+    "layouts": [
+      "Model",
+      "Layout1",
+      "A1-T0B"
+    ]
+  },
+  "environment": {
+    "python": "3.12.13",
+    "ezdxf": "1.4.4",
+    "trimesh": "4.12.2",
+    "font": {
+      "path": "C:\\Windows\\Fonts\\simhei.ttf",
+      "sha256": "9b1959db3b3abeb7efdaec26edf7dfe871a6039de8d614af7248575207be629e"
+    },
+    "pdfBackend": "ReportLab canvas"
+  },
+  "artifacts": [
+    {
+      "path": "geometry.json",
+      "bytes": 249310,
+      "sha256": "a7faf34d9d4a2356a4ff037dbea4b84c2aa9a8d61f58dd8050677e60d618b852"
+    },
+    {
+      "path": "t0b-professional-hall.glb",
+      "bytes": 718696,
+      "sha256": "8fd5ac344d2c0345b3549d38dbd13f74818755d1249b8367f9bd3990c9477022"
+    },
+    {
+      "path": "t0b-professional-sheet.dxf",
+      "bytes": 205117,
+      "sha256": "fef4b0aa256a48f600537299336e5988350afeb7eadcdf02211181a289a996a8"
+    },
+    {
+      "path": "t0b-professional-sheet.pdf",
+      "bytes": 52907,
+      "sha256": "029f7919fa4737e06e09b545e6b90a0005126150401a63f4f8124eaabc621f98"
+    },
+    {
+      "path": "t0b-professional-sheet.svg",
+      "bytes": 85993,
+      "sha256": "86deeeb4a6233086208bf3bfdba07bd58da400cfb6af6bc954222b2716f24570"
+    }
+  ]
+}

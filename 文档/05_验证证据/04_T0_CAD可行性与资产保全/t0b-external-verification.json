@@ -1,0 +1,21 @@
+{
+    "schemaVersion":  "t0-external-verification-1",
+    "status":  "passed",
+    "gate":  "T0-B",
+    "qualityLevel":  "L1",
+    "autocad":  {
+                    "executable":  "D:\\AutoCAD 2024\\accoreconsole.exe",
+                    "version":  "24.3.61.0.0",
+                    "exitCode":  0,
+                    "auditZeroErrors":  true,
+                    "fontSubstitution":  false,
+                    "logSha256":  "691bd6c5592e06eca523d2343919a7fca3e6201e91739296c0f5f77f1b0b1bed"
+                },
+    "blender":  {
+                    "executable":  "D:\\Blender 5.0\\blender.exe",
+                    "version":  "5.0",
+                    "meshObjects":  86,
+                    "previewSha256":  "2d20e2087144cc1380256a6a5031690c0461dbc1981fe80e0eeaf5d324773aa9",
+                    "logSha256":  "f38468247aa58bcfe9aca0d9453d03d4635ead5896463403b639450d0e985f59"
+                }
+}
