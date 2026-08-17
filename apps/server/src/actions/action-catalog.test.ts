@@ -25,6 +25,22 @@ describe("动作目录", () => {
     }
   });
 
+  it("切换视图覆盖工作区十个视图加模型运行与费用", () => {
+    // 少一个视图，助手就切不过去，模型侧还会因为 z.enum 拒绝而落到兜底回答。
+    const expected = [
+      "任务卡", "资料清单", "实测基准", "构件清单", "现状记录",
+      "三维模型", "问题队列", "图纸样式", "图纸与检查", "交付包",
+      "模型运行与费用",
+    ];
+    for (const view of expected) {
+      expect(validateActionCall("switch_view", { view }).ok).toBe(true);
+    }
+    const schema = modelFacingCatalog().find((a) => a.name === "switch_view")?.parameters as {
+      properties: { view: { enum: string[] } };
+    };
+    expect(schema.properties.view.enum).toEqual(expected);
+  });
+
   it("高成本动作与确认级别标记正确", () => {
     const costly = ACTION_DEFINITIONS.filter((a) => a.costly).map((a) => a.name);
     expect(costly.sort()).toEqual(["generate_drawings", "generate_geometry"]);

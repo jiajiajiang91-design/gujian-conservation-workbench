@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { dispatchUserText, keywordFallback, type ModelDispatchRunner } from "./dispatch.js";
+import { WORKSPACE_VIEW_NAMES } from "@gujian/domain";
+
+import { dispatchUserText, keywordFallback, VIEW_JUMP, type ModelDispatchRunner } from "./dispatch.js";
 
 const toolCall = (name: string, args: unknown) => ({
   kind: "tool_call" as const,
@@ -106,6 +108,44 @@ describe("关键词退路表", () => {
   for (const [text, expected] of cases) {
     it(`${text} 落到 ${expected}`, () => {
       expect(keywordFallback(text).name).toBe(expected);
+    });
+  }
+});
+
+describe("切视图与作业动作的边界", () => {
+  it("每个工作区视图都有关键词退路", () => {
+    const covered = VIEW_JUMP.map(([, view]) => view);
+    expect([...covered].sort()).toEqual([...WORKSPACE_VIEW_NAMES].sort());
+  });
+
+  const viewCases: Array<[string, string]> = [
+    ["看三维模型", "三维模型"],
+    ["打开问题队列", "问题队列"],
+    ["看一下待办", "问题队列"],
+    ["去看模型用量和费用", "模型运行与费用"],
+    ["打开图纸样式", "图纸样式"],
+    ["看图纸", "图纸与检查"],
+  ];
+  for (const [text, view] of viewCases) {
+    it(`${text} 切到${view}`, () => {
+      expect(keywordFallback(text)).toEqual({ name: "switch_view", args: { view } });
+    });
+  }
+
+  it("看三维模型不触发生成三维这类高成本作业", () => {
+    expect(keywordFallback("看三维模型").name).not.toBe("generate_geometry");
+  });
+
+  const jobCases: Array<[string, string]> = [
+    ["生成三维模型", "generate_geometry"],
+    ["重新建模", "generate_geometry"],
+    ["检查一下数据", "run_data_check"],
+    ["帮我组包交付", "export_deliverable"],
+    ["帮我盘点资料", "parse_task_brief"],
+  ];
+  for (const [text, action] of jobCases) {
+    it(`${text} 仍落到 ${action}`, () => {
+      expect(keywordFallback(text).name).toBe(action);
     });
   }
 });

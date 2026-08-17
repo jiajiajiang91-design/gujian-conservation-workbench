@@ -1,8 +1,9 @@
-// 07 界面与交互形态表 2 的十个工作区视图，加表 3 的模型运行与费用页面。
-// 项目列表属左栏，不是工作区视图，不进本表。
+import type { WorkspaceViewName } from "@gujian/domain";
+
+// 视图名取自 WORKSPACE_VIEW_NAMES，每个视图都要有一行，测试有覆盖检查。
 // 缺失视图不从目录移除（目录稳定原则），切换时落到最近替代 stage 并返回结构化说明。
 export interface ViewMapping {
-  view: string;
+  view: WorkspaceViewName;
   stageId: string;
   implemented: boolean;
   noteZh: string | null;

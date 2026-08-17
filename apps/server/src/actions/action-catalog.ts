@@ -1,3 +1,4 @@
+import { WORKSPACE_VIEW_NAMES } from "@gujian/domain";
 import { z } from "zod";
 
 // 动作目录：13-6 表 10 修订稿（2026-08-15）的代码形态。
@@ -18,10 +19,7 @@ export interface ActionDefinition {
   generation: 1 | 2 | 3;
 }
 
-const VIEW_NAMES = [
-  "任务卡", "资料清单", "实测基准", "构件清单",
-  "现状记录", "图纸样式", "图纸与检查", "交付包",
-] as const;
+const VIEW_NAMES = WORKSPACE_VIEW_NAMES;
 
 const CHANGE_TYPES = [
   "参数修改", "类别修改", "标记存疑", "标记不可用", "标记不可见", "新增", "删除",

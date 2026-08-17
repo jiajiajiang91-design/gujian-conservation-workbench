@@ -1,3 +1,5 @@
+import type { WorkspaceViewName } from "@gujian/domain";
+
 import { validateActionCall, type ActionDefinition } from "./action-catalog.js";
 
 export interface ModelToolCall {
@@ -30,18 +32,37 @@ export interface DispatchTrace {
 
 // 关键词退路：移植自旧原型 orchestrator.js userSay（738-807 行）的正则表。
 // 关键词无法构造带参动作（如修改建议需要 subjectRef），这类表达一律落回答问题兜底。
-const VIEW_JUMP: Array<[RegExp, string]> = [
+// 视图名取自 WORKSPACE_VIEW_NAMES，每个视图都要有一行，测试有覆盖检查。
+// 关键词取窄不取宽：单独的"检查""模型""问题"同时是作业动作和视图名，
+// 放进这张表会把运行检查、生成三维一类的请求错判成切视图。
+export const VIEW_JUMP: Array<[RegExp, WorkspaceViewName]> = [
   [/任务/, "任务卡"],
   [/资料/, "资料清单"],
   [/实测|尺寸/, "实测基准"],
   [/构件/, "构件清单"],
   [/现状/, "现状记录"],
+  [/三维/, "三维模型"],
+  [/问题队列|待办/, "问题队列"],
   [/样式/, "图纸样式"],
-  [/图纸|检查/, "图纸与检查"],
+  [/图纸/, "图纸与检查"],
   [/交付/, "交付包"],
+  [/费用|用量|运行记录/, "模型运行与费用"],
 ];
 
+// 切视图带明确的动词前缀（看、去、打开、切到），意图比作业类关键词明确，
+// 必须先判。否则"看三维模型"会被派成生成三维这类高成本作业动作。
+function viewJump(text: string): { name: string; args: unknown } | null {
+  for (const [re, view] of VIEW_JUMP) {
+    if (new RegExp(`(看|去|打开|切到).*(${re.source})`).test(text)) {
+      return { name: "switch_view", args: { view } };
+    }
+  }
+  return null;
+}
+
 export function keywordFallback(text: string): { name: string; args: unknown } {
+  const jump = viewJump(text);
+  if (jump) return jump;
   if (/重新识别/.test(text)) return { name: "rerun_recognition", args: {} };
   if (/继续|往下|接着/.test(text)) return { name: "advance_workflow", args: {} };
   if (/出图|开始画|画图/.test(text)) return { name: "generate_drawings", args: {} };
@@ -50,11 +71,6 @@ export function keywordFallback(text: string): { name: string; args: unknown } {
   if (/解析任务书|盘点资料|解析资料/.test(text)) return { name: "parse_task_brief", args: {} };
   if (/检查/.test(text)) return { name: "run_data_check", args: {} };
   if (/进度|还要多久|跑完/.test(text)) return { name: "query_job_progress", args: {} };
-  for (const [re, view] of VIEW_JUMP) {
-    if (new RegExp(`(看|去|打开|切到).*(${re.source})`).test(text)) {
-      return { name: "switch_view", args: { view } };
-    }
-  }
   return { name: "answer_question", args: { question: text } };
 }
 

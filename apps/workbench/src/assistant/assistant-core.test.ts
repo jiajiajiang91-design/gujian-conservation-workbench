@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectHead } from "@gujian/application";
+import { WORKSPACE_VIEW_NAMES } from "@gujian/domain";
 
 import {
   AssistantExecutors,
@@ -17,12 +18,7 @@ const HEAD = {
   revisionId: "9f8e7d6c-5b4a-4392-8170-fedcba987654",
 } as unknown as ProjectHead;
 
-// 07 表 2 的十个工作区视图，加表 3 的模型运行与费用
-const DESIGN_VIEWS = [
-  "任务卡", "资料清单", "实测基准", "构件清单", "现状记录",
-  "三维模型", "问题队列", "图纸样式", "图纸与检查", "交付包",
-  "模型运行与费用",
-];
+const DESIGN_VIEWS = [...WORKSPACE_VIEW_NAMES];
 
 describe("视图映射", () => {
   it("设计视图全部有映射，未实现的带说明", () => {
