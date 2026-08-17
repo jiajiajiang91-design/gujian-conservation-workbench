@@ -28,11 +28,15 @@ await commands.execute({
 });
 let head = await repository.getProjectHead(projectId);
 const commandId = crypto.randomUUID();
+// 演示尺寸的来源必须是 demo：它不是现场实测也不是人工转写，
+// 标成 human 会让界面把演示数据显示为真实结果（质量基准 2.3）。
+// 没有真实资料支撑时不写证据引用，避免出现指向不存在资料的假引用。
+const demoProducer = { producerType: "demo", fixtureId: "lift-ratio-demo" };
 await commands.execute({
   commandType: "CommitFacts", commandId, projectId, actorId,
   expectedRevisionId: head.revisionId, issuedAt: now, payload: { facts: [
-    { id: crypto.randomUUID(), subjectRef: head.snapshot.buildings[0].id, field: "roofFrame.totalDepthMm", value: 3600, producer: { producerType: "human", actorId, actionRef: { commandId } }, evidenceRefs: ["evidence:frame-note"], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
-    { id: crypto.randomUUID(), subjectRef: head.snapshot.buildings[0].id, field: "roofFrame.stepCount", value: 3, producer: { producerType: "human", actorId, actionRef: { commandId } }, evidenceRefs: ["evidence:frame-note"], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
+    { id: crypto.randomUUID(), subjectRef: head.snapshot.buildings[0].id, field: "roofFrame.totalDepthMm", value: 3600, producer: demoProducer, evidenceRefs: [], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
+    { id: crypto.randomUUID(), subjectRef: head.snapshot.buildings[0].id, field: "roofFrame.stepCount", value: 3, producer: demoProducer, evidenceRefs: [], reviewStatus: "confirmed", acceptanceRef: { type: "command", id: commandId }, dataStatus: "available" },
   ] },
 });
 head = await repository.getProjectHead(projectId);

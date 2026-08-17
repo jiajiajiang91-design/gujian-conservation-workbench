@@ -927,10 +927,11 @@ export function App() {
       .filter((item) => item.withinTolerance === false);
   })();
 
-  // 引用一律显示资料名称，不显示内部编号
+  // 引用一律显示资料名称，不显示内部编号。
+  // 找不到对应资料时如实说明，不能用泛称掩盖引用失效。
   const evidenceTitle = (ref: string) => {
     const evidence = selected?.snapshot.evidences.find((item) => item.id === ref || ref.endsWith(item.id));
-    return evidence?.title ?? "关联资料";
+    return evidence?.title ?? "引用的资料缺失";
   };
   // 字段名转成测绘人员熟悉的说法
   const factFieldLabel = (field: string) => {
@@ -947,7 +948,8 @@ export function App() {
     return field;
   };
 
-  // 数据来源构成（05 表 7）：实测依据、AI 推测、人工确认分别可见
+  // 数据来源构成（07 界面视觉规范表 3）：四类来源按数据模型的 producerType 统计。
+  // 数据模型没有"实测"这一类来源，实测另按测量记录统计，不能拿人工确认顶替。
   const basisCounts = (() => {
     const counts = { model: 0, human: 0, rule: 0, demo: 0 };
     for (const fact of selected?.snapshot.facts ?? []) {
@@ -956,6 +958,10 @@ export function App() {
     }
     return counts;
   })();
+
+  // 实测记录：只算测量人、时间、方法齐全的记录，这是系统内唯一有现场实测支撑的口径
+  const measuredRecordCount = (selected?.snapshot.measurements ?? [])
+    .filter((item) => item.metadataStatus === "complete").length;
 
   // 当前状态条（05 表 3）：说明系统正在做什么与进度，不用静态文案顶替
   const currentStatusText = (() => {
@@ -1146,13 +1152,14 @@ export function App() {
       </section>
       <section className="workspace-shell">
         <div className="topbar">
-          {/* 三种状态的可见区分（05 表 7）：每条数据标明来源，此处给出全项目构成 */}
+          {/* 来源可区分（07 界面视觉规范表 3）：四类来源按数据模型统计，实测另算 */}
           <div>
             <span className="status-dot" />
             <span className="muted">{serverStatus?.modelConfigured ? "在线识别已连接" : "等待服务端密钥"}</span>
-            {selected && <><span className="basis-tag measured">实测依据 {basisCounts.human}</span>
-            <span className="basis-tag inferred">AI 推测 {basisCounts.model}</span>
-            <span className="basis-tag ruled">规则推导 {basisCounts.rule}</span>
+            {selected && <><span className="basis-tag measured" title="有测量人、时间与方法记录的现场实测">实测记录 {measuredRecordCount}</span>
+            <span className="basis-tag human">人工确认 {basisCounts.human}</span>
+            <span className="basis-tag inferred">AI 识别 {basisCounts.model}</span>
+            <span className="basis-tag ruled">自动核对 {basisCounts.rule}</span>
             <span className="basis-tag demo">示例资料 {basisCounts.demo}</span></>}
           </div>
           <div>

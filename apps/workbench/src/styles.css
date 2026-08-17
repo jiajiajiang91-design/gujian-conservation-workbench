@@ -95,6 +95,8 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .basis-tag::before { content: ""; width: 8px; height: 8px; flex: 0 0 auto; }
 .basis-tag.measured { color: var(--src-measured); }
 .basis-tag.measured::before { background: currentColor; border-radius: var(--radius-pill); }
+.basis-tag.human { color: var(--src-human); }
+.basis-tag.human::before { background: currentColor; border-radius: var(--radius-pill); }
 .basis-tag.inferred { color: var(--src-model); }
 .basis-tag.inferred::before { border: 1.5px solid currentColor; border-radius: var(--radius-pill); }
 .basis-tag.ruled { color: var(--src-rule); }
