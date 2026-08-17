@@ -204,7 +204,17 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .geometry-inspector dl div { display: grid; grid-template-columns: 72px 1fr; gap: 8px; font-size: 12px; }
 .geometry-inspector dt { color: var(--text-secondary); }
 .geometry-inspector dd { margin: 0; overflow-wrap: anywhere; }
-.qualification-chip { width: fit-content; padding: 5px 8px; border-radius: 3px; color: var(--danger); background: var(--danger-soft); font-size: 13px; font-weight: 650; }
+/* 资格标签：常驻显示结论，展开显示成果等级、使用禁区、身份性质三层限制 */
+.qualification-block { width: fit-content; display: grid; gap: 6px; justify-items: start; }
+.qualification-chip { width: fit-content; padding: 5px 8px; border: 0; border-radius: 3px; color: var(--danger); background: var(--danger-soft); font: var(--text-note); font-weight: 650; text-align: left; cursor: pointer; }
+.qualification-chip[aria-expanded="true"] { outline: 1px solid var(--danger); }
+.qualification-limits { margin: 0; max-width: 460px; display: grid; gap: 5px; padding: 8px 10px; background: var(--bg-subtle); border-left: 2px solid var(--danger); }
+.qualification-limits div { display: grid; grid-template-columns: 60px 1fr; gap: 8px; }
+.qualification-limits dt { font: var(--text-label); color: var(--text-secondary); }
+.qualification-limits dd { margin: 0; font: var(--text-label); color: var(--text-primary); line-height: 1.7; }
+.drawing-limitation { display: grid; gap: 4px; padding: 9px 12px; background: var(--danger-soft); border-left: 2px solid var(--danger); }
+.drawing-limitation strong { font: var(--text-label); color: var(--danger); }
+.drawing-limitation p { margin: 0; font: var(--text-label); color: var(--text-primary); line-height: 1.7; }
 .unknown-card { padding: 12px; border-left: 3px solid var(--danger); background: var(--danger-soft); }
 .unknown-card p { margin: 6px 0; font-size: 12px; line-height: 1.5; }
 .geometry-gate, .delivery-blockers, .delivery-status { margin: 16px 0; padding: 15px 16px; border-left: 3px solid var(--warning); background: var(--warning-soft); }

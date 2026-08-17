@@ -22,6 +22,8 @@ import {
 } from "./workbench";
 import { buildArtifactMatrix } from "./artifact-matrix-builder";
 import { describeFailure, inputError, type FailureNotice } from "./failure-notice";
+import { DrawingLimitationNote, QualificationChip } from "./QualificationNotice";
+import { describeBlocker } from "./qualification";
 import { commitGeometryFacts } from "./geometry-fact-service";
 import { commitDocumentedDimensionChain } from "./document-dimension-service";
 import { geometryPrerequisites } from "./geometry-spec-builder";
@@ -74,15 +76,6 @@ export const REVIEW_LABELS: Record<string, string> = {
 // 存疑是本产品最需要显性表达的状态，缺它等于把不确定当成可用
 export const DATA_STATUS_LABELS: Record<string, string> = {
   available: "可用", uncertain: "存疑", missing: "缺失", stale: "已过期",
-};
-const BLOCKER_LABELS: Record<string, string> = {
-  UNVERIFIED_DIMENSION_CANDIDATES: "尺寸尚未核验",
-  MEASUREMENT_METADATA_MISSING: "测量记录缺测量人、时间或方法",
-  GEOMETRY_EVIDENCE_FACTS_MISSING: "缺少支撑三维模型的实测数据",
-  missingEvidence: "资料不足",
-  ruleConflict: "数据对不上",
-  professionalUncertainty: "需专业判断",
-  highRisk: "存在高风险项",
 };
 // 恢复检验用的独立数据库，与本机项目库分开，用完即删
 const ROUNDTRIP_VERIFY_DB = "gujian-roundtrip-verify";
@@ -967,6 +960,9 @@ export function App() {
   const measuredRecordCount = (selected?.snapshot.measurements ?? [])
     .filter((item) => item.metadataStatus === "complete").length;
 
+  // 阻断原因用中文说法显示。多个内部码可能翻成同一句话，去重后再列。
+  const blockerReasons = [...new Set((dashboard?.blockerCodes ?? []).map(describeBlocker))];
+
   // 当前状态条（05 表 3）：说明系统正在做什么与进度，不用静态文案顶替
   const currentStatusText = (() => {
     if (!selected) return "选中项目后，可在这里对助手下达操作指令。";
@@ -1533,7 +1529,7 @@ export function App() {
                   <div className="geometry-workspace">
                     <GlbViewer blob={geometryBlob} onSelect={setSelectedGeometryEntityId} />
                     <aside className="geometry-inspector">
-                      <span className="qualification-chip">未签发，不能用于正式交付</span>
+                      <QualificationChip />
                       <h4>{selectedGeometryEntity?.displayNameZh ?? "选择模型构件查看来源"}</h4>
                       {selectedGeometryEntity ? <>
                         <dl>
@@ -1613,12 +1609,14 @@ export function App() {
               <section className="evidence-board drawing-board">
                 <header className="board-heading">
                   <div><h3>成组平立剖与节点详图</h3></div>
+                  <QualificationChip />
                   <button className="gj-btn gj-btn--primary" type="button" disabled={!geometryRevision || !confirmedTask || Boolean(drawingProgress && !["succeeded", "failed"].includes(drawingProgress))} onClick={() => void generateDrawings()}>
                     <Images size={14} /> {drawingProgress && !["succeeded", "failed"].includes(drawingProgress) ? "生成中" : "按成果目录生成"}
                   </button>
                 </header>
                 <div className="pane-body">
                 <div className="transmission-note"><ShieldCheck size={15} /><span>图种、图幅和版面来自任务要求；图上每条线都由当前三维模型剖切或投影得到，不另外描画。</span></div>
+                {drawingArtifacts.length > 0 && <DrawingLimitationNote />}
                 {drawingArtifacts.length ? (
                   <><div className="drawing-preview-grid" aria-label="成组图纸预览">
                     {drawingPreviewUrls.map((preview) => preview.kind === "svg"
@@ -1635,15 +1633,15 @@ export function App() {
 
             {activeStage === "checks" && (
               <section className="evidence-board checks-board">
-                <header className="board-heading"><div><h3>检查结果与待确认项</h3></div><span className="qualification-chip">未签发，不能用于正式交付</span></header>
+                <header className="board-heading"><div><h3>检查结果与待确认项</h3></div><QualificationChip /></header>
                 <div className="pane-body">
                 <div className="summary-grid">
                   <article><span>三维模型</span><strong>{geometryRevision ? "已生成" : "未生成"}</strong><small>{geometrySpec?.unknowns.length ?? 0} 项待确认</small></article>
                   <article><span>当前成果</span><strong>{artifactSetView?.currentArtifacts.length ?? 0} 项</strong><small>{artifactSetView?.crossRevisionArtifactCount ?? 0} 项旧版本成果已隔离</small></article>
                   <article><span>检查结论</span><strong>{latestCheckRun ? latestCheckRun.results.filter((result) => result.outcome === "blocked").length ? "有不通过项" : "全部通过" : "尚未检查"}</strong><small>技术检查通过不等于专业复核通过</small></article>
                 </div>
-                {latestCheckRun ? <div className="check-register">{latestCheckRun.results.map((result) => <article key={result.code} className={result.outcome}><span>{result.outcome === "passed" ? "通过" : "不通过"}</span><strong>{result.code}</strong><p>{result.message}</p></article>)}</div> : <div className="panel-empty">还没有检查记录。检查通过不等于专业复核通过，签发仍需责任人操作。</div>}
-                {!!dashboard?.blockerCodes.length && <div className="delivery-blockers"><strong>暂时不能正式交付</strong>{dashboard.blockerCodes.map((code) => <p key={code}>{BLOCKER_LABELS[code] ?? code}</p>)}</div>}
+                {latestCheckRun ? <div className="check-register">{latestCheckRun.results.map((result) => <article key={result.code} className={result.outcome}><span>{result.outcome === "passed" ? "通过" : "不通过"}</span><strong>{describeBlocker(result.code)}</strong><p>{result.message}</p></article>)}</div> : <div className="panel-empty">还没有检查记录。检查通过不等于专业复核通过，签发仍需责任人操作。</div>}
+                {!!blockerReasons.length && <div className="delivery-blockers"><strong>暂时不能正式交付</strong>{blockerReasons.map((reason) => <p key={reason}>{reason}</p>)}</div>}
                 </div>
               </section>
             )}
@@ -1652,7 +1650,7 @@ export function App() {
               <section className="evidence-board package-board">
                 <header className="board-heading"><div><h3>代理成果交付与项目包</h3></div><button className="gj-btn gj-btn--primary" type="button" disabled={!geometryRevision || !latestCheckRun || !drawingArtifacts.length || Boolean(latestDelivery)} onClick={() => void createProxyDelivery()}><PackageOpen size={14} /> 建立代理交付草案</button></header>
                 <div className="pane-body">
-                {latestDelivery ? <div className="delivery-status"><span className="qualification-chip">未签发，不能用于正式交付</span><strong>交付草案 {latestDelivery.id.slice(0, 8)}</strong><p>{latestDelivery.restrictions.join(" · ")}</p></div> : deliveries.blockers(selected).length ? <div className="delivery-blockers"><strong>暂时不能正式交付</strong>{deliveries.blockers(selected).map((item) => <p key={item}>{item}</p>)}<button type="button" disabled={Boolean(latestBlockedDelivery)} onClick={() => void recordBlockedDelivery()}>{latestBlockedDelivery ? "已记录原因" : "记录无法交付的原因"}</button></div> : null}
+                {latestDelivery ? <div className="delivery-status"><QualificationChip /><strong>交付草案已建立</strong><p>{latestDelivery.restrictions.join(" · ")}</p></div> : deliveries.blockers(selected).length ? <div className="delivery-blockers"><strong>暂时不能正式交付</strong>{deliveries.blockers(selected).map((item) => <p key={item}>{item}</p>)}<button type="button" disabled={Boolean(latestBlockedDelivery)} onClick={() => void recordBlockedDelivery()}>{latestBlockedDelivery ? "已记录原因" : "记录无法交付的原因"}</button></div> : null}
                 <div className="package-grid">
                   <article><FileJson /><strong>project.json</strong><p>适合检查结构化记录，不包含二进制文件本体。</p><button type="button" onClick={() => void downloadProject("json")}>导出 JSON</button></article>
                   <article><PackageOpen /><strong>project.gujian.zip</strong><p>包含全部资料原件、识别与核对记录、人工决定、三维模型、图纸、检查结果和交付草案。</p><button type="button" onClick={() => void downloadProject("zip")}>导出代理 ZIP</button></article>

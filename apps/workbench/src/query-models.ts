@@ -10,6 +10,8 @@ import type {
   RuleRun,
 } from "@gujian/domain";
 
+import { QUALIFICATION_CHIP_LABEL } from "./qualification";
+
 export type WorkbenchStage =
   | "资料整理"
   | "问题处理中"
@@ -25,7 +27,7 @@ export interface ProjectDashboardSummary {
   readonly geometryRevisionCount: number;
   readonly artifactCount: number;
   readonly blockerCodes: readonly string[];
-  readonly qualificationLabel: "未签发，不能用于正式交付";
+  readonly qualificationLabel: typeof QUALIFICATION_CHIP_LABEL;
 }
 
 export interface ProvenanceNode {
@@ -118,7 +120,7 @@ export function buildProjectDashboardSummary(input: ReadModelInput): ProjectDash
     geometryRevisionCount: snapshot.geometryRevisions.length,
     artifactCount: currentArtifacts.length,
     blockerCodes: [...blockers],
-    qualificationLabel: "未签发，不能用于正式交付",
+    qualificationLabel: QUALIFICATION_CHIP_LABEL,
   };
 }
 

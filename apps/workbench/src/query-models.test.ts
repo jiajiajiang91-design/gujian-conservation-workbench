@@ -19,7 +19,8 @@ describe("workbench query models", () => {
     });
     expect(summary.stage).toBe("资料整理");
     expect(summary.evidenceCompleteness).toBe(0);
-    expect(summary.qualificationLabel).toContain("不能用于正式交付");
+    expect(summary.qualificationLabel).toContain("未签发");
+    expect(summary.qualificationLabel).toContain("未达专业样板等级");
     expect(snapshot.evidences).toHaveLength(0);
   });
 
