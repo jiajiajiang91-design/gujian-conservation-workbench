@@ -5,6 +5,7 @@ import { ArtifactRequirementMatrixSchema, ProjectDrivenGeometrySpecSchema } from
 import { z } from "zod";
 
 import { ActionLedger } from "./actions/action-ledger.js";
+import { modelFacingCatalog } from "./actions/action-catalog.js";
 import { AssistantRuntime } from "./actions/assistant-routes.js";
 import { CadJobLedger } from "./cad-ledger.js";
 import { PythonCadWorker, type CadWorker, type CadWorkerRun } from "./cad-worker.js";
@@ -334,6 +335,11 @@ export function createWorkbenchServer(options: {
       const session = sessionId ? sessions.get(sessionId) : undefined;
       if (!session || session.expiresAt < Date.now() || request.headers["x-csrf-token"] !== session.csrfToken) {
         return writeJson(response, 403, { error: "SESSION_OR_CSRF_INVALID" }, origin);
+      }
+
+      // 模型侧动作目录（架构 7.6）：只投影名称、描述、参数三字段
+      if (request.method === "GET" && url.pathname === "/api/assistant/catalog") {
+        return writeJson(response, 200, { actions: modelFacingCatalog() }, origin);
       }
 
       if (request.method === "POST" && url.pathname === "/api/assistant/turn") {

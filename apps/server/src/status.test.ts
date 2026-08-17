@@ -108,6 +108,30 @@ describe("workbench server", () => {
     expect(replay.status).toBe(403);
   });
 
+  it("助手目录只返回名称、描述与参数，且需要会话", async () => {
+    const gateway: ModelGateway = {
+      configured: false,
+      model: "kimi-k2.6",
+      execute: async () => { throw new Error("not called"); },
+    };
+    const { baseUrl } = await start(gateway);
+
+    // 无会话不得枚举动作清单
+    expect((await fetch(`${baseUrl}/api/assistant/catalog`)).status).toBe(403);
+
+    const credentials = await session(baseUrl);
+    const response = await fetch(`${baseUrl}/api/assistant/catalog`, {
+      headers: { cookie: credentials.cookie, "x-csrf-token": credentials.csrfToken },
+    });
+    expect(response.status).toBe(200);
+    const body = await response.json() as { actions: Array<Record<string, unknown>> };
+    expect(body.actions).toHaveLength(14);
+    expect(body.actions.map((action) => action.name)).toContain("switch_view");
+    for (const action of body.actions) {
+      expect(Object.keys(action).sort()).toEqual(["description", "name", "parameters"]);
+    }
+  });
+
   it("取消后隔离迟到输出", async () => {
     let release!: (value: GatewayResult) => void;
     let callbacks!: Parameters<ModelGateway["execute"]>[0];
