@@ -21,6 +21,7 @@ import {
   projectCommands, workflow,
 } from "./workbench";
 import { buildArtifactMatrix } from "./artifact-matrix-builder";
+import { describeFailure, inputError, type FailureNotice } from "./failure-notice";
 import { commitGeometryFacts } from "./geometry-fact-service";
 import { commitDocumentedDimensionChain } from "./document-dimension-service";
 import { geometryPrerequisites } from "./geometry-spec-builder";
@@ -144,7 +145,7 @@ export function App() {
   const [activeStage, setActiveStage] = useState<StageId>("evidence");
   const [query, setQuery] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<FailureNotice | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [modelProgress, setModelProgress] = useState<ModelRunProgress | null>(null);
   const [cadProgress, setCadProgress] = useState<CadJobProgress | null>(null);
@@ -200,7 +201,7 @@ export function App() {
   };
 
   useEffect(() => {
-    void refresh().catch((reason: unknown) => setError(String(reason)));
+    void refresh().catch((reason: unknown) => setError(describeFailure(reason, "载入项目列表失败")));
     void fetch("/api/status")
       .then(async (response) => response.ok ? response.json() as Promise<ServerStatus> : Promise.reject(new Error("SERVER_STATUS_FAILED")))
       .then(setServerStatus)
@@ -335,7 +336,7 @@ export function App() {
       await refresh();
       setNotice("三维模型已生成。成果尚未经专业复核签发，不能用于正式交付");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "几何作业失败");
+      setError(describeFailure(reason, "几何作业失败"));
     }
   };
 
@@ -352,7 +353,7 @@ export function App() {
         },
       });
       setSelected(head); await refresh(); setNotice("控制尺寸已作为人工确认事实写入；来源仍指向当前项目资料");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "控制尺寸确认失败"); }
+    } catch (reason) { setError(describeFailure(reason, "控制尺寸确认失败")); }
   };
 
   const generateDrawings = async () => {
@@ -362,7 +363,7 @@ export function App() {
       const matrix = buildArtifactMatrix(selected, geometryRevision, geometrySpec);
       const outcome = await drawingJobs.generate(selected, localActorId(), geometryRevision, matrix, setDrawingProgress);
       setSelected(outcome.head); await loadProject(selected.projectId); await refresh(); setNotice("成组图纸已生成，各图与同一版三维模型一致");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "图纸作业失败"); }
+    } catch (reason) { setError(describeFailure(reason, "图纸作业失败")); }
   };
 
   const createProxyDelivery = async () => {
@@ -371,7 +372,7 @@ export function App() {
     try {
       const outcome = await deliveries.createProxyDraft(selected, localActorId(), geometryRevision, drawingArtifacts, latestCheckRun);
       setSelected(outcome.head); await loadProject(selected.projectId); await refresh(); setNotice("交付草案已建立。尚未签发，不能用于正式交付或施工");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "代理交付草案建立失败"); }
+    } catch (reason) { setError(describeFailure(reason, "代理交付草案建立失败")); }
   };
 
   const recordBlockedDelivery = async () => {
@@ -382,7 +383,7 @@ export function App() {
       await loadProject(selected.projectId);
       await refresh();
       setNotice("已记录本次无法正式交付的原因。系统没有生成空成果，也没有用默认数据补齐");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "记录失败"); }
+    } catch (reason) { setError(describeFailure(reason, "记录失败")); }
   };
 
   const downloadArtifact = async (artifact: ArtifactRecord) => {
@@ -412,7 +413,7 @@ export function App() {
       setActiveStage("evidence");
       setShowCreate(false);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "项目创建失败");
+      setError(describeFailure(reason, "项目创建失败"));
     }
   };
 
@@ -550,7 +551,7 @@ export function App() {
       await loadProject(selected.projectId);
       setNotice("形制模板已登记，应然值派生完成并入规则运行记录");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "形制模板登记失败");
+      setError(describeFailure(reason, "形制模板登记失败"));
     }
   };
 
@@ -562,7 +563,7 @@ export function App() {
       await loadProject(selected.projectId);
       setNotice("修改建议已确认生效");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "修改建议生效失败");
+      setError(describeFailure(reason, "修改建议生效失败"));
     }
   };
 
@@ -575,7 +576,7 @@ export function App() {
       setActiveStage("evidence");
       setNotice("项目包已校验并导入本地库");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "项目包导入失败");
+      setError(describeFailure(reason, "项目包导入失败"));
     } finally {
       if (importInput.current) importInput.current.value = "";
     }
@@ -695,7 +696,7 @@ export function App() {
       });
       setNotice("检验通过：导出的项目在独立环境中完整恢复，本机项目未改动");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "导出与恢复检验未通过");
+      setError(describeFailure(reason, "导出与恢复检验未通过"));
     } finally {
       // 验证库用完即删，失败路径同样清理，不留残库
       verifyDatabase?.close();
@@ -724,7 +725,7 @@ export function App() {
         ? `资料“${files[0]!.name}”已保存并建立来源关系`
         : `${files.length} 份原始资料已保存并逐份建立来源关系`);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "资料上传失败");
+      setError(describeFailure(reason, "资料上传失败"));
     } finally {
       if (evidenceInput.current) evidenceInput.current.value = "";
     }
@@ -754,7 +755,7 @@ export function App() {
       setNotice(outcome.candidate ? "助手已给出识别结果，请在待确认区逐条核对" : "本次识别没有产生可用结果");
       await refresh();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "模型运行失败");
+      setError(describeFailure(reason, "模型运行失败"));
     }
   };
 
@@ -782,7 +783,7 @@ export function App() {
       await refresh();
       setNotice("任务范围、规范和责任角色已一次确认");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "任务设置失败");
+      setError(describeFailure(reason, "任务设置失败"));
     }
   };
 
@@ -809,14 +810,14 @@ export function App() {
       setProjectRuleRuns(await projectRepository.getProjectRuleRuns(selected.projectId));
       await refresh();
       setNotice("任务成果要求已建立新版本；旧任务定义保留在审计链中。");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "任务成果要求更新失败"); }
+    } catch (reason) { setError(describeFailure(reason, "任务成果要求更新失败")); }
   };
 
   const decideCandidate = async (issueId: string, candidateId: string, outcome: "accepted" | "rejected") => {
     if (!selected) return;
     const typedReason = decisionReasons[issueId]?.trim() ?? "";
     if (outcome === "rejected" && !typedReason) {
-      setError("驳回候选时需要填写理由");
+      setError(inputError("驳回候选时需要填写理由"));
       return;
     }
     try {
@@ -835,7 +836,7 @@ export function App() {
       await refresh();
       setNotice(outcome === "accepted" ? "候选已接受，仍保持模型来源" : "候选已驳回并记录理由");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "候选处理失败");
+      setError(describeFailure(reason, "候选处理失败"));
     }
   };
 
@@ -845,11 +846,11 @@ export function App() {
     const selectedOptionId = selectedOptions[issueId] ?? null;
     const typedReason = decisionReasons[issueId]?.trim() ?? "";
     if (outcome === "accepted" && !selectedOptionId) {
-      setError("请先选择一个方案再确认");
+      setError(inputError("请先选择一个方案再确认"));
       return;
     }
     if (outcome === "rejected" && !typedReason) {
-      setError("暂不选择时需要填写理由");
+      setError(inputError("暂不选择时需要填写理由"));
       return;
     }
     try {
@@ -862,7 +863,7 @@ export function App() {
       setDecisionReasons((current) => ({ ...current, [issueId]: "" }));
       setNotice(outcome === "accepted" ? "方案已选定并记录出处，问题关闭" : "已记录暂不选择的理由");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "方案决定失败");
+      setError(describeFailure(reason, "方案决定失败"));
     }
   };
 
@@ -873,7 +874,7 @@ export function App() {
     const form = event.currentTarget;
     const data = new FormData(form);
     const evidenceRef = String(data.get("evidenceRef") ?? "").trim();
-    if (!evidenceRef) { setError("现状记录必须指向一份项目资料"); return; }
+    if (!evidenceRef) { setError(inputError("现状记录必须指向一份项目资料")); return; }
     const commandId = crypto.randomUUID();
     try {
       await projectCommands.execute({
@@ -895,7 +896,7 @@ export function App() {
       form.reset();
       setNotice("现状记录已写入当前版本，来源指向所选资料");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "现状记录写入失败");
+      setError(describeFailure(reason, "现状记录写入失败"));
     }
   };
 
@@ -918,7 +919,7 @@ export function App() {
       await refresh();
       setNotice("文档尺寸链已转写，规则已自动核对差值和测量元数据");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "尺寸链转写失败");
+      setError(describeFailure(reason, "尺寸链转写失败"));
     }
   };
 
@@ -1697,7 +1698,13 @@ export function App() {
             </div>
           </div>
         )}
-        {error && <div className="error-banner" role="alert">{error}</div>}
+        {error && (
+          <div className="error-banner" role="alert">
+            <span>{error.summaryZh}</span>
+            {error.nextStepZh && <em>{error.nextStepZh}</em>}
+            <button type="button" onClick={() => setError(null)} aria-label="关闭提示"><X size={13} /></button>
+          </div>
+        )}
         {notice && <div className="notice-banner" role="status"><Download size={13} /> {notice}<button type="button" onClick={() => setNotice(null)} aria-label="关闭提示"><X size={13} /></button></div>}
       </section>
       <aside className={`assistant-shell ${assistantCollapsed ? "collapsed" : ""}`}>

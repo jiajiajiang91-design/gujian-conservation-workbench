@@ -308,7 +308,11 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .check-register article strong { font: 13px Consolas, monospace; }
 .check-register article p { margin: 0 !important; color: var(--text-secondary) !important; font-size: 12px !important; line-height: 1.55 !important; }
 .check-register article code { grid-column: 2 / -1; color: var(--text-secondary); overflow-wrap: anywhere; font-size: 13px; }
-.error-banner { position: fixed; left: 350px; bottom: 22px; background: var(--danger); color: var(--bg-panel); padding: 10px 14px; font-size: 12px; box-shadow: 0 8px 30px rgba(61,28,19,.2); }
+/* 失败提示：第一行说明现象，第二行说明下一步（05 界面与交互形态 5.6） */
+.error-banner { position: fixed; left: 350px; bottom: 22px; max-width: 520px; background: var(--danger); color: var(--bg-panel); padding: 10px 14px; font: var(--text-note); box-shadow: 0 8px 30px rgba(61,28,19,.2); display: grid; grid-template-columns: 1fr 20px; gap: 4px 10px; }
+.error-banner span { grid-column: 1; }
+.error-banner em { grid-column: 1; font: var(--text-label); font-style: normal; opacity: .85; }
+.error-banner button { grid-column: 2; grid-row: 1; align-self: start; border: 0; background: transparent; color: var(--bg-panel); display: grid; place-items: center; padding: 0; }
 .notice-banner { position: fixed; left: 350px; bottom: 22px; background: var(--accent); color: var(--bg-panel); padding: 10px 12px; font-size: 13px; box-shadow: 0 8px 30px rgba(19,35,28,.2); display: flex; align-items: center; gap: 8px; }
 .notice-banner button { border: 0; background: transparent; color: var(--bg-panel); display: grid; place-items: center; padding: 0; }
 
