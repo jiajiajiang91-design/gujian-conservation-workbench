@@ -28,7 +28,7 @@ button:disabled { cursor: not-allowed; opacity: .48; }
 .evidence-board, .stage-list.professional, .summary-grid article, .object-table button, .object-table article,
 .candidate-card, .geometry-workspace, .artifact-list button, .check-summary, .transmission-note,
 .geometry-gate, .delivery-blockers, .delivery-status, .unknown-card, .archetype-comparison { border-radius: 10px; }
-.new-project, .secondary-action, .search-field, .upload-evidence, .quiet-link, .panel-toggle, .board-count,
+.search-field, .board-count,
 .project-card, .stage-row, .geometry-fact-form input, .geometry-fact-form button, .task-setup input,
 .task-setup textarea, .task-setup select, .task-setup button { border-radius: 7px; }
 .data-status, .producer-badge, .qualification-chip, .revision-chip, .project-card-status span { border-radius: 999px; }
@@ -65,8 +65,9 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .catalog-panel > footer { padding: 10px 16px; color: var(--text-secondary); font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--border); }
 .catalog-panel > footer button { padding: 0; display: flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--danger); font-size: 13px; }
 
-.new-project { width: 100%; min-height: 38px; margin: 20px 0 0; border: 1px solid var(--accent); color: var(--accent); background: var(--bg-panel); display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 12px; font-weight: 650; }
-.secondary-action { width: 100%; min-height: 36px; border: 0; border-bottom: 1px solid var(--border); color: var(--text-secondary); background: transparent; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 13px; }
+/* 按钮外观来自 gj- 组件，页面只写在版面中的排布 */
+.new-project { width: 100%; }
+.secondary-action { width: 100%; }
 .project-list { display: grid; align-content: start; max-height: calc(100vh - 342px); overflow: auto; border-top: 1px solid var(--border); }
 .project-card { min-height: 96px; padding: 12px 10px; border: 0; border-bottom: 1px solid var(--border); background: transparent; text-align: left; display: grid; gap: 4px; color: var(--text-primary); }
 .project-card:hover, .project-card.selected { background: var(--accent-soft); }
@@ -89,19 +90,18 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .topbar div { display: flex; gap: 12px; align-items: center; min-width: 0; font-size: 13px; }
 .status-dot { width: 7px; height: 7px; background: var(--success); border-radius: 50%; box-shadow: 0 0 0 3px var(--success-soft); }
 .muted { color: var(--text-secondary); font-size: 13px; }
-/* 三种状态的可见区分（05 表 7）：实测实心、推测空心、规则与示例分别着色 */
-.basis-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; font-size: 13px; }
-.basis-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
-.basis-tag.measured { color: var(--success); background: var(--success-soft); }
-.basis-tag.measured::before { background: var(--success); }
-.basis-tag.inferred { color: var(--text-secondary); background: var(--bg-subtle); }
-.basis-tag.inferred::before { border: 1px solid var(--text-muted); }
-.basis-tag.ruled { color: var(--accent); background: var(--accent-soft); }
-.basis-tag.ruled::before { background: var(--accent); }
-.basis-tag.demo { color: var(--warning); background: var(--warning-soft); }
-.basis-tag.demo::before { background: var(--warning); }
-.panel-toggle { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--border-strong); background: var(--bg-panel); color: var(--text-secondary); }
-.empty-workspace { min-height: calc(100vh - 58px); display: grid; grid-template-columns: 90px minmax(320px, 520px); align-content: center; justify-content: center; gap: 28px; }
+/* 顶栏来源统计条：沿用 gj-source 的来源色与形状，不复用语义色 */
+.basis-tag { display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--bg-subtle); font: var(--text-label); }
+.basis-tag::before { content: ""; width: 8px; height: 8px; flex: 0 0 auto; }
+.basis-tag.measured { color: var(--src-measured); }
+.basis-tag.measured::before { background: currentColor; border-radius: var(--radius-pill); }
+.basis-tag.inferred { color: var(--src-model); }
+.basis-tag.inferred::before { border: 1.5px solid currentColor; border-radius: var(--radius-pill); }
+.basis-tag.ruled { color: var(--src-rule); }
+.basis-tag.ruled::before { background: currentColor; }
+.basis-tag.demo { color: var(--src-demo); }
+.basis-tag.demo::before { background: repeating-linear-gradient(45deg, currentColor 0 2px, transparent 2px 4px); }
+.empty-workspace { min-height: 0; overflow-y: auto; display: grid; grid-template-columns: 90px minmax(320px, 520px); align-content: center; justify-content: center; gap: var(--space-8); }
 .trace-spine { position: relative; display: grid; justify-items: center; align-content: center; gap: 40px; }
 .trace-spine::before { content: ""; width: 1px; height: 172px; background: var(--text-muted); position: absolute; top: 50%; transform: translateY(-50%); }
 .trace-spine span { width: 13px; height: 13px; border: 2px solid var(--text-muted); background: var(--bg-page); border-radius: 50%; z-index: 1; }
@@ -131,7 +131,6 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .evidence-board > .pane-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--space-4); }
 .board-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .board-count { padding: 4px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--text-secondary); background: var(--bg-subtle); font-size: 13px; }
-.quiet-link { min-height: 30px; padding: 0 9px; border: 1px solid var(--border-strong); background: var(--bg-panel); color: var(--accent); font-size: 12px; }
 .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
 .summary-grid article { min-width: 0; min-height: 108px; padding: 14px; display: grid; align-content: start; gap: 7px; border: 1px solid var(--border); background: var(--bg-panel); }
 .summary-grid article > span { color: var(--text-secondary); font-size: 13px; }
@@ -151,7 +150,6 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .object-table span, .object-table strong { font-size: 12px; }
 .object-table code { color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .object-table small { color: var(--text-secondary); font-size: 13px; }
-.upload-evidence { min-height: 34px; padding: 0 11px; border: 0; background: var(--accent); color: var(--bg-panel); display: flex; align-items: center; gap: 7px; font-size: 13px; }
 /* 数据与证据双半区（07 表 2、09 第 6 节）：默认各半，分隔条可拖动 30% 至 70% */
 .stage-split { flex: 1 1 auto; min-height: 0; display: grid; overflow: hidden; }
 .pane-data { min-width: 0; min-height: 0; overflow-y: auto; padding: var(--space-4); }
@@ -190,7 +188,6 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .candidate-list { display: grid; gap: 12px; margin-top: 16px; }
 .candidate-card { border: 1px solid var(--border); background: var(--bg-panel); padding: 16px; }
 .candidate-meta { display: flex; align-items: center; gap: 9px; color: var(--text-secondary); font: 13px Consolas, monospace; }
-.producer-badge { padding: 3px 6px; border: 1px solid var(--border-strong); text-transform: uppercase; }
 .producer-badge.model { color: var(--accent); background: var(--success-soft); }
 
 .geometry-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 280px; min-height: 520px; border: 1px solid var(--border); background: var(--bg-page); }
@@ -312,7 +309,6 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 /* 右栏：状态条 / 消息流 / 输入区（05 表 3），只有消息流滚动 */
 .assistant-shell { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; background: var(--bg-panel); border-left: 1px solid var(--border); }
 .assistant-shell.collapsed { grid-template-rows: auto; padding: 10px 6px; overflow: hidden; }
-.assistant-open { width: 30px; height: 30px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-secondary); }
 .assistant-status { padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .assistant-status p { margin: 5px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .assistant-body { min-height: 0; overflow-y: auto; padding: 12px 16px; display: grid; align-content: start; gap: 10px; }
@@ -346,7 +342,7 @@ h1 { font: 600 14px/1.35 "Microsoft YaHei", sans-serif; letter-spacing: -.01em; 
 .create-dialog label { display: grid; gap: 7px; margin-top: 14px; color: var(--text-secondary); font-size: 12px; font-weight: 600; }
 .create-dialog input { width: 100%; height: 39px; padding: 0 10px; border: 1px solid var(--border-strong); background: var(--bg-panel); color: var(--text-primary); }
 .close-dialog { position: absolute; top: 14px; right: 14px; border: 0; background: transparent; color: var(--text-secondary); }
-.primary-action { width: 100%; min-height: 42px; margin-top: 24px; border: 0; background: var(--accent); color: var(--bg-panel); font-weight: 650; }
+.primary-action { width: 100%; margin-top: var(--space-6); }
 
 /* 焦点样式为主操作色外框（09 第 7 节） */
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,

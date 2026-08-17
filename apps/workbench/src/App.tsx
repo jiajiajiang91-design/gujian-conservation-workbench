@@ -1077,7 +1077,7 @@ export function App() {
             <h2>{selected.snapshot.buildings[0]?.name}</h2>
             <small>{confirmedTask?.name ?? selected.snapshot.project.name}</small>
             <small>{selected.snapshot.project.locationText ?? "地点尚未记录"}</small>
-            <button type="button" onClick={() => { setSelected(null); setActiveEvidenceId(null); }}>← 返回项目列表</button>
+            <button className="gj-btn gj-btn--text" type="button" onClick={() => { setSelected(null); setActiveEvidenceId(null); }}>← 返回项目列表</button>
           </div>
         )}
         {selected && (
@@ -1112,8 +1112,8 @@ export function App() {
         )}
         {selected && dashboard && <div className="stage-qualification"><ShieldCheck size={13} /><span>{dashboard.qualificationLabel}</span></div>}
         {!selected && <>
-        <button className="new-project" type="button" onClick={() => setShowCreate(true)}><Plus size={15} /> 新建项目</button>
-        <button className="secondary-action" type="button" onClick={() => importInput.current?.click()}><Upload size={14} /> 导入 JSON / ZIP</button>
+        <button className="gj-btn gj-btn--primary" type="button" onClick={() => setShowCreate(true)}><Plus size={15} /> 新建项目</button>
+        <button className="gj-btn gj-btn--secondary" type="button" onClick={() => importInput.current?.click()}><Upload size={14} /> 导入 JSON / ZIP</button>
         <input
           ref={importInput}
           className="sr-only"
@@ -1128,7 +1128,7 @@ export function App() {
         </label>
         <div className="project-list" aria-label="项目列表">
           {filtered.map((project) => (
-            <button className="project-card" key={project.projectId} type="button" onClick={() => void chooseProject(project.projectId)}>
+            <button className="gj-card project-card" key={project.projectId} type="button" onClick={() => void chooseProject(project.projectId)}>
               
               <strong>{project.name}</strong>
               <small>{project.buildingName}</small>
@@ -1142,7 +1142,7 @@ export function App() {
         </div>
         </>}
         </div>
-        <footer><span>项目保存在本机</span><button type="button" onClick={() => void clearLibrary()}><Trash2 size={12} /> 清空本机项目</button></footer>
+        <footer><span>项目保存在本机</span><button className="gj-btn gj-btn--danger" type="button" onClick={() => void clearLibrary()}><Trash2 size={12} /> 清空本机项目</button></footer>
       </section>
       <section className="workspace-shell">
         <div className="topbar">
@@ -1156,9 +1156,9 @@ export function App() {
             <span className="basis-tag demo">示例资料 {basisCounts.demo}</span></>}
           </div>
           <div>
-            {selected && <button className="panel-toggle" type="button" onClick={() => void downloadProject("json")} aria-label="导出项目记录"><FileJson size={14} /></button>}
-            {selected && <button className="panel-toggle" type="button" onClick={() => void downloadProject("zip")} aria-label="导出完整项目包"><PackageOpen size={14} /></button>}
-            <button className="panel-toggle" type="button" onClick={() => setAssistantCollapsed((value) => !value)} aria-label={assistantCollapsed ? "展开助手与来源面板" : "收起助手与来源面板"}>
+            {selected && <button className="gj-btn gj-btn--secondary gj-btn--icon" type="button" onClick={() => void downloadProject("json")} aria-label="导出项目记录"><FileJson size={14} /></button>}
+            {selected && <button className="gj-btn gj-btn--secondary gj-btn--icon" type="button" onClick={() => void downloadProject("zip")} aria-label="导出完整项目包"><PackageOpen size={14} /></button>}
+            <button className="gj-btn gj-btn--secondary gj-btn--icon" type="button" onClick={() => setAssistantCollapsed((value) => !value)} aria-label={assistantCollapsed ? "展开助手与来源面板" : "收起助手与来源面板"}>
               {assistantCollapsed ? <PanelRightOpen size={15} /> : <PanelRightClose size={15} />}
             </button>
           </div>
@@ -1177,7 +1177,7 @@ export function App() {
 
             {activeStage === "tasks" && (
               <section className="evidence-board task-overview-board">
-                <header className="board-heading"><div><h3>任务要求与成果目录</h3></div><button className="quiet-link" type="button" onClick={() => setActiveStage("issues")}>在问题流程中更新</button></header>
+                <header className="board-heading"><div><h3>任务要求与成果目录</h3></div><button className="gj-btn gj-btn--text" type="button" onClick={() => setActiveStage("issues")}>在问题流程中更新</button></header>
                 <div className="pane-body">
                 {confirmedTask ? <>
                   <div className="summary-grid">
@@ -1197,7 +1197,7 @@ export function App() {
               <section className="evidence-board">
                 <header className="board-heading">
                   <div><h3>原始资料与解析记录</h3></div>
-                  <button className="upload-evidence" type="button" onClick={() => evidenceInput.current?.click()}><Upload size={14} /> 上传原始资料</button>
+                  <button className="gj-btn gj-btn--primary" type="button" onClick={() => evidenceInput.current?.click()}><Upload size={14} /> 上传原始资料</button>
                   <input ref={evidenceInput} className="sr-only" type="file" multiple onChange={(event) => { const files = Array.from(event.target.files ?? []); if (files.length) void uploadEvidenceFiles(files); }} />
                 </header>
                 {renderSplit(<>
@@ -1210,7 +1210,7 @@ export function App() {
                             <span className="evidence-type">{EVIDENCE_TYPE_LABELS[evidence.evidenceType] ?? evidence.evidenceType}</span>
                             <div><strong>{evidence.title}</strong><small>{parse ? PARSE_STATUS_LABELS[parse.status] ?? "尚未读取" : "尚未读取"}</small></div>
                             <span className={`data-status ${evidence.dataStatus}`}>{evidence.dataStatus === "available" ? "可用" : evidence.dataStatus}</span>
-                            <button type="button" onClick={(event) => { event.stopPropagation(); void downloadEvidence(evidence.assetId); }}>原文件</button>
+                            <button className="gj-btn gj-btn--text" type="button" onClick={(event) => { event.stopPropagation(); void downloadEvidence(evidence.assetId); }}>原文件</button>
                           </article>
                         );
                       })}
@@ -1264,7 +1264,7 @@ export function App() {
                     <label>柱位（列/行，逗号分隔）<input name="pillarNet" required placeholder="例如 0/0,0/1,1/0,1/1" /></label>
                     <label>枋连接的两根柱（可选）<input name="fangNet" placeholder="例如 0/0#1/0,0/1#1/1" /></label>
                     <label>形制判断依据<input name="sourceDeclaration" required placeholder="例如 现场踏勘并对照同期实例" /></label>
-                    <button type="submit">登记并推算尺寸</button>
+                    <button className="gj-btn gj-btn--primary" type="submit">登记并推算尺寸</button>
                   </form>
                 )}
                 <div className="record-table">
@@ -1337,7 +1337,7 @@ export function App() {
                         </select>
                       </label>
                       <label>判断内容<textarea name="text" required placeholder="例如：西侧檐柱柱脚可见糟朽，范围约柱高下部三分之一" /></label>
-                      <button type="submit" disabled={!selected.snapshot.evidences.length}>记录并绑定来源</button>
+                      <button className="gj-btn gj-btn--primary" type="submit" disabled={!selected.snapshot.evidences.length}>记录并绑定来源</button>
                     </form>
 
                 </>, "选择资料查看对应部位照片。")}
@@ -1348,7 +1348,7 @@ export function App() {
               <section className="evidence-board candidate-board">
                 <header className="board-heading">
                   <div><h3>AI 候选与真实运行记录</h3></div>
-                  <button className="upload-evidence" type="button" disabled={!parsedEvidenceCount || Boolean(modelRunning) || !serverStatus?.modelConfigured} onClick={() => void runModel()}>
+                  <button className="gj-btn gj-btn--primary" type="button" disabled={!parsedEvidenceCount || Boolean(modelRunning) || !serverStatus?.modelConfigured} onClick={() => void runModel()}>
                     <Play size={14} /> {modelRunning ? "运行中" : "生成资料候选"}
                   </button>
                 </header>
@@ -1398,7 +1398,7 @@ export function App() {
                     <label>需要出图的构件类型（每行一项）<textarea name="geometryTargetRoles" required placeholder="例如 柱、墙、屋面；缺一项该图就不生成" /></label>
                     <label>图幅设置<textarea name="drawingSheets" required placeholder='逐张图填写图号、图名和图幅尺寸，例如：[{"key":"sheet-1","drawingNumber":"P-01","displayLabelZh":"平面与立面","pageMm":[841,594]}]' /></label>
                     <label>视图设置<textarea name="drawingViews" required placeholder="逐个视图填写图种、比例、所在图幅、在图上的位置、朝向和对应构件。详图还需指明依据的资料，缺依据则不生成" /></label>
-                    <button type="submit">确认任务要求，开始整理资料</button>
+                    <button className="gj-btn gj-btn--primary" type="submit">确认任务要求，开始整理资料</button>
                   </form>
                 ) : (
                   <>
@@ -1415,7 +1415,7 @@ export function App() {
                         <label>几何目标角色<textarea name="geometryTargetRoles" required defaultValue={confirmedTask.artifactRequirements?.geometryTargetRoles.join("\n") ?? ""} /></label>
                         <label>图纸结构 JSON<textarea name="drawingSheets" required defaultValue={JSON.stringify(confirmedTask.artifactRequirements?.sheets ?? [], null, 2)} /></label>
                         <label>视图结构 JSON<textarea name="drawingViews" required defaultValue={JSON.stringify(confirmedTask.artifactRequirements?.views ?? [], null, 2)} /></label>
-                        <button type="submit">保存新任务版本</button>
+                        <button className="gj-btn gj-btn--primary" type="submit">保存新任务版本</button>
                       </form>
                     </details>
                   </>
@@ -1471,7 +1471,7 @@ export function App() {
                     <label>总尺寸 mm<input name="totalWidthMm" type="number" min="1" step="any" required /></label>
                     <label>分段尺寸 mm<textarea name="segmentWidthsMm" required placeholder="例如：4200, 3600, 3600" /></label>
                     <label className="check-label"><input name="measurementMetadataComplete" type="checkbox" />资料已明确测量人、时间、方法和原始记录</label>
-                    <button type="submit">转写并自动核对</button>
+                    <button className="gj-btn gj-btn--primary" type="submit">转写并自动核对</button>
                   </form>
                 )}
                 <div className="workflow-ledgers">
@@ -1498,7 +1498,7 @@ export function App() {
               <section className="evidence-board geometry-board">
                 <header className="board-heading">
                   <div><h3>项目驱动三维模型</h3></div>
-                  <button className="upload-evidence" type="button" disabled={!geometryGate?.ready || Boolean(cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase))} onClick={() => void generateDemoGeometry()}>
+                  <button className="gj-btn gj-btn--primary" type="button" disabled={!geometryGate?.ready || Boolean(cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase))} onClick={() => void generateDemoGeometry()}>
                     <Play size={14} /> {geometryRevision ? "生成新代理版本" : "生成代理几何"}
                   </button>
                 </header>
@@ -1513,7 +1513,7 @@ export function App() {
                         <label>构件数据<textarea name="geometryComponents" required placeholder="逐个构件填写：名称、类型、尺寸、依据的资料，以及尚未确认的部分" /></label>
                         <label>界面事实 JSON<textarea name="geometryInterfaces" required placeholder="仅填写图纸或调查资料可证明的承托、接触、包含或搭接关系；无证据可留空 []" /></label>
                         <p>当前项目证据 ID：{selected.snapshot.evidences.map((item) => `${item.title}=${item.id}`).join("；")}</p>
-                        <button type="submit">写入逐构件证据事实</button>
+                        <button className="gj-btn gj-btn--primary" type="submit">写入逐构件证据事实</button>
                       </form>
                     )}
                   </div>
@@ -1552,7 +1552,7 @@ export function App() {
               <section className="evidence-board">
                 <header className="board-heading">
                   <div><h3>图幅、视图与图签</h3></div>
-                  <button className="quiet-link" type="button" onClick={() => setActiveStage("tasks")}>在任务要求中修改</button>
+                  <button className="gj-btn gj-btn--text" type="button" onClick={() => setActiveStage("tasks")}>在任务要求中修改</button>
                 </header>
                 {confirmedTask?.artifactRequirements ? (() => {
                   const requirements = confirmedTask.artifactRequirements;
@@ -1602,7 +1602,7 @@ export function App() {
               <section className="evidence-board drawing-board">
                 <header className="board-heading">
                   <div><h3>成组平立剖与节点详图</h3></div>
-                  <button className="upload-evidence" type="button" disabled={!geometryRevision || !confirmedTask || Boolean(drawingProgress && !["succeeded", "failed"].includes(drawingProgress))} onClick={() => void generateDrawings()}>
+                  <button className="gj-btn gj-btn--primary" type="button" disabled={!geometryRevision || !confirmedTask || Boolean(drawingProgress && !["succeeded", "failed"].includes(drawingProgress))} onClick={() => void generateDrawings()}>
                     <Images size={14} /> {drawingProgress && !["succeeded", "failed"].includes(drawingProgress) ? "生成中" : "按成果目录生成"}
                   </button>
                 </header>
@@ -1639,7 +1639,7 @@ export function App() {
 
             {activeStage === "package" && (
               <section className="evidence-board package-board">
-                <header className="board-heading"><div><h3>代理成果交付与项目包</h3></div><button className="upload-evidence" type="button" disabled={!geometryRevision || !latestCheckRun || !drawingArtifacts.length || Boolean(latestDelivery)} onClick={() => void createProxyDelivery()}><PackageOpen size={14} /> 建立代理交付草案</button></header>
+                <header className="board-heading"><div><h3>代理成果交付与项目包</h3></div><button className="gj-btn gj-btn--primary" type="button" disabled={!geometryRevision || !latestCheckRun || !drawingArtifacts.length || Boolean(latestDelivery)} onClick={() => void createProxyDelivery()}><PackageOpen size={14} /> 建立代理交付草案</button></header>
                 <div className="pane-body">
                 {latestDelivery ? <div className="delivery-status"><span className="qualification-chip">未签发，不能用于正式交付</span><strong>交付草案 {latestDelivery.id.slice(0, 8)}</strong><p>{latestDelivery.restrictions.join(" · ")}</p></div> : deliveries.blockers(selected).length ? <div className="delivery-blockers"><strong>暂时不能正式交付</strong>{deliveries.blockers(selected).map((item) => <p key={item}>{item}</p>)}<button type="button" disabled={Boolean(latestBlockedDelivery)} onClick={() => void recordBlockedDelivery()}>{latestBlockedDelivery ? "已记录原因" : "记录无法交付的原因"}</button></div> : null}
                 <div className="package-grid">
@@ -1651,7 +1651,7 @@ export function App() {
                     <ShieldCheck size={17} />
                     <span><strong>导出后能否完整恢复</strong><small>用当前项目实时导出一份，在一个独立环境里恢复并逐项核对资料、记录与成果。检验不改动本机项目，结束后自动清理。</small></span>
                   </div>
-                  <button type="button" onClick={() => void verifyEmptyLibraryRoundTrip()}>检验导出与恢复</button>
+                  <button className="gj-btn gj-btn--secondary" type="button" onClick={() => void verifyEmptyLibraryRoundTrip()}>检验导出与恢复</button>
                   {roundTripReceipt && (
                     <dl aria-label="恢复检验结果">
                       
@@ -1683,7 +1683,7 @@ export function App() {
               
               <h2>从一份原始资料开始</h2>
               <p>新建项目后，资料、模型候选、人工决定和导出包会在同一条证据链中显示。</p>
-              <button type="button" onClick={() => setShowCreate(true)}><Plus size={16} /> 建立项目档案</button>
+              <button className="gj-btn gj-btn--primary" type="button" onClick={() => setShowCreate(true)}><Plus size={16} /> 建立项目档案</button>
             </div>
           </div>
         )}
@@ -1691,7 +1691,7 @@ export function App() {
         {notice && <div className="notice-banner" role="status"><Download size={13} /> {notice}<button type="button" onClick={() => setNotice(null)} aria-label="关闭提示"><X size={13} /></button></div>}
       </section>
       <aside className={`assistant-shell ${assistantCollapsed ? "collapsed" : ""}`}>
-        {assistantCollapsed ? <button className="assistant-open" type="button" onClick={() => setAssistantCollapsed(false)} aria-label="展开助手与来源面板"><PanelRightOpen size={17} /></button> : <>
+        {assistantCollapsed ? <button className="gj-btn gj-btn--secondary gj-btn--icon" type="button" onClick={() => setAssistantCollapsed(false)} aria-label="展开助手与来源面板"><PanelRightOpen size={17} /></button> : <>
         {/* 当前状态条（05 图 1、表 3）：显示正在做什么与进度 */}
         <div className="assistant-status">
           <div className="assistant-title"><Bot size={17} /><strong>助手与来源</strong><button type="button" onClick={() => setAssistantCollapsed(true)} aria-label="收起助手与来源面板"><PanelRightClose size={15} /></button></div>
@@ -1706,8 +1706,8 @@ export function App() {
             <small>{pendingProposal.rationaleZh}</small>
             {pendingProposal.warnings.map((warning) => <p className="inline-warning" key={warning}>{warning}</p>)}
             <div className="proposal-actions">
-              <button type="button" onClick={() => void adoptProposal()}>采纳生效</button>
-              <button type="button" onClick={() => { setPendingProposal(null); setNotice("修改建议已拒绝，未生效"); }}>拒绝</button>
+              <button className="gj-btn gj-btn--primary" type="button" onClick={() => void adoptProposal()}>采纳生效</button>
+              <button className="gj-btn gj-btn--secondary" type="button" onClick={() => { setPendingProposal(null); setNotice("修改建议已拒绝，未生效"); }}>拒绝</button>
             </div>
           </div>
         )}
@@ -1716,7 +1716,7 @@ export function App() {
             <span className={`run-state ${modelProgress.phase}`}>{modelProgress.phase}</span>
             <strong>助手正在识别</strong>
             <p>{modelProgress.streamedText || "正在建立受控运行……"}</p>
-            {modelRunning && <button type="button" onClick={() => void modelRuns.cancel()}><CircleStop size={14} /> 停止识别</button>}
+            {modelRunning && <button className="gj-btn gj-btn--secondary" type="button" onClick={() => void modelRuns.cancel()}><CircleStop size={14} /> 停止识别</button>}
           </div>
         ) : (
           <>
@@ -1735,14 +1735,14 @@ export function App() {
       {showCreate && (
         <div className="modal-backdrop" role="presentation">
           <form className="create-dialog" onSubmit={(event) => void handleCreate(event)}>
-            <button className="close-dialog" type="button" onClick={() => setShowCreate(false)} aria-label="关闭"><X size={17} /></button>
+            <button className="gj-btn gj-btn--text gj-btn--icon" type="button" onClick={() => setShowCreate(false)} aria-label="关闭"><X size={17} /></button>
             <Building2 size={20} />
             
             <h2>建立项目档案</h2>
             <label>项目名称<input name="name" required maxLength={200} placeholder="例如：城隍庙山门保护记录" /></label>
             <label>建筑名称<input name="buildingName" required maxLength={200} placeholder="例如：山门" /></label>
             <label>地点<input name="locationText" maxLength={500} placeholder="可暂时留空" /></label>
-            <button className="primary-action" type="submit">创建并进入项目</button>
+            <button className="gj-btn gj-btn--primary" type="submit">创建并进入项目</button>
           </form>
         </div>
       )}
