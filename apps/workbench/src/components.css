@@ -1,0 +1,169 @@
+/* 基础组件（09 界面视觉规范第 5 节）
+   页面只做组合，不为单个页面另写卡片、按钮或标签样式。
+   组件类统一 gj- 前缀，业务名不用于基础组件。 */
+
+/* 5.1 按钮：四种类型，五种状态 */
+.gj-btn {
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-primary);
+  font: var(--text-body);
+  white-space: nowrap;
+}
+.gj-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.gj-btn:disabled { cursor: not-allowed; color: var(--text-muted); background: var(--bg-subtle); border-color: var(--border); }
+
+.gj-btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.gj-btn--primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.gj-btn--primary:active:not(:disabled) { background: var(--accent-active); border-color: var(--accent-active); }
+
+.gj-btn--secondary { background: var(--bg-panel); border-color: var(--border-strong); color: var(--text-primary); }
+.gj-btn--secondary:hover:not(:disabled) { background: var(--bg-subtle); }
+.gj-btn--secondary:active:not(:disabled) { background: var(--border); }
+
+.gj-btn--text { background: transparent; border-color: transparent; color: var(--accent); padding: 0 var(--space-2); }
+.gj-btn--text:hover:not(:disabled) { background: var(--accent-soft); }
+
+.gj-btn--danger { background: var(--bg-panel); border-color: var(--danger); color: var(--danger); }
+.gj-btn--danger:hover:not(:disabled) { background: var(--danger-soft); }
+
+/* 图标按钮必须带可读标签（第 7 节） */
+.gj-btn--icon { width: var(--control-height); height: var(--control-height); padding: 0; }
+
+/* 加载态：显示进度指示并阻止重复点击 */
+.gj-btn[aria-busy="true"] { pointer-events: none; color: var(--text-muted); }
+.gj-btn[aria-busy="true"]::before {
+  content: "";
+  width: 12px; height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: gj-spin .7s linear infinite;
+}
+@keyframes gj-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .gj-btn[aria-busy="true"]::before { animation: none; } }
+
+/* 5.2 表格：行高 44、表头 40 且次级底，数值列等宽右对齐 */
+.gj-table { width: 100%; border-collapse: collapse; font: var(--text-body); }
+.gj-table thead th {
+  height: var(--header-row-height);
+  padding: 0 var(--space-3);
+  text-align: left;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font: var(--text-label);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.gj-table tbody td { height: var(--row-height); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); vertical-align: middle; }
+.gj-table tbody tr:hover { background: var(--bg-subtle); }
+.gj-table tbody tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 2px 0 var(--accent); }
+.gj-table .gj-numeric { font: var(--text-numeric); text-align: right; }
+/* 存疑项置顶时行首标记 */
+.gj-table tbody tr[data-flagged="true"] td:first-child { box-shadow: inset 3px 0 var(--warning); }
+
+/* 5.3 卡片：白底、1px 常规边框、7px 圆角、12px 内边距，嵌套不超过两层 */
+.gj-card {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  display: grid;
+  gap: var(--space-1);
+  text-align: left;
+  color: var(--text-primary);
+}
+.gj-card > strong { font: var(--text-section); }
+.gj-card > small { color: var(--text-secondary); font: var(--text-note); }
+button.gj-card:hover { border-color: var(--border-strong); }
+button.gj-card[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
+button.gj-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* 5.4 标签：高 22、全圆角、语义浅底。状态与来源分开，一个标签一种含义 */
+.gj-tag {
+  height: 22px;
+  padding: 0 var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  font: var(--text-label);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.gj-tag--accent { background: var(--accent-soft); color: var(--accent); }
+.gj-tag--success { background: var(--success-soft); color: var(--success); }
+.gj-tag--warning { background: var(--warning-soft); color: var(--warning); }
+.gj-tag--danger { background: var(--danger-soft); color: var(--danger); }
+
+/* 来源标记：颜色之外必须有形状差异（第 2 节表 3、第 7 节） */
+.gj-source { display: inline-flex; align-items: center; gap: var(--space-1); font: var(--text-label); color: var(--text-secondary); white-space: nowrap; }
+.gj-source::before { content: ""; width: 8px; height: 8px; flex: 0 0 auto; }
+.gj-source--measured { color: var(--src-measured); }
+.gj-source--measured::before { background: var(--src-measured); border-radius: var(--radius-pill); }
+.gj-source--model { color: var(--src-model); }
+.gj-source--model::before { border: 1.5px solid var(--src-model); border-radius: var(--radius-pill); }
+.gj-source--rule { color: var(--src-rule); }
+.gj-source--rule::before { background: var(--src-rule); }
+.gj-source--human { color: var(--src-human); }
+.gj-source--human::before { background: var(--src-human); border-radius: var(--radius-pill); }
+.gj-source--demo { color: var(--src-demo); }
+.gj-source--demo::before {
+  background: repeating-linear-gradient(45deg, var(--src-demo) 0 2px, transparent 2px 4px);
+}
+
+/* 5.5 输入与表单 */
+.gj-field { display: grid; gap: var(--space-1); font: var(--text-note); color: var(--text-secondary); }
+.gj-field + .gj-field { margin-top: var(--space-3); }
+.gj-field[data-required="true"] > span::after { content: " *"; color: var(--accent); }
+.gj-input,
+.gj-field input,
+.gj-field select,
+.gj-field textarea {
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  font: var(--text-body);
+  width: 100%;
+}
+.gj-field textarea { padding: var(--space-2) var(--space-3); min-height: 72px; resize: vertical; line-height: 22px; }
+.gj-input:focus, .gj-field :is(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.gj-input:disabled, .gj-field :is(input, select, textarea):disabled { background: var(--bg-subtle); color: var(--text-muted); }
+.gj-field[data-invalid="true"] :is(input, select, textarea) { border-color: var(--danger); }
+.gj-field-error { color: var(--danger); font: var(--text-note); }
+
+/* 5.6 空状态、加载与失败：都要说明原因并给出下一步 */
+.gj-empty {
+  padding: var(--space-6);
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  align-content: center;
+  border-radius: var(--radius-control);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font: var(--text-body);
+}
+.gj-empty--danger { background: var(--danger-soft); color: var(--danger); }
+.gj-empty p { margin: 0; }
+
+/* 通用文本类 */
+.gj-numeric { font: var(--text-numeric); }
+.gj-note { color: var(--text-secondary); font: var(--text-note); margin: 0; }

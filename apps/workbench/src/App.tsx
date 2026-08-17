@@ -4,7 +4,11 @@ import {
   PanelRightOpen, Play, Plus, Ruler, Search, ShieldCheck, Trash2, Upload, X, FileCheck2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type {
+  FormEvent, ReactNode,
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import type { ProjectHead, ProjectSummary } from "@gujian/application";
 import type { ArtifactRecord, Decision, ModelRun, RuleRun } from "@gujian/domain";
 
@@ -161,6 +165,9 @@ export function App() {
   // 证据半区（05 界面与交互形态 §三）：中栏右半区显示选中资料原件，数据与证据并置
   const [activeEvidenceId, setActiveEvidenceId] = useState<string | null>(null);
   const [evidencePreview, setEvidencePreview] = useState<{ evidenceId: string; url: string; mimeType: string; fileName: string } | null>(null);
+  // 数据与证据双半区默认各占一半，分隔条可拖动，比例限制在 30% 至 70%（09 第 6 节）
+  const [dataPaneRatio, setDataPaneRatio] = useState(50);
+  const splitRef = useRef<HTMLDivElement | null>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const evidenceInput = useRef<HTMLInputElement>(null);
 
@@ -989,29 +996,71 @@ export function App() {
     candidates: projectModelRuns.length ? { label: `${projectModelRuns.length} 次运行`, tone: "done" } : { label: "未运行", tone: "idle" },
   };
 
-  // 证据在中栏内联展示：选中资料后原件显示在数据下方，中栏不再拆分为并列子栏
-  const renderEvidenceView = (emptyHint: string) => (
-    <aside className="stage-evidence" aria-label="资料原件">
-      <header>
-        <strong>资料原件</strong>
-        {evidencePreview && <small>{evidencePreview.fileName}</small>}
-      </header>
-      {selected && selected.snapshot.evidences.length > 1 && (
-        <div className="evidence-switch">
-          {selected.snapshot.evidences.map((evidence) => (
-            <button key={evidence.id} type="button" className={activeEvidenceId === evidence.id ? "active" : ""}
-              onClick={() => setActiveEvidenceId(evidence.id)}>{evidence.title}</button>
-          ))}
+  // 分隔条拖动：按中栏宽度换算比例，限制在 30% 至 70%
+  const startSplitDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const container = splitRef.current;
+    if (!container) return;
+    const move = (pointer: PointerEvent) => {
+      const bounds = container.getBoundingClientRect();
+      const ratio = ((pointer.clientX - bounds.left) / bounds.width) * 100;
+      setDataPaneRatio(Math.min(70, Math.max(30, ratio)));
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+  };
+
+  // 键盘可达：方向键以 5% 步进调整（09 第 7 节）
+  const nudgeSplit = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    setDataPaneRatio((current) => Math.min(70, Math.max(30, current + (event.key === "ArrowRight" ? 5 : -5))));
+  };
+
+  // 数据与证据双半区（07 表 2、09 第 6 节）：左数据、右证据，中间分隔条
+  const renderSplit = (data: ReactNode, emptyHint: string) => (
+    <div className="stage-split" ref={splitRef} style={{ gridTemplateColumns: `${dataPaneRatio}% 8px minmax(0, 1fr)` }}>
+      <div className="pane-data">{data}</div>
+      <div
+        className="pane-divider"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="调整数据区与证据区的宽度"
+        aria-valuenow={Math.round(dataPaneRatio)}
+        aria-valuemin={30}
+        aria-valuemax={70}
+        tabIndex={0}
+        onPointerDown={startSplitDrag}
+        onKeyDown={nudgeSplit}
+      />
+      <aside className="pane-evidence" aria-label="证据区">
+        <header>
+          <strong>资料原件</strong>
+          {evidencePreview && <small>{evidencePreview.fileName}</small>}
+        </header>
+        <div className="pane-evidence-body">
+          {selected && selected.snapshot.evidences.length > 1 && (
+            <div className="evidence-switch">
+              {selected.snapshot.evidences.map((evidence) => (
+                <button key={evidence.id} type="button" className={activeEvidenceId === evidence.id ? "active" : ""}
+                  onClick={() => setActiveEvidenceId(evidence.id)}>{evidence.title}</button>
+              ))}
+            </div>
+          )}
+          {evidencePreview ? (
+            evidencePreview.mimeType.startsWith("image/")
+              ? <img src={evidencePreview.url} alt={`${evidencePreview.fileName} 原件`} />
+              : evidencePreview.mimeType === "application/pdf"
+                ? <object data={evidencePreview.url} type="application/pdf" aria-label={`${evidencePreview.fileName} 原件`} />
+                : <div className="gj-empty"><p>该类型的文件无法在页内显示。</p><button className="gj-btn gj-btn--text" type="button" onClick={() => { const evidence = selected?.snapshot.evidences.find((item) => item.id === activeEvidenceId); if (evidence) void downloadEvidence(evidence.assetId); }}>下载原文件核对</button></div>
+          ) : <div className="gj-empty"><p>{selected?.snapshot.evidences.length ? emptyHint : "还没有资料。上传后可在此对照原件核对数据。"}</p></div>}
         </div>
-      )}
-      {evidencePreview ? (
-        evidencePreview.mimeType.startsWith("image/")
-          ? <img src={evidencePreview.url} alt={`${evidencePreview.fileName} 原件`} />
-          : evidencePreview.mimeType === "application/pdf"
-            ? <object data={evidencePreview.url} type="application/pdf" aria-label={`${evidencePreview.fileName} 原件`} />
-            : <div className="panel-empty">该类型（{evidencePreview.mimeType}）无法在页内显示，可下载原文件核对。</div>
-      ) : <div className="panel-empty">{selected?.snapshot.evidences.length ? emptyHint : "上传资料后在此并置显示原件。"}</div>}
-    </aside>
+      </aside>
+    </div>
   );
 
   return (
@@ -1151,7 +1200,7 @@ export function App() {
                   <button className="upload-evidence" type="button" onClick={() => evidenceInput.current?.click()}><Upload size={14} /> 上传原始资料</button>
                   <input ref={evidenceInput} className="sr-only" type="file" multiple onChange={(event) => { const files = Array.from(event.target.files ?? []); if (files.length) void uploadEvidenceFiles(files); }} />
                 </header>
-                <div className="pane-body">
+                {renderSplit(<>
                     <div className="evidence-list">
                       {selected.snapshot.evidences.map((evidence) => {
                         const parse = selected.snapshot.parseRecords.find((record) => record.evidenceId === evidence.id);
@@ -1169,15 +1218,15 @@ export function App() {
                         <div className="evidence-empty"><div className="trace-spine" aria-hidden="true"><span /><span /><span /><span /></div><p>上传任务书、照片、测量记录或已有图纸。文件本体、证据记录和解析结果会一起进入项目版本。</p></div>
                       )}
                     </div>
-                  {renderEvidenceView("选择左侧资料查看原件。")}
-                </div>
+
+                </>, "选择左侧资料查看原件。")}
               </section>
             )}
 
             {activeStage === "measurements" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><h3>测量记录、事实与缺失影响</h3></div><span className="board-count">{selected.snapshot.measurements.length + selected.snapshot.facts.length} 条记录</span></header>
-                <div className="pane-body">
+                {renderSplit(<>
                 {projectArchetypes.length ? (() => {
                   const archetype = projectArchetypes[projectArchetypes.length - 1]!;
                   const derivation = deriveArchetypeExpectations(archetype);
@@ -1223,29 +1272,29 @@ export function App() {
                   {selected.snapshot.facts.map((fact) => <article key={fact.id}><span className={`producer-badge ${fact.producer.producerType}`}>{PRODUCER_LABELS[fact.producer.producerType]}</span><strong>{factFieldLabel(fact.field)}</strong><small>{REVIEW_LABELS[fact.reviewStatus] ?? fact.reviewStatus} · {DATA_STATUS_LABELS[fact.dataStatus] ?? fact.dataStatus}</small><small>{fact.evidenceRefs.map(evidenceTitle).join("、") || "未指明资料"}</small></article>)}
                   {!selected.snapshot.measurements.length && !selected.snapshot.facts.length && <div className="panel-empty">还没有可用的尺寸。尺寸缺失时，依赖它的成果不会生成，系统也不会用默认值补齐。</div>}
                 </div>
-                  {renderEvidenceView("选择资料查看手写草图或测量记录原件。")}
-                </div>
+
+                </>, "选择资料查看手写草图或测量记录原件。")}
               </section>
             )}
 
             {activeStage === "objects" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? selected.snapshot.entities.length} 个对象</span></header>
-                <div className="pane-body">
+                {renderSplit(<>
                 <div className="object-table">
                   {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><small>{typeLabel(object.componentType, object.conceptRef)}</small><small>{PRODUCER_LABELS[object.producer.producerType]}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 项待确认` : "来源已记录"}</strong></button>)}
                   {!geometrySpec?.objects.length && selected.snapshot.entities.map((entity) => <article key={entity.id}><strong>{entity.name}</strong><span>{entity.entityType}</span></article>)}
                   {!geometrySpec?.objects.length && !selected.snapshot.entities.length && <div className="panel-empty">还没有构件。构件只能来自本项目的资料，或本项目已核对过的三维模型。</div>}
                 </div>
-                  {renderEvidenceView("选择资料查看构件对应的照片。")}
-                </div>
+
+                </>, "选择资料查看构件对应的照片。")}
               </section>
             )}
 
             {activeStage === "conditions" && (
               <section className="evidence-board">
                 <header className="board-heading"><div><h3>空间关系、构造连接与可见残损</h3></div><span className="board-count">{selected.snapshot.observations.length} 条记录</span></header>
-                <div className="pane-body">
+                {renderSplit(<>
                     <div className="record-table">
                       {selected.snapshot.relations.map((relation) => (
                         <article key={relation.id}>
@@ -1290,8 +1339,8 @@ export function App() {
                       <label>判断内容<textarea name="text" required placeholder="例如：西侧檐柱柱脚可见糟朽，范围约柱高下部三分之一" /></label>
                       <button type="submit" disabled={!selected.snapshot.evidences.length}>记录并绑定来源</button>
                     </form>
-                  {renderEvidenceView("选择资料查看对应部位照片。")}
-                </div>
+
+                </>, "选择资料查看对应部位照片。")}
               </section>
             )}
 
