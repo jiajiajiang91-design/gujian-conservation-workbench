@@ -27,7 +27,10 @@ import {
   buildProjectDashboardSummary,
   buildProvenanceGraphView,
 } from "./query-models";
-import { compareWithMeasuredFacts, conceptLabel, deriveArchetypeExpectations, resolveVocabulary } from "@gujian/infrastructure";
+import {
+  compareWithMeasuredFacts, conceptLabel, deriveArchetypeExpectations, resolveVocabulary,
+  IndexedDbProjectRepository, ProjectPackageService, openWorkbenchDatabase,
+} from "@gujian/infrastructure";
 import { ArchetypeSpecSchema, type ArchetypeSpec } from "@gujian/domain";
 
 import { AssistantExecutors, type ModificationProposal } from "./assistant/action-executors";
@@ -73,6 +76,8 @@ const BLOCKER_LABELS: Record<string, string> = {
   professionalUncertainty: "需专业判断",
   highRisk: "存在高风险项",
 };
+// 恢复检验用的独立数据库，与本机项目库分开，用完即删
+const ROUNDTRIP_VERIFY_DB = "gujian-roundtrip-verify";
 const PARSE_STATUS_LABELS: Record<string, string> = {
   parsed: "已读取文字内容", failed: "无法自动读取", metadataOnly: "仅登记，未读取内容", pending: "读取中",
 };
@@ -582,6 +587,7 @@ export function App() {
     if (!selected) return;
     setError(null);
     setRoundTripReceipt(null);
+    let verifyDatabase: IDBDatabase | null = null;
     const expected = {
       projectId: selected.projectId,
       revisionId: selected.revisionId,
@@ -627,20 +633,18 @@ export function App() {
         throw new Error("ZIP_ROUNDTRIP_ASSET_CONTENT_MISSING");
       }
 
-      await projectRepository.clearAllData();
-      setSelected(null);
-      setProjectModelRuns([]);
-      setProjectRuleRuns([]);
-      setProjectDecisions([]);
-      setProjectArtifacts([]); setProjectCheckRuns([]); setProjectDeliveries([]);
-      const importedProjectId = await projectPackages.import(zipBytes, "roundtrip.gujian.zip", localActorId());
-      const importedHead = await projectRepository.getProjectHead(importedProjectId);
+      // 恢复检验在独立数据库进行，本机项目库全程只读，不受影响
+      verifyDatabase = await openWorkbenchDatabase(ROUNDTRIP_VERIFY_DB);
+      const verifyRepository = new IndexedDbProjectRepository(verifyDatabase);
+      const verifyPackages = new ProjectPackageService(verifyRepository);
+      const importedProjectId = await verifyPackages.import(zipBytes, "roundtrip.gujian.zip", localActorId());
+      const importedHead = await verifyRepository.getProjectHead(importedProjectId);
       if (!importedHead) throw new Error("ROUNDTRIP_PROJECT_MISSING");
       const importedEvidenceIds = importedHead.snapshot.evidences.map((item) => item.id).sort();
       const importedAssetIds = importedHead.snapshot.evidences.map((item) => item.assetId).sort();
-      const importedArtifacts = await projectRepository.getProjectArtifacts(importedProjectId);
-      const importedChecks = await projectRepository.getProjectCheckRuns(importedProjectId);
-      const importedDeliveries = await projectRepository.getProjectDeliveries(importedProjectId);
+      const importedArtifacts = await verifyRepository.getProjectArtifacts(importedProjectId);
+      const importedChecks = await verifyRepository.getProjectCheckRuns(importedProjectId);
+      const importedDeliveries = await verifyRepository.getProjectDeliveries(importedProjectId);
       if (
         importedHead.projectId !== expected.projectId
         || !importedHead.snapshot.adoptedRecordRefs.some((ref) => ref.startsWith("revision:"))
@@ -654,16 +658,13 @@ export function App() {
         throw new Error("ROUNDTRIP_IDENTITY_MISMATCH");
       }
       const [rules, decisions] = await Promise.all([
-        projectRepository.getProjectRuleRuns(importedProjectId),
-        projectRepository.getProjectDecisions(importedProjectId),
+        verifyRepository.getProjectRuleRuns(importedProjectId),
+        verifyRepository.getProjectDecisions(importedProjectId),
       ]);
-      const importedAssets = await projectRepository.getProjectAssets(importedProjectId);
+      const importedAssets = await verifyRepository.getProjectAssets(importedProjectId);
       if (importedAssets.some(({ record, content }) => record.contentStatus !== "available" || content === null)) {
         throw new Error("ZIP_ROUNDTRIP_ASSET_CONTENT_MISSING");
       }
-      await refresh();
-      await loadProject(importedProjectId);
-      setActiveStage("package");
       setRoundTripReceipt({
         jsonSha256,
         jsonBytes: jsonBytes.byteLength,
@@ -682,10 +683,18 @@ export function App() {
         checkRunCount: importedChecks.length,
         deliveryCount: importedDeliveries.length,
       });
-      setNotice("已用当前项目依次完成 JSON 结构回导和 ZIP 完整资料回导");
+      setNotice("检验通过：导出的项目在独立环境中完整恢复，本机项目未改动");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "导出与恢复检验未通过");
-      await refresh();
+    } finally {
+      // 验证库用完即删，失败路径同样清理，不留残库
+      verifyDatabase?.close();
+      await new Promise<void>((resolve) => {
+        const request = indexedDB.deleteDatabase(ROUNDTRIP_VERIFY_DB);
+        request.onsuccess = () => resolve();
+        request.onerror = () => resolve();
+        request.onblocked = () => resolve();
+      });
     }
   };
 
@@ -1591,7 +1600,7 @@ export function App() {
                 <section className="roundtrip-check">
                   <div>
                     <ShieldCheck size={17} />
-                    <span><strong>导出后能否完整恢复</strong><small>用当前项目实时导出一份，再在空白环境里恢复，检查资料、记录和成果是否都在。不使用预置数据。</small></span>
+                    <span><strong>导出后能否完整恢复</strong><small>用当前项目实时导出一份，在一个独立环境里恢复并逐项核对资料、记录与成果。检验不改动本机项目，结束后自动清理。</small></span>
                   </div>
                   <button type="button" onClick={() => void verifyEmptyLibraryRoundTrip()}>检验导出与恢复</button>
                   {roundTripReceipt && (
