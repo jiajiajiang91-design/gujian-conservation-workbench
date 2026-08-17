@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { buildDemoProjectPackage } from "../packages/infrastructure/dist/index.js";
 
 const root = resolve(import.meta.dirname, "..");
-const source = resolve(root, "验证材料/06_T0_CAD可行性验证/t0b-v3-outputs/r2-geometry");
+const source = resolve(root, "文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v3-outputs/r2-geometry");
 const output = resolve(root, "apps/server/.data/acceptance/milestone-three/third-project");
 const [manifestText, sourceMeshes, glb] = await Promise.all([
   readFile(resolve(source, "geometry-manifest.json"), "utf8"),

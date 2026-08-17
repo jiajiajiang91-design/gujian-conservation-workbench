@@ -75,8 +75,8 @@ workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.verify_details `
 
 ```powershell
 workers\cad\.venv\Scripts\python.exe -m workers.cad.t0b_v2.build_geometry `
-  --fixture 验证材料\06_T0_CAD可行性验证\t0b-v2-resolved-local-assembly.json `
-  --output-dir 验证材料\06_T0_CAD可行性验证\t0b-v2-outputs
+  --fixture 文档\05_验证证据\04_T0_CAD可行性与资产保全\t0b-v2-resolved-local-assembly.json `
+  --output-dir 文档\05_验证证据\04_T0_CAD可行性与资产保全\t0b-v2-outputs
 ```
 
 当前几何输出包含稳定构件 ID、材料、来源、连接关系、冻结几何签名、GLB 和 JSON 清单。生成器只读取团队 `demo` fixture；外部参考图和 DWG 不进入输入或输出。
