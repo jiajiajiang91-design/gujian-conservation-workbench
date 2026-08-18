@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { buildDemoProjectPackage } from "./demo-project-package-converter.js";
+import { buildDemoProjectPackage, type LegacyDemoGeometryManifest } from "./demo-project-package-converter.js";
 import { IndexedDbProjectRepository, openWorkbenchDatabase } from "./indexeddb-project-repository.js";
 import { ProjectPackageService } from "./project-package-service.js";
 
@@ -16,13 +16,8 @@ afterEach(async () => {
   });
 });
 
-function sample() {
-  return buildDemoProjectPackage({
-    createdAt: "2026-08-14T12:00:00Z",
-    projectName: "团队 demo 泛化项目",
-    buildingName: "演示构造样本",
-    fixtureId: "test-demo-fixture",
-    manifest: {
+function sampleManifest(): LegacyDemoGeometryManifest {
+  return {
       geometryRevisionId: "00000000-0000-5000-8000-000000000001",
       geometrySignature: "a".repeat(64),
       entities: [
@@ -65,11 +60,22 @@ function sample() {
           interfaceKind: "lap", contactMode: "overlapZone", expectedGapMm: 0.5, maximumGapMm: 1.5, maximumUnexpectedOverlapMm3: 0.1,
         },
       ],
-    },
-    sourceFiles: [{
-      fileName: "manifest.json", mimeType: "application/json", bytes: new TextEncoder().encode("{}\n"),
-      evidenceType: "document", title: "演示 manifest",
-    }],
+  };
+}
+
+const SOURCE_FILES = [{
+  fileName: "manifest.json", mimeType: "application/json", bytes: new TextEncoder().encode("{}\n"),
+  evidenceType: "document" as const, title: "演示 manifest",
+}];
+
+function sample() {
+  return buildDemoProjectPackage({
+    createdAt: "2026-08-14T12:00:00Z",
+    projectName: "团队 demo 泛化项目",
+    buildingName: "演示构造样本",
+    fixtureId: "test-demo-fixture",
+    manifest: sampleManifest(),
+    sourceFiles: SOURCE_FILES,
   });
 }
 
@@ -116,5 +122,71 @@ describe("demo project package converter", () => {
     const second = sample();
     expect(second.packageSha256).toBe(first.packageSha256);
     expect(second.packageBytes).toEqual(first.packageBytes);
+  });
+});
+
+// 演示包带几何成果时必须带一个合法的几何版本，
+// 否则导入后三维视图显示未生成，演示做不到打开即见。
+describe("演示包携带几何成果", () => {
+  const geometryAsset = (kind: string, fileName: string, mimeType: string) => ({
+    kind, fileName, mimeType, bytes: new TextEncoder().encode(`${kind}-content`),
+  }) as never;
+
+  function withGeometry() {
+    return buildDemoProjectPackage({
+      createdAt: "2026-08-14T12:00:00Z",
+      projectName: "团队 demo 泛化项目",
+      buildingName: "演示构造样本",
+      fixtureId: "test-demo-fixture",
+      manifest: sampleManifest(),
+      sourceFiles: SOURCE_FILES,
+      geometry: {
+        assets: [
+          geometryAsset("ifc", "model.ifc", "application/x-step"),
+          geometryAsset("glb", "model.glb", "model/gltf-binary"),
+          geometryAsset("brepBundle", "model-brep.zip", "application/zip"),
+          geometryAsset("sourceMap", "source-map.ndjson", "application/x-ndjson"),
+          geometryAsset("report", "geometry-report.json", "application/json"),
+          geometryAsset("preview", "preview.png", "image/png"),
+          geometryAsset("manifest", "geometry-manifest.json", "application/json"),
+        ],
+        inputHash: "b".repeat(64),
+        entityClosureHash: "c".repeat(64),
+        interfaceClosureHash: "d".repeat(64),
+        geometrySignature: "e".repeat(64),
+        blockers: ["PROFESSIONAL_REVIEW_REQUIRED", "FORMAL_SIGNOFF_UNAVAILABLE"],
+      },
+    });
+  }
+
+  it("不传几何时行为不变，包内没有几何版本", () => {
+    const result = sample();
+    expect(result.geometryRevisionId).toBeNull();
+    expect(result.geometryAssetCount).toBe(0);
+  });
+
+  it("传几何时写入通过契约校验的几何版本与七类资产", async () => {
+    const result = withGeometry();
+    expect(result.geometryRevisionId).not.toBeNull();
+    expect(result.geometryAssetCount).toBe(7);
+
+    const name = `t0b-geometry-${crypto.randomUUID()}`;
+    databases.push(name);
+    const repository = new IndexedDbProjectRepository(openWorkbenchDatabase(name));
+    const projectId = await new ProjectPackageService(repository).import(result.packageBytes, "demo.gujian.zip", crypto.randomUUID());
+    const head = await repository.getProjectHead(projectId);
+    const revision = head!.snapshot.geometryRevisions.at(-1)!;
+    expect(revision.id).toBe(result.geometryRevisionId);
+    expect(revision.status).toBe("generated-not-qualified");
+    expect(revision.l1Eligible).toBe(false);
+    expect(revision.formalEligibility).toBe(false);
+    expect([...revision.assets.map((asset) => asset.kind)].sort())
+      .toEqual(["brepBundle", "glb", "ifc", "manifest", "preview", "report", "sourceMap"]);
+
+    const assets = await repository.getProjectAssets(projectId);
+    const glbRef = revision.assets.find((asset) => asset.kind === "glb")!;
+    const glb = assets.find((asset) => asset.record.id === glbRef.assetId)!;
+    expect(glb.record.contentStatus).toBe("available");
+    expect(glb.content).not.toBeNull();
   });
 });

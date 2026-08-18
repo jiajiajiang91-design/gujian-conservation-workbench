@@ -977,10 +977,14 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
   // 数据模型没有"实测"这一类来源，实测另按测量记录统计，不能拿人工确认顶替。
   const basisCounts = (() => {
     const counts = { model: 0, human: 0, rule: 0, demo: 0 };
-    for (const fact of selected?.snapshot.facts ?? []) {
-      const type = fact.producer.producerType as keyof typeof counts;
+    const add = (producerType: string) => {
+      const type = producerType as keyof typeof counts;
       if (type in counts) counts[type] += 1;
-    }
+    };
+    for (const fact of selected?.snapshot.facts ?? []) add(fact.producer.producerType);
+    // 构件也是数据，它的来源要计入。只统计事实会让纯几何项目
+    // 五类来源全显示为零，看上去像没有任何来源信息。
+    for (const object of geometrySpec?.objects ?? []) add(object.producer.producerType);
     return counts;
   })();
 

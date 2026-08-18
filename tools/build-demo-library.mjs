@@ -50,10 +50,22 @@ for (const definition of DEMO_PROJECTS) {
   console.log(`${definition.demoId} ${result.packageBytes.byteLength} bytes sha256=${result.packageSha256.slice(0, 16)}`);
 }
 
+// T0-B 演示包由 build-t0b-demo-package.mjs 单独生成（几何管线在 Python 侧），
+// 这里只把它的清单条目并进来。条目不存在时清单少一项，装载器逐条处理不受影响。
+const extra = [];
+try {
+  const entry = JSON.parse(await readFile(resolve(output, "t0b-construction-sample.entry.json"), "utf8"));
+  extra.push(entry);
+  console.log(`并入 ${entry.demoId} ${Math.round(entry.packageBytes / 1024 / 1024 * 100) / 100} MiB`);
+} catch {
+  console.log("未找到 T0-B 清单条目，清单只含本脚本生成的项目。补齐命令：node tools/build-t0b-demo-package.mjs");
+}
+
 const manifest = {
   schemaVersion: "demo-library-1",
   generatedFrom: "tools/build-demo-library.mjs",
-  projects: entries,
+  // 08 演示项目定义表 1 的顺序：专业深度、完整链路、阻断行为
+  projects: [...extra, ...entries],
 };
 const manifestBytes = new TextEncoder().encode(`${JSON.stringify(manifest, null, 2)}\n`);
 await writeFile(resolve(output, "manifest.json"), manifestBytes);

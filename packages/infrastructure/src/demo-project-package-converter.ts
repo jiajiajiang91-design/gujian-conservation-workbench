@@ -1,5 +1,6 @@
 import {
   AuditEventSchema,
+  GeometryRevisionSchema,
   ProjectDrivenGeometrySpecSchema,
   ProjectRevisionSchema,
   ProjectSnapshotSchema,
@@ -64,6 +65,24 @@ export interface DemoSourceFile {
   readonly title: string;
 }
 
+// 已生成的几何成果。传入后包内带 GeometryRevision，导入即可直接看模型；
+// 不传时行为与原来一致，只带 GeometrySpec，需要在工作台里现场生成。
+export interface DemoGeometryAsset {
+  readonly kind: "ifc" | "glb" | "brepBundle" | "manifest" | "sourceMap" | "report" | "preview";
+  readonly fileName: string;
+  readonly mimeType: string;
+  readonly bytes: Uint8Array;
+}
+
+export interface DemoGeometryOutput {
+  readonly assets: readonly DemoGeometryAsset[];
+  readonly inputHash: string;
+  readonly entityClosureHash: string;
+  readonly interfaceClosureHash: string;
+  readonly geometrySignature: string;
+  readonly blockers: readonly string[];
+}
+
 export interface DemoConversionInput {
   readonly manifest: LegacyDemoGeometryManifest;
   readonly sourceFiles: readonly DemoSourceFile[];
@@ -71,6 +90,7 @@ export interface DemoConversionInput {
   readonly projectName: string;
   readonly buildingName: string;
   readonly fixtureId: string;
+  readonly geometry?: DemoGeometryOutput;
 }
 
 export interface DemoConversionResult {
@@ -88,6 +108,11 @@ export interface DemoConversionResult {
   readonly solidKindCounts: Readonly<Record<string, number>>;
   readonly approximationCounts: Readonly<Record<string, number>>;
   readonly originalGeometrySignature: string;
+  readonly geometryRevisionId: string | null;
+  readonly geometryAssetCount: number;
+  // 翻译得到的 GeometrySpec。构建演示包时要把它交给几何管线生成成果，
+  // 调用方不必再从包里解回来。
+  readonly geometrySpec: ProjectDrivenGeometrySpec;
 }
 
 // 只携带极值面语义可以正确表达的完整竖向承重链接口；
@@ -472,6 +497,35 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     status: "metadataOnly" as const, extractedText: null,
     warnings: ["团队 demo 来源；构件级参数化转换的近似项与未携带接口见 GeometrySpec 结构化未知项。"], createdAt: input.createdAt,
   }));
+  // 几何成果资产与版本。资产走 artifacts/geometry 路径与证据分开，
+  // 导入后由仓储按 assetId 取内容，三维视图直接读 glb。
+  const geometryRevisionId = deterministicUuid(`geometry-revision:${sourceSeed}`);
+  const geometryAssets = (input.geometry?.assets ?? []).map((asset) => {
+    const id = deterministicUuid(`geometry-asset:${sourceSeed}:${asset.kind}`);
+    return {
+      id, projectId, fileName: asset.fileName, mimeType: asset.mimeType, byteLength: asset.bytes.byteLength,
+      sha256: sha256Hex(asset.bytes), contentStatus: "available" as const, createdAt: input.createdAt,
+      path: `artifacts/geometry/${id}/${asset.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}`,
+      bytes: asset.bytes, kind: asset.kind,
+    };
+  });
+  const geometryRevisions = input.geometry
+    ? [GeometryRevisionSchema.parse({
+      id: geometryRevisionId, projectId, projectRevisionId: sourceRevisionId, geometrySpecId: geometrySpec.id,
+      inputHash: input.geometry.inputHash,
+      entityClosureHash: input.geometry.entityClosureHash,
+      interfaceClosureHash: input.geometry.interfaceClosureHash,
+      geometrySignature: input.geometry.geometrySignature,
+      assets: geometryAssets.map((asset) => ({
+        assetId: asset.id, kind: asset.kind, sha256: asset.sha256,
+        mimeType: asset.mimeType, byteLength: asset.byteLength,
+      })),
+      status: "generated-not-qualified", l1Eligible: false, formalEligibility: false,
+      blockers: [...input.geometry.blockers],
+      createdAt: input.createdAt,
+    })]
+    : [];
+
   const snapshot = ProjectSnapshotSchema.parse({
     schemaVersion: "3.0",
     project: { id: projectId, name: input.projectName, status: "active", locationText: "示例数据，不对应真实地点", createdAt: input.createdAt },
@@ -483,11 +537,11 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
       sourceRef: manifestEvidenceId, status: "open", impactRefs: [geometrySpec.id], blocksProxyOutcome: false, blocksFormalEligibility: true,
       producer: { producerType: "demo", fixtureId: input.fixtureId }, createdAt: input.createdAt, resolvedAt: null,
     }],
-    dependencyEdges: [], geometrySpecs: [geometrySpec], geometryRevisions: [], adoptedRecordRefs: [`demo:${input.fixtureId}`],
+    dependencyEdges: [], geometrySpecs: [geometrySpec], geometryRevisions, adoptedRecordRefs: [`demo:${input.fixtureId}`],
   });
   const revisionBase = {
     id: sourceRevisionId, projectId, parentId: null, snapshotHash: recordHash(snapshot),
-    changedRefs: [projectId, buildingId, taskId, geometrySpec.id, ...assets.map((asset) => asset.id)], committedAt: input.createdAt,
+    changedRefs: [projectId, buildingId, taskId, geometrySpec.id, ...assets.map((asset) => asset.id), ...geometryAssets.map((asset) => asset.id)], committedAt: input.createdAt,
   };
   const sourceRevision = ProjectRevisionSchema.parse({
     ...revisionBase, closureHash: recordHash({ parentId: null, snapshotHash: revisionBase.snapshotHash }), recordHash: recordHash(revisionBase),
@@ -496,6 +550,7 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     { kind: "record" as const, storeName: "projects", id: projectId, hash: recordHash(snapshot.project) },
     { kind: "record" as const, storeName: "revisions", id: sourceRevisionId, hash: sourceRevision.recordHash },
     ...assets.map((asset) => ({ kind: "asset" as const, storeName: "assets", id: asset.id, hash: asset.sha256 })),
+    ...geometryAssets.map((asset) => ({ kind: "asset" as const, storeName: "assets", id: asset.id, hash: asset.sha256 })),
   ];
   const eventBase = {
     id: deterministicUuid(`audit:${sourceSeed}`), projectId, commandId: deterministicUuid(`command:${sourceSeed}`), actorId,
@@ -508,7 +563,10 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     format: "gujian-project-package", packageVersion: 1, sourceRevision, auditHeadHash: auditEvent.eventHash,
     snapshot, auditEvents: [auditEvent], modelRuns: [], ruleRuns: [], decisions: [], cadJobs: [], artifactRequirementMatrices: [], artifacts: [],
     checkRuns: [], deliveryEvaluations: [], deliveries: [],
-    assets: assets.map(({ bytes: _bytes, evidenceType: _evidenceType, title: _title, ...asset }) => asset),
+    assets: [
+      ...assets.map(({ bytes: _bytes, evidenceType: _evidenceType, title: _title, ...asset }) => asset),
+      ...geometryAssets.map(({ bytes: _bytes, kind: _kind, ...asset }) => asset),
+    ],
   };
   const projectBytes = strToU8(`${canonicalJson(projectData)}\n`);
   const auditBytes = strToU8(`${canonicalJson(auditEvent)}\n`);
@@ -516,6 +574,7 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     { path: "project.json", bytes: projectBytes, mimeType: "application/json" },
     { path: "audit/events.ndjson", bytes: auditBytes, mimeType: "application/x-ndjson" },
     ...assets.map((asset) => ({ path: asset.path, bytes: asset.bytes, mimeType: asset.mimeType })),
+    ...geometryAssets.map((asset) => ({ path: asset.path, bytes: asset.bytes, mimeType: asset.mimeType })),
   ];
   const packageManifest = {
     format: "gujian-project-package", packageVersion: 1, projectId, sourceRevisionId,
@@ -536,5 +595,8 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     solidKindCounts: translation.solidKindCounts,
     approximationCounts: translation.approximationCounts,
     originalGeometrySignature: input.manifest.geometrySignature,
+    geometryRevisionId: input.geometry ? geometryRevisionId : null,
+    geometryAssetCount: geometryAssets.length,
+    geometrySpec,
   };
 }
