@@ -552,7 +552,17 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
           const request = transaction.objectStore("assets").get(record.id);
           request.onsuccess = () => {
             const staged = request.result as PersistedAsset | undefined;
-            if (!staged || staged.stagingSessionId !== assetWrite.stagingSessionId || staged.projectId !== mutation.command.projectId) {
+            if (!staged) {
+              // 标为缺失的资料本来就没有原件可暂存，直接写记录。
+              // 其余情况下没有暂存条目说明内容未经校验，整批回滚。
+              if (record.contentStatus === "missing") {
+                transaction.objectStore("assets").add({ id: record.id, projectId: record.projectId, record } satisfies PersistedAsset);
+                return;
+              }
+              transaction.abort();
+              return;
+            }
+            if (staged.stagingSessionId !== assetWrite.stagingSessionId || staged.projectId !== mutation.command.projectId) {
               transaction.abort();
               return;
             }

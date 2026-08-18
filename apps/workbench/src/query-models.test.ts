@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildModelRunCostView, buildProjectDashboardSummary } from "./query-models";
+import { buildModelRunCostView, buildProjectDashboardSummary, buildProvenanceGraphView } from "./query-models";
 
 const id = () => crypto.randomUUID();
 
@@ -35,5 +35,32 @@ describe("workbench query models", () => {
     expect(view.totalTokens).toBe(18);
     expect(view.rows[0]?.costLabel).toBe("费用待核算");
     expect(view.hasPriceBasis).toBe(false);
+  });
+});
+
+describe("来源面板的阻断计数", () => {
+  it("没有三维模型时也把问题队列算进影响正式交付", () => {
+    const projectId = id();
+    const buildingId = id();
+    const issue = (blocksFormal: boolean) => ({
+      id: id(), projectId, issueType: "missingEvidence" as const, subjectRefs: [buildingId],
+      description: "缺现场实测记录，尺寸只能按推算处理。", sourceRef: id(), status: "open" as const,
+      impactRefs: [], blocksProxyOutcome: false, blocksFormalEligibility: blocksFormal,
+      producer: { producerType: "demo" as const, fixtureId: "test" }, createdAt: "2026-08-18T00:00:00.000Z", resolvedAt: null,
+    });
+    const snapshot = {
+      schemaVersion: "3.0" as const,
+      project: { id: projectId, name: "test", status: "active" as const, locationText: null, createdAt: "2026-08-18T00:00:00.000Z" },
+      buildings: [{ id: buildingId, projectId, name: "building", periodText: null, addressText: null, status: "existing" as const }],
+      taskDefinitions: [], evidences: [], parseRecords: [], entities: [], relations: [], observations: [],
+      measurements: [], facts: [], candidates: [], issues: [issue(true), issue(true), issue(false)],
+      dependencyEdges: [], geometrySpecs: [], geometryRevisions: [], adoptedRecordRefs: [],
+    };
+    const view = buildProvenanceGraphView({
+      head: { projectId, revisionId: id(), auditEventId: id(), snapshot },
+      modelRuns: [], ruleRuns: [], decisions: [], artifacts: [], checks: [], evaluations: [], deliveries: [],
+    }, null);
+    expect(view.unknownCount).toBe(3);
+    expect(view.formalBlockerCount).toBe(2);
   });
 });

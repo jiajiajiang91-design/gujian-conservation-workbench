@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "demo-library-1",
+  "generatedFrom": "tools/build-demo-library.mjs",
+  "projects": [
+    {
+      "demoId": "dai-loy-habs-ca-2071-w",
+      "fileName": "dai-loy-habs-ca-2071-w.gujian.zip",
+      "projectName": "Dai Loy 赌馆博物馆测绘归档",
+      "buildingName": "Dai Loy 主楼",
+      "limitationZh": "美国华人木构，不代表中国官式古建形制。它验证工程流程与制图质量，不证明中国古建构件识别能力。",
+      "projectId": "a1548db4-cfa6-5dff-9f71-e020d4487e59",
+      "packageSha256": "41ff59a7fe528869164a8acbcb70d2dc5455e9e759c61f701d8c9826fd17a642",
+      "packageBytes": 1345850,
+      "evidenceCount": 7,
+      "missingEvidenceCount": 1,
+      "factCount": 8,
+      "measurementCount": 0,
+      "completeMeasurementCount": 0,
+      "issueCount": 3
+    },
+    {
+      "demoId": "gaodu-yuhuang-temple-main-hall",
+      "fileName": "gaodu-yuhuang-temple-main-hall.gujian.zip",
+      "projectName": "高都玉皇庙主殿现状记录",
+      "buildingName": "玉皇庙院内主殿",
+      "limitationZh": "全部尺寸由照片比例推算，无实测基准。成果只能作为草图参考，不能作为测绘成果使用。",
+      "projectId": "4d89aca9-358b-569a-8fe9-6291fa4c239a",
+      "packageSha256": "a48ffc7e12c4c181054d26ccb32f944caac4a7020b01183b5524b356db8345b6",
+      "packageBytes": 12721,
+      "evidenceCount": 3,
+      "missingEvidenceCount": 2,
+      "factCount": 10,
+      "measurementCount": 0,
+      "completeMeasurementCount": 0,
+      "issueCount": 4
+    }
+  ]
+}

@@ -1,9 +1,16 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { App, LENGTH_INPUT_STEP } from "./App";
+import { projectRepository } from "./workbench";
 
 afterEach(cleanup);
+
+// 本用例走的是空库路径。演示项目装载与上一轮用例都会留下项目，
+// 不清库会让断言取决于执行顺序。
+beforeEach(async () => {
+  await projectRepository.clearAllData();
+});
 
 describe("App", () => {
   it("建立项目后显示当前建筑和版本", async () => {

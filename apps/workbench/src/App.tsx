@@ -22,6 +22,7 @@ import {
 } from "./workbench";
 import { buildArtifactMatrix } from "./artifact-matrix-builder";
 import { describeFailure, inputError, type FailureNotice } from "./failure-notice";
+import { loadDemoLibrary } from "./demo-library-loader";
 import { DrawingLimitationNote, QualificationChip } from "./QualificationNotice";
 import { describeBlocker } from "./qualification";
 import { commitGeometryFacts } from "./geometry-fact-service";
@@ -79,11 +80,12 @@ export const DATA_STATUS_LABELS: Record<string, string> = {
 };
 // 恢复检验用的独立数据库，与本机项目库分开，用完即删
 const ROUNDTRIP_VERIFY_DB = "gujian-roundtrip-verify";
-const PARSE_STATUS_LABELS: Record<string, string> = {
-  parsed: "已读取文字内容", failed: "无法自动读取", metadataOnly: "仅登记，未读取内容", pending: "读取中",
+export const PARSE_STATUS_LABELS: Record<string, string> = {
+  parsed: "已读取文字内容", failed: "无法自动读取", metadataOnly: "仅登记，未读取内容", pending: "待读取",
 };
-const EVIDENCE_TYPE_LABELS: Record<string, string> = {
-  photo: "照片", document: "文档", drawing: "图纸", measurement: "测量记录", other: "其他",
+export const EVIDENCE_TYPE_LABELS: Record<string, string> = {
+  photo: "照片", document: "文档", drawing: "图纸", measurementRecord: "测量记录",
+  audio: "录音", video: "视频", pointCloud: "点云", other: "其他",
 };
 const ISSUE_TYPE_LABELS: Record<string, string> = {
   missingEvidence: "缺资料", professionalUncertainty: "需专业判断",
@@ -193,8 +195,27 @@ export function App() {
     setProjectArchetypes(await projectRepository.getProjectArchetypeSpecs(projectId));
   };
 
+  // 首次打开装载演示项目（08 演示项目定义 3.3：不生成空白项目）。
+  // 本地已有项目就不装，用户自己的库不被演示数据打扰。
+  const bootstrapDemoLibrary = async () => {
+    const existing = await listLocalProjects();
+    if (existing.length) return;
+    const result = await loadDemoLibrary({
+      packages: projectPackages,
+      existingProjectIds: new Set(existing.map((item) => item.projectId)),
+      actorId: localActorId(),
+    });
+    if (result.loaded.length) {
+      await refresh();
+      setNotice(`已载入 ${result.loaded.length} 个演示项目。演示数据标为示例来源，不能作为真实成果。`);
+    }
+    if (result.failed.length) setError(describeFailure(result.failed[0]!.reason, "演示项目载入失败"));
+  };
+
   useEffect(() => {
-    void refresh().catch((reason: unknown) => setError(describeFailure(reason, "载入项目列表失败")));
+    void refresh()
+      .then(bootstrapDemoLibrary)
+      .catch((reason: unknown) => setError(describeFailure(reason, "载入项目列表失败")));
     void fetch("/api/status")
       .then(async (response) => response.ok ? response.json() as Promise<ServerStatus> : Promise.reject(new Error("SERVER_STATUS_FAILED")))
       .then(setServerStatus)
@@ -632,7 +653,8 @@ export function App() {
       const parsedZip = projectPackages.parseWithContents(zipBytes, "roundtrip.gujian.zip");
       if (
         parsedZip.data.snapshot.project.id !== expected.projectId
-        || parsedZip.contents.size !== parsedZip.data.assets.length
+        // 标为可用的资料必须带回原件；登记时就没有原件的资料不该凭空多出内容。
+        || parsedZip.contents.size !== parsedZip.data.assets.filter((asset) => asset.contentStatus === "available").length
       ) {
         throw new Error("ZIP_ROUNDTRIP_ASSET_CONTENT_MISSING");
       }
@@ -666,9 +688,14 @@ export function App() {
         verifyRepository.getProjectDecisions(importedProjectId),
       ]);
       const importedAssets = await verifyRepository.getProjectAssets(importedProjectId);
-      if (importedAssets.some(({ record, content }) => record.contentStatus !== "available" || content === null)) {
-        throw new Error("ZIP_ROUNDTRIP_ASSET_CONTENT_MISSING");
-      }
+      const expectedAvailableAssetIds = new Set(
+        (await projectRepository.getProjectAssets(selected.projectId))
+          .filter(({ record }) => record.contentStatus === "available").map(({ record }) => record.id),
+      );
+      const assetStateWrong = importedAssets.some(({ record, content }) => expectedAvailableAssetIds.has(record.id)
+        ? record.contentStatus !== "available" || content === null
+        : record.contentStatus !== "missing");
+      if (assetStateWrong) throw new Error("ZIP_ROUNDTRIP_ASSET_CONTENT_MISSING");
       setRoundTripReceipt({
         jsonSha256,
         jsonBytes: jsonBytes.byteLength,
@@ -1673,7 +1700,7 @@ export function App() {
                       <div><dt>成果</dt><dd>{roundTripReceipt.artifactCount}</dd></div>
                       <div><dt>检查</dt><dd>{roundTripReceipt.checkRunCount}</dd></div>
                       <div><dt>交付</dt><dd>{roundTripReceipt.deliveryCount}</dd></div>
-                      <div><dt>项目记录</dt><dd>{roundTripReceipt.jsonEvidenceCount} 份资料，其中 {roundTripReceipt.jsonMissingAssetCount} 份缺原文件</dd></div>
+                      <div><dt>项目记录</dt><dd>{roundTripReceipt.jsonEvidenceCount} 份资料，全部原文件另存于 ZIP 包</dd></div>
                       
                       
                     </dl>

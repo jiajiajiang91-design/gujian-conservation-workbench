@@ -184,6 +184,7 @@ export function buildProvenanceGraphView(input: ReadModelInput, selectedObject: 
   const objectUnknowns = selectedObject
     ? (snapshot.geometrySpecs.at(-1)?.unknowns ?? []).filter((unknown) => selectedObject.unknownRefs.includes(unknown.id))
     : (snapshot.geometrySpecs.at(-1)?.unknowns ?? []);
+  const openIssues = snapshot.issues.filter((issue) => issue.status === "open");
   const currentArtifacts = input.artifacts.filter((artifact) => artifact.geometryRevisionId === geometryRevision?.id);
   const currentChecks = input.checks.filter((check) => check.geometryRevisionId === geometryRevision?.id);
   const currentDeliveries = input.deliveries.filter((delivery) => delivery.geometryRevisionId === geometryRevision?.id);
@@ -206,7 +207,11 @@ export function buildProvenanceGraphView(input: ReadModelInput, selectedObject: 
       node("check", "检查记录", currentChecks.map((check) => check.id), currentChecks.some((check) => check.results.some((result) => result.outcome === "blocked"))),
       node("delivery", "交付草案", currentDeliveries.map((delivery) => delivery.id)),
     ],
-    unknownCount: objectUnknowns.length,
-    formalBlockerCount: objectUnknowns.filter((unknown) => unknown.blocksFormalEligibility).length,
+    // 待确认与影响正式交付两个计数要把问题队列算进来。
+    // 只算三维模型里的未确认项会在没生成模型时显示成零，
+    // 与同屏的待办条数矛盾，看上去像没有任何阻断。
+    unknownCount: objectUnknowns.length + openIssues.length,
+    formalBlockerCount: objectUnknowns.filter((unknown) => unknown.blocksFormalEligibility).length
+      + openIssues.filter((issue) => issue.blocksFormalEligibility).length,
   };
 }

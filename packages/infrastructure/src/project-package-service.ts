@@ -145,7 +145,11 @@ export class ProjectPackageService {
       conceptEntries,
       assets: assets.map(({ record, content }) => ({
         ...record,
-        contentStatus: includeBinary && content !== null ? "available" : "missing",
+        // 登记时就标为缺失的资料不能因为占位内容存在而被改成可用。
+        // 有些资料确实拿不到原件，这个状态必须原样带过导出与导入。
+        contentStatus: includeBinary && content !== null && record.contentStatus === "available"
+          ? "available"
+          : "missing",
         path: artifactByAsset.has(record.id)
           ? `artifacts/${artifactByAsset.get(record.id)!.kind}/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}`
           : `evidence/${record.id}/${record.fileName.replace(/[^\p{L}\p{N}._-]+/gu, "_")}`,
@@ -262,7 +266,10 @@ export class ProjectPackageService {
       ...asset,
       contentStatus: parsed.contents.has(asset.id) ? "available" : "missing",
     }));
-    if (sessionId) await this.#repository.stageAssets(sessionId, assetRecords, parsed.contents);
+    // 只暂存有原件的资料。包里允许有已登记但拿不到原件的资料，
+    // 把这类也塞进暂存会让整批入库失败。
+    const stagedRecords = assetRecords.filter((asset) => parsed.contents.has(asset.id));
+    if (sessionId) await this.#repository.stageAssets(sessionId, stagedRecords, parsed.contents);
     try {
       await this.#commands.execute({
       commandType: "ImportProjectSnapshot",
