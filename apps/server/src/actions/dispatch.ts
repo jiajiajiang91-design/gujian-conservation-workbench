@@ -1,4 +1,4 @@
-import type { WorkspaceViewName } from "@gujian/domain";
+import type { SwitchableViewName } from "@gujian/domain";
 
 import { validateActionCall, type ActionDefinition } from "./action-catalog.js";
 
@@ -35,7 +35,9 @@ export interface DispatchTrace {
 // 视图名取自 WORKSPACE_VIEW_NAMES，每个视图都要有一行，测试有覆盖检查。
 // 关键词取窄不取宽：单独的"检查""模型""问题"同时是作业动作和视图名，
 // 放进这张表会把运行检查、生成三维一类的请求错判成切视图。
-export const VIEW_JUMP: Array<[RegExp, WorkspaceViewName]> = [
+export const VIEW_JUMP: Array<[RegExp, SwitchableViewName]> = [
+  // 项目列表放最前：说到项目列表就是要退出当前项目，不该再往视图里找。
+  [/项目列表|项目清单/, "项目列表"],
   [/任务/, "任务卡"],
   [/资料/, "资料清单"],
   [/实测|尺寸/, "实测基准"],
@@ -53,7 +55,7 @@ export const VIEW_JUMP: Array<[RegExp, WorkspaceViewName]> = [
 // 必须先判。否则"看三维模型"会被派成生成三维这类高成本作业动作。
 function viewJump(text: string): { name: string; args: unknown } | null {
   for (const [re, view] of VIEW_JUMP) {
-    if (new RegExp(`(看|去|打开|切到).*(${re.source})`).test(text)) {
+    if (new RegExp(`(看|去|打开|切到|回到|返回).*(${re.source})`).test(text)) {
       return { name: "switch_view", args: { view } };
     }
   }

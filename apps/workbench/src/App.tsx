@@ -363,6 +363,12 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     };
   }, [activeEvidenceId, selected?.projectId]);
 
+  // 退出当前项目回到列表页。左栏按钮与助手走同一处，行为不分叉。
+  const exitToProjectList = () => {
+    setSelected(null);
+    setActiveEvidenceId(null);
+  };
+
   const chooseProject = async (projectId: string) => {
     setError(null);
     setModelProgress(null);
@@ -559,6 +565,7 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     switchStage: (stageId) => {
       if (stages.some((stage) => stage.id === stageId)) setActiveStage(stageId as StageId);
     },
+    exitProject: () => exitToProjectList(),
     advanceStage: () => {
       const index = stages.findIndex((stage) => stage.id === activeStage);
       const next = stages[index + 1];
@@ -1197,7 +1204,7 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
             <h2>{selected.snapshot.buildings[0]?.name}</h2>
             <small>{confirmedTask?.name ?? selected.snapshot.project.name}</small>
             <small>{selected.snapshot.project.locationText ?? "地点尚未记录"}</small>
-            <button className="gj-btn gj-btn--text" type="button" onClick={() => { setSelected(null); setActiveEvidenceId(null); }}>← 返回项目列表</button>
+            <button className="gj-btn gj-btn--text" type="button" onClick={exitToProjectList}>← 返回项目列表</button>
           </div>
         )}
         {selected && (

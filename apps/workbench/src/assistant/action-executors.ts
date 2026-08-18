@@ -15,6 +15,8 @@ export interface ExecutorDeps {
 
 export type UiIntent =
   | { op: "switchStage"; stageId: string; noteZh: string | null }
+  // 退出当前项目回到列表页。与切 stage 不是一回事，消费方分开处理。
+  | { op: "exitProject" }
   | { op: "locate"; ref: string }
   | { op: "advance" };
 
@@ -120,6 +122,9 @@ export class AssistantExecutors {
   switchView(view: string): ExecutionOutcome {
     const mapping = resolveView(view);
     if (!mapping) return { kind: "rejected", reasonZh: `未知视图: ${view}` };
+    if (mapping.kind === "exitProject") {
+      return { kind: "ui", intent: { op: "exitProject" }, messageZh: "已退出当前项目，回到项目列表" };
+    }
     return {
       kind: "ui",
       intent: { op: "switchStage", stageId: mapping.stageId, noteZh: mapping.noteZh },

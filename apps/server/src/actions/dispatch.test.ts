@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { WORKSPACE_VIEW_NAMES } from "@gujian/domain";
+import { ALL_SWITCHABLE_VIEW_NAMES } from "@gujian/domain";
 
 import { dispatchUserText, keywordFallback, VIEW_JUMP, type ModelDispatchRunner } from "./dispatch.js";
 
@@ -113,9 +113,9 @@ describe("关键词退路表", () => {
 });
 
 describe("切视图与作业动作的边界", () => {
-  it("每个工作区视图都有关键词退路", () => {
+  it("每个可切换视图都有关键词退路", () => {
     const covered = VIEW_JUMP.map(([, view]) => view);
-    expect([...covered].sort()).toEqual([...WORKSPACE_VIEW_NAMES].sort());
+    expect([...covered].sort()).toEqual([...ALL_SWITCHABLE_VIEW_NAMES].sort());
   });
 
   const viewCases: Array<[string, string]> = [
@@ -125,6 +125,9 @@ describe("切视图与作业动作的边界", () => {
     ["去看模型用量和费用", "模型运行与费用"],
     ["打开图纸样式", "图纸样式"],
     ["看图纸", "图纸与检查"],
+    ["回到项目列表", "项目列表"],
+    ["返回项目列表", "项目列表"],
+    ["打开项目清单", "项目列表"],
   ];
   for (const [text, view] of viewCases) {
     it(`${text} 切到${view}`, () => {

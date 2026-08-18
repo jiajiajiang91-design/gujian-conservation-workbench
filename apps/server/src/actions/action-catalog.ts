@@ -1,4 +1,4 @@
-import { WORKSPACE_VIEW_NAMES } from "@gujian/domain";
+import { ALL_SWITCHABLE_VIEW_NAMES } from "@gujian/domain";
 import { z } from "zod";
 
 // 动作目录：05 界面与交互形态表 11、表 12 的代码形态。
@@ -19,7 +19,8 @@ export interface ActionDefinition {
   generation: 1 | 2 | 3;
 }
 
-const VIEW_NAMES = WORKSPACE_VIEW_NAMES;
+// 工作区视图加项目级页面。项目列表是退出当前项目，不是切 stage。
+const VIEW_NAMES = ALL_SWITCHABLE_VIEW_NAMES;
 
 const CHANGE_TYPES = [
   "参数修改", "类别修改", "标记存疑", "标记不可用", "标记不可见", "新增", "删除",

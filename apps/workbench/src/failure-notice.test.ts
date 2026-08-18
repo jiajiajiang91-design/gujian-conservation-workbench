@@ -71,6 +71,15 @@ describe("失败提示不漏错误码", () => {
     expect(notice.nextStepZh.length).toBeGreaterThan(0);
   });
 
+  it("助手请求的 HTTP 码不直出", () => {
+    for (const code of ["ASSISTANT_TURN_HTTP_403", "ASSISTANT_CONFIRM_HTTP_500"]) {
+      const notice = describeFailure(new Error(code), "助手请求失败");
+      expect(CODE_TOKEN.test(notice.summaryZh), code).toBe(false);
+      expect(notice.summaryZh).not.toContain("403");
+      expect(notice.summaryZh).not.toContain("500");
+    }
+  });
+
   it("英文运行时错误不直出，改用调用点的中文说法", () => {
     const notice = describeFailure(new TypeError("Failed to fetch"), "图纸作业失败");
     expect(notice.summaryZh).toContain("图纸作业失败");

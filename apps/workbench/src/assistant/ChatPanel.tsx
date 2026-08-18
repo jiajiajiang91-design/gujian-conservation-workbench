@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
+import { describeFailure } from "../failure-notice";
 import { ActionCard, type ActionCardData } from "./ActionCard";
 import type { AssistantClient, AssistantTurnEvent } from "./assistant-client";
 import { ConfirmBar } from "./ConfirmBar";
@@ -90,10 +91,12 @@ export function ChatPanel({ client, buildSnapshot, onClientOp }: ChatPanelProps)
     try {
       await client.sendTurn({ text, snapshot: buildSnapshot(), onEvent: handleEvent });
     } catch (error) {
+      // 助手消息与错误横幅走同一套中文说法，不显示错误码原文（07 界面视觉规范 5.6）。
+      const notice = describeFailure(error, "助手请求失败");
       append(newMessage({
         who: "assistant",
         kind: "risk",
-        text: `本轮请求失败：${error instanceof Error ? error.message : "未知错误"}`,
+        text: `${notice.summaryZh}${notice.nextStepZh ? ` ${notice.nextStepZh}` : ""}`,
       }));
     } finally {
       setBusy(false);

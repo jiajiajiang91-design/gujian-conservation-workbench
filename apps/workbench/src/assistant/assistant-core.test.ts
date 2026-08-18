@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectHead } from "@gujian/application";
-import { WORKSPACE_VIEW_NAMES } from "@gujian/domain";
+import { ALL_SWITCHABLE_VIEW_NAMES } from "@gujian/domain";
 
 import {
   AssistantExecutors,
@@ -18,13 +18,13 @@ const HEAD = {
   revisionId: "9f8e7d6c-5b4a-4392-8170-fedcba987654",
 } as unknown as ProjectHead;
 
-const DESIGN_VIEWS = [...WORKSPACE_VIEW_NAMES];
+const DESIGN_VIEWS = [...ALL_SWITCHABLE_VIEW_NAMES];
 
 describe("视图映射", () => {
   it("设计视图全部有映射，未实现的带说明", () => {
     expect(ALL_VIEW_MAPPINGS.map((mapping) => mapping.view)).toEqual(DESIGN_VIEWS);
     for (const mapping of ALL_VIEW_MAPPINGS) {
-      expect(mapping.stageId.length).toBeGreaterThan(0);
+      if (mapping.kind === "stage") expect(mapping.stageId.length).toBeGreaterThan(0);
       if (!mapping.implemented) expect(mapping.noteZh).toBeTruthy();
     }
     expect(resolveView("不存在")).toBeNull();
@@ -37,8 +37,16 @@ describe("视图映射", () => {
       "geometry", "sheetStyle", "drawings", "checks", "package", "candidates",
     ]);
     for (const mapping of ALL_VIEW_MAPPINGS) {
+      if (mapping.kind !== "stage") continue;
       expect(stageIds.has(mapping.stageId), `${mapping.view} 指向未知视图 ${mapping.stageId}`).toBe(true);
     }
+  });
+
+  // 项目列表是退出当前项目，不是切 stage。塞一个假 stage 标识会让消费方猜。
+  it("项目列表是退出项目而不是切换视图", () => {
+    const mapping = resolveView("项目列表");
+    expect(mapping?.kind).toBe("exitProject");
+    expect(mapping).not.toHaveProperty("stageId");
   });
 });
 
@@ -207,5 +215,19 @@ describe("SSE 读取", () => {
     const events: unknown[] = [];
     await readSseStream(new Response(body), (event) => events.push(event));
     expect(events).toEqual([{ type: "progress", n: 1 }, { type: "answer", n: 2 }]);
+  });
+});
+
+describe("退出当前项目", () => {
+  it("助手说回到项目列表时产出退出意图，不产出切换 stage", () => {
+    const executors = new AssistantExecutors({
+      commands: {} as never, workflow: {} as never, actorId: () => HEAD.projectId,
+    });
+    const outcome = executors.switchView("项目列表");
+    expect(outcome.kind).toBe("ui");
+    if (outcome.kind === "ui") {
+      expect(outcome.intent).toEqual({ op: "exitProject" });
+      expect(outcome.messageZh).toContain("项目列表");
+    }
   });
 });

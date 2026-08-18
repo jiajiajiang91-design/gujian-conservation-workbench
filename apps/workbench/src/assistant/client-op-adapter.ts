@@ -14,6 +14,7 @@ export interface ClientOpDeps {
   knownRefs: () => readonly string[];
   measurements: () => readonly MeasurementForCheck[];
   switchStage: (stageId: string) => void;
+  exitProject: () => void;
   advanceStage: () => string | null;
   jobProgressSummary: () => string;
   startGeometryJob: () => Promise<void>;
@@ -59,7 +60,13 @@ export async function runClientOp(
   switch (input.clientOp) {
     case "ui:switch-view": {
       const outcome = deps.executors.switchView(String(args.view ?? ""));
-      if (outcome.kind !== "ui" || outcome.intent.op !== "switchStage") return warn(outcome.kind === "rejected" ? outcome.reasonZh : "视图切换失败");
+      if (outcome.kind !== "ui") return warn(outcome.kind === "rejected" ? outcome.reasonZh : "视图切换失败");
+      // 项目级页面与工作区视图分开处理，不共用一个 stage 标识。
+      if (outcome.intent.op === "exitProject") {
+        deps.exitProject();
+        return ok(outcome.messageZh);
+      }
+      if (outcome.intent.op !== "switchStage") return warn("视图切换失败");
       deps.switchStage(outcome.intent.stageId);
       return ok(outcome.messageZh);
     }
