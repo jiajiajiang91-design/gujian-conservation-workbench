@@ -91,6 +91,7 @@ interface ActiveCadJob {
 interface ActiveDrawingJob {
   workerRun: DrawingWorkerRun;
   response: ServerResponse;
+  state: "running" | "cancelled" | "settled";
 }
 
 export interface ModelGateway {
@@ -579,17 +580,27 @@ export function createWorkbenchServer(options: {
           sendSse(response, { type: "failed", jobId: input.jobId, errorCode: publicErrorCode(error) });
           return response.end();
         }
-        activeDrawingJobs.set(input.jobId, { workerRun, response });
+        const activeDrawing: ActiveDrawingJob = { workerRun, response, state: "running" };
+        activeDrawingJobs.set(input.jobId, activeDrawing);
         sendSse(response, { type: "running", jobId: input.jobId });
         try {
           const result = await workerRun.result;
-          completedDrawingJobs.set(input.jobId, result);
-          sendSse(response, { type: "succeeded", jobId: input.jobId, buildRecordHash: result.buildRecordHash, assets: result.assets });
+          // 已取消的作业不再回写成果：取消后到达的完成事件只留痕不生效。
+          if (activeDrawing.state === "cancelled") {
+            sendSse(response, { type: "late", jobId: input.jobId, detail: "ignored-worker-completion" });
+          } else {
+            completedDrawingJobs.set(input.jobId, result);
+            activeDrawing.state = "settled";
+            sendSse(response, { type: "succeeded", jobId: input.jobId, buildRecordHash: result.buildRecordHash, assets: result.assets });
+          }
         } catch (error) {
-          sendSse(response, { type: "failed", jobId: input.jobId, errorCode: publicErrorCode(error) });
+          if (activeDrawing.state !== "cancelled") {
+            activeDrawing.state = "settled";
+            sendSse(response, { type: "failed", jobId: input.jobId, errorCode: publicErrorCode(error) });
+          }
         } finally {
           activeDrawingJobs.delete(input.jobId);
-          response.end();
+          if (!response.writableEnded) response.end();
         }
         return;
       }
@@ -617,6 +628,17 @@ export function createWorkbenchServer(options: {
       if (cadMatch && request.method === "GET") {
         const entry = cadLedger.read(cadMatch[1] ?? "");
         return entry ? writeJson(response, 200, entry, origin) : writeJson(response, 404, { error: "CAD_JOB_NOT_FOUND" }, origin);
+      }
+      const drawingMatch = url.pathname.match(/^\/api\/drawing-jobs\/([0-9a-f-]+)$/i);
+      if (drawingMatch && request.method === "DELETE") {
+        const jobId = drawingMatch[1] ?? "";
+        const active = activeDrawingJobs.get(jobId);
+        if (!active || active.state !== "running") return writeJson(response, 404, { error: "DRAWING_JOB_NOT_ACTIVE" }, origin);
+        active.state = "cancelled";
+        active.workerRun.process.kill();
+        sendSse(active.response, { type: "cancelled", jobId });
+        active.response.end();
+        return writeJson(response, 200, { jobId, status: "cancelled" }, origin);
       }
       if (cadMatch && request.method === "DELETE") {
         const jobId = cadMatch[1] ?? "";

@@ -96,6 +96,50 @@ describe("controlled drawing jobs", () => {
     expect(Buffer.from(await downloaded.arrayBuffer())).toEqual(asset);
   });
 
+  // 07 表 7 第三档要求长任务可取消。取消后到达的完成事件只留痕不回写成果。
+  it("取消图纸作业后终止进程，迟到的完成结果不生效", async () => {
+    let release: (value: Awaited<DrawingWorkerRun["result"]>) => void = () => {};
+    let killed = false;
+    const run = workerRun(new Promise((resolve) => { release = resolve; }));
+    Object.assign(run.process, { kill: () => { killed = true; return true; } });
+    const drawingWorker: DrawingWorker = { start: () => run, readAsset: () => Buffer.alloc(0) };
+    const { baseUrl, ledger } = await start(drawingWorker);
+    const projectId = crypto.randomUUID();
+    const projectRevisionId = crypto.randomUUID();
+    const sourceCadJobId = crypto.randomUUID();
+    ledger.start({ jobId: sourceCadJobId, projectId, projectRevisionId, geometrySpecId: crypto.randomUUID(), inputHash: "c".repeat(64), idempotencyKey: crypto.randomUUID(), startedAt: "2026-08-14T00:00:00.000Z" });
+    ledger.append(sourceCadJobId, "succeeded", "d".repeat(64));
+    ledger.complete(sourceCadJobId, { status: "succeeded", outputManifestHash: "d".repeat(64), outputDirectory: "server-owned" });
+    const credentials = await session(baseUrl);
+    const geometryRevisionId = crypto.randomUUID();
+    const jobId = crypto.randomUUID();
+    const streamRequest = fetch(`${baseUrl}/api/drawing-jobs`, {
+      method: "POST", headers: { "content-type": "application/json", cookie: credentials.cookie, "x-csrf-token": credentials.csrfToken, "x-capability-token": credentials.drawingCapabilityToken },
+      body: JSON.stringify({ jobId, clientRequestId: crypto.randomUUID(), sourceCadJobId, projectId, projectRevisionId, geometryRevisionId, artifactMatrix: matrix(projectId, projectRevisionId, geometryRevisionId) }),
+    });
+    const streamResponse = await streamRequest;
+    const cancelled = await fetch(`${baseUrl}/api/drawing-jobs/${jobId}`, {
+      method: "DELETE", headers: { cookie: credentials.cookie, "x-csrf-token": credentials.csrfToken },
+    });
+    expect(cancelled.status).toBe(200);
+    expect(killed).toBe(true);
+    release({ buildRecordHash: "b".repeat(64), outputDirectory: "server-owned", assets: [] });
+    const text = await streamResponse.text();
+    expect(text).toContain('"type":"cancelled"');
+    expect(text).not.toContain('"type":"succeeded"');
+  });
+
+  it("没有进行中的图纸作业时取消返回未激活", async () => {
+    const drawingWorker: DrawingWorker = { start: () => workerRun(Promise.reject(new Error("not expected"))), readAsset: () => Buffer.alloc(0) };
+    const { baseUrl } = await start(drawingWorker);
+    const credentials = await session(baseUrl);
+    const response = await fetch(`${baseUrl}/api/drawing-jobs/${crypto.randomUUID()}`, {
+      method: "DELETE", headers: { cookie: credentials.cookie, "x-csrf-token": credentials.csrfToken },
+    });
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ error: "DRAWING_JOB_NOT_ACTIVE" });
+  });
+
   it("rejects external paths and unknown matrix fields before starting the worker", async () => {
     let called = false;
     const drawingWorker: DrawingWorker = { start: () => { called = true; return workerRun(Promise.reject(new Error("not expected"))); }, readAsset: () => Buffer.alloc(0) };

@@ -22,6 +22,7 @@ import {
 } from "./workbench";
 import { buildArtifactMatrix } from "./artifact-matrix-builder";
 import { describeFailure, inputError, type FailureNotice } from "./failure-notice";
+import { LongTask, useDelayedIndicator } from "./LongTask";
 import type { DemoLoadResult } from "./demo-library-loader";
 import { DrawingLimitationNote, QualificationChip } from "./QualificationNotice";
 import { describeBlocker } from "./qualification";
@@ -80,6 +81,20 @@ export const DATA_STATUS_LABELS: Record<string, string> = {
 };
 // 恢复检验用的独立数据库，与本机项目库分开，用完即删
 const ROUNDTRIP_VERIFY_DB = "gujian-roundtrip-verify";
+// 作业阶段的中文说法。界面不显示 queued、running 一类原值。
+const JOB_PHASE_LABELS: Record<string, string> = {
+  queued: "排队中", running: "运行中", succeeded: "已完成", failed: "已失败",
+  cancelled: "已取消", late: "结果已作废",
+};
+// 取消是用户主动的结果，与作业失败要分开处理。
+function isCancelled(reason: unknown): boolean {
+  return reason instanceof Error && /_CANCELLED$/.test(reason.message);
+}
+
+function cadPhaseLabel(phase: string | undefined | null): string {
+  return phase ? JOB_PHASE_LABELS[phase] ?? "运行中" : "排队中";
+}
+
 export const PARSE_STATUS_LABELS: Record<string, string> = {
   parsed: "已读取文字内容", failed: "无法自动读取", metadataOnly: "仅登记，未读取内容", pending: "待读取",
 };
@@ -151,6 +166,17 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
   const [modelProgress, setModelProgress] = useState<ModelRunProgress | null>(null);
   const [cadProgress, setCadProgress] = useState<CadJobProgress | null>(null);
   const [drawingProgress, setDrawingProgress] = useState<string | null>(null);
+  const [cadCancelling, setCadCancelling] = useState(false);
+  // 从点击到作业首个事件之间有一段准备工作（规则留痕、构件规格组装、建立会话）。
+  // 这段时间也属于用户在等，必须同样进入加载态，否则按钮还能再点，会重复提交。
+  const [geometryStarting, setGeometryStarting] = useState(false);
+  // 取消意图记在界面这一侧。取消请求发出后作业流会先断，客户端拿到的是
+  // 连接错误而不是取消事件，只靠错误内容判断会把取消显示成失败。
+  const cadCancelRequested = useRef(false);
+  const drawingCancelRequested = useRef(false);
+  const [drawingCancelling, setDrawingCancelling] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ phase: string; cancelling: boolean } | null>(null);
+  const exportCancelled = useRef(false);
   const [geometryBlob, setGeometryBlob] = useState<Blob | null>(null);
   const [selectedGeometryEntityId, setSelectedGeometryEntityId] = useState<string | null>(null);
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
@@ -229,6 +255,14 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
   );
   const parsedEvidenceCount = selected?.snapshot.parseRecords.filter((record) => record.status === "parsed" && record.extractedText?.trim()).length ?? 0;
   const modelRunning = modelProgress && !["succeeded", "failed", "cancelled"].includes(modelProgress.phase);
+  // 三个长任务的运行判定与指示器门槛（07 表 7）：短于 300 ms 不显示指示器
+  const geometryRunning = geometryStarting
+    || Boolean(cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase));
+  const drawingRunning = Boolean(drawingProgress && !["succeeded", "failed", "cancelled"].includes(drawingProgress));
+  const exportRunning = Boolean(exportProgress);
+  const showGeometryTask = useDelayedIndicator(geometryRunning);
+  const showDrawingTask = useDelayedIndicator(drawingRunning);
+  const showExportTask = useDelayedIndicator(exportRunning);
   const confirmedTask = selected?.snapshot.taskDefinitions.find((task) => task.confirmedAt !== null) ?? null;
   const openIssues = selected?.snapshot.issues.filter((issue) => issue.status === "open") ?? [];
   const geometryRevision = selected?.snapshot.geometryRevisions.at(-1) ?? null;
@@ -340,6 +374,9 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     if (!selected) return;
     setError(null);
     setCadProgress(null);
+    setCadCancelling(false);
+    setGeometryStarting(true);
+    cadCancelRequested.current = false;
     try {
       const outcome = await cadJobs.startGeometry(
         selected,
@@ -351,7 +388,13 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
       await refresh();
       setNotice("三维模型已生成。成果尚未经专业复核签发，不能用于正式交付");
     } catch (reason) {
-      setError(describeFailure(reason, "几何作业失败"));
+      setCadProgress(null);
+      // 用户主动取消不是失败，不进失败提示。
+      if (cadCancelRequested.current || isCancelled(reason)) setNotice("三维模型生成已取消，本机数据保持在生成前的状态");
+      else setError(describeFailure(reason, "几何作业失败"));
+    } finally {
+      setGeometryStarting(false);
+      setCadCancelling(false);
     }
   };
 
@@ -373,12 +416,31 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
 
   const generateDrawings = async () => {
     if (!selected || !geometryRevision || !geometrySpec) return;
-    setError(null); setDrawingProgress("queued");
+    setError(null); setDrawingProgress("queued"); setDrawingCancelling(false);
+    drawingCancelRequested.current = false;
     try {
       const matrix = buildArtifactMatrix(selected, geometryRevision, geometrySpec);
       const outcome = await drawingJobs.generate(selected, localActorId(), geometryRevision, matrix, setDrawingProgress);
       setSelected(outcome.head); await loadProject(selected.projectId); await refresh(); setNotice("成组图纸已生成，各图与同一版三维模型一致");
-    } catch (reason) { setError(describeFailure(reason, "图纸作业失败")); }
+    } catch (reason) {
+      setDrawingProgress(null);
+      if (drawingCancelRequested.current || isCancelled(reason)) setNotice("图纸生成已取消，本机数据保持在生成前的状态");
+      else setError(describeFailure(reason, "图纸作业失败"));
+    } finally {
+      setDrawingCancelling(false);
+    }
+  };
+
+  const cancelGeometry = async () => {
+    cadCancelRequested.current = true;
+    setCadCancelling(true);
+    try { await cadJobs.cancel(); } catch { /* 取消失败时作业仍会自然结束 */ }
+  };
+
+  const cancelDrawings = async () => {
+    drawingCancelRequested.current = true;
+    setDrawingCancelling(true);
+    try { await drawingJobs.cancel(); } catch { /* 同上 */ }
   };
 
   const createProxyDelivery = async () => {
@@ -432,19 +494,39 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     }
   };
 
+  // 导出是本机流程，没有服务端作业可以终止，因此按阶段推进并在每个阶段
+  // 之间检查取消标志。取消后不落文件，界面回到导出前的状态。
   const downloadProject = async (type: "json" | "zip") => {
-    if (!selected) return;
-    const bytes = type === "json"
-      ? await projectPackages.exportJson(selected.projectId)
-      : await projectPackages.exportZip(selected.projectId);
-    const blob = new Blob([bytes as BlobPart], { type: type === "json" ? "application/json" : "application/zip" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${selected.snapshot.project.name}.${type === "json" ? "project.json" : "gujian.zip"}`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setNotice(`已导出 ${type.toUpperCase()} 项目包`);
+    if (!selected || exportProgress) return;
+    setError(null);
+    exportCancelled.current = false;
+    setExportProgress({ phase: "组装项目记录", cancelling: false });
+    try {
+      const bytes = type === "json"
+        ? await projectPackages.exportJson(selected.projectId)
+        : await projectPackages.exportZip(selected.projectId);
+      if (exportCancelled.current) { setNotice("导出已取消，未产生文件"); return; }
+      setExportProgress({ phase: "写出文件", cancelling: false });
+      const blob = new Blob([bytes as BlobPart], { type: type === "json" ? "application/json" : "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${selected.snapshot.project.name}.${type === "json" ? "project.json" : "gujian.zip"}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setNotice(`已导出 ${type.toUpperCase()} 项目包`);
+    } catch (reason) {
+      setExportProgress(null);
+      setError(describeFailure(reason, "项目包导出失败"));
+      return;
+    } finally {
+      setExportProgress(null);
+    }
+  };
+
+  const cancelExport = () => {
+    exportCancelled.current = true;
+    setExportProgress((current) => current ? { ...current, cancelling: true } : current);
   };
 
   const buildAssistantSnapshot = () => buildWorkspaceSnapshot({
@@ -1537,11 +1619,14 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
               <section className="evidence-board geometry-board">
                 <header className="board-heading">
                   <div><h3>项目驱动三维模型</h3></div>
-                  <button className="gj-btn gj-btn--primary" type="button" disabled={!geometryGate?.ready || Boolean(cadProgress && !["succeeded", "failed", "cancelled"].includes(cadProgress.phase))} onClick={() => void generateDemoGeometry()}>
+                  <button className="gj-btn gj-btn--primary gj-btn--loadable" type="button" aria-busy={geometryRunning} disabled={!geometryGate?.ready || geometryRunning} onClick={() => void generateDemoGeometry()}>
                     <Play size={14} /> {geometryRevision ? "生成新代理版本" : "生成代理几何"}
                   </button>
                 </header>
                 <div className="pane-body">
+                {showGeometryTask && (
+                  <LongTask labelZh={`正在生成三维模型：${cadPhaseLabel(cadProgress?.phase)}`} onCancel={() => void cancelGeometry()} cancelling={cadCancelling} />
+                )}
                 <div className="transmission-note"><ShieldCheck size={15} /><span>生成三维只使用本项目已确认的构件数据，不读取项目以外的文件。</span></div>
                 {!geometryGate?.ready && (
                   <div className="geometry-gate">
@@ -1642,11 +1727,14 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
                 <header className="board-heading">
                   <div><h3>成组平立剖与节点详图</h3></div>
                   <QualificationChip />
-                  <button className="gj-btn gj-btn--primary" type="button" disabled={!geometryRevision || !confirmedTask || Boolean(drawingProgress && !["succeeded", "failed"].includes(drawingProgress))} onClick={() => void generateDrawings()}>
-                    <Images size={14} /> {drawingProgress && !["succeeded", "failed"].includes(drawingProgress) ? "生成中" : "按成果目录生成"}
+                  <button className="gj-btn gj-btn--primary gj-btn--loadable" type="button" aria-busy={drawingRunning} disabled={!geometryRevision || !confirmedTask || drawingRunning} onClick={() => void generateDrawings()}>
+                    <Images size={14} /> 按成果目录生成
                   </button>
                 </header>
                 <div className="pane-body">
+                {showDrawingTask && (
+                  <LongTask labelZh={`正在生成成组图纸：${cadPhaseLabel(drawingProgress)}`} onCancel={() => void cancelDrawings()} cancelling={drawingCancelling} />
+                )}
                 <div className="transmission-note"><ShieldCheck size={15} /><span>图种、图幅和版面来自任务要求；图上每条线都由当前三维模型剖切或投影得到，不另外描画。</span></div>
                 {drawingArtifacts.length > 0 && <DrawingLimitationNote />}
                 {drawingArtifacts.length ? (
@@ -1683,9 +1771,12 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
                 <header className="board-heading"><div><h3>代理成果交付与项目包</h3></div><button className="gj-btn gj-btn--primary" type="button" disabled={!geometryRevision || !latestCheckRun || !drawingArtifacts.length || Boolean(latestDelivery)} onClick={() => void createProxyDelivery()}><PackageOpen size={14} /> 建立代理交付草案</button></header>
                 <div className="pane-body">
                 {latestDelivery ? <div className="delivery-status"><QualificationChip /><strong>交付草案已建立</strong><p>{latestDelivery.restrictions.join(" · ")}</p></div> : deliveries.blockers(selected).length ? <div className="delivery-blockers"><strong>暂时不能正式交付</strong>{deliveries.blockers(selected).map((item) => <p key={item}>{item}</p>)}<button type="button" disabled={Boolean(latestBlockedDelivery)} onClick={() => void recordBlockedDelivery()}>{latestBlockedDelivery ? "已记录原因" : "记录无法交付的原因"}</button></div> : null}
+                {showExportTask && (
+                  <LongTask labelZh={`正在导出项目包：${exportProgress?.phase ?? ""}`} onCancel={cancelExport} cancelling={exportProgress?.cancelling ?? false} />
+                )}
                 <div className="package-grid">
-                  <article><FileJson /><strong>project.json</strong><p>适合检查结构化记录，不包含二进制文件本体。</p><button type="button" onClick={() => void downloadProject("json")}>导出 JSON</button></article>
-                  <article><PackageOpen /><strong>project.gujian.zip</strong><p>包含全部资料原件、识别与核对记录、人工决定、三维模型、图纸、检查结果和交付草案。</p><button type="button" onClick={() => void downloadProject("zip")}>导出代理 ZIP</button></article>
+                  <article><FileJson /><strong>project.json</strong><p>适合检查结构化记录，不包含二进制文件本体。</p><button className="gj-btn gj-btn--secondary gj-btn--loadable" type="button" aria-busy={Boolean(exportProgress)} disabled={Boolean(exportProgress)} onClick={() => void downloadProject("json")}>导出 JSON</button></article>
+                  <article><PackageOpen /><strong>project.gujian.zip</strong><p>包含全部资料原件、识别与核对记录、人工决定、三维模型、图纸、检查结果和交付草案。</p><button className="gj-btn gj-btn--secondary gj-btn--loadable" type="button" aria-busy={Boolean(exportProgress)} disabled={Boolean(exportProgress)} onClick={() => void downloadProject("zip")}>导出代理 ZIP</button></article>
                 </div>
                 <section className="roundtrip-check">
                   <div>

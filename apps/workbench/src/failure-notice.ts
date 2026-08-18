@@ -154,6 +154,7 @@ const GENERIC: FailureNotice = {
 };
 
 const CODE_SHAPE = /^[A-Z][A-Z0-9_]{2,}$/;
+const CJK = /[一-鿿]/;
 const DETAIL_MAX = 120;
 
 function lookup(code: string): FailureRule | null {
@@ -178,9 +179,13 @@ export function describeFailure(reason: unknown, fallbackZh: string): FailureNot
   const code = head.trim();
 
   if (!CODE_SHAPE.test(code)) {
-    // 已经是中文说明的直接用，空消息用调用点给的兜底说法。
-    const summaryZh = raw.trim() === "" ? fallbackZh : raw.trim();
-    return { summaryZh, nextStepZh: GENERIC.nextStepZh };
+    // 只有中文说明才直接采用。浏览器与运行时抛的是英文原文
+    // （如 Failed to fetch），直出同样违反不显示错误码原文的要求。
+    const text = raw.trim();
+    return {
+      summaryZh: CJK.test(text) ? text : `${fallbackZh}。数据保持在操作前的状态。`,
+      nextStepZh: GENERIC.nextStepZh,
+    };
   }
 
   const rule = lookup(code);

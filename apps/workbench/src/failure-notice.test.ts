@@ -71,6 +71,13 @@ describe("失败提示不漏错误码", () => {
     expect(notice.nextStepZh.length).toBeGreaterThan(0);
   });
 
+  it("英文运行时错误不直出，改用调用点的中文说法", () => {
+    const notice = describeFailure(new TypeError("Failed to fetch"), "图纸作业失败");
+    expect(notice.summaryZh).toContain("图纸作业失败");
+    expect(notice.summaryZh).not.toContain("Failed");
+    expect(/[a-zA-Z]/.test(notice.summaryZh)).toBe(false);
+  });
+
   it("中文消息原样保留", () => {
     const notice = describeFailure(new Error("驳回候选时需要填写理由"), "操作失败");
     expect(notice.summaryZh).toBe("驳回候选时需要填写理由");

@@ -12,7 +12,19 @@ const kindMap: Record<string, ArtifactRecord["kind"]> = {
 };
 
 export class DrawingJobClient {
+  #active: { jobId: string; csrfToken: string } | null = null;
+
   constructor(private readonly input: { repository: IndexedDbProjectRepository; commands: ProjectCommandService; fetchImpl?: typeof fetch }) {}
+
+  // 与三维作业一致：终止服务端进程，本机不留半成品。
+  async cancel(): Promise<void> {
+    const active = this.#active;
+    if (!active) return;
+    const fetcher = this.input.fetchImpl ?? globalThis.fetch.bind(globalThis);
+    await fetcher(`/api/drawing-jobs/${active.jobId}`, {
+      method: "DELETE", credentials: "same-origin", headers: { "x-csrf-token": active.csrfToken },
+    });
+  }
 
   async generate(head: ProjectHead, actorId: string, geometry: GeometryRevision, matrix: ArtifactRequirementMatrix, onProgress: (phase: string) => void): Promise<{ head: ProjectHead; artifacts: ArtifactRecord[]; checkRun: CheckRun }> {
     const jobs = await this.input.repository.getProjectCadJobs(head.projectId);
@@ -23,6 +35,7 @@ export class DrawingJobClient {
     if (!sessionResponse.ok) throw new Error("DRAWING_SESSION_FAILED");
     const session = await sessionResponse.json() as SessionResponse;
     const jobId = crypto.randomUUID();
+    this.#active = { jobId, csrfToken: session.csrfToken };
     const response = await fetcher("/api/drawing-jobs", {
       method: "POST", credentials: "same-origin", headers: { "content-type": "application/json", "x-csrf-token": session.csrfToken, "x-capability-token": session.drawingCapabilityToken },
       body: JSON.stringify({ jobId, clientRequestId: crypto.randomUUID(), sourceCadJobId: sourceJob.id, projectId: head.projectId, projectRevisionId: geometry.projectRevisionId, geometryRevisionId: geometry.id, artifactMatrix: matrix }),
@@ -37,6 +50,7 @@ export class DrawingJobClient {
       const payload = JSON.parse(line.slice(5).trim()) as { type: string } | DrawingSucceeded;
       onProgress(payload.type);
       if (payload.type === "failed") throw new Error("DRAWING_JOB_FAILED");
+      if (payload.type === "cancelled") throw new Error("DRAWING_JOB_CANCELLED");
       if (payload.type === "succeeded") terminal = payload as DrawingSucceeded;
     };
     while (true) {
@@ -82,6 +96,7 @@ export class DrawingJobClient {
     await this.input.commands.execute({ commandType: "CommitCheckRun", commandId: crypto.randomUUID(), projectId: head.projectId, actorId, expectedRevisionId: updated.revisionId, issuedAt: createdAt, payload: { checkRun } });
     updated = await this.input.repository.getProjectHead(head.projectId);
     if (!updated) throw new Error("PROJECT_NOT_FOUND_AFTER_CHECK");
+    this.#active = null;
     return { head: updated, artifacts, checkRun };
   }
 }

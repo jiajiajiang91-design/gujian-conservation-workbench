@@ -71,4 +71,37 @@ describe("界面视觉规范自检（07 第 8 节）", () => {
     expect(PAGES).toContain("var(--right-column)");
     expect(PAGES).toMatch(/:focus-visible[^{]*\{[^}]*outline:\s*2px solid var\(--accent\)/);
   });
+
+  // 表 7 加载分档：三档表现各自成立，且不伪造百分比
+  it("加载分档三档齐全", () => {
+    // 第一档由 useDelayedIndicator 的 300 ms 门槛实现，见 LongTask.tsx
+    expect(read("LongTask.tsx")).toContain("INDICATOR_DELAY_MS = 300");
+    // 第二档：区域内 24 px 指示器加一行说明
+    expect(COMPONENTS).toContain(".gj-loading");
+    expect(COMPONENTS).toMatch(/\.gj-loading::before[\s\S]*?width: 24px/);
+    // 第三档：进度条高 4 px、圆角 2 px，含不确定态
+    expect(COMPONENTS).toMatch(/\.gj-task-bar \{[\s\S]*?height: 4px/);
+    expect(COMPONENTS).toMatch(/\.gj-task-bar \{[\s\S]*?border-radius: 2px/);
+    expect(COMPONENTS).toContain(".gj-task-bar--indeterminate");
+    expect(COMPONENTS).toContain(".gj-task-bar--determinate");
+  });
+
+  it("按钮加载态为 16 px 指示器且宽度不跳动", () => {
+    // 指示器槽位常驻并预留宽度，进入加载态只切换可见性，宽度不变
+    expect(COMPONENTS).toMatch(/\.gj-btn--loadable::before \{[\s\S]*?width: 16px/);
+    expect(COMPONENTS).toMatch(/\.gj-btn--loadable::before \{[\s\S]*?visibility: hidden/);
+    expect(COMPONENTS).toMatch(/\.gj-btn\[aria-busy="true"\]::before \{[\s\S]*?width: 16px/);
+    // 动画 0.8 s 匀速，不用跳动或缩放
+    expect(COMPONENTS).toMatch(/animation: gj-spin \.8s linear infinite/);
+  });
+
+  it("长任务不伪造百分比也不伪造估算值", () => {
+    const source = read("LongTask.tsx");
+    // 没有历史数据时显示耗时未知
+    expect(source).toContain("耗时未知");
+    // 预计耗时不精确到秒以下
+    expect(source).toContain("预计还需");
+    expect(source).not.toMatch(/toFixed\(\d\)/);
+  });
+
 });
