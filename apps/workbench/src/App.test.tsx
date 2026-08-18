@@ -1,20 +1,18 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { App, LENGTH_INPUT_STEP } from "./App";
-import { projectRepository } from "./workbench";
 
 afterEach(cleanup);
 
-// 本用例走的是空库路径。演示项目装载与上一轮用例都会留下项目，
-// 不清库会让断言取决于执行顺序。
-beforeEach(async () => {
-  await projectRepository.clearAllData();
-});
+// 演示项目装载在本用例里注入空实现。它是组件挂载后自行发起的异步写入，
+// 测试无法等待，完成时的重渲染会把已取到的节点摘出文档，断言随机失败。
+// 装载本身的覆盖在 demo-library-loader.test.ts。
+const noDemoBootstrap = async () => null;
 
 describe("App", () => {
   it("建立项目后显示当前建筑和版本", async () => {
-    render(<App />);
+    render(<App bootstrapDemo={noDemoBootstrap} />);
     expect(screen.getByRole("heading", { name: /古建保护/ })).toBeInTheDocument();
     expect(screen.getByText("资料原件保存在本机，不会上传")).toBeInTheDocument();
 

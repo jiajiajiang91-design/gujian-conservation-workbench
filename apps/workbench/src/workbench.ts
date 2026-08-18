@@ -1,6 +1,7 @@
 import { ProjectCommandService, type ProjectHead, type ProjectSummary } from "@gujian/application";
 import { EvidenceIngestionService, IndexedDbProjectRepository, LocalAuthorization, ProjectPackageService, WorkflowService } from "@gujian/infrastructure";
 
+import { loadDemoLibrary, type DemoLoadResult } from "./demo-library-loader";
 import { ModelRunClient } from "./model-run-client";
 import { CadJobClient } from "./cad-job-client";
 import { DrawingJobClient } from "./drawing-job-client";
@@ -69,4 +70,17 @@ export async function createLocalProject(input: {
 
 export async function listLocalProjects(): Promise<readonly ProjectSummary[]> {
   return projectRepository.listProjects();
+}
+
+// 首次打开的装载策略放在组合根，不放在组件里。
+// 组件自行发起的异步写入没有办法被调用方等待，测试里会与断言竞争。
+// 返回 null 表示本地已有项目，没有装载动作。
+export async function bootstrapDemoProjects(): Promise<DemoLoadResult | null> {
+  const existing = await listLocalProjects();
+  if (existing.length) return null;
+  return loadDemoLibrary({
+    packages: projectPackages,
+    existingProjectIds: new Set(existing.map((item) => item.projectId)),
+    actorId: localActorId(),
+  });
 }

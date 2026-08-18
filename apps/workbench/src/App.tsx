@@ -16,13 +16,13 @@ import type { ModelRunProgress } from "./model-run-client";
 import type { CadJobProgress } from "./cad-job-client";
 import { GlbViewer } from "./GlbViewer";
 import {
-  cadJobs, createLocalProject, deliveries, drawingJobs, evidenceIngestion, listLocalProjects, localActorId,
-  modelRuns, projectPackages, projectRepository,
+  bootstrapDemoProjects, cadJobs, createLocalProject, deliveries, drawingJobs, evidenceIngestion,
+  listLocalProjects, localActorId, modelRuns, projectPackages, projectRepository,
   projectCommands, workflow,
 } from "./workbench";
 import { buildArtifactMatrix } from "./artifact-matrix-builder";
 import { describeFailure, inputError, type FailureNotice } from "./failure-notice";
-import { loadDemoLibrary } from "./demo-library-loader";
+import type { DemoLoadResult } from "./demo-library-loader";
 import { DrawingLimitationNote, QualificationChip } from "./QualificationNotice";
 import { describeBlocker } from "./qualification";
 import { commitGeometryFacts } from "./geometry-fact-service";
@@ -126,7 +126,13 @@ interface RoundTripReceipt {
   deliveryCount: number;
 }
 
-export function App() {
+export interface AppProps {
+  // 首次打开的演示项目装载。默认走真实装载，测试注入空实现，
+  // 测试进程里就不存在无法等待的后台写入与网络请求。
+  bootstrapDemo?: () => Promise<DemoLoadResult | null>;
+}
+
+export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
   const [projects, setProjects] = useState<readonly ProjectSummary[]>([]);
   const [selected, setSelected] = useState<ProjectHead | null>(null);
   const [projectModelRuns, setProjectModelRuns] = useState<readonly ModelRun[]>([]);
@@ -196,15 +202,9 @@ export function App() {
   };
 
   // 首次打开装载演示项目（08 演示项目定义 3.3：不生成空白项目）。
-  // 本地已有项目就不装，用户自己的库不被演示数据打扰。
-  const bootstrapDemoLibrary = async () => {
-    const existing = await listLocalProjects();
-    if (existing.length) return;
-    const result = await loadDemoLibrary({
-      packages: projectPackages,
-      existingProjectIds: new Set(existing.map((item) => item.projectId)),
-      actorId: localActorId(),
-    });
+  // 装载策略由组合根注入，组件只负责把结果显示出来。
+  const showBootstrapResult = async (result: DemoLoadResult | null) => {
+    if (!result) return;
     if (result.loaded.length) {
       await refresh();
       setNotice(`已载入 ${result.loaded.length} 个演示项目。演示数据标为示例来源，不能作为真实成果。`);
@@ -214,7 +214,8 @@ export function App() {
 
   useEffect(() => {
     void refresh()
-      .then(bootstrapDemoLibrary)
+      .then(bootstrapDemo)
+      .then(showBootstrapResult)
       .catch((reason: unknown) => setError(describeFailure(reason, "载入项目列表失败")));
     void fetch("/api/status")
       .then(async (response) => response.ok ? response.json() as Promise<ServerStatus> : Promise.reject(new Error("SERVER_STATUS_FAILED")))
