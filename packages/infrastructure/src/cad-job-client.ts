@@ -57,7 +57,10 @@ export interface CadJobProgress {
 
 export type GeometryStartInput =
   | { readonly mode: "derivedFromFacts" }
-  | { readonly mode: "existingGeometrySpec"; readonly geometrySpecId: string };
+  | { readonly mode: "existingGeometrySpec"; readonly geometrySpecId: string }
+  // 形制驱动的构件生成器产出的规格：项目里还没有这份规格，
+  // 由调用方直接给，仍走重绑保证构件标识与当前项目版本一致。
+  | { readonly mode: "providedSpec"; readonly geometrySpec: ProjectDrivenGeometrySpec; readonly sourceZh: string };
 
 export function rebindExistingGeometrySpec(head: ProjectHead, source: ProjectDrivenGeometrySpec): ProjectDrivenGeometrySpec {
   if (source.projectId !== head.projectId) throw new Error("GEOMETRY_SPEC_PROJECT_MISMATCH");
@@ -111,24 +114,30 @@ export class CadJobClient {
         status: "completed", producer: { producerType: "rule", ruleRunId },
         results: [{
           ruleId: "geometry-input-closure", outcome: "passed",
-          inputRefs: input.mode === "derivedFromFacts" ? head.snapshot.facts.map((item) => item.id) : [input.geometrySpecId],
+          inputRefs: input.mode === "derivedFromFacts"
+            ? head.snapshot.facts.map((item) => item.id)
+            : input.mode === "existingGeometrySpec" ? [input.geometrySpecId] : [input.geometrySpec.id],
           issueRefs: [],
           message: input.mode === "derivedFromFacts"
             ? "有证据的控制尺寸已形成受控 GeometrySpec 输入。"
-            : "当前项目包内的 GeometrySpec 已重新绑定到当前项目版本；稳定构件 ID 保留。",
+            : input.mode === "existingGeometrySpec"
+              ? "当前项目包内的 GeometrySpec 已重新绑定到当前项目版本；稳定构件 ID 保留。"
+              : input.sourceZh,
         }],
         startedAt: ruleStarted, completedAt: ruleStarted,
       }, issues: [] },
     });
     const ruledHead = await this.#repository.getProjectHead(head.projectId);
     if (!ruledHead) throw new Error("PROJECT_NOT_FOUND_AFTER_GEOMETRY_RULE");
-    const geometrySpec = input.mode === "derivedFromFacts"
+    const sourceSpec = input.mode === "derivedFromFacts"
+      ? null
+      : input.mode === "providedSpec"
+        ? input.geometrySpec
+        : head.snapshot.geometrySpecs.find((spec) => spec.id === input.geometrySpecId)
+          ?? (() => { throw new Error("GEOMETRY_SPEC_NOT_FOUND_IN_PROJECT"); })();
+    const geometrySpec = sourceSpec === null
       ? buildProjectGeometrySpec(ruledHead, ruleRunId)
-      : rebindExistingGeometrySpec(
-        ruledHead,
-        head.snapshot.geometrySpecs.find((spec) => spec.id === input.geometrySpecId)
-          ?? (() => { throw new Error("GEOMETRY_SPEC_NOT_FOUND_IN_PROJECT"); })(),
-      );
+      : rebindExistingGeometrySpec(ruledHead, sourceSpec);
     const jobId = crypto.randomUUID();
     const idempotencyKey = crypto.randomUUID();
     const startedAt = new Date().toISOString();

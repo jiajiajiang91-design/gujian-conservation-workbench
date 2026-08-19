@@ -238,13 +238,13 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
         {
           key: "first-floor-plan", displayLabelZh: "首层平面图", drawingRef: "DL-01-1", kind: "floorPlan",
           scaleDenominator: 50, sheetKey: "sheet-plans",
-          viewportRectMm: [20, 20, 180, 250], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          viewportRectMm: [20, 20, 180, 240], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
           sourceEvidenceKeys: ["sheet-16"],
         },
         {
           key: "second-floor-plan", displayLabelZh: "二层平面图", drawingRef: "DL-01-2", kind: "floorPlan",
           scaleDenominator: 50, sheetKey: "sheet-plans",
-          viewportRectMm: [220, 20, 180, 250], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          viewportRectMm: [220, 20, 180, 240], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
           sourceEvidenceKeys: ["sheet-16"],
         },
         {
@@ -263,7 +263,7 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
         {
           key: "section-bb", displayLabelZh: "纵剖面 B-B", drawingRef: "DL-02-3", kind: "longitudinalSection",
           scaleDenominator: 50, sheetKey: "sheet-sections",
-          viewportRectMm: [220, 155, 180, 120], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          viewportRectMm: [220, 142, 180, 118], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
           sectionPlane: { normal: [1, 0, 0], offsetMm: feetInches(6, 0) },
           sourceEvidenceKeys: ["sheet-18"],
         },
@@ -452,24 +452,73 @@ export const GAODU_DEMO: DemoProjectDefinition = {
     name: "高都玉皇庙主殿现状记录",
     scope: ["院内主殿正立面"],
     regulationRefs: [],
-    deliverables: ["正立面现状草图"],
+    deliverables: ["正立面图", "平面图", "横剖面图"],
     confirmed: true,
     artifactRequirements: {
-      titleZh: "高都玉皇庙主殿正立面现状草图",
+      titleZh: "高都玉皇庙主殿现状记录成组图纸",
       revisionLabel: "A",
       geometryTargetRoles: ["column", "roof"],
       sheets: [
-        { key: "sheet-elevation", drawingNumber: "GD-01", displayLabelZh: "正立面草图", pageMm: [420, 297] },
+        { key: "sheet-elevation", drawingNumber: "GD-01", displayLabelZh: "正立面图", pageMm: [420, 297] },
+        { key: "sheet-plan-section", drawingNumber: "GD-02", displayLabelZh: "平面与剖面图", pageMm: [420, 297] },
       ],
       views: [
         {
-          key: "front-elevation", displayLabelZh: "正立面草图", drawingRef: "GD-01-1", kind: "elevation",
+          key: "front-elevation", displayLabelZh: "正立面图", drawingRef: "GD-01-1", kind: "elevation",
           scaleDenominator: 50, sheetKey: "sheet-elevation",
-          viewportRectMm: [20, 20, 380, 250], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
+          viewportRectMm: [20, 20, 380, 240], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
+          sourceEvidenceKeys: ["recognition-record"],
+        },
+        {
+          key: "floor-plan", displayLabelZh: "平面图", drawingRef: "GD-02-1", kind: "floorPlan",
+          scaleDenominator: 50, sheetKey: "sheet-plan-section",
+          viewportRectMm: [20, 20, 180, 240], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          sourceEvidenceKeys: ["recognition-record"],
+        },
+        {
+          key: "transverse-section", displayLabelZh: "横剖面图", drawingRef: "GD-02-2", kind: "transverseSection",
+          scaleDenominator: 50, sheetKey: "sheet-plan-section",
+          viewportRectMm: [220, 20, 180, 240], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          sectionPlane: { normal: [1, 0, 0], offsetMm: 0 },
           sourceEvidenceKeys: ["recognition-record"],
         },
       ],
     },
+  },
+  // 形制参数：面阔与柱高等取自照片估算，步架与举高由规则集推算。
+  // 每一项在生成时按 estimatedDimensionKeys 分别标注，界面如实显示。
+  archetype: {
+    ruleSetId: "qing-gongcheng-zuofa",
+    moduleMm: 60,
+    moduleNameZh: "斗口",
+    moduleSourceZh: "按密布小斗栱做法取斗口 60 mm，为形制判断估值，待实测斗栱后校正",
+    stepCount: 3,
+    bayWidthsMm: [3000, 3600, 3000],
+    depthMm: 9600,
+    sourceDeclarationZh: "面阔、柱高、台基等取自照片比例推算，基准为石檐柱净高 3400 mm；步架与举高由清工程做法则例系数组推算。",
+    componentDimensionsMm: {
+      terraceHeight: 500, terraceProjection: 1200, stairTreadCount: 3, stairWidth: 2000,
+      columnBaseHeight: 250, columnHeight: 3400, columnSize: 380,
+      architraveHeight: 700, architraveThickness: 240,
+      bracketLayerHeight: 900,
+      purlinDiameter: 220, rafterDiameter: 90, rafterSpacing: 300,
+      roofBoardThickness: 25, eaveProjection: 1200,
+      tileCourseWidth: 200, tileThickness: 18, ridgeHeight: 600,
+    },
+    columnSection: "square",
+    bracketSetsPerBay: 4,
+    enclosure: { front: "open", sides: "walled", back: "walled" },
+    materials: {
+      terrace: "石作", stair: "石作", columnBase: "石作", column: "石作",
+      architrave: "木作", bracket: "木作", purlin: "木作", rafter: "木作",
+      roofBoard: "木作", tile: "瓦作", ridge: "瓦作", wall: "砖作",
+    },
+    estimatedDimensionKeys: [
+      "bayWidth1", "bayWidth2", "bayWidth3",
+      "terraceHeight", "terraceProjection", "stairWidth",
+      "columnBaseHeight", "columnHeight", "columnSize",
+      "architraveHeight", "bracketLayerHeight", "eaveProjection", "ridgeHeight",
+    ],
   },
 };
 

@@ -104,4 +104,29 @@ export interface DemoProjectDefinition {
   readonly measurements: readonly DemoMeasurement[];
   readonly issues: readonly DemoIssue[];
   readonly task: DemoTask;
+  // 形制参数。有它才能由规则推算出尺寸并驱动构件生成，
+  // 08 演示项目定义表 3 的实测基准这一格也靠它才有内容。
+  readonly archetype?: DemoArchetype;
+}
+
+// 形制参数与由它驱动的构件生成配置。数值全部来自照片估算或规则推算，
+// 每项在 sourceZh 里说清是哪一种，界面据此如实标注。
+export interface DemoArchetype {
+  readonly ruleSetId: string;
+  readonly moduleMm: number;
+  readonly moduleNameZh: string;
+  readonly moduleSourceZh: string;
+  readonly stepCount: number;
+  // 逐间面阔与逐架步架，毫米
+  readonly bayWidthsMm: readonly number[];
+  readonly depthMm: number;
+  readonly sourceDeclarationZh: string;
+  // 构件生成用的其余尺寸，键与生成器的 BuildingForm 字段同名
+  readonly componentDimensionsMm: Readonly<Record<string, number>>;
+  readonly columnSection: "round" | "square";
+  readonly bracketSetsPerBay: number;
+  readonly enclosure: { readonly front: "open" | "walled"; readonly sides: "walled" | "open"; readonly back: "walled" | "open" };
+  readonly materials: Readonly<Record<string, string>>;
+  // 哪些尺寸是照片估算，其余按规则推算标注
+  readonly estimatedDimensionKeys: readonly string[];
 }

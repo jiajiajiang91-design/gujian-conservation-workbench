@@ -206,11 +206,14 @@ function taskContent(input: RunRequest): string {
   ].join("\n\n");
 }
 
+// 只放行成体系的错误码，进程输出与堆栈不外传。
+// 建模与制图作业不经过模型，它们的失败原因原来一律被压成模型运行失败，
+// 界面与日志都拿不到线索，排查只能靠猜。
 function publicErrorCode(error: unknown): string {
   if (error instanceof RunCancelledError) return "MODEL_RUN_CANCELLED";
   if (!(error instanceof Error)) return "MODEL_RUN_FAILED";
   const code = error.message.split(":", 1)[0] ?? "";
-  if (/^(KIMI_[A-Z0-9_]+|MODEL_RUN_CANCELLED)$/.test(code)) return code;
+  if (/^(KIMI_|MODEL_RUN_|CAD_|DRAWING_|GEOMETRY_)[A-Z0-9_]*$/.test(code)) return code;
   return "MODEL_RUN_FAILED";
 }
 

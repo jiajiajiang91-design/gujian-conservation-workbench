@@ -263,7 +263,7 @@ function translateManifest(input: DemoConversionInput, evidenceId: string, fixtu
       unknowns.push({
         id: entityUnknownIds[index]!, subjectRef: entity.entityId,
         reasonCode: `LEGACY_DEMO_${unknownKey(item).toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`.slice(0, 120),
-        description: `示例数据待确认项：${unknownLabel(item)}`,
+        description: `待确认项：${unknownLabel(item)}`,
         requiredEvidence: ["项目自身证据或专业人员复核记录"], affectedRefs: [entity.entityId], evidenceRefs: [evidenceId],
         blocksProxyOutcome: false, blocksFormalEligibility: true,
       });
@@ -435,23 +435,23 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     .flatMap((type) => (byType.get(type) ?? []).slice(0, 4)).slice(0, 30);
   const taskId = deterministicUuid(`task:${sourceSeed}`);
   const taskDefinition = {
-    id: taskId, name: "示例项目：构件核对与出图", scope: ["核对构件转换结果", "生成成组图纸"],
-    regulationRefs: ["示例项目约定：成果需注明来源，未签发不得正式使用"], deliverables: ["IFC", "GLB", "DXF", "SVG", "PDF", "检查报告"],
+    id: taskId, name: "古建局部构造样板制作", scope: ["逐构件核对构造关系", "按成果目录生成成组图纸"],
+    regulationRefs: ["成果须注明来源；未经责任人员签发不得作为正式测绘成果使用"], deliverables: ["三维模型（IFC 与 GLB）", "成组图纸（DXF、SVG、PDF）", "检查报告"],
     responsibilities: [{ role: "projectLead" as const, actorId }], automationPolicyRef: "internal:demo-proxy-automation-v1",
     artifactRequirements: {
-      titleZh: "示例建筑测绘图", revisionLabel: "D1",
+      titleZh: "古建局部构造样板成组图纸", revisionLabel: "D1",
       geometryTargetRoles: ["column", "roofBoard", "panTile"].filter((type) => byType.has(type)),
       sheets: [
         { key: "sheet-a2", drawingNumber: "D-01", displayLabelZh: "总体与立面", pageMm: [594, 420] },
         { key: "sheet-a3", drawingNumber: "D-02", displayLabelZh: "剖面与承托组合", pageMm: [420, 297] },
       ],
       views: [
-        { key: "floor", displayLabelZh: "底层平面示意", drawingRef: "D-01-1", kind: "floorPlan", scaleDenominator: 50, sheetKey: "sheet-a2", viewportRectMm: [20, 200, 260, 175], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0], targetStableKeys: representative, sourceEvidenceRefs: [] },
-        { key: "roof", displayLabelZh: "屋顶平面示意", drawingRef: "D-01-2", kind: "roofPlan", scaleDenominator: 50, sheetKey: "sheet-a2", viewportRectMm: [314, 200, 260, 175], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0], targetStableKeys: representative, sourceEvidenceRefs: [] },
-        { key: "south", displayLabelZh: "南立面示意", drawingRef: "D-01-3", kind: "elevation", scaleDenominator: 50, sheetKey: "sheet-a2", viewportRectMm: [20, 20, 260, 175], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1], targetStableKeys: representative, sourceEvidenceRefs: [] },
-        { key: "axon", displayLabelZh: "轴测示意", drawingRef: "D-01-4", kind: "axonometric", scaleDenominator: 100, sheetKey: "sheet-a2", viewportRectMm: [314, 20, 260, 175], direction: [0.5773502691896258, 0.5773502691896258, -0.5773502691896258], right: [0.7071067811865476, -0.7071067811865476, 0], up: [0.4082482904638631, 0.4082482904638631, 0.8164965809277261], targetStableKeys: representative, sourceEvidenceRefs: [] },
-        { key: "transverse", displayLabelZh: "横剖示意", drawingRef: "D-02-1", kind: "transverseSection", scaleDenominator: 75, sheetKey: "sheet-a3", viewportRectMm: [15, 130, 185, 125], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1], sectionPlane: { normal: [1, 0, 0], offsetMm: 0 }, targetStableKeys: representative, sourceEvidenceRefs: [] },
-        { key: "longitudinal", displayLabelZh: "纵剖示意", drawingRef: "D-02-2", kind: "longitudinalSection", scaleDenominator: 75, sheetKey: "sheet-a3", viewportRectMm: [220, 130, 185, 125], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1], sectionPlane: { normal: [0, 1, 0], offsetMm: 0 }, targetStableKeys: representative, sourceEvidenceRefs: [] },
+        { key: "floor", displayLabelZh: "底层平面图", drawingRef: "D-01-1", kind: "floorPlan", scaleDenominator: 50, sheetKey: "sheet-a2", viewportRectMm: [20, 200, 260, 175], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0], targetStableKeys: representative, sourceEvidenceRefs: [] },
+        { key: "roof", displayLabelZh: "屋顶平面图", drawingRef: "D-01-2", kind: "roofPlan", scaleDenominator: 50, sheetKey: "sheet-a2", viewportRectMm: [314, 200, 260, 175], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0], targetStableKeys: representative, sourceEvidenceRefs: [] },
+        { key: "south", displayLabelZh: "南立面图", drawingRef: "D-01-3", kind: "elevation", scaleDenominator: 50, sheetKey: "sheet-a2", viewportRectMm: [20, 20, 260, 175], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1], targetStableKeys: representative, sourceEvidenceRefs: [] },
+        { key: "axon", displayLabelZh: "轴测图", drawingRef: "D-01-4", kind: "axonometric", scaleDenominator: 100, sheetKey: "sheet-a2", viewportRectMm: [314, 20, 260, 175], direction: [0.5773502691896258, 0.5773502691896258, -0.5773502691896258], right: [0.7071067811865476, -0.7071067811865476, 0], up: [0.4082482904638631, 0.4082482904638631, 0.8164965809277261], targetStableKeys: representative, sourceEvidenceRefs: [] },
+        { key: "transverse", displayLabelZh: "横剖面图", drawingRef: "D-02-1", kind: "transverseSection", scaleDenominator: 75, sheetKey: "sheet-a3", viewportRectMm: [15, 130, 185, 125], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1], sectionPlane: { normal: [1, 0, 0], offsetMm: 0 }, targetStableKeys: representative, sourceEvidenceRefs: [] },
+        { key: "longitudinal", displayLabelZh: "纵剖面图", drawingRef: "D-02-2", kind: "longitudinalSection", scaleDenominator: 75, sheetKey: "sheet-a3", viewportRectMm: [220, 130, 185, 125], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1], sectionPlane: { normal: [0, 1, 0], offsetMm: 0 }, targetStableKeys: representative, sourceEvidenceRefs: [] },
         { key: "support-detail", displayLabelZh: "檐下承托组合详图", drawingRef: "D-02-3", kind: "detail", scaleDenominator: 20, sheetKey: "sheet-a3", viewportRectMm: [15, 20, 390, 105], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1], sectionPlane: { normal: [1, 0, 0], offsetMm: 1800 }, cropBoundsMm: [-3500, 3500, 3600, 5600], targetStableKeys: supportKeys.length ? supportKeys : representative.slice(0, 20), sourceEvidenceRefs: [manifestEvidenceId] },
       ],
     }, confirmedAt: input.createdAt,
@@ -474,7 +474,7 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     limitations: ["非实测", "非真实中国古建", "近似构件与未携带接口见结构化未知项", "不可用于正式交付或施工"],
     sourceFiles: input.sourceFiles.map((file) => ({ fileName: file.fileName, sha256: sha256Hex(file.bytes), byteLength: file.bytes.byteLength })),
   })}\n`);
-  const sources = [...input.sourceFiles, { fileName: "demo-source-declaration.json", mimeType: "application/json", bytes: sourceDeclaration, evidenceType: "document" as const, title: "示例数据的来源说明" }];
+  const sources = [...input.sourceFiles, { fileName: "demo-source-declaration.json", mimeType: "application/json", bytes: sourceDeclaration, evidenceType: "document" as const, title: "构件数据来源与转换说明" }];
   const assets = sources.map((file) => {
     const id = deterministicUuid(`asset:${sourceSeed}:${file.fileName}`);
     return {
@@ -528,12 +528,12 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
 
   const snapshot = ProjectSnapshotSchema.parse({
     schemaVersion: "3.0",
-    project: { id: projectId, name: input.projectName, status: "active", locationText: "示例数据，不对应真实地点", createdAt: input.createdAt },
+    project: { id: projectId, name: input.projectName, status: "active", locationText: null, createdAt: input.createdAt },
     buildings: [{ id: buildingId, projectId, name: input.buildingName, periodText: null, addressText: null, status: "uncertain" }],
     taskDefinitions: [taskDefinition], evidences, parseRecords, entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [],
     issues: [{
       id: deterministicUuid(`issue:${sourceSeed}`), projectId, issueType: "professionalUncertainty", subjectRefs: [geometrySpec.id],
-      description: "示例三维数据已按构件拆分。部分构件为近似形状，构件之间的连接、年代和类型都还没有确认，需要专业人员逐项核对。",
+      description: "三维数据已按构件拆分。部分构件为近似形状，构件之间的连接、年代和类型尚未确认，需要专业人员逐项核对。",
       sourceRef: manifestEvidenceId, status: "open", impactRefs: [geometrySpec.id], blocksProxyOutcome: false, blocksFormalEligibility: true,
       producer: { producerType: "demo", fixtureId: input.fixtureId }, createdAt: input.createdAt, resolvedAt: null,
     }],

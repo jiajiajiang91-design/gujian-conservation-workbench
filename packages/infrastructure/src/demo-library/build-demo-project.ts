@@ -27,8 +27,14 @@ function seededUuid(namespace: string, key: string): string {
   return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
 }
 
+export interface SeededDemoProject {
+  readonly projectId: string;
+  readonly buildingId: string;
+  readonly actorId: string;
+  readonly seededAt: string;
+}
+
 export interface DemoBuildResult {
-  readonly demoId: string;
   readonly projectId: string;
   readonly buildingId: string;
   readonly packageBytes: Uint8Array;
@@ -39,6 +45,8 @@ export interface DemoBuildResult {
   readonly measurementCount: number;
   readonly completeMeasurementCount: number;
   readonly issueCount: number;
+  readonly geometryRevisionCount: number;
+  readonly geometryObjectCount: number;
 }
 
 export interface DemoBuildInput {
@@ -49,7 +57,8 @@ export interface DemoBuildInput {
   readonly repository: IndexedDbProjectRepository;
 }
 
-export async function buildDemoProject(input: DemoBuildInput): Promise<DemoBuildResult> {
+// 只播种项目内容（任务书、资料、事实、问题），不导出，供完整链路继续往下跑。
+export async function seedDemoProject(input: DemoBuildInput): Promise<SeededDemoProject> {
   const { definition, files, repository } = input;
   const id = (key: string) => seededUuid(definition.demoId, key);
   const evidenceRef = (key: string) => id(`evidence/${key}`);
@@ -258,12 +267,25 @@ export async function buildDemoProject(input: DemoBuildInput): Promise<DemoBuild
     });
   }
 
-  const packageBytes = await new ProjectPackageService(repository).exportZip(projectId);
-  const final = await head();
+  return { projectId, buildingId, actorId, seededAt: at };
+}
+
+// 播种加导出。不跑几何与制图，用于只需要资料与事实的场景与单元测试。
+export async function buildDemoProject(input: DemoBuildInput): Promise<DemoBuildResult> {
+  const seeded = await seedDemoProject(input);
+  return exportDemoProject(input.repository, seeded);
+}
+
+export async function exportDemoProject(
+  repository: IndexedDbProjectRepository,
+  seeded: { projectId: string; buildingId: string },
+): Promise<DemoBuildResult> {
+  const packageBytes = await new ProjectPackageService(repository).exportZip(seeded.projectId);
+  const final = await repository.getProjectHead(seeded.projectId);
+  if (!final) throw new Error("PROJECT_NOT_FOUND_AFTER_DEMO_COMMAND");
   return {
-    demoId: definition.demoId,
-    projectId,
-    buildingId,
+    projectId: seeded.projectId,
+    buildingId: seeded.buildingId,
     packageBytes,
     packageSha256: sha256Hex(packageBytes),
     evidenceCount: final.snapshot.evidences.length,
@@ -272,5 +294,7 @@ export async function buildDemoProject(input: DemoBuildInput): Promise<DemoBuild
     measurementCount: final.snapshot.measurements.length,
     completeMeasurementCount: final.snapshot.measurements.filter((item) => item.metadataStatus === "complete").length,
     issueCount: final.snapshot.issues.length,
+    geometryRevisionCount: final.snapshot.geometryRevisions.length,
+    geometryObjectCount: final.snapshot.geometrySpecs.at(-1)?.objects.length ?? 0,
   };
 }
