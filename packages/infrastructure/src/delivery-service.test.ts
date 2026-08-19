@@ -2,7 +2,7 @@ import type { ProjectHead } from "@gujian/application";
 import type { ArtifactRecord, CheckRun, GeometryRevision, ProjectDrivenGeometrySpec } from "@gujian/domain";
 import { describe, expect, it } from "vitest";
 
-import { collectDeliveryBlockerDetails } from "./delivery-service";
+import { collectDeliveryBlockerDetails } from "./delivery-service.js";
 
 describe("delivery blocker propagation", () => {
   it("传播 open issue、结构化 unknown 和 blocked check，并区分仅正式资格阻断", () => {

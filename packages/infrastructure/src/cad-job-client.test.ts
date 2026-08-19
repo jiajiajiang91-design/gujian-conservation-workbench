@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ProjectDrivenGeometrySpecSchema } from "@gujian/domain";
-import { recordHash } from "@gujian/infrastructure";
+import { recordHash } from "./hash.js";
 
-import { rebindExistingGeometrySpec } from "./cad-job-client";
+import { rebindExistingGeometrySpec } from "./cad-job-client.js";
 
 const uuid = () => crypto.randomUUID();
 

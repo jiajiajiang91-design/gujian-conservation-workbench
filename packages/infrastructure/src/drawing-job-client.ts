@@ -1,6 +1,7 @@
 import { ProjectCommandService, type ProjectHead } from "@gujian/application";
 import { ArtifactRecordSchema, CheckRunSchema, type ArtifactRecord, type ArtifactRequirementMatrix, type CheckRun, type GeometryRevision } from "@gujian/domain";
-import { IndexedDbProjectRepository, sha256Hex } from "@gujian/infrastructure";
+import { IndexedDbProjectRepository } from "./indexeddb-project-repository.js";
+import { sha256Hex } from "./hash.js";
 
 interface SessionResponse { csrfToken: string; drawingCapabilityToken: string }
 interface WorkerAsset { kind: string; fileName: string; mimeType: string; sha256: string; byteLength: number }

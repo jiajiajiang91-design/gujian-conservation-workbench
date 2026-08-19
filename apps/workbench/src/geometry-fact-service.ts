@@ -6,7 +6,7 @@ import { z } from "zod";
 import {
   EvidenceGeometryComponentValueSchema,
   EvidenceGeometryInterfaceValueSchema,
-} from "./geometry-spec-builder";
+} from "@gujian/infrastructure";
 
 export interface GeometryFactInput {
   components: z.infer<typeof EvidenceGeometryComponentValueSchema>[];

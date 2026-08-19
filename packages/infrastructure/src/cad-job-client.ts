@@ -1,8 +1,9 @@
 import { ProjectCommandService, type ProjectHead } from "@gujian/application";
 import { CadJobSchema, GeometryRevisionSchema, ProjectDrivenGeometrySpecSchema, type CadJob, type CadJobEvent, type GeometryRevision, type ProjectDrivenGeometrySpec } from "@gujian/domain";
-import { IndexedDbProjectRepository, recordHash, sha256Hex } from "@gujian/infrastructure";
+import { IndexedDbProjectRepository } from "./indexeddb-project-repository.js";
+import { recordHash, sha256Hex } from "./hash.js";
 
-import { buildProjectGeometrySpec } from "./geometry-spec-builder";
+import { buildProjectGeometrySpec } from "./geometry-spec-builder.js";
 
 interface SessionResponse {
   csrfToken: string;

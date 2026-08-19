@@ -1,7 +1,7 @@
 import type { ProjectHead } from "@gujian/application";
 import { describe, expect, it } from "vitest";
 
-import { buildProjectGeometrySpec, geometryPrerequisites } from "./geometry-spec-builder";
+import { buildProjectGeometrySpec, geometryPrerequisites } from "./geometry-spec-builder.js";
 
 function head(): ProjectHead {
   const projectId = crypto.randomUUID();

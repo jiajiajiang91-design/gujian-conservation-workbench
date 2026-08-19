@@ -9,9 +9,10 @@ import {
   type DeliveryEvaluation,
   type GeometryRevision,
 } from "@gujian/domain";
-import { IndexedDbProjectRepository, sha256Hex } from "@gujian/infrastructure";
+import { IndexedDbProjectRepository } from "./indexeddb-project-repository.js";
+import { sha256Hex } from "./hash.js";
 
-import { geometryPrerequisites } from "./geometry-spec-builder";
+import { geometryPrerequisites } from "./geometry-spec-builder.js";
 
 const GEOMETRY_KIND: Record<string, ArtifactRecord["kind"]> = {
   ifc: "ifc", glb: "glb", brepBundle: "brepBundle", manifest: "geometryManifest", sourceMap: "geometrySourceMap",

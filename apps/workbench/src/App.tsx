@@ -13,14 +13,14 @@ import type { ProjectHead, ProjectSummary } from "@gujian/application";
 import type { ArtifactRecord, Decision, ModelRun, RuleRun } from "@gujian/domain";
 
 import type { ModelRunProgress } from "./model-run-client";
-import type { CadJobProgress } from "./cad-job-client";
+import type { CadJobProgress } from "@gujian/infrastructure";
 import { GlbViewer } from "./GlbViewer";
 import {
   bootstrapDemoProjects, cadJobs, createLocalProject, deliveries, drawingJobs, evidenceIngestion,
   listLocalProjects, localActorId, modelRuns, projectPackages, projectRepository,
   projectCommands, workflow,
 } from "./workbench";
-import { buildArtifactMatrix } from "./artifact-matrix-builder";
+import { buildArtifactMatrix } from "@gujian/infrastructure";
 import { describeFailure, inputError, type FailureNotice } from "./failure-notice";
 import { LongTask, useDelayedIndicator } from "./LongTask";
 import type { DemoLoadResult } from "./demo-library-loader";
@@ -28,7 +28,7 @@ import { DrawingLimitationNote, QualificationChip } from "./QualificationNotice"
 import { describeBlocker } from "./qualification";
 import { commitGeometryFacts } from "./geometry-fact-service";
 import { commitDocumentedDimensionChain } from "./document-dimension-service";
-import { geometryPrerequisites } from "./geometry-spec-builder";
+import { geometryPrerequisites } from "@gujian/infrastructure";
 import {
   buildArtifactSetView,
   buildHumanInterventionView,

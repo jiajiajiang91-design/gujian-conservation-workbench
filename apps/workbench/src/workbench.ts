@@ -1,11 +1,11 @@
 import { ProjectCommandService, type ProjectHead, type ProjectSummary } from "@gujian/application";
-import { EvidenceIngestionService, IndexedDbProjectRepository, LocalAuthorization, ProjectPackageService, WorkflowService } from "@gujian/infrastructure";
+import {
+  CadJobClient, DeliveryService, DrawingJobClient, EvidenceIngestionService,
+  IndexedDbProjectRepository, LocalAuthorization, ProjectPackageService, WorkflowService,
+} from "@gujian/infrastructure";
 
 import { loadDemoLibrary, type DemoLoadResult } from "./demo-library-loader";
 import { ModelRunClient } from "./model-run-client";
-import { CadJobClient } from "./cad-job-client";
-import { DrawingJobClient } from "./drawing-job-client";
-import { DeliveryService } from "./delivery-service";
 
 export const projectRepository = new IndexedDbProjectRepository();
 export const projectCommands = new ProjectCommandService({

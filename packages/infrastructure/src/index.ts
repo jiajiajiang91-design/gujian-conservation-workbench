@@ -9,6 +9,11 @@ export * from "./rules/heritage-baseline-v1.js";
 export * from "./vocabulary-resolver.js";
 export * from "./vocabulary/heritage-concepts-v1.js";
 export * from "./archetype-derivation.js";
+export * from "./geometry-spec-builder.js";
+export * from "./artifact-matrix-builder.js";
+export * from "./cad-job-client.js";
+export * from "./drawing-job-client.js";
+export * from "./delivery-service.js";
 export * from "./demo-library/index.js";
 export { canonicalJson, recordHash, sha256Hex } from "./hash.js";
 

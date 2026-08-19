@@ -2,7 +2,7 @@ import type { ProjectHead } from "@gujian/application";
 import type { GeometryRevision, ProjectDrivenGeometrySpec, TaskArtifactRequirements } from "@gujian/domain";
 import { describe, expect, it } from "vitest";
 
-import { buildArtifactMatrix } from "./artifact-matrix-builder";
+import { buildArtifactMatrix } from "./artifact-matrix-builder.js";
 
 function input(requirements: TaskArtifactRequirements): { head: ProjectHead; geometry: GeometryRevision; spec: ProjectDrivenGeometrySpec } {
   const projectId = crypto.randomUUID();

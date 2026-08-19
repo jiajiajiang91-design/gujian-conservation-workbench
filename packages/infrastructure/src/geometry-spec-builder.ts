@@ -7,7 +7,8 @@ import {
   type ProjectDrivenGeometrySpec,
   type ProjectGeometryObject,
 } from "@gujian/domain";
-import { matchesGeometryRole, recordHash, resolveVocabulary } from "@gujian/infrastructure";
+import { recordHash } from "./hash.js";
+import { matchesGeometryRole, resolveVocabulary } from "./vocabulary-resolver.js";
 import { z } from "zod";
 
 export const EvidenceGeometryComponentValueSchema = ProjectGeometryObjectSchema.omit({
