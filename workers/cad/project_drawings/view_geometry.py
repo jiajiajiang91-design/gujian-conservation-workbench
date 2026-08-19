@@ -10,6 +10,8 @@ from typing import Any
 import numpy as np
 import trimesh
 import cadquery as cq
+from OCP.BRepAdaptor import BRepAdaptor_Curve
+from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCP.gp import gp_Dir, gp_Pln, gp_Pnt
 from shapely.geometry import LineString, box
@@ -56,6 +58,54 @@ def load_source_meshes(glb_path, manifest: dict[str, Any]) -> list[SourceMesh]:
     return result
 
 
+# 构件是否在剖切面之外（沿观察方向更远的一侧）。整块都在观察者与剖切面
+# 之间的构件被剖切规则移除，不参与投影；跨过剖切面的构件保留，它露在
+# 剖切面之外的部分正是要画的可见投影。
+def _is_beyond_plane(mesh: SourceMesh, normal: np.ndarray, origin: np.ndarray, direction: np.ndarray) -> bool:
+    offsets = (mesh.vertices - origin) @ normal
+    # 观察方向与法向同号时，剖切面之外是法向的正侧，反之为负侧
+    toward = float(np.dot(direction, normal))
+    if toward >= 0:
+        return bool(offsets.max() > 1e-6)
+    return bool(offsets.min() < -1e-6)
+
+
+def _projected_lines(
+    view: dict[str, Any],
+    manifest: dict[str, Any],
+    meshes: list[SourceMesh],
+    right: np.ndarray,
+    up: np.ndarray,
+    direction: np.ndarray,
+    triangle_pool: "_TrianglePool",
+    crop_bounds: tuple[float, float, float, float] | None,
+) -> list[dict[str, Any]]:
+    edge_meta: list[tuple[SourceMesh, str, np.ndarray]] = []
+    edge_jobs: list[tuple[np.ndarray, np.ndarray]] = []
+    for mesh in meshes:
+        for start, end, line_class in _candidate_edges(mesh, direction):
+            projected, depths = _project(np.vstack((start, end)), right, up, direction)
+            if np.linalg.norm(projected[1] - projected[0]) < 0.05:
+                continue
+            edge_meta.append((mesh, line_class, projected))
+            edge_jobs.append((projected, depths))
+    interval_results = _parallel_visibility(edge_jobs, triangle_pool)
+    lines: list[dict[str, Any]] = []
+    line_index = 0
+    for (mesh, line_class, projected), intervals in zip(edge_meta, interval_results, strict=True):
+        for interval_start, interval_end in intervals:
+            clipped = np.vstack((
+                projected[0] * (1 - interval_start) + projected[1] * interval_start,
+                projected[0] * (1 - interval_end) + projected[1] * interval_end,
+            ))
+            if np.linalg.norm(clipped[1] - clipped[0]) < 0.05:
+                continue
+            for view_clipped in _clip_to_view(clipped, crop_bounds):
+                lines.append(_line_record(view, manifest, mesh, view_clipped, line_class, "occlusionProjection", line_index))
+                line_index += 1
+    return lines
+
+
 def _ocp_section_segments(shape: cq.Shape, normal: np.ndarray, offset: float, tolerance_mm: float) -> list[np.ndarray]:
     origin = normal * offset
     section = BRepAlgoAPI_Section(
@@ -64,17 +114,29 @@ def _ocp_section_segments(shape: cq.Shape, normal: np.ndarray, offset: float, to
         True,
     ).Shape()
     segments: list[np.ndarray] = []
+    deflection = max(tolerance_mm, 0.05)
     for edge in cq.Shape.cast(section).Edges():
         # Preserve exact linear section edges as one CAD segment. Sampling a
         # straight edge at the curve tolerance creates thousands of collinear
         # fragments without adding geometric information.
-        sample_count = 2 if edge.geomType() == "LINE" else max(
-            2,
-            int(math.ceil(edge.Length() / max(tolerance_mm, 0.05))) + 1,
-        )
-        points, _ = edge.sample(sample_count)
-        for left, right in zip(points, points[1:], strict=False):
-            segments.append(np.asarray([left.toTuple(), right.toTuple()], dtype=float))
+        if edge.geomType() == "LINE":
+            points, _ = edge.sample(2)
+            coordinates = [point.toTuple() for point in points]
+        else:
+            # 容差是弦高，不是步长。按弧长每 0.5 mm 取一点会把半径 130 mm 的
+            # 檩切面拆成一千六百多段，图线数与文件体积随之失控，而弦高
+            # 采样只要三十七段就达到同样精度。
+            sampler = GCPnts_QuasiUniformDeflection(BRepAdaptor_Curve(edge.wrapped), deflection)
+            if not sampler.IsDone() or sampler.NbPoints() < 2:
+                points, _ = edge.sample(2)
+                coordinates = [point.toTuple() for point in points]
+            else:
+                coordinates = [
+                    (lambda value: (value.X(), value.Y(), value.Z()))(sampler.Value(index))
+                    for index in range(1, sampler.NbPoints() + 1)
+                ]
+        for left, right in zip(coordinates, coordinates[1:], strict=False):
+            segments.append(np.asarray([left, right], dtype=float))
     return segments
 
 
@@ -381,29 +443,13 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
                         "materialCode": next(item["materialCode"] for item in manifest["entities"] if item["id"] == mesh.entity_id),
                         "derivation": "planeIntersection", "boundaryMm": coordinates,
                     })
+        # 剖面与平面还要画剖切面之外的可见投影。只画剖切线的话，平面上
+        # 只剩几个柱截面，剖面上看不到后面那一榀的梁架，都不成图。
+        # 剖切面与观察者之间的构件按剖切规则移除，其余按可见轮廓投影。
+        beyond = [mesh for mesh in selected if _is_beyond_plane(mesh, normal, origin, direction)]
+        lines.extend(_projected_lines(view, manifest, beyond, right, up, direction, triangle_pool, crop_bounds))
     else:
-        edge_meta: list[tuple[SourceMesh, str, np.ndarray]] = []
-        edge_jobs: list[tuple[np.ndarray, np.ndarray]] = []
-        for mesh in selected:
-            for start, end, line_class in _candidate_edges(mesh, direction):
-                projected, depths = _project(np.vstack((start, end)), right, up, direction)
-                if np.linalg.norm(projected[1] - projected[0]) < 0.05:
-                    continue
-                edge_meta.append((mesh, line_class, projected))
-                edge_jobs.append((projected, depths))
-        interval_results = _parallel_visibility(edge_jobs, triangle_pool)
-        line_index = 0
-        for (mesh, line_class, projected), intervals in zip(edge_meta, interval_results, strict=True):
-            for interval_start, interval_end in intervals:
-                clipped = np.vstack((
-                    projected[0] * (1 - interval_start) + projected[1] * interval_start,
-                    projected[0] * (1 - interval_end) + projected[1] * interval_end,
-                ))
-                if np.linalg.norm(clipped[1] - clipped[0]) < 0.05:
-                    continue
-                for view_clipped in _clip_to_view(clipped, crop_bounds):
-                    lines.append(_line_record(view, manifest, mesh, view_clipped, line_class, "occlusionProjection", line_index))
-                    line_index += 1
+        lines.extend(_projected_lines(view, manifest, selected, right, up, direction, triangle_pool, crop_bounds))
     if not lines:
         raise ValueError(f"view {view['key']} generated no source-bound lines")
     all_points = np.asarray([point for line in lines for point in line["pointsMm"]], dtype=float)

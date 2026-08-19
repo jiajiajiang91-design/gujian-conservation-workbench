@@ -9,16 +9,19 @@ import {
   CadJobClient, DeliveryService, DrawingJobClient,
   DEMO_PROJECTS, HERITAGE_BASELINE_RULE_DATA,
   IndexedDbProjectRepository, LocalAuthorization,
-  buildArchetypeGeometrySpec, buildFullDemoProject,
-  openWorkbenchDatabase, sha256Hex,
+  buildArchetypeGeometrySpec, buildFullDemoProject, buildT0bDefinition, demoSeededUuid,
+  openWorkbenchDatabase, resolveViewTargets, sha256Hex, translateLegacyGeometry,
 } from "../packages/infrastructure/dist/index.js";
 
 // 演示项目包构建：三个项目共用一条流程，从任务书跑到交付草案。
 // 全程走产品自身的命令服务与真实作业进程，不为演示另做一套代码路径。
 //
 // 几何来源按项目不同：高都由形制参数经构件生成器产出；团队构造样板由
-// 已验收的 r2 成果翻译得到，见 build-t0b-demo-package.mjs；Dai Loy 的
-// 建模需要美式木构生成器，本轮不出三维，前面的环节照常保留。
+// 已验收的 r2 成果翻译得到；Dai Loy 的尺寸要先从 HABS 图纸读出来，
+// 本轮不出三维，前面的环节照常保留。
+//
+// 三个项目共用一条链路。团队构造样板此前走独立脚本只跑几何，
+// 图纸、检查与交付三格因此是空的，08 表 3 判定为演示不成立。
 
 const root = resolve(import.meta.dirname, "..");
 const output = resolve(root, "apps/workbench/public/demo");
@@ -94,9 +97,14 @@ const fetchImpl = (input, init = {}) => new Promise((settle, fail) => {
   outgoing.end();
 });
 
+// 团队构造样板的定义由已验收的 r2 清单现算，数值不抄进源码
+const t0bManifestPath = "文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v3-outputs/r2-geometry/geometry-manifest.json";
+const t0bManifest = JSON.parse(await readFile(resolve(root, t0bManifestPath), "utf8"));
+const definitions = [buildT0bDefinition(t0bManifest), ...DEMO_PROJECTS];
+
 const entries = [];
 try {
-  for (const definition of DEMO_PROJECTS) {
+  for (const definition of definitions) {
     const files = new Map();
     for (const source of definition.sources) {
       if (source.filePath) files.set(source.filePath, new Uint8Array(await readFile(resolve(root, source.filePath))));
@@ -110,13 +118,30 @@ try {
 
     const result = await buildFullDemoProject({
       definition, files, repository,
+      resolveViewTargets: (view) => resolveViewTargets(t0bManifest, view),
       pipeline: {
         commands,
         cadJobs: new CadJobClient({ repository, commands, fetchImpl }),
         drawingJobs: new DrawingJobClient({ repository, commands, fetchImpl }),
         deliveries: new DeliveryService({ repository, commands }),
-        geometrySourceZh: "形制参数经构件生成器产出，尺寸来自照片估算与规则推算",
-        geometrySpec: (head) => definition.archetype
+        geometrySourceZh: definition.demoId === "t0b-construction-sample"
+          ? "已验收的构造样板几何成果翻译为本产品的几何契约，构件不改动"
+          : "形制参数经构件生成器产出，尺寸来自照片估算与规则推算",
+        geometrySpec: (head) => definition.demoId === "t0b-construction-sample"
+          ? translateLegacyGeometry({
+            manifest: t0bManifest,
+            sourceFiles: [...files].map(([filePath, bytes]) => ({
+              fileName: filePath.split("/").pop(), mimeType: "application/octet-stream",
+              bytes, evidenceType: "other", title: filePath,
+            })),
+            fixtureId: t0bManifest.fixtureId,
+            createdAt: definition.createdAt,
+            projectId: head.snapshot.project.id,
+            buildingId: head.snapshot.buildings[0].id,
+            projectRevisionId: head.revisionId,
+            manifestEvidenceId: demoSeededUuid(definition.demoId, "evidence/geometry-manifest"),
+          }).spec
+          : definition.archetype
           ? buildArchetypeGeometrySpec({
             head,
             archetype: definition.archetype,
@@ -157,19 +182,11 @@ try {
     console.log(`${definition.demoId} ${(result.packageBytes.byteLength / 1024 / 1024).toFixed(2)} MiB 环节 ${result.stagesCompleted.length}`);
   }
 
-  // T0-B 的清单条目由它自己的脚本落盘，这里并进来
-  const extra = [];
-  try {
-    extra.push(JSON.parse(await readFile(resolve(output, "t0b-construction-sample.entry.json"), "utf8")));
-  } catch {
-    console.log("未找到团队构造样板的清单条目。补齐命令：node tools/build-t0b-demo-package.mjs");
-  }
-
   const manifest = {
     schemaVersion: "demo-library-1",
     generatedFrom: "tools/build-demo-packages.mjs",
     // 08 演示项目定义表 1 的顺序：专业深度、完整链路、阻断行为
-    projects: [...extra, ...entries],
+    projects: entries,
   };
   const manifestBytes = new TextEncoder().encode(`${JSON.stringify(manifest, null, 2)}\n`);
   await writeFile(resolve(output, "manifest.json"), manifestBytes);

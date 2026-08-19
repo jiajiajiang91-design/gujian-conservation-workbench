@@ -403,6 +403,42 @@ function translateManifest(input: DemoConversionInput, evidenceId: string, fixtu
   };
 }
 
+// 把已验收的 r2 清单翻译成本产品的几何契约。演示链路要用它取 GeometrySpec，
+// 项目标识由命令服务建项目后给出，不能沿用转换器自算的那套。
+export interface LegacyGeometryTranslation {
+  readonly spec: ProjectDrivenGeometrySpec;
+  readonly partCount: number;
+  readonly interfaceCount: number;
+  readonly solidKindCounts: Readonly<Record<string, number>>;
+  readonly approximationCounts: Readonly<Record<string, number>>;
+}
+
+export function translateLegacyGeometry(input: {
+  readonly manifest: LegacyDemoGeometryManifest;
+  readonly sourceFiles: readonly DemoSourceFile[];
+  readonly fixtureId: string;
+  readonly createdAt: string;
+  readonly projectId: string;
+  readonly buildingId: string;
+  readonly projectRevisionId: string;
+  readonly manifestEvidenceId: string;
+}): LegacyGeometryTranslation {
+  const { spec, translation } = projectGeometrySpec(
+    {
+      manifest: input.manifest, sourceFiles: input.sourceFiles, createdAt: input.createdAt,
+      fixtureId: input.fixtureId, projectName: "", buildingName: "",
+    },
+    input.projectId, input.buildingId, input.projectRevisionId, input.manifestEvidenceId,
+  );
+  return {
+    spec,
+    partCount: translation.partCount,
+    interfaceCount: translation.interfaceCount,
+    solidKindCounts: translation.solidKindCounts,
+    approximationCounts: translation.approximationCounts,
+  };
+}
+
 function projectGeometrySpec(
   input: DemoConversionInput, projectId: string, buildingId: string, revisionId: string, evidenceId: string,
 ): { spec: ProjectDrivenGeometrySpec; translation: TranslationOutput } {

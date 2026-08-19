@@ -476,6 +476,9 @@ export const GAODU_DEMO: DemoProjectDefinition = {
           // 5.4.6 的比例集含 1:100，平面与剖面取 1:100，正立面另出一张仍用 1:50。
           scaleDenominator: 100, sheetKey: "sheet-plan-section",
           viewportRectMm: [20, 40, 180, 222], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          // 平面图是水平剖切，不是俯视投影；没有剖切面画出来的是屋顶。
+          // 剖切标高取台明顶面（500）之上 1200 mm。
+          sectionPlane: { normal: [0, 0, 1], offsetMm: 1700 },
           sourceEvidenceKeys: ["recognition-record"],
         },
         {

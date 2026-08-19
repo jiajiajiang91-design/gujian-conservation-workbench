@@ -11,13 +11,20 @@ import {
 import { sha256Hex } from "../hash.js";
 import { IndexedDbProjectRepository, LocalAuthorization } from "../indexeddb-project-repository.js";
 import { ProjectPackageService } from "../project-package-service.js";
-import type { DemoProjectDefinition } from "./definitions.js";
+import type { DemoDrawingView, DemoProjectDefinition } from "./definitions.js";
 
 // 演示项目包的生成路径。走真实命令服务与真实导出，不另做一套写入口，
 // 因此包里带完整操作记录链，导入后与用户自己建的项目没有区别（08 演示项目定义 6）。
 //
 // 全过程不用 crypto.randomUUID 与当前时间：同一份输入必须得到同一份字节，
 // 否则 08 第 2 节的可复现标准不成立。
+
+// 演示项目的标识全部由 demoId 与键名确定性推出。构建脚本要引用其中的
+// 资料标识（几何翻译的 evidenceRefs 指向它），因此对外暴露同一套算法，
+// 不让调用方按标题去猜。
+export function demoSeededUuid(namespace: string, key: string): string {
+  return seededUuid(namespace, key);
+}
 
 function seededUuid(namespace: string, key: string): string {
   const hex = sha256Hex(new TextEncoder().encode(`${namespace}/${key}`)).slice(0, 32).split("");
@@ -55,6 +62,9 @@ export interface DemoBuildInput {
   // 不能悄悄降级成缺失，那会让演示包比实际资料少东西而看不出来。
   readonly files: ReadonlyMap<string, Uint8Array>;
   readonly repository: IndexedDbProjectRepository;
+  // 详图要声明它画的是哪些构件。构件的稳定键在定义里写不出来（要么随几何生成，
+  // 要么在清单里），所以由调用方在建包时按视图解析。
+  readonly resolveViewTargets?: (view: DemoDrawingView) => readonly string[];
 }
 
 // 只播种项目内容（任务书、资料、事实、问题），不导出，供完整链路继续往下跑。
@@ -212,7 +222,8 @@ export async function seedDemoProject(input: DemoBuildInput): Promise<SeededDemo
             ...(view.sectionPlane
               ? { sectionPlane: { normal: [...view.sectionPlane.normal], offsetMm: view.sectionPlane.offsetMm } }
               : {}),
-            targetStableKeys: [],
+            ...(view.cropBoundsMm ? { cropBoundsMm: [...view.cropBoundsMm] } : {}),
+            targetStableKeys: [...(input.resolveViewTargets?.(view) ?? [])],
             sourceEvidenceRefs: view.sourceEvidenceKeys.map(evidenceRef),
           })),
         },

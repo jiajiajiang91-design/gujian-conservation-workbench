@@ -18,7 +18,9 @@ from PIL import Image
 from fontTools.ttLib import TTFont
 from pypdf import PdfReader
 from shapely.geometry import LineString, Point, Polygon, box
+from OCP.BRepAdaptor import BRepAdaptor_Curve
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
+from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 from OCP.gp import gp_Dir, gp_Pln, gp_Pnt
 from shapely.ops import unary_union
 
@@ -61,9 +63,24 @@ def _independent_ocp_section(shape: cq.Shape, normal: np.ndarray, offset: float)
     result = BRepAlgoAPI_Section(shape.wrapped, gp_Pln(gp_Pnt(*origin.tolist()), gp_Dir(*normal.tolist())), True).Shape()
     segments: list[np.ndarray] = []
     for edge in cq.Shape.cast(result).Edges():
-        points, _ = edge.sample(max(2, int(math.ceil(edge.Length() / 0.5)) + 1))
-        for left, right in zip(points, points[1:], strict=False):
-            segments.append(np.asarray([left.toTuple(), right.toTuple()], dtype=float))
+        # 容差是弦高不是步长：直线边一段，曲线边按弦高 0.5 mm 采样。
+        # 按弧长采样会把一个圆切面拆成上千段，与制图侧对不上，
+        # 两侧偏差也会超过 Hausdorff 判定阈值。
+        if edge.geomType() == "LINE":
+            points, _ = edge.sample(2)
+            coordinates = [point.toTuple() for point in points]
+        else:
+            sampler = GCPnts_QuasiUniformDeflection(BRepAdaptor_Curve(edge.wrapped), 0.5)
+            if not sampler.IsDone() or sampler.NbPoints() < 2:
+                points, _ = edge.sample(2)
+                coordinates = [point.toTuple() for point in points]
+            else:
+                coordinates = [
+                    (sampler.Value(index).X(), sampler.Value(index).Y(), sampler.Value(index).Z())
+                    for index in range(1, sampler.NbPoints() + 1)
+                ]
+        for left, right in zip(coordinates, coordinates[1:], strict=False):
+            segments.append(np.asarray([left, right], dtype=float))
     return segments
 
 
@@ -165,21 +182,17 @@ def _independent_view_line_sets(matrix: dict[str, Any], manifest: dict[str, Any]
         }
         crop_bounds = view.get("cropBoundsMm")
         expected: set[tuple[str, tuple[float, float], tuple[float, float]]] = set()
-        if view.get("sectionPlane"):
-            plane = view["sectionPlane"]
-            normal = np.asarray(plane["normal"], dtype=float)
-            origin = normal * float(plane["offsetMm"])
-            for entity_id, (vertices, faces) in selected.items():
-                for segment in _independent_ocp_section(shapes[entity_id], normal, float(plane["offsetMm"])):
-                    projected = np.column_stack((segment @ right_vector, segment @ up_vector))
-                    for clipped in _independent_crop(projected, crop_bounds):
-                        expected.add(_segment_key(entity_id, clipped))
-        else:
+
+        # 遮挡投影对全模型判可见，投影集合本身可以另选一部分构件。
+        # 剖面与平面只投影剖切面之外的部分，剖切面与观察者之间的构件被移除。
+        def add_projection(projection_ids: set[str]) -> None:
             projected_triangles: list[tuple[np.ndarray, np.ndarray]] = []
             for vertices, faces in selected.values():
                 for triangle in vertices[faces]:
                     projected_triangles.append((np.column_stack((triangle @ right_vector, triangle @ up_vector)), triangle @ direction))
             for entity_id, (vertices, faces) in selected.items():
+                if entity_id not in projection_ids:
+                    continue
                 for start, end in _independent_candidate_edges(vertices, faces, direction):
                     segment_3d = np.vstack((start, end))
                     segment_2d = np.column_stack((segment_3d @ right_vector, segment_3d @ up_vector))
@@ -194,8 +207,35 @@ def _independent_view_line_sets(matrix: dict[str, Any], manifest: dict[str, Any]
                         if np.linalg.norm(clipped[1] - clipped[0]) >= 0.05:
                             for view_clipped in _independent_crop(clipped, crop_bounds):
                                 expected.add(_segment_key(entity_id, view_clipped))
+
+        if view.get("sectionPlane"):
+            plane = view["sectionPlane"]
+            normal = np.asarray(plane["normal"], dtype=float)
+            origin = normal * float(plane["offsetMm"])
+            for entity_id, (vertices, faces) in selected.items():
+                for segment in _independent_ocp_section(shapes[entity_id], normal, float(plane["offsetMm"])):
+                    projected = np.column_stack((segment @ right_vector, segment @ up_vector))
+                    for clipped in _independent_crop(projected, crop_bounds):
+                        expected.add(_segment_key(entity_id, clipped))
+            toward = float(np.dot(direction, normal))
+            beyond_ids = set()
+            for entity_id, (vertices, faces) in selected.items():
+                offsets = (vertices - origin) @ normal
+                if (offsets.max() > 1e-6) if toward >= 0 else (offsets.min() < -1e-6):
+                    beyond_ids.add(entity_id)
+            add_projection(beyond_ids)
+        else:
+            add_projection(set(selected))
         output[view["id"]] = expected
     return output
+
+
+# 与 sheet_writer._horizontal_label 同一条规则：横轴沿 X 是面阔，沿 Y 是进深。
+# 这里按视图自己的 right 向量独立算一遍，不引用制图侧的实现。
+def _horizontal_label_for(matrix: dict[str, Any], view_id: str) -> str:
+    right = next(item["right"] for item in matrix["views"] if item["id"] == view_id)
+    dominant = max(range(3), key=lambda index: abs(float(right[index])))
+    return {0: "总面阔", 1: "总进深", 2: "总高"}[dominant]
 
 
 def _hash(path: Path) -> str:
@@ -452,7 +492,11 @@ def verify(
     _check(png_ok, "png-closure", "全部预览尺寸、300 dpi 元数据和非空内容闭合", checks)
 
     cross_format_text = all(value in svg_text and value in pdf_text and value in visible_text for value in required_text)
-    dimension_texts = [f"总宽 {view['boundsMm'][1][0] - view['boundsMm'][0][0]:.0f} mm" for view in ir["views"]]
+    # 尺寸名称随视图横轴在模型里的方向定，与 sheet_writer 的规则一致
+    dimension_texts = [
+        f"{_horizontal_label_for(matrix, view['viewId'])} {view['boundsMm'][1][0] - view['boundsMm'][0][0]:.0f} mm"
+        for view in ir["views"]
+    ]
     _check(cross_format_text and all(value in svg_text and value in pdf_text for value in dimension_texts), "cross-format-text", "图名、图号、资格状态和同源尺寸跨格式一致", checks)
 
     font_manifest = json.loads((font_path.parent / "font-manifest.json").read_text(encoding="utf-8"))

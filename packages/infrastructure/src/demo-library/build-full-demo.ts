@@ -7,7 +7,7 @@ import type { DeliveryService } from "../delivery-service.js";
 import type { DrawingJobClient } from "../drawing-job-client.js";
 import type { IndexedDbProjectRepository } from "../indexeddb-project-repository.js";
 import { exportDemoProject, seedDemoProject, type DemoBuildResult } from "./build-demo-project.js";
-import type { DemoProjectDefinition } from "./definitions.js";
+import type { DemoDrawingView, DemoProjectDefinition } from "./definitions.js";
 
 // 演示项目的完整链路：从任务书一路跑到交付草案，走产品自身的命令服务与
 // 真实作业进程，不为演示另做一套。08 演示项目定义要求每个环节都有产出，
@@ -31,6 +31,8 @@ export interface FullDemoBuildInput {
   readonly files: ReadonlyMap<string, Uint8Array>;
   readonly repository: IndexedDbProjectRepository;
   readonly pipeline: DemoPipeline;
+  // 详图的构件集解析，见 seedDemoProject 的同名参数
+  readonly resolveViewTargets?: (view: DemoDrawingView) => readonly string[];
 }
 
 export interface FullDemoBuildResult extends DemoBuildResult {
@@ -49,7 +51,10 @@ export async function buildFullDemoProject(input: FullDemoBuildInput): Promise<F
     pipeline.onStage?.(stageZh);
   };
 
-  const seeded = await seedDemoProject({ definition, files: input.files, repository });
+  const seeded = await seedDemoProject({
+    definition, files: input.files, repository,
+    ...(input.resolveViewTargets ? { resolveViewTargets: input.resolveViewTargets } : {}),
+  });
   mark("任务书、资料与尺寸事实");
 
   const readHead = async (): Promise<ProjectHead> => {

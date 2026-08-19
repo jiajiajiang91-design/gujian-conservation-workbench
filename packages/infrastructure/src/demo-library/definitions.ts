@@ -66,6 +66,12 @@ export interface DemoDrawingView {
   readonly right: readonly [number, number, number];
   readonly up: readonly [number, number, number];
   readonly sectionPlane?: { readonly normal: readonly [number, number, number]; readonly offsetMm: number };
+  // 详图必须声明它画的是哪些构件（成果矩阵对 detail 强制要求非空构件集）。
+  // 定义里按构件类型写，构建时解析成稳定键，不在定义文件里硬列几百个键。
+  readonly targetComponentTypes?: readonly string[];
+  // 每类最多取几个，避免详图把整座建筑都拉进来
+  readonly targetPerTypeLimit?: number;
+  readonly cropBoundsMm?: readonly [number, number, number, number];
   readonly sourceEvidenceKeys: readonly string[];
 }
 
