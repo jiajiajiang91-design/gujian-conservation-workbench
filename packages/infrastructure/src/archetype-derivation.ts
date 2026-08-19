@@ -64,6 +64,28 @@ export function deriveArchetypeExpectations(spec: ArchetypeSpec): ArchetypeDeriv
   };
   for (const [name, value] of Object.entries(spec.baseParams)) params[name] = Number(value);
   const evaluation = evaluateRuleSet(ruleSet, params);
+  // 举架系数按文献档数写足，实际用到几架由步架数决定。
+  // 不裁剪会让七檩填 3 仍输出四段举高，凭空多出本建筑没有的步架；
+  // 步架数超过文献档数时缺的段进未知项，不外推系数。
+  const liftOrdinal = (ruleId: string) => {
+    const matched = /^lift(\d+)$/.exec(ruleId);
+    return matched ? Number(matched[1]) : null;
+  };
+  const availableLifts = evaluation.results.filter((item) => liftOrdinal(item.ruleId) !== null).length;
+  const trimmed = evaluation.results.filter((item) => {
+    const ordinal = liftOrdinal(item.ruleId);
+    return ordinal === null || ordinal <= spec.stepCount;
+  });
+  const missingLifts: ExpectedDimension[] = Array.from(
+    { length: Math.max(0, spec.stepCount - availableLifts) },
+    (_unused, index) => ({
+      dimension: `第${availableLifts + index + 1}步举高`,
+      valueMm: null,
+      status: "unknown" as const,
+      toleranceText: null,
+      sourceText: `步架数 ${spec.stepCount} 超出 ${ruleSet.ruleSetId} 的 ${availableLifts} 档系数，该段无文献取值，按实计`,
+    }),
+  );
   const bayExpectations: ExpectedDimension[] = bayTotals.map((bay) => ({
     dimension: bay.direction === "x" ? "通面阔" : "通进深",
     valueMm: bay.totalMm,
@@ -74,7 +96,7 @@ export function deriveArchetypeExpectations(spec: ArchetypeSpec): ArchetypeDeriv
   return {
     ruleSetId: ruleSet.ruleSetId,
     ruleSetVersion: RULE_DATA.ruleSetVersion,
-    expected: [...bayExpectations, ...evaluation.results.map(toExpected)],
+    expected: [...bayExpectations, ...trimmed.map(toExpected), ...missingLifts],
     layout: {
       pillarCount: parsePillarNet(spec.pillarNet).length,
       fangCount: spec.fangNet ? parseFangNet(spec.fangNet).length : 0,

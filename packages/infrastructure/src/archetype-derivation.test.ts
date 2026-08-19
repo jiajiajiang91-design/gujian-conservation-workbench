@@ -69,3 +69,46 @@ describe("形制参数派生", () => {
     expect(span).toMatchObject({ measuredMm: null, deltaMm: null, withinTolerance: null });
   });
 });
+
+function specWithSteps(stepCount: number): ArchetypeSpec {
+  return ArchetypeSpecSchema.parse({ ...r2Spec(), stepCount });
+}
+
+// 举架系数按文献档数写足，用到几架由步架数决定。
+// 不裁剪会让七檩填 3 仍输出四段举高，凭空多出本建筑没有的步架。
+describe("举高按步架数裁剪", () => {
+  const liftCount = (derivation: { expected: readonly { dimension: string }[] }) =>
+    derivation.expected.filter((item) => item.dimension.endsWith("举高")).length;
+
+  it("步架数少于文献档数时只出对应段", () => {
+    const derivation = deriveArchetypeExpectations(specWithSteps(3));
+    expect(liftCount(derivation)).toBe(3);
+    expect(derivation.expected.some((item) => item.dimension === "脊步举高")).toBe(false);
+  });
+
+  it("步架数等于文献档数时四段齐全", () => {
+    expect(liftCount(deriveArchetypeExpectations(specWithSteps(4)))).toBe(4);
+  });
+
+  it("步架数超出文献档数时缺的段标未知，不外推系数", () => {
+    const derivation = deriveArchetypeExpectations(specWithSteps(6));
+    expect(liftCount(derivation)).toBe(6);
+    const extra = derivation.expected.filter((item) => item.dimension.endsWith("举高") && item.status === "unknown");
+    expect(extra).toHaveLength(2);
+    expect(extra[0]?.valueMm).toBeNull();
+    expect(extra[0]?.sourceText).toContain("按实计");
+  });
+});
+
+// 没有可引用出处的维度必须留空，编造比例比留空更难被专业人员纠正。
+describe("无出处维度按实计", () => {
+  it("台基、柱础、椽檩、瓦作、斗口都是未知项而不是数字", () => {
+    const derivation = deriveArchetypeExpectations(specWithSteps(4));
+    for (const dimension of ["台基高", "柱础高", "檩径", "椽径", "瓦垄宽", "斗口"]) {
+      const found = derivation.expected.find((item) => item.dimension === dimension);
+      expect(found, dimension).toBeDefined();
+      expect(found?.status, dimension).toBe("unknown");
+      expect(found?.valueMm, dimension).toBeNull();
+    }
+  });
+});

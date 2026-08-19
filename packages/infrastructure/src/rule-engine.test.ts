@@ -27,7 +27,7 @@ describe("规则数据文件", () => {
   it("基线数据通过全表校验且版本绑定内容哈希", () => {
     const loaded = loadRuleData(HERITAGE_BASELINE_RULE_DATA);
     expect(loaded.data.ruleSets).toHaveLength(2);
-    expect(loaded.ruleSetVersion).toMatch(/^heritage-baseline-1\.0\.0@[0-9a-f]{16}$/);
+    expect(loaded.ruleSetVersion).toMatch(/^heritage-baseline-1\.1\.0@[0-9a-f]{16}$/);
     expect(loadRuleData(HERITAGE_BASELINE_RULE_DATA).ruleSetVersion).toBe(loaded.ruleSetVersion);
   });
 
@@ -96,7 +96,7 @@ describe("多规范并存方案", () => {
     expect(options).toHaveLength(2);
     const liang = options.find((o) => o.ruleSetId === "liang-drawings")!;
     const qing = options.find((o) => o.ruleSetId === "qing-gongcheng-zuofa")!;
-    const liftSecond = (evaluation: typeof liang) => evaluation.results.find((r) => r.ruleId === "liftSecond")!;
+    const liftSecond = (evaluation: typeof liang) => evaluation.results.find((r) => r.ruleId === "lift2")!;
     expect(liftSecond(liang).valueMm).toBe(700);
     expect(liftSecond(qing).valueMm).toBe(650);
     expect(liftSecond(liang).sourceText).toContain("梁思成");
