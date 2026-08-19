@@ -1,0 +1,164 @@
+import { ProjectDrivenGeometrySpecSchema } from "@gujian/domain";
+import { describe, expect, it } from "vitest";
+
+import { generateConstruction } from "./generate.js";
+import type { BuildingForm, ModularSystem, SourcedLength } from "./types.js";
+
+// 生成器的三条硬要求：分部齐全、尺寸只来自输入、同一输入重复生成结果一致。
+
+const QING: ModularSystem = {
+  ruleSetId: "qing-gongcheng-zuofa",
+  labelZh: "清式斗口制",
+  moduleMm: 60,
+  moduleNameZh: "斗口",
+  sourceText: "清工程做法则例斗口制",
+};
+
+const SONG: ModularSystem = {
+  ruleSetId: "song-yingzao-fashi",
+  labelZh: "宋材份制",
+  moduleMm: 16.5,
+  moduleNameZh: "分",
+  sourceText: "营造法式材份制",
+};
+
+function length(valueMm: number, basis: SourcedLength["basis"] = "rule"): SourcedLength {
+  return { valueMm, basis, factRefs: [`fact:${basis}:${valueMm}`], evidenceRefs: ["evidence:form"] };
+}
+
+// 高都玉皇庙主殿的照片估算与规则推算尺寸
+function gaoduForm(overrides: Partial<BuildingForm> = {}): BuildingForm {
+  return {
+    modular: QING,
+    bayWidthsMm: [length(3000, "demo"), length(3600, "demo"), length(3000, "demo")],
+    stepSpansMm: [length(1600), length(1600), length(1600)],
+    liftHeightsMm: [length(800), length(1040), length(1200)],
+    terraceHeight: length(500, "demo"),
+    terraceProjection: length(1200, "demo"),
+    stairTreadCount: 3,
+    stairWidth: length(2000, "demo"),
+    columnBaseHeight: length(250, "demo"),
+    columnHeight: length(3400, "demo"),
+    columnSize: length(380, "demo"),
+    columnSection: "square",
+    architraveHeight: length(700, "demo"),
+    architraveThickness: length(240),
+    bracketLayerHeight: length(900, "demo"),
+    bracketSetsPerBay: 4,
+    purlinDiameter: length(220),
+    rafterDiameter: length(90),
+    rafterSpacing: length(300),
+    roofBoardThickness: length(25),
+    eaveProjection: length(1200, "demo"),
+    tileCourseWidth: length(200),
+    tileThickness: length(18),
+    ridgeHeight: length(600, "demo"),
+    enclosure: { front: "open", sides: "walled", back: "walled" },
+    materials: {
+      terrace: "stone", stair: "stone", columnBase: "stone", column: "stone",
+      architrave: "timber", bracket: "timber", purlin: "timber", rafter: "timber",
+      roofBoard: "timber", tile: "ceramic", ridge: "ceramic", wall: "brick",
+    },
+    ...overrides,
+  };
+}
+
+function generate(form: BuildingForm = gaoduForm()) {
+  return generateConstruction({
+    form,
+    producer: { producerType: "demo", fixtureId: "test-form" },
+    formEvidenceRefs: ["evidence:photo-record"],
+    keyPrefix: "test",
+  });
+}
+
+describe("形制驱动的构件生成", () => {
+  it("质量基准 3.1 的各部位都有构件", () => {
+    const result = generate();
+    for (const type of [
+      "terrace", "step", "columnBase", "column", "eaveBeam",
+      "bracketSeat", "bracketArm", "bearingBlock",
+      "purlin", "rafter", "roofBoard", "panTile", "coverTile", "ridgeTile", "wall",
+    ]) {
+      expect(result.partCounts[type], `缺构件类型 ${type}`).toBeGreaterThan(0);
+    }
+  });
+
+  it("构件规模与团队构造样板可比，不是简化体块", () => {
+    const result = generate();
+    expect(result.objects.length).toBeGreaterThan(400);
+  });
+
+  it("产出通过几何契约校验", () => {
+    const result = generate();
+    const parsed = ProjectDrivenGeometrySpecSchema.safeParse({
+      schemaVersion: "2.0",
+      id: "3b241101-e2bb-4255-8caf-4136c566a962",
+      projectId: "2fa4684c-f640-5c45-99cd-407305343f3f",
+      projectRevisionId: "d2511b25-9b51-562d-bb39-a05305712053",
+      buildingId: "9f8e7d6c-5b4a-4392-8170-fedcba987654",
+      inputHash: "a".repeat(64),
+      coordinateSystem: { name: "项目局部坐标", axisOrder: "XYZ", upAxis: "Z", lengthUnit: "mm", origin: [0, 0, 0] },
+      tolerances: { modellingMm: 0.01, interfaceMm: 0.5, tessellationMm: 0.5 },
+      objects: result.objects,
+      interfaces: result.interfaces,
+      unknowns: result.unknowns,
+      createdAt: "2026-08-19T00:00:00Z",
+    });
+    expect(parsed.success, parsed.success ? "" : JSON.stringify(parsed.error.issues.slice(0, 3))).toBe(true);
+  });
+
+  it("每个构件的来源如实反映输入，不被生成器改写", () => {
+    const result = generate();
+    const column = result.objects.find((item) => item.stableKey === "column:0:0")!;
+    expect(column.producer).toEqual({ producerType: "demo", fixtureId: "test-form" });
+    // 高都的柱高是照片估算，参数的 basis 必须是 demo 而不是 rule
+    expect(column.parameters.find((item) => item.name === "height")?.basis).toBe("demo");
+    // 步架由规则推算
+    const purlin = result.objects.find((item) => item.componentType === "purlin")!;
+    expect(purlin.parameters.find((item) => item.name === "diameter")?.basis).toBe("rule");
+  });
+
+  it("同一输入重复生成得到同样的标识与同样的构件", () => {
+    const first = generate();
+    const second = generate();
+    expect(second.objects.map((item) => item.id)).toEqual(first.objects.map((item) => item.id));
+    expect(second.objects.map((item) => item.stableKey)).toEqual(first.objects.map((item) => item.stableKey));
+    expect(second.interfaces.map((item) => item.id)).toEqual(first.interfaces.map((item) => item.id));
+  });
+
+  it("敞开面记为形制判断而不是悄悄少一面墙", () => {
+    const result = generate();
+    expect(result.objects.some((item) => item.stableKey === "wall:front")).toBe(false);
+    const declared = result.unknowns.find((item) => item.reasonCode === "ENCLOSURE_DECLARED_OPEN");
+    expect(declared?.description).toContain("敞开");
+    expect(declared?.blocksFormalEligibility).toBe(true);
+    expect(declared?.blocksProxyOutcome).toBe(false);
+  });
+
+  it("未声明斗栱层高时不生成承托构件并记未知项", () => {
+    const result = generate(gaoduForm({ bracketLayerHeight: null }));
+    expect(result.partCounts.bracketSeat ?? 0).toBe(0);
+    expect(result.unknowns.some((item) => item.reasonCode === "BRACKET_LAYER_NOT_DECLARED")).toBe(true);
+  });
+
+  it("举高与步架数量对不上直接报错，不静默补齐", () => {
+    expect(() => generate(gaoduForm({ liftHeightsMm: [] }))).toThrow(/LIFT_STEP_COUNT_MISMATCH/);
+  });
+
+  // 生成器不是清式专用：换一套模数体系同样出得来，构件分部不变。
+  it("换成宋材份制同样生成，且承托尺寸随模数变化", () => {
+    const qing = generate();
+    const song = generate(gaoduForm({ modular: SONG }));
+    expect(Object.keys(song.partCounts).sort()).toEqual(Object.keys(qing.partCounts).sort());
+    const seatOf = (result: ReturnType<typeof generate>) =>
+      result.objects.find((item) => item.componentType === "bracketSeat")!.solid;
+    const qingSeat = seatOf(qing);
+    const songSeat = seatOf(song);
+    expect(qingSeat.kind).toBe("box");
+    expect(songSeat.kind).toBe("box");
+    if (qingSeat.kind === "box" && songSeat.kind === "box") {
+      expect(Number(songSeat.sizeX)).toBeLessThan(Number(qingSeat.sizeX));
+    }
+  });
+});

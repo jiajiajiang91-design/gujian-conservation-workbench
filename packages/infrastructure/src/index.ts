@@ -14,6 +14,7 @@ export * from "./artifact-matrix-builder.js";
 export * from "./cad-job-client.js";
 export * from "./drawing-job-client.js";
 export * from "./delivery-service.js";
+export * from "./construction-generator/index.js";
 export * from "./demo-library/index.js";
 export { canonicalJson, recordHash, sha256Hex } from "./hash.js";
 
