@@ -162,3 +162,39 @@ describe("形制驱动的构件生成", () => {
     }
   });
 });
+
+// 圆柱按弦高细分，三角形数与半径成反比，而消隐成本与三角形数直接相关。
+// 小半径长构件用圆柱会让出图跑不完：实测三百六十条筒瓦做成圆柱时
+// 占全模型三角形的九成四，一张立面图跑不出来；改断面挤出后总量降七倍多。
+describe("小半径重复构件不用圆柱", () => {
+  it("筒瓦用断面挤出而不是圆柱", () => {
+    const result = generate();
+    const covers = result.objects.filter((item) => item.componentType === "coverTile");
+    expect(covers.length).toBeGreaterThan(100);
+    for (const cover of covers) expect(cover.solid.kind, cover.stableKey).toBe("extrudedProfile");
+  });
+
+  it("断面段数固定，不随半径变化", () => {
+    const small = generate(gaoduForm({ tileCourseWidth: length(120) }));
+    const large = generate(gaoduForm({ tileCourseWidth: length(400) }));
+    const points = (result: ReturnType<typeof generate>) => {
+      const cover = result.objects.find((item) => item.componentType === "coverTile")!;
+      return cover.solid.kind === "extrudedProfile" ? cover.solid.profileMm.length : -1;
+    };
+    expect(points(small)).toBe(points(large));
+    expect(points(small)).toBeGreaterThan(4);
+  });
+
+  // 重复几百次的构件里不该再出现圆柱。檩只有几根，成本可接受，单列。
+  it("重复过百的构件类型里没有圆柱", () => {
+    const result = generate();
+    const counts = new Map<string, number>();
+    for (const object of result.objects) {
+      counts.set(object.componentType, (counts.get(object.componentType) ?? 0) + 1);
+    }
+    const offenders = result.objects
+      .filter((object) => object.solid.kind === "cylinder" && (counts.get(object.componentType) ?? 0) > 100)
+      .map((object) => object.componentType);
+    expect([...new Set(offenders)]).toEqual([]);
+  });
+});

@@ -1,4 +1,4 @@
-import { ConstructionAssembly, boxSolid, cylinderSolid } from "./builder.js";
+import { ConstructionAssembly, boxSolid, cylinderSolid, extrudedProfileSolid, halfRoundProfile } from "./builder.js";
 import type { BuildingForm, GenerateInput, GenerateResult, SourcedLength } from "./types.js";
 
 // 按分部装配构件。坐标系与几何管线一致：X 面阔、Y 进深、Z 竖向，
@@ -354,9 +354,17 @@ function buildRoofSurface(assembly: ConstructionAssembly, form: BuildingForm): v
         componentType: "coverTile",
         displayNameZh: `筒瓦 ${segment + 1}-${course + 1}`,
         materialCode: form.materials.tile,
-        solid: cylinderSolid({
-          radius: courseWidth * 0.2, height: spanY, axis: "y",
-          center: [x + courseWidth * 0.4, centerY, centerZ + form.roofBoardThickness.valueMm + form.tileThickness.valueMm * 1.5],
+        // 半圆断面挤出而不是圆柱：圆柱按弦高细分会产生数百个三角形，
+        // 三百六十条筒瓦足以让消隐成本失控（实测占全模型三角形的九成四）。
+        solid: extrudedProfileSolid({
+          profileMm: halfRoundProfile(courseWidth * 0.2),
+          depth: spanY,
+          axis: "y",
+          origin: [
+            x + courseWidth * 0.4,
+            centerY + spanY / 2,
+            centerZ + form.roofBoardThickness.valueMm + form.tileThickness.valueMm,
+          ],
         }),
         dimensions: [["courseWidth", form.tileCourseWidth], ["thickness", form.tileThickness]],
         parentKey: `roof-board:${segment}`,

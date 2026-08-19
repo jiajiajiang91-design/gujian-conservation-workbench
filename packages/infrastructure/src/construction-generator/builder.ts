@@ -189,3 +189,34 @@ export function cylinderSolid(input: {
     centerMm: [input.center[0], input.center[1], input.center[2]],
   };
 }
+
+// 断面轮廓挤出。小半径长构件不要用圆柱：圆柱的三角形数与半径成反比，
+// 半径 40 mm 的筒瓦按 0.5 mm 弦高细分要五百个三角形，
+// 而消隐成本与三角形数直接相关。按断面轮廓给定段数则由我们控制。
+//
+// 挤出沿轴的负方向（cadquery 的 XZ 面法向为 -Y），originMm 取起始端。
+export function extrudedProfileSolid(input: {
+  profileMm: readonly (readonly [number, number])[];
+  depth: number;
+  axis: "x" | "y" | "z";
+  origin: readonly [number, number, number];
+}): ProjectDrivenGeometrySpec["objects"][number]["solid"] {
+  return {
+    kind: "extrudedProfile",
+    profileMm: input.profileMm.map(([first, second]) => [first, second] as [number, number]),
+    depth: exact(input.depth),
+    axis: input.axis,
+    originMm: [input.origin[0], input.origin[1], input.origin[2]],
+  };
+}
+
+// 半圆断面，段数固定，不随半径变化。
+export function halfRoundProfile(radius: number, segments = 10): [number, number][] {
+  return Array.from({ length: segments + 1 }, (_unused, index) => {
+    const angle = (Math.PI * index) / segments;
+    return [
+      Math.round(radius * Math.cos(angle) * 10) / 10,
+      Math.round(radius * Math.sin(angle) * 10) / 10,
+    ] as [number, number];
+  });
+}
