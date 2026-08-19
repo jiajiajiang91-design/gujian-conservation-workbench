@@ -48,43 +48,48 @@ const base = `http://127.0.0.1:${server.address().port}`;
 const { request: httpRequest } = await import("node:http");
 
 let cookie = "";
+// 构建卡住时要能看出卡在哪一个请求上，作业本身不发事件的时段可能很长。
+const trace = (text) => console.log(`    [http] ${new Date().toISOString().slice(11, 19)} ${text}`);
+
 const fetchImpl = (input, init = {}) => new Promise((settle, fail) => {
   const url = new URL(String(input).startsWith("http") ? String(input) : `${base}${input}`);
+  trace(`> ${init.method ?? "GET"} ${url.pathname}`);
   const headers = { ...(init.headers ?? {}), ...(cookie ? { cookie } : {}) };
   const outgoing = httpRequest({
     hostname: url.hostname, port: url.port, path: `${url.pathname}${url.search}`,
     method: init.method ?? "GET", headers,
   }, (incoming) => {
+    trace(`< ${incoming.statusCode} ${url.pathname}`);
+    incoming.on("end", () => trace(`. end ${url.pathname}`));
     const setCookie = incoming.headers["set-cookie"]?.[0];
     if (setCookie) cookie = setCookie.split(";", 1)[0];
     const chunks = [];
-    let controllerRef = null;
+    // 响应体的结束状态必须在响应回调里同步记住。json 与 text 是等到调用时
+    // 才执行的，短响应在调用方从 await 恢复之前就已经 end，那时再挂监听器
+    // 永远等不到事件，整条构建会静默挂住。
+    const finished = new Promise((done, fail2) => {
+      incoming.on("end", done);
+      incoming.on("error", fail2);
+    });
     const body = new ReadableStream({
       start(controller) {
-        controllerRef = controller;
         incoming.on("data", (chunk) => { chunks.push(chunk); controller.enqueue(new Uint8Array(chunk)); });
         incoming.on("end", () => controller.close());
         incoming.on("error", (error) => controller.error(error));
       },
     });
-    void controllerRef;
     settle({
       ok: (incoming.statusCode ?? 500) < 400,
       status: incoming.statusCode ?? 500,
       headers: { get: (name) => incoming.headers[name.toLowerCase()] ?? null },
       body,
-      json: () => new Promise((done, reject) => {
-        incoming.on("end", () => {
-          try { done(JSON.parse(Buffer.concat(chunks).toString("utf8"))); } catch (error) { reject(error); }
-        });
-        incoming.on("error", reject);
-      }),
-      text: () => new Promise((done) => incoming.on("end", () => done(Buffer.concat(chunks).toString("utf8")))),
-      arrayBuffer: () => new Promise((done) => incoming.on("end", () => done(Buffer.concat(chunks)))),
+      json: () => finished.then(() => JSON.parse(Buffer.concat(chunks).toString("utf8"))),
+      text: () => finished.then(() => Buffer.concat(chunks).toString("utf8")),
+      arrayBuffer: () => finished.then(() => Buffer.concat(chunks)),
     });
   });
   outgoing.setTimeout(0);
-  outgoing.on("error", fail);
+  outgoing.on("error", (error) => { trace(`! ${url.pathname} ${error.message}`); fail(error); });
   if (init.body) outgoing.write(init.body);
   outgoing.end();
 });

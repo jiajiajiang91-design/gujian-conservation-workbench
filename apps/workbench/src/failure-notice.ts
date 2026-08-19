@@ -195,6 +195,15 @@ export function describeFailure(reason: unknown, fallbackZh: string): FailureNot
   if (!rule.showDetail || detail === "") {
     return { summaryZh: rule.summaryZh, nextStepZh: rule.nextStepZh };
   }
+  // 细节本身常常是内层错误码（如 DRAWING_JOB_FAILED:DRAWING_WORKER_FAILED）。
+  // 能翻译就用内层的中文说明，翻译不出就只留外层说明，不把标识符抛给用户。
+  if (CODE_SHAPE.test(detail)) {
+    const inner = lookup(detail);
+    return inner
+      ? { summaryZh: inner.summaryZh, nextStepZh: inner.nextStepZh }
+      : { summaryZh: rule.summaryZh, nextStepZh: rule.nextStepZh };
+  }
+  if (!CJK.test(detail)) return { summaryZh: rule.summaryZh, nextStepZh: rule.nextStepZh };
   const shown = detail.length > DETAIL_MAX ? `${detail.slice(0, DETAIL_MAX)}…` : detail;
   return { summaryZh: `${rule.summaryZh}涉及：${shown}`, nextStepZh: rule.nextStepZh };
 }

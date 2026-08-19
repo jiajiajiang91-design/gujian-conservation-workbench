@@ -53,7 +53,11 @@ export class PythonDrawingWorker implements DrawingWorker {
       child.stderr!.on("data", (chunk: string) => { stderr += chunk; });
       child.once("error", rejectResult);
       child.once("exit", (code) => {
-        if (code !== 0) return rejectResult(new Error(`DRAWING_WORKER_FAILED:${stderr.slice(-1_500)}`));
+        if (code !== 0) {
+          // 对外错误码不带 stderr，作业目录留一份原文，排查不用重跑构建。
+          try { writeFileSync(resolve(jobDirectory, "worker-stderr.log"), stderr, "utf8"); } catch { /* 落盘失败不掩盖原错误 */ }
+          return rejectResult(new Error(`DRAWING_WORKER_FAILED:${stderr.slice(-1_500)}`));
+        }
         try {
           const recordPath = resolve(outputDirectory, "drawing-build-record.json");
           const recordBytes = readFileSync(recordPath);

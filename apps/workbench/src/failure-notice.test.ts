@@ -99,3 +99,30 @@ describe("失败提示不漏错误码", () => {
     });
   });
 });
+
+// 作业类错误常常是两层码嵌套，界面上一个标识符都不该出现。
+describe("嵌套错误码", () => {
+  const codeShape = /[A-Z][A-Z0-9_]{2,}/;
+
+  it("内层码有对应说明时用内层的中文", () => {
+    const notice = describeFailure(new Error("DRAWING_JOB_FAILED:DRAWING_SOURCE_GEOMETRY_NOT_FOUND"), "出图失败");
+    expect(notice.summaryZh).toBe(describeFailure(new Error("DRAWING_SOURCE_GEOMETRY_NOT_FOUND"), "出图失败").summaryZh);
+    expect(notice.summaryZh).not.toMatch(codeShape);
+  });
+
+  it("内层码翻译不出时只留外层说明，不显示标识符", () => {
+    const notice = describeFailure(new Error("DRAWING_JOB_FAILED:DRAWING_WORKER_FAILED"), "出图失败");
+    expect(notice.summaryZh).toBe("图纸作业失败，图纸没有更新。");
+    expect(notice.summaryZh).not.toMatch(codeShape);
+  });
+
+  it("英文原文的细节也不外显", () => {
+    const notice = describeFailure(new Error("DRAWING_JOB_FAILED:view floor-plan does not fit"), "出图失败");
+    expect(notice.summaryZh).toBe("图纸作业失败，图纸没有更新。");
+  });
+
+  it("中文细节照常带出", () => {
+    const notice = describeFailure(new Error("DRAWING_JOB_FAILED:平面图缺少轴线"), "出图失败");
+    expect(notice.summaryZh).toContain("平面图缺少轴线");
+  });
+});

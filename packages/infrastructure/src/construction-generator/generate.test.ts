@@ -43,6 +43,11 @@ function gaoduForm(overrides: Partial<BuildingForm> = {}): BuildingForm {
     columnSection: "square",
     architraveHeight: length(700, "demo"),
     architraveThickness: length(240),
+    beamSectionsMm: [
+      { width: length(380, "demo"), height: length(480, "demo") },
+      { width: length(320, "demo"), height: length(420, "demo") },
+      { width: length(260, "demo"), height: length(360, "demo") },
+    ],
     bracketLayerHeight: length(900, "demo"),
     bracketSetsPerBay: 4,
     purlinDiameter: length(220),
@@ -56,7 +61,8 @@ function gaoduForm(overrides: Partial<BuildingForm> = {}): BuildingForm {
     enclosure: { front: "open", sides: "walled", back: "walled" },
     materials: {
       terrace: "stone", stair: "stone", columnBase: "stone", column: "stone",
-      architrave: "timber", bracket: "timber", purlin: "timber", rafter: "timber",
+      architrave: "timber", beam: "timber", kingPost: "timber",
+      bracket: "timber", purlin: "timber", rafter: "timber",
       roofBoard: "timber", tile: "ceramic", ridge: "ceramic", wall: "brick",
     },
     ...overrides,
@@ -76,7 +82,7 @@ describe("形制驱动的构件生成", () => {
   it("质量基准 3.1 的各部位都有构件", () => {
     const result = generate();
     for (const type of [
-      "terrace", "step", "columnBase", "column", "eaveBeam",
+      "terrace", "step", "columnBase", "column", "eaveBeam", "beam", "kingPost",
       "bracketSeat", "bracketArm", "bearingBlock",
       "purlin", "rafter", "roofBoard", "panTile", "coverTile", "ridgeTile", "wall",
     ]) {
@@ -174,7 +180,7 @@ describe("小半径重复构件不用圆柱", () => {
     for (const cover of covers) expect(cover.solid.kind, cover.stableKey).toBe("extrudedProfile");
   });
 
-  it("断面段数固定，不随半径变化", () => {
+  it("断面点数固定且很少，不随构件尺寸变化", () => {
     const small = generate(gaoduForm({ tileCourseWidth: length(120) }));
     const large = generate(gaoduForm({ tileCourseWidth: length(400) }));
     const points = (result: ReturnType<typeof generate>) => {
@@ -182,7 +188,8 @@ describe("小半径重复构件不用圆柱", () => {
       return cover.solid.kind === "extrudedProfile" ? cover.solid.profileMm.length : -1;
     };
     expect(points(small)).toBe(points(large));
-    expect(points(small)).toBeGreaterThan(4);
+    expect(points(small)).toBeGreaterThan(2);
+    expect(points(small)).toBeLessThanOrEqual(8);
   });
 
   // 重复几百次的构件里不该再出现圆柱。檩只有几根，成本可接受，单列。
@@ -196,5 +203,88 @@ describe("小半径重复构件不用圆柱", () => {
       .filter((object) => object.solid.kind === "cylinder" && (counts.get(object.componentType) ?? 0) > 100)
       .map((object) => object.componentType);
     expect([...new Set(offenders)]).toEqual([]);
+  });
+});
+
+// 质量基准 3.1 要求柱、梁、枋、檩、椽、望板成为独立可追踪构件，
+// 3.5 要求一榀"屋面—瓦作—檩椽—梁枋—承托—柱—柱础—台基"构造链完整。
+// 缺梁架时剖面里檩是悬空的，这类缺陷图上一眼可见。
+describe("梁架与构造链", () => {
+  it("逐缝按步架数分层，命名与架数对应", () => {
+    const result = generate();
+    const beams = result.objects.filter((item) => item.componentType === "beam");
+    const axes = 4;
+    expect(beams.length).toBe(axes * 3);
+    const names = new Set(beams.map((item) => item.displayNameZh.split(" ")[0]));
+    expect([...names]).toEqual(expect.arrayContaining(["三架梁", "五架梁", "七架梁"]));
+    expect(names.size).toBe(3);
+  });
+
+  it("瓜柱把上下两层梁连起来，脊檩有脊瓜柱承托", () => {
+    const result = generate();
+    const posts = result.objects.filter((item) => item.componentType === "kingPost");
+    // 两层瓜柱各前后一根，加脊瓜柱一根，共五根，逐缝
+    expect(posts.length).toBe(4 * 5);
+    expect(posts.some((item) => item.displayNameZh.startsWith("脊瓜柱"))).toBe(true);
+  });
+
+  it("梁落在柱头科上，不是悬空", () => {
+    const result = generate();
+    const beam = result.objects.find((item) => item.stableKey === "beam:0:0")!;
+    const seat = result.objects.find((item) => item.stableKey === "bracket-column:0:0:block");
+    expect(seat, "缺柱头科").toBeDefined();
+    const bearing = result.interfaces.find(
+      (item) => item.fromObjectId === beam.id && item.toObjectId === seat!.id,
+    );
+    expect(bearing?.interfaceType).toBe("bearing");
+  });
+
+  it("举高与梁高对不上时报错，不生成穿模的瓜柱", () => {
+    expect(() => generate(gaoduForm({
+      liftHeightsMm: [length(100), length(100), length(100)],
+    }))).toThrow(/CLEARANCE_INSUFFICIENT/);
+  });
+});
+
+// 屋面沿举架斜铺。水平摆放的椽与望板在立面上是悬空的横条，
+// 不是屋面，图上一眼可见。
+describe("屋面沿举架斜置", () => {
+  const slopeOf = (solid: { kind: string; profileMm?: readonly (readonly [number, number])[] }) => {
+    if (solid.kind !== "extrudedProfile" || !solid.profileMm) return null;
+    const [first, second] = solid.profileMm;
+    if (!first || !second) return null;
+    return (second[1] - first[1]) / (second[0] - first[0]);
+  };
+
+  it("椽、望板、瓦都是斜置断面而不是水平盒子", () => {
+    const result = generate();
+    for (const type of ["rafter", "roofBoard", "panTile", "coverTile"]) {
+      const item = result.objects.find((object) => object.componentType === type)!;
+      expect(item.solid.kind, type).toBe("extrudedProfile");
+      const slope = slopeOf(item.solid as never);
+      expect(slope, type).not.toBeNull();
+      expect(Math.abs(slope!), `${type} 坡度为零`).toBeGreaterThan(0.1);
+    }
+  });
+
+  it("逐步架坡度不同，反映举架而不是单一斜面", () => {
+    const result = generate();
+    const boards = result.objects
+      .filter((item) => item.componentType === "roofBoard")
+      .map((item) => Math.abs(slopeOf(item.solid as never) ?? 0));
+    const distinct = new Set(boards.map((value) => value.toFixed(3)));
+    expect(distinct.size).toBeGreaterThan(1);
+  });
+
+  it("屋面各层自下而上不穿插：椽在檩背之上，望板在椽之上", () => {
+    const result = generate();
+    const zStart = (key: string) => {
+      const solid = result.objects.find((item) => item.stableKey === key)!.solid as never as {
+        profileMm: [number, number][];
+      };
+      return solid.profileMm[0]![1];
+    };
+    expect(zStart("roof-board:0")).toBeGreaterThan(zStart("rafter:0:0"));
+    expect(zStart("pan-tile:0:0")).toBeGreaterThan(zStart("roof-board:0"));
   });
 });

@@ -74,6 +74,21 @@ export function buildArchetypeGeometrySpec(input: ArchetypeGeometryInput): Proje
       ? null
       : sourced("bracketLayerHeight", archetype.componentDimensionsMm.bracketLayerHeight),
     bracketSetsPerBay: archetype.bracketSetsPerBay,
+    // 梁架逐层截面：底层取形制参数给的值，往上每层各减一个模数。
+    // 递减幅度是做法比例，规则集里目前没有带出处的梁截面条目，
+    // 因此整组标为估算，与 sourceDeclarationZh 的声明一致。
+    beamSectionsMm: Array.from({ length: archetype.stepCount }, (_unused, tier) => {
+      const module = archetype.moduleMm;
+      const width = requireDimension(archetype, "beamWidth") - module * tier;
+      const height = requireDimension(archetype, "beamHeight") - module * tier;
+      if (width <= 0 || height <= 0) throw new Error(`ARCHETYPE_BEAM_SECTION_EXHAUSTED:${tier + 1}`);
+      // 来源随底层取值判定：底层是估算，逐层递减出来的也是估算。
+      const tiered = (baseKey: string, valueMm: number): SourcedLength => ({
+        ...sourced(baseKey, valueMm),
+        factRefs: [`archetype:${archetype.ruleSetId}:${baseKey}:${tier + 1}`],
+      });
+      return { width: tiered("beamWidth", width), height: tiered("beamHeight", height) };
+    }),
     purlinDiameter: sourced("purlinDiameter", requireDimension(archetype, "purlinDiameter")),
     rafterDiameter: sourced("rafterDiameter", requireDimension(archetype, "rafterDiameter")),
     rafterSpacing: sourced("rafterSpacing", requireDimension(archetype, "rafterSpacing")),

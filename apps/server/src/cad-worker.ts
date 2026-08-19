@@ -49,7 +49,11 @@ export class PythonCadWorker implements CadWorker {
       child.stderr!.on("data", (chunk: string) => { stderr += chunk; });
       child.once("error", rejectResult);
       child.once("exit", (code) => {
-        if (code !== 0) return rejectResult(new Error(`CAD_WORKER_FAILED:${stderr.slice(-1_500)}`));
+        if (code !== 0) {
+          // 对外错误码不带 stderr，作业目录留一份原文，排查不用重跑构建。
+          try { writeFileSync(resolve(jobDirectory, "worker-stderr.log"), stderr, "utf8"); } catch { /* 落盘失败不掩盖原错误 */ }
+          return rejectResult(new Error(`CAD_WORKER_FAILED:${stderr.slice(-1_500)}`));
+        }
         try {
           const line = stdout.trim().split(/\r?\n/).at(-1) ?? "";
           const payload = JSON.parse(line) as Record<string, unknown>;

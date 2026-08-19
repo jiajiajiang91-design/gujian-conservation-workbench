@@ -210,13 +210,33 @@ export function extrudedProfileSolid(input: {
   };
 }
 
-// 半圆断面，段数固定，不随半径变化。
-export function halfRoundProfile(radius: number, segments = 10): [number, number][] {
-  return Array.from({ length: segments + 1 }, (_unused, index) => {
-    const angle = (Math.PI * index) / segments;
-    return [
-      Math.round(radius * Math.cos(angle) * 10) / 10,
-      Math.round(radius * Math.sin(angle) * 10) / 10,
-    ] as [number, number];
+
+// 沿屋面斜置的构件：椽、望板、瓦垄都在 YZ 面内沿举架斜行，沿 X 方向重复。
+// 挤出只能沿坐标轴，所以斜度放进断面轮廓，再沿 X 挤出构件宽度。
+// axis 为 x 时轮廓平面是 YZ，轮廓点即 (y, z)，挤出沿 +X，originMm 取起始端。
+export function slopedBarSolid(input: {
+  fromY: number; fromZ: number; toY: number; toZ: number;
+  thickness: number; widthX: number; xStart: number;
+}): ProjectDrivenGeometrySpec["objects"][number]["solid"] {
+  const spanY = input.toY - input.fromY;
+  const spanZ = input.toZ - input.fromZ;
+  const length = Math.hypot(spanY, spanZ);
+  if (length <= 0) throw new Error("CONSTRUCTION_SLOPED_BAR_DEGENERATE");
+  // 厚度沿坡面法向叠，法向的 z 分量取正，构件永远长在坡面之上。
+  const normalY = -spanZ / length;
+  const normalZ = spanY / length;
+  const sign = normalZ >= 0 ? 1 : -1;
+  const offsetY = normalY * sign * input.thickness;
+  const offsetZ = normalZ * sign * input.thickness;
+  return extrudedProfileSolid({
+    profileMm: [
+      [input.fromY, input.fromZ],
+      [input.toY, input.toZ],
+      [input.toY + offsetY, input.toZ + offsetZ],
+      [input.fromY + offsetY, input.fromZ + offsetZ],
+    ],
+    depth: input.widthX,
+    axis: "x",
+    origin: [input.xStart, 0, 0],
   });
 }

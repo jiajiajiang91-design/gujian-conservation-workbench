@@ -1,4 +1,4 @@
-import { ConstructionAssembly, boxSolid, cylinderSolid, extrudedProfileSolid, halfRoundProfile } from "./builder.js";
+import { ConstructionAssembly, boxSolid, cylinderSolid, slopedBarSolid } from "./builder.js";
 import type { BuildingForm, GenerateInput, GenerateResult, SourcedLength } from "./types.js";
 
 // 按分部装配构件。坐标系与几何管线一致：X 面阔、Y 进深、Z 竖向，
@@ -41,8 +41,11 @@ function purlinLines(form: BuildingForm): { y: number; z: number; index: number;
   const halfDepth = sum(form.stepSpansMm);
   const lines: { y: number; z: number; index: number; side: "front" | "back" | "ridge" }[] = [];
   let y = halfDepth;
+  // 檐檩坐在最下一层梁背上，梁底落在承托顶（无斗栱时落额枋顶）。
+  // 每层同理：檩底等于该层梁背，瓜柱净高就是举高减该层梁高。
+  const bottomBeamHeight = form.beamSectionsMm[0]?.height.valueMm ?? 0;
   let z = form.terraceHeight.valueMm + form.columnBaseHeight.valueMm + form.columnHeight.valueMm
-    + form.architraveHeight.valueMm + (form.bracketLayerHeight?.valueMm ?? 0);
+    + form.architraveHeight.valueMm + (form.bracketLayerHeight?.valueMm ?? 0) + bottomBeamHeight;
   lines.push({ y, z, index: 0, side: "front" });
   form.stepSpansMm.forEach((step, index) => {
     y -= step.valueMm;
@@ -53,6 +56,126 @@ function purlinLines(form: BuildingForm): { y: number; z: number; index: number;
     .filter((line) => line.y !== 0)
     .map((line) => ({ ...line, y: -line.y, side: "back" as const }));
   return [...lines, ...mirrored].sort((left, right) => right.y - left.y);
+}
+
+// 梁的名称按所承檩数计，用汉字数目，与图纸和构件清单一致。
+const SPAN_NUMERALS = ["三", "五", "七", "九", "十一", "十三"];
+function beamNameZh(spans: number): string {
+  const numeral = SPAN_NUMERALS[(spans - 3) / 2];
+  if (!numeral) throw new Error(`BEAM_SPAN_UNSUPPORTED:${spans}`);
+  return `${numeral}架梁`;
+}
+
+// 单坡檩位，自檐向脊。梁架逐层跨在对称的一对檩位之间。
+function slopePurlins(form: BuildingForm): { y: number; z: number }[] {
+  return purlinLines(form).filter((line) => line.y >= 0).sort((left, right) => right.y - left.y);
+}
+
+// 梁架：逐缝自下而上，第 i 层梁跨在 ±y[i] 两檩之间，梁背承檩，
+// 层与层之间由瓜柱支起，最上一层由脊瓜柱承脊檩。
+// 层数等于单坡步架数，三步架依次是七架梁、五架梁、三架梁。
+function buildBeamFrame(assembly: ConstructionAssembly, form: BuildingForm): void {
+  const slope = slopePurlins(form);
+  const tiers = slope.length - 1;
+  if (form.beamSectionsMm.length !== tiers) {
+    throw new Error(`BEAM_TIER_COUNT_MISMATCH:${form.beamSectionsMm.length}:${tiers}`);
+  }
+  const axes = columnAxes(form);
+  // 梁落在柱头科上；无斗栱做法直接落在柱头。
+  const seatKey = (axisIndex: number, side: "front" | "back") => {
+    const rowIndex = side === "front" ? 0 : 1;
+    return form.bracketLayerHeight
+      ? `bracket-column:${rowIndex}:${axisIndex}:block`
+      : `architrave:${rowIndex}:${Math.min(axisIndex, form.bayWidthsMm.length - 1)}`;
+  };
+
+  axes.forEach((x, axisIndex) => {
+    for (let tier = 0; tier < tiers; tier += 1) {
+      const line = slope[tier]!;
+      const section = form.beamSectionsMm[tier]!;
+      const beamKey = `beam:${axisIndex}:${tier}`;
+      const spans = 2 * (tiers - tier) + 1;
+      assembly.add({
+        stableKey: beamKey,
+        componentType: "beam",
+        displayNameZh: `${beamNameZh(spans)} ${axisIndex + 1}`,
+        materialCode: form.materials.beam,
+        solid: boxSolid({
+          sizeX: section.width.valueMm,
+          sizeY: line.y * 2 + section.width.valueMm,
+          sizeZ: section.height.valueMm,
+          center: [x, 0, line.z - section.height.valueMm / 2],
+        }),
+        dimensions: [["width", section.width], ["height", section.height]],
+      });
+
+      if (tier === 0) {
+        // 最下一层梁底正好落在承托顶或额枋顶，两侧檐柱轴线各连一处
+        for (const side of ["front", "back"] as const) {
+          const support = seatKey(axisIndex, side);
+          if (assembly.has(support)) {
+            assembly.connect({
+              fromKey: beamKey, toKey: support, interfaceType: "bearing",
+              fromSurface: "zMin", toSurface: "zMax", direction: [0, 0, -1], maximumGapMm: 2,
+            });
+          }
+        }
+        continue;
+      }
+
+      // 下层梁背到本层梁底之间由瓜柱支起
+      const below = slope[tier - 1]!;
+      const postHeight = line.z - section.height.valueMm - below.z;
+      if (postHeight <= 0) {
+        throw new Error(`BEAM_TIER_CLEARANCE_INSUFFICIENT:${tier}:${Math.round(postHeight)}`);
+      }
+      for (const side of [1, -1]) {
+        const postKey = `king-post:${axisIndex}:${tier}:${side > 0 ? "front" : "back"}`;
+        assembly.add({
+          stableKey: postKey,
+          componentType: "kingPost",
+          displayNameZh: `${side > 0 ? "前" : "后"}瓜柱 ${axisIndex + 1}-${tier}`,
+          materialCode: form.materials.kingPost,
+          solid: boxSolid({
+            sizeX: section.width.valueMm, sizeY: section.width.valueMm, sizeZ: postHeight,
+            center: [x, line.y * side, below.z + postHeight / 2],
+          }),
+          dimensions: [["width", section.width]],
+        });
+        assembly.connect({
+          fromKey: postKey, toKey: `beam:${axisIndex}:${tier - 1}`, interfaceType: "bearing",
+          fromSurface: "zMin", toSurface: "zMax", direction: [0, 0, -1], maximumGapMm: 2,
+        });
+        assembly.connect({
+          fromKey: beamKey, toKey: postKey, interfaceType: "bearing",
+          fromSurface: "zMin", toSurface: "zMax", direction: [0, 0, -1], maximumGapMm: 2,
+        });
+      }
+    }
+
+    // 脊瓜柱立在最上一层梁背上承脊檩
+    const top = slope[tiers - 1]!;
+    const ridge = slope[tiers]!;
+    const topSection = form.beamSectionsMm[tiers - 1]!;
+    const ridgePostHeight = ridge.z - top.z;
+    if (ridgePostHeight <= 0) throw new Error(`RIDGE_POST_CLEARANCE_INSUFFICIENT:${Math.round(ridgePostHeight)}`);
+    const ridgePostKey = `king-post:${axisIndex}:ridge`;
+    assembly.add({
+      stableKey: ridgePostKey,
+      componentType: "kingPost",
+      displayNameZh: `脊瓜柱 ${axisIndex + 1}`,
+      materialCode: form.materials.kingPost,
+      solid: boxSolid({
+        sizeX: topSection.width.valueMm, sizeY: topSection.width.valueMm, sizeZ: ridgePostHeight,
+        center: [x, 0, top.z + ridgePostHeight / 2],
+      }),
+      dimensions: [["width", topSection.width]],
+    });
+    assembly.connect({
+      fromKey: ridgePostKey, toKey: `beam:${axisIndex}:${tiers - 1}`, interfaceType: "bearing",
+      fromSurface: "zMin", toSurface: "zMax", direction: [0, 0, -1], maximumGapMm: 2,
+    });
+  });
 }
 
 function buildTerraceAndStairs(assembly: ConstructionAssembly, form: BuildingForm): void {
@@ -198,7 +321,69 @@ function buildBrackets(assembly: ConstructionAssembly, form: BuildingForm): void
   }
   const centers = bayCenters(form);
   const module = form.modular.moduleMm;
-  [{ y: halfDepth, label: "前檐" }, { y: -halfDepth, label: "后檐" }].forEach((row, rowIndex) => {
+
+  // 柱头科：立在柱轴线上，梁架落在它上面。缺了它梁就没有落脚点。
+  // 平身科在下面按逐间攒数排布，两者构造相同，位置与承载对象不同。
+  const rows = [{ y: halfDepth, label: "前檐" }, { y: -halfDepth, label: "后檐" }];
+  const seatHeightOf = layer.valueMm * 0.4;
+  const armHeightOf = layer.valueMm * 0.35;
+  const blockHeightOf = layer.valueMm - seatHeightOf - armHeightOf;
+  rows.forEach((row, rowIndex) => {
+    columnAxes(form).forEach((x, axisIndex) => {
+      const prefix = `bracket-column:${rowIndex}:${axisIndex}`;
+      assembly.add({
+        stableKey: `${prefix}:seat`,
+        componentType: "bracketSeat",
+        displayNameZh: `${row.label}柱头科坐斗 ${axisIndex + 1}`,
+        materialCode: form.materials.bracket,
+        solid: boxSolid({
+          sizeX: module * 3, sizeY: module * 3, sizeZ: seatHeightOf,
+          center: [x, row.y, architraveTop + seatHeightOf / 2],
+        }),
+        dimensions: [["layerHeight", layer]],
+      });
+      assembly.add({
+        stableKey: `${prefix}:arm`,
+        componentType: "bracketArm",
+        displayNameZh: `${row.label}柱头科栱 ${axisIndex + 1}`,
+        materialCode: form.materials.bracket,
+        solid: boxSolid({
+          sizeX: module * 6, sizeY: module, sizeZ: armHeightOf,
+          center: [x, row.y, architraveTop + seatHeightOf + armHeightOf / 2],
+        }),
+        dimensions: [["layerHeight", layer]],
+        parentKey: `${prefix}:seat`,
+      });
+      assembly.add({
+        stableKey: `${prefix}:block`,
+        componentType: "bearingBlock",
+        displayNameZh: `${row.label}柱头科散斗 ${axisIndex + 1}`,
+        materialCode: form.materials.bracket,
+        solid: boxSolid({
+          sizeX: module * 1.5, sizeY: module * 1.5, sizeZ: blockHeightOf,
+          center: [x, row.y, architraveTop + seatHeightOf + armHeightOf + blockHeightOf / 2],
+        }),
+        dimensions: [["layerHeight", layer]],
+        parentKey: `${prefix}:arm`,
+      });
+      // 坐斗压在额枋上，不是直接落柱头。端头轴线取相邻那一间的额枋。
+      const bay = Math.min(axisIndex, form.bayWidthsMm.length - 1);
+      assembly.connect({
+        fromKey: `${prefix}:seat`, toKey: `architrave:${rowIndex}:${bay}`, interfaceType: "bearing",
+        fromSurface: "zMin", toSurface: "zMax", direction: [0, 0, -1], maximumGapMm: AXIS_TOLERANCE_MM,
+      });
+      assembly.connect({
+        fromKey: `${prefix}:arm`, toKey: `${prefix}:seat`, interfaceType: "bearing",
+        fromSurface: "zMin", toSurface: "zMax", direction: [0, 0, -1], maximumGapMm: AXIS_TOLERANCE_MM,
+      });
+      assembly.connect({
+        fromKey: `${prefix}:block`, toKey: `${prefix}:arm`, interfaceType: "bearing",
+        fromSurface: "zMin", toSurface: "zMax", direction: [0, 0, -1], maximumGapMm: AXIS_TOLERANCE_MM,
+      });
+    });
+  });
+
+  rows.forEach((row, rowIndex) => {
     centers.forEach((center, bayIndex) => {
       const bayWidth = form.bayWidthsMm[bayIndex]!.valueMm;
       const spacing = bayWidth / (form.bracketSetsPerBay + 1);
@@ -284,16 +469,14 @@ function buildRoofFrame(assembly: ConstructionAssembly, form: BuildingForm): voi
     });
   });
 
-  // 椽逐根跨相邻两檩，前后坡分别铺
+  // 椽逐根斜跨相邻两檩，搭在檩背上。前后坡对称，逐步架分段。
   const rafterSpacing = form.rafterSpacing.valueMm;
   const rafterCount = Math.max(1, Math.floor(width / rafterSpacing));
   const sorted = [...lines].sort((left, right) => right.y - left.y);
+  const purlinTop = (line: { z: number }) => line.z + form.purlinDiameter.valueMm;
   for (let segment = 0; segment < sorted.length - 1; segment += 1) {
     const upper = sorted[segment]!;
     const lower = sorted[segment + 1]!;
-    const spanY = upper.y - lower.y;
-    const spanZ = lower.z - upper.z;
-    const length = Math.hypot(spanY, spanZ);
     for (let index = 0; index < rafterCount; index += 1) {
       const x = -width / 2 + rafterSpacing * (index + 0.5);
       assembly.add({
@@ -301,13 +484,14 @@ function buildRoofFrame(assembly: ConstructionAssembly, form: BuildingForm): voi
         componentType: "rafter",
         displayNameZh: `椽 ${segment + 1}-${index + 1}`,
         materialCode: form.materials.rafter,
-        solid: boxSolid({
-          sizeX: form.rafterDiameter.valueMm, sizeY: Math.abs(spanY), sizeZ: form.rafterDiameter.valueMm,
-          center: [x, (upper.y + lower.y) / 2, (upper.z + lower.z) / 2 + form.purlinDiameter.valueMm],
+        solid: slopedBarSolid({
+          fromY: upper.y, fromZ: purlinTop(upper), toY: lower.y, toZ: purlinTop(lower),
+          thickness: form.rafterDiameter.valueMm,
+          widthX: form.rafterDiameter.valueMm,
+          xStart: x - form.rafterDiameter.valueMm / 2,
         }),
         dimensions: [["diameter", form.rafterDiameter], ["spacing", form.rafterSpacing]],
       });
-      if (length <= 0) continue;
     }
   }
 }
@@ -317,54 +501,52 @@ function buildRoofSurface(assembly: ConstructionAssembly, form: BuildingForm): v
   const lines = [...purlinLines(form)].sort((left, right) => right.y - left.y);
   const courseWidth = form.tileCourseWidth.valueMm;
   const courseCount = Math.max(1, Math.floor(width / courseWidth));
+  // 坡面自檩背起算，依次叠椽、望板、瓦。同一步架内是直坡，
+  // 举架的折线由逐段坡度不同形成，与檩位一致。
+  const deckOf = (line: { z: number }) => line.z + form.purlinDiameter.valueMm + form.rafterDiameter.valueMm;
 
   for (let segment = 0; segment < lines.length - 1; segment += 1) {
     const upper = lines[segment]!;
     const lower = lines[segment + 1]!;
-    const centerY = (upper.y + lower.y) / 2;
-    const centerZ = (upper.z + lower.z) / 2 + form.purlinDiameter.valueMm + form.rafterDiameter.valueMm;
-    const spanY = Math.abs(upper.y - lower.y);
     assembly.add({
       stableKey: `roof-board:${segment}`,
       componentType: "roofBoard",
       displayNameZh: `望板 ${segment + 1}`,
       materialCode: form.materials.roofBoard,
-      solid: boxSolid({
-        sizeX: width, sizeY: spanY, sizeZ: form.roofBoardThickness.valueMm,
-        center: [0, centerY, centerZ + form.roofBoardThickness.valueMm / 2],
+      solid: slopedBarSolid({
+        fromY: upper.y, fromZ: deckOf(upper), toY: lower.y, toZ: deckOf(lower),
+        thickness: form.roofBoardThickness.valueMm, widthX: width, xStart: -width / 2,
       }),
       dimensions: [["thickness", form.roofBoardThickness]],
     });
+    const tileBase = form.roofBoardThickness.valueMm;
     for (let course = 0; course < courseCount; course += 1) {
-      const x = -width / 2 + courseWidth * (course + 0.5);
+      const x = -width / 2 + courseWidth * course;
       assembly.add({
         stableKey: `pan-tile:${segment}:${course}`,
         componentType: "panTile",
         displayNameZh: `板瓦 ${segment + 1}-${course + 1}`,
         materialCode: form.materials.tile,
-        solid: boxSolid({
-          sizeX: courseWidth * 0.6, sizeY: spanY, sizeZ: form.tileThickness.valueMm,
-          center: [x, centerY, centerZ + form.roofBoardThickness.valueMm + form.tileThickness.valueMm / 2],
+        solid: slopedBarSolid({
+          fromY: upper.y, fromZ: deckOf(upper) + tileBase, toY: lower.y, toZ: deckOf(lower) + tileBase,
+          thickness: form.tileThickness.valueMm,
+          widthX: courseWidth * 0.6, xStart: x + courseWidth * 0.2,
         }),
         dimensions: [["courseWidth", form.tileCourseWidth], ["thickness", form.tileThickness]],
         parentKey: `roof-board:${segment}`,
       });
+      // 筒瓦压在相邻两垄板瓦的接缝上，断面高度取两倍瓦厚。
+      // 沿坡挤出只能沿坐标轴，半圆断面与坡向垂直，本轮按矩形断面表达，
+      // 一比五十图上体现为瓦垄凸起，瓦当滴水不在本轮范围。
       assembly.add({
         stableKey: `cover-tile:${segment}:${course}`,
         componentType: "coverTile",
         displayNameZh: `筒瓦 ${segment + 1}-${course + 1}`,
         materialCode: form.materials.tile,
-        // 半圆断面挤出而不是圆柱：圆柱按弦高细分会产生数百个三角形，
-        // 三百六十条筒瓦足以让消隐成本失控（实测占全模型三角形的九成四）。
-        solid: extrudedProfileSolid({
-          profileMm: halfRoundProfile(courseWidth * 0.2),
-          depth: spanY,
-          axis: "y",
-          origin: [
-            x + courseWidth * 0.4,
-            centerY + spanY / 2,
-            centerZ + form.roofBoardThickness.valueMm + form.tileThickness.valueMm,
-          ],
+        solid: slopedBarSolid({
+          fromY: upper.y, fromZ: deckOf(upper) + tileBase, toY: lower.y, toZ: deckOf(lower) + tileBase,
+          thickness: form.tileThickness.valueMm * 2,
+          widthX: courseWidth * 0.4, xStart: x - courseWidth * 0.2,
         }),
         dimensions: [["courseWidth", form.tileCourseWidth], ["thickness", form.tileThickness]],
         parentKey: `roof-board:${segment}`,
@@ -381,7 +563,8 @@ function buildRoofSurface(assembly: ConstructionAssembly, form: BuildingForm): v
       materialCode: form.materials.ridge,
       solid: boxSolid({
         sizeX: width, sizeY: courseWidth, sizeZ: form.ridgeHeight.valueMm,
-        center: [0, 0, ridge.z + form.purlinDiameter.valueMm + form.rafterDiameter.valueMm + form.ridgeHeight.valueMm / 2],
+        center: [0, 0, ridge.z + form.purlinDiameter.valueMm + form.rafterDiameter.valueMm
+          + form.roofBoardThickness.valueMm + form.tileThickness.valueMm * 2 + form.ridgeHeight.valueMm / 2],
       }),
       dimensions: [["height", form.ridgeHeight]],
     });
@@ -450,6 +633,7 @@ export function generateConstruction(input: GenerateInput): GenerateResult {
   buildTerraceAndStairs(assembly, form);
   buildColumnsAndArchitraves(assembly, form);
   buildBrackets(assembly, form);
+  buildBeamFrame(assembly, form);
   buildRoofFrame(assembly, form);
   buildRoofSurface(assembly, form);
   buildEnclosure(assembly, form);

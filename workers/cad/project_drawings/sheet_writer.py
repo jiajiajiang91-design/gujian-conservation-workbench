@@ -42,18 +42,65 @@ def _sheet_content(ir: dict[str, Any], sheet: dict[str, Any]) -> tuple[list[dict
     return views, requirements
 
 
-def _dimension_geometry(view: dict[str, Any], requirement: dict[str, Any]) -> dict[str, float | str]:
-    transform = _view_transform(view, requirement)
+# 图签固定在右下角，占 x 从右边距起 221 mm、y 从下边距起 30 mm。
+TITLE_BLOCK_WIDTH_MM = 221.0
+TITLE_BLOCK_HEIGHT_MM = 30.0
+SHEET_MARGIN_MM = 5.0
+TITLE_BLOCK_CLEARANCE_MM = 3.0
+
+
+def _title_block_rect(page_width: float) -> tuple[float, float, float, float]:
+    left = page_width - SHEET_MARGIN_MM - TITLE_BLOCK_WIDTH_MM
+    return left, SHEET_MARGIN_MM, page_width - SHEET_MARGIN_MM, SHEET_MARGIN_MM + TITLE_BLOCK_HEIGHT_MM
+
+
+# 标注跟着图形走，不按视口固定位置放。视口下沿常常落在图签带里，
+# 固定位置会让尺寸与图名压在图签文字上。
+# 尺寸线在图形下方 8 mm，图名再下 7 mm；两者与图签横向重叠时抬到图签之上。
+def _annotation_rows(view: dict[str, Any], requirement: dict[str, Any], page_width: float) -> tuple[float, float, float, float]:
     bounds = view["boundsMm"]
     rect = requirement["viewportRectMm"]
-    first = transform([bounds[0][0], bounds[0][1]])
-    last = transform([bounds[1][0], bounds[0][1]])
-    value = bounds[1][0] - bounds[0][0]
+    scale = float(requirement["scaleDenominator"])
+    drawn_height = (bounds[1][1] - bounds[0][1]) / scale
+    drawn_bottom = rect[1] + rect[3] / 2 - drawn_height / 2
+    transform = _view_transform(view, requirement)
+    x1 = transform([bounds[0][0], bounds[0][1]])[0]
+    x2 = transform([bounds[1][0], bounds[0][1]])[0]
+
+    title_left, _title_bottom, title_right, title_top = _title_block_rect(page_width)
+    floor = title_top + TITLE_BLOCK_CLEARANCE_MM
+    label_x = min(x1, rect[0])
+    overlaps = lambda left, right: right > title_left and left < title_right
+
+    label_y = drawn_bottom - 15.0
+    if overlaps(label_x, label_x + 60.0) and label_y < floor:
+        label_y = floor
+    dimension_y = max(drawn_bottom - 8.0, label_y + 7.0)
+    if overlaps(x1, x2) and dimension_y < floor:
+        dimension_y = floor
+    if dimension_y >= drawn_bottom:
+        raise ValueError(f"view {view['viewKey']} leaves no room for its dimension row above the title block")
+    return x1, x2, dimension_y, label_y
+
+
+# 标注名称按视图横轴在模型里的方向定：沿 X 是面阔，沿 Y 是进深。
+# 剖面与侧立面的横轴是进深，一律写总宽属于标注错误。
+def _horizontal_label(requirement: dict[str, Any]) -> str:
+    right = requirement.get("right") or [1, 0, 0]
+    dominant = max(range(3), key=lambda index: abs(float(right[index])))
+    return {0: "总面阔", 1: "总进深", 2: "总高"}[dominant]
+
+
+def _dimension_geometry(view: dict[str, Any], requirement: dict[str, Any], page_width: float) -> dict[str, float | str]:
+    x1, x2, dimension_y, label_y = _annotation_rows(view, requirement, page_width)
+    value = view["boundsMm"][1][0] - view["boundsMm"][0][0]
     return {
-        "x1": first[0],
-        "x2": last[0],
-        "y": rect[1] + 5.0,
-        "text": f"总宽 {value:.0f} mm",
+        "x1": x1,
+        "x2": x2,
+        "y": dimension_y,
+        "labelY": label_y,
+        "labelX": min(x1, requirement["viewportRectMm"][0]),
+        "text": f"{_horizontal_label(requirement)} {value:.0f} mm",
     }
 
 
@@ -94,7 +141,7 @@ class SheetArtifactWriter:
                 css = "cut" if line["lineClass"] == "cut" else "outline" if line["lineClass"] == "silhouette" else "projection"
                 parts.append(f'<line class="{css}" x1="{first[0]:.4f}" y1="{height-first[1]:.4f}" x2="{last[0]:.4f}" y2="{height-last[1]:.4f}" data-source-entity="{line["sourceEntityId"]}"/>')
             parts.append('</g>')
-            dimension = _dimension_geometry(view, requirement)
+            dimension = _dimension_geometry(view, requirement, width)
             dimension_y = height - float(dimension["y"])
             dimension_mid = (float(dimension["x1"]) + float(dimension["x2"])) / 2
             parts.extend([
@@ -105,7 +152,7 @@ class SheetArtifactWriter:
                 f'<text class="text" x="{dimension_mid:.4f}" y="{dimension_y-1.5:.4f}" text-anchor="middle" font-size="3">{dimension["text"]}</text>',
                 '</g>',
             ])
-            parts.append(f'<text class="text" x="{rect[0]:.3f}" y="{height-(rect[1]-6):.3f}" font-size="4">{html.escape(view["displayLabelZh"])}  1:{view["scaleDenominator"]}  {html.escape(view["drawingRef"])}</text>')
+            parts.append(f'<text class="text" x="{float(dimension["labelX"]):.3f}" y="{height-float(dimension["labelY"]):.3f}" font-size="4">{html.escape(view["displayLabelZh"])}  1:{view["scaleDenominator"]}  {html.escape(view["drawingRef"])}</text>')
         title_x, title_y = width - 226, height - 35
         parts.extend([
             f'<rect class="frame" x="{title_x}" y="{title_y}" width="221" height="30"/>',
@@ -152,16 +199,15 @@ class SheetArtifactWriter:
                     pdf.setLineWidth(width_mm * MM_TO_POINT)
                     pdf.setStrokeColorRGB(0.05, 0.05, 0.05)
                     pdf.line(first_point[0] * MM_TO_POINT, first_point[1] * MM_TO_POINT, last_point[0] * MM_TO_POINT, last_point[1] * MM_TO_POINT)
-                dimension = _dimension_geometry(view, requirements[view["viewId"]])
+                dimension = _dimension_geometry(view, requirements[view["viewId"]], width)
                 pdf.setLineWidth(0.18 * MM_TO_POINT)
                 pdf.line(float(dimension["x1"]) * MM_TO_POINT, float(dimension["y"]) * MM_TO_POINT, float(dimension["x2"]) * MM_TO_POINT, float(dimension["y"]) * MM_TO_POINT)
                 for x_value in (float(dimension["x1"]), float(dimension["x2"])):
                     pdf.line(x_value * MM_TO_POINT, (float(dimension["y"]) - 2) * MM_TO_POINT, x_value * MM_TO_POINT, (float(dimension["y"]) + 2) * MM_TO_POINT)
                 pdf.setFont("GujianSansSC", 3 * MM_TO_POINT)
                 pdf.drawCentredString(((float(dimension["x1"]) + float(dimension["x2"])) / 2) * MM_TO_POINT, (float(dimension["y"]) + 1.5) * MM_TO_POINT, str(dimension["text"]))
-                rect = requirements[view["viewId"]]["viewportRectMm"]
                 pdf.setFont("GujianSansSC", 4 * MM_TO_POINT)
-                pdf.drawString(rect[0] * MM_TO_POINT, (rect[1] - 6) * MM_TO_POINT, f"{view['displayLabelZh']}  1:{view['scaleDenominator']}  {view['drawingRef']}")
+                pdf.drawString(float(dimension["labelX"]) * MM_TO_POINT, float(dimension["labelY"]) * MM_TO_POINT, f"{view['displayLabelZh']}  1:{view['scaleDenominator']}  {view['drawingRef']}")
             for annotation in self.ir["annotations"]:
                 if annotation["kind"] == "conditionCandidate" and annotation["viewId"] in sheet["viewIds"]:
                     rect = requirements[annotation["viewId"]]["viewportRectMm"]
@@ -201,7 +247,7 @@ class SheetArtifactWriter:
                 y1, y2 = height_mm - first[1], height_mm - last[1]
                 line_width = .5 if line["lineClass"] == "cut" else .35 if line["lineClass"] == "silhouette" else .18
                 draw.line((first[0] * scale, y1 * scale, last[0] * scale, y2 * scale), fill="#111111", width=max(1, round(line_width * scale)))
-            dimension = _dimension_geometry(view, requirements[view["viewId"]])
+            dimension = _dimension_geometry(view, requirements[view["viewId"]], width_mm)
             dim_y = (height_mm - float(dimension["y"])) * scale
             dim_x1, dim_x2 = float(dimension["x1"]) * scale, float(dimension["x2"]) * scale
             draw.line((dim_x1, dim_y, dim_x2, dim_y), fill="#444444", width=max(1, round(.18 * scale)))
@@ -210,8 +256,7 @@ class SheetArtifactWriter:
             text = str(dimension["text"])
             bbox = draw.textbbox((0, 0), text, font=small_font)
             draw.text(((dim_x1 + dim_x2 - (bbox[2] - bbox[0])) / 2, dim_y - (bbox[3] - bbox[1]) - 1.5 * scale), text, fill="#111111", font=small_font)
-            rect = requirements[view["viewId"]]["viewportRectMm"]
-            draw.text((rect[0] * scale, (height_mm - rect[1] + 5) * scale), f"{view['displayLabelZh']}  1:{view['scaleDenominator']}  {view['drawingRef']}", fill="#111111", font=font)
+            draw.text((float(dimension["labelX"]) * scale, (height_mm - float(dimension["labelY"]) - 4) * scale), f"{view['displayLabelZh']}  1:{view['scaleDenominator']}  {view['drawingRef']}", fill="#111111", font=font)
         title_x = width_mm - 226
         title_top = height_mm - 35
         draw.rectangle((title_x * scale, title_top * scale, (width_mm - 5) * scale, (height_mm - 5) * scale), outline="#111111", width=max(1, round(.35 * scale)))

@@ -238,25 +238,25 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
         {
           key: "first-floor-plan", displayLabelZh: "首层平面图", drawingRef: "DL-01-1", kind: "floorPlan",
           scaleDenominator: 50, sheetKey: "sheet-plans",
-          viewportRectMm: [20, 20, 180, 240], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          viewportRectMm: [20, 40, 180, 222], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
           sourceEvidenceKeys: ["sheet-16"],
         },
         {
           key: "second-floor-plan", displayLabelZh: "二层平面图", drawingRef: "DL-01-2", kind: "floorPlan",
           scaleDenominator: 50, sheetKey: "sheet-plans",
-          viewportRectMm: [220, 20, 180, 240], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          viewportRectMm: [220, 40, 180, 222], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
           sourceEvidenceKeys: ["sheet-16"],
         },
         {
           key: "west-elevation", displayLabelZh: "西立面图", drawingRef: "DL-02-1", kind: "elevation",
           scaleDenominator: 50, sheetKey: "sheet-sections",
-          viewportRectMm: [20, 20, 180, 120], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          viewportRectMm: [20, 40, 180, 100], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
           sourceEvidenceKeys: ["sheet-17"],
         },
         {
           key: "section-aa", displayLabelZh: "纵剖面 A-A", drawingRef: "DL-02-2", kind: "longitudinalSection",
           scaleDenominator: 50, sheetKey: "sheet-sections",
-          viewportRectMm: [220, 20, 180, 120], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          viewportRectMm: [220, 40, 180, 100], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
           sectionPlane: { normal: [1, 0, 0], offsetMm: feetInches(12, 0) },
           sourceEvidenceKeys: ["sheet-17"],
         },
@@ -466,20 +466,26 @@ export const GAODU_DEMO: DemoProjectDefinition = {
         {
           key: "front-elevation", displayLabelZh: "正立面图", drawingRef: "GD-01-1", kind: "elevation",
           scaleDenominator: 50, sheetKey: "sheet-elevation",
-          viewportRectMm: [20, 20, 380, 240], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
+          viewportRectMm: [20, 40, 380, 222], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
           sourceEvidenceKeys: ["recognition-record"],
         },
         {
           key: "floor-plan", displayLabelZh: "平面图", drawingRef: "GD-02-1", kind: "floorPlan",
-          scaleDenominator: 50, sheetKey: "sheet-plan-section",
-          viewportRectMm: [20, 20, 180, 240], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          // 台明连檐出算进图面后平面是 12.0 x 13.2 m，1:50 要 240 x 264 mm，
+          // A3 可用区只有 372 x 228 mm，放不下。质量基准 5.4.8 以 A3 为常规图幅，
+          // 5.4.6 的比例集含 1:100，平面与剖面取 1:100，正立面另出一张仍用 1:50。
+          scaleDenominator: 100, sheetKey: "sheet-plan-section",
+          viewportRectMm: [20, 40, 180, 222], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
           sourceEvidenceKeys: ["recognition-record"],
         },
         {
           key: "transverse-section", displayLabelZh: "横剖面图", drawingRef: "GD-02-2", kind: "transverseSection",
-          scaleDenominator: 50, sheetKey: "sheet-plan-section",
-          viewportRectMm: [220, 20, 180, 240], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
-          sectionPlane: { normal: [1, 0, 0], offsetMm: 0 },
+          scaleDenominator: 100, sheetKey: "sheet-plan-section",
+          viewportRectMm: [220, 40, 180, 222], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          // 剖切面落在明间与次间之间的柱缝上（面阔 3000+3600+3000，轴线在 x = -1800）。
+          // 切在开间正中只能切到檩与瓦，梁架、柱、斗栱一根都切不到，
+          // 质量基准 3.5 要的一榀构造链就断了。
+          sectionPlane: { normal: [1, 0, 0], offsetMm: -1800 },
           sourceEvidenceKeys: ["recognition-record"],
         },
       ],
@@ -495,12 +501,13 @@ export const GAODU_DEMO: DemoProjectDefinition = {
     stepCount: 3,
     bayWidthsMm: [3000, 3600, 3000],
     depthMm: 9600,
-    sourceDeclarationZh: "面阔、柱高、台基等取自照片比例推算，基准为石檐柱净高 3400 mm；步架与举高由清工程做法则例系数组推算。",
+    sourceDeclarationZh: "面阔、柱高、台基等取自照片比例推算，基准为石檐柱净高 3400 mm；步架与举高由清工程做法则例系数组推算；梁架截面按檐柱径估算，逐层递减一个斗口，规则集尚无带出处的梁截面条目。",
     componentDimensionsMm: {
       terraceHeight: 500, terraceProjection: 1200, stairTreadCount: 3, stairWidth: 2000,
       columnBaseHeight: 250, columnHeight: 3400, columnSize: 380,
       architraveHeight: 700, architraveThickness: 240,
       bracketLayerHeight: 900,
+      beamWidth: 380, beamHeight: 480,
       purlinDiameter: 220, rafterDiameter: 90, rafterSpacing: 300,
       roofBoardThickness: 25, eaveProjection: 1200,
       tileCourseWidth: 200, tileThickness: 18, ridgeHeight: 600,
@@ -510,7 +517,7 @@ export const GAODU_DEMO: DemoProjectDefinition = {
     enclosure: { front: "open", sides: "walled", back: "walled" },
     materials: {
       terrace: "石作", stair: "石作", columnBase: "石作", column: "石作",
-      architrave: "木作", bracket: "木作", purlin: "木作", rafter: "木作",
+      architrave: "木作", beam: "木作", kingPost: "木作", bracket: "木作", purlin: "木作", rafter: "木作",
       roofBoard: "木作", tile: "瓦作", ridge: "瓦作", wall: "砖作",
     },
     estimatedDimensionKeys: [
@@ -518,6 +525,7 @@ export const GAODU_DEMO: DemoProjectDefinition = {
       "terraceHeight", "terraceProjection", "stairWidth",
       "columnBaseHeight", "columnHeight", "columnSize",
       "architraveHeight", "bracketLayerHeight", "eaveProjection", "ridgeHeight",
+      "beamWidth", "beamHeight",
     ],
   },
 };

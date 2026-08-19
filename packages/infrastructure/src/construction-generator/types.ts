@@ -61,6 +61,11 @@ export interface BuildingForm {
   readonly bracketLayerHeight: SourcedLength | null;
   readonly bracketSetsPerBay: number;
 
+  // 梁架逐层截面，自下而上，条目数等于单坡步架数。
+  // 三步架给三条，依次是七架梁、五架梁、三架梁。
+  // 截面取值属于做法比例，生成器不推导，由形制参数按各自出处给出。
+  readonly beamSectionsMm: readonly BeamSection[];
+
   readonly purlinDiameter: SourcedLength;
   readonly rafterDiameter: SourcedLength;
   readonly rafterSpacing: SourcedLength;
@@ -75,12 +80,19 @@ export interface BuildingForm {
   readonly materials: Readonly<Record<ConstructionPart, string>>;
 }
 
+export interface BeamSection {
+  readonly width: SourcedLength;
+  readonly height: SourcedLength;
+}
+
 export type ConstructionPart =
   | "terrace"
   | "stair"
   | "columnBase"
   | "column"
   | "architrave"
+  | "beam"
+  | "kingPost"
   | "bracket"
   | "purlin"
   | "rafter"
