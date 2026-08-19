@@ -704,7 +704,9 @@ export function createWorkbenchServer(options: {
   return Object.assign(server, { cancelActiveWork });
 }
 
-if (process.env.NODE_ENV !== "test") {
+// 只有作为入口运行时才监听端口。被别的进程 import 时不该占端口，
+// 构建脚本要自己起服务器并选空闲端口。
+if (process.env.NODE_ENV !== "test" && process.env.GUJIAN_SERVER_AUTOSTART !== "0") {
   const server = createWorkbenchServer();
   server.listen(port, host, () => {
     console.log(`古建保护成果工作台服务：http://${host}:${port}`);

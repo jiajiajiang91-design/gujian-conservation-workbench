@@ -20,6 +20,10 @@ from .contracts import canonical_bytes, sha256_value
 
 LINE_NAMESPACE = uuid.UUID("a63b0356-5f49-5f60-a192-9aa374ec3246")
 
+# 消隐分块的目标元素数。每块会同时存在若干同形状的中间矩阵，
+# 四百万元素对应单块约 32 MB，乘中间量后峰值仍在数百 MB 内。
+_VISIBILITY_BLOCK_ELEMENTS = 4_000_000
+
 
 @dataclass(frozen=True)
 class SourceMesh:
@@ -224,10 +228,6 @@ def _visibility_intervals(
         points = start[None, :] * (1 - fractions[:, None]) + end[None, :] * fractions[:, None]
         bounds_min = pool.bounds_min[overlap]
         bounds_max = pool.bounds_max[overlap]
-        inside_bbox = (
-            (points[:, None, 0] >= bounds_min[None, :, 0] - 1e-7) & (points[:, None, 0] <= bounds_max[None, :, 0] + 1e-7)
-            & (points[:, None, 1] >= bounds_min[None, :, 1] - 1e-7) & (points[:, None, 1] <= bounds_max[None, :, 1] + 1e-7)
-        )
         triangles = pool.triangles[overlap]
         triangle_depths = pool.depths[overlap]
         ax, ay = triangles[:, 0, 0], triangles[:, 0, 1]
@@ -236,15 +236,25 @@ def _visibility_intervals(
         denominator = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
         usable = np.abs(denominator) >= 1e-9
         safe = np.where(usable, denominator, 1.0)
-        px = points[:, 0][:, None]
-        py = points[:, 1][:, None]
-        w1 = ((by - cy)[None, :] * (px - cx[None, :]) + (cx - bx)[None, :] * (py - cy[None, :])) / safe[None, :]
-        w2 = ((cy - ay)[None, :] * (px - cx[None, :]) + (ax - cx)[None, :] * (py - cy[None, :])) / safe[None, :]
-        w3 = 1.0 - w1 - w2
-        inside = inside_bbox & usable[None, :] & (np.minimum(np.minimum(w1, w2), w3) >= -1e-7)
-        depth_grid = w1 * triangle_depths[None, :, 0] + w2 * triangle_depths[None, :, 1] + w3 * triangle_depths[None, :, 2]
-        depth_grid = np.where(inside, depth_grid, np.inf)
-        nearest_all = depth_grid.min(axis=1)
+        # 采样点乘三角形的稠密矩阵按行分块算。构件密集的项目里这个乘积能到
+        # 数千乘数万，一次成型要几 GiB，直接内存不足。分块只改内存策略，
+        # 每块仍对全部候选三角形取最近深度，结果与整块计算一致。
+        nearest_all = np.empty(len(fractions), dtype=float)
+        block = max(1, _VISIBILITY_BLOCK_ELEMENTS // max(len(overlap), 1))
+        for offset in range(0, len(fractions), block):
+            chunk = points[offset:offset + block]
+            px = chunk[:, 0][:, None]
+            py = chunk[:, 1][:, None]
+            inside_bbox = (
+                (px >= bounds_min[None, :, 0] - 1e-7) & (px <= bounds_max[None, :, 0] + 1e-7)
+                & (py >= bounds_min[None, :, 1] - 1e-7) & (py <= bounds_max[None, :, 1] + 1e-7)
+            )
+            w1 = ((by - cy)[None, :] * (px - cx[None, :]) + (cx - bx)[None, :] * (py - cy[None, :])) / safe[None, :]
+            w2 = ((cy - ay)[None, :] * (px - cx[None, :]) + (ax - cx)[None, :] * (py - cy[None, :])) / safe[None, :]
+            w3 = 1.0 - w1 - w2
+            inside = inside_bbox & usable[None, :] & (np.minimum(np.minimum(w1, w2), w3) >= -1e-7)
+            depth_grid = w1 * triangle_depths[None, :, 0] + w2 * triangle_depths[None, :, 1] + w3 * triangle_depths[None, :, 2]
+            nearest_all[offset:offset + len(chunk)] = np.where(inside, depth_grid, np.inf).min(axis=1)
     else:
         nearest_all = np.full(len(fractions), np.inf)
     for index, (left, right) in enumerate(zip(ordered, ordered[1:], strict=False)):

@@ -50,7 +50,11 @@ export class DrawingJobClient {
       if (!line.startsWith("data:")) return;
       const payload = JSON.parse(line.slice(5).trim()) as { type: string } | DrawingSucceeded;
       onProgress(payload.type);
-      if (payload.type === "failed") throw new Error("DRAWING_JOB_FAILED");
+      // 带上服务端给的失败码，否则界面只能显示通用说法，排查时没有线索。
+      if (payload.type === "failed") {
+        const code = (payload as { errorCode?: string }).errorCode;
+        throw new Error(code ? `DRAWING_JOB_FAILED:${code}` : "DRAWING_JOB_FAILED");
+      }
       if (payload.type === "cancelled") throw new Error("DRAWING_JOB_CANCELLED");
       if (payload.type === "succeeded") terminal = payload as DrawingSucceeded;
     };
