@@ -15,7 +15,11 @@ import { PythonDrawingWorker, type DrawingWorker, type DrawingWorkerRun, type Dr
 
 const host = "127.0.0.1";
 const port = Number.parseInt(process.env.GUJIAN_SERVER_PORT ?? "8787", 10);
-const defaultAllowedOrigin = process.env.GUJIAN_ALLOWED_ORIGIN ?? "http://127.0.0.1:5173";
+// 两个回环地址都接受。安全边界由下面的 HOST_NOT_ALLOWED 限死在回环，
+// Origin 再单挑其中一个不增加防护，只会让助手在另一个地址下静默不可用。
+// 环境变量可覆盖，逗号分隔。
+const defaultAllowedOrigins = (process.env.GUJIAN_ALLOWED_ORIGIN ?? "http://127.0.0.1:5173,http://localhost:5173")
+  .split(",").map((value) => value.trim()).filter(Boolean);
 const sessionLifetimeMs = 30 * 60 * 1_000;
 // GeometrySpec 随项目构件数增长（三方项目 1258 实体约 3.7 MB），上限按最大预期项目留余量
 const maxBodyBytes = 32 * 1_024 * 1_024;
@@ -216,7 +220,7 @@ export function createWorkbenchServer(options: {
   cadLedger?: CadJobLedger;
   cadWorker?: CadWorker;
   drawingWorker?: DrawingWorker;
-  allowedOrigin?: string;
+  allowedOrigin?: string | readonly string[];
 } = {}) {
   const gateway = options.gateway ?? new KimiGateway();
   const assistantRuntime = new AssistantRuntime({
@@ -237,7 +241,11 @@ export function createWorkbenchServer(options: {
   const cadLedger = options.cadLedger ?? new CadJobLedger(process.env.NODE_ENV === "test" ? ":memory:" : undefined);
   const cadWorker = options.cadWorker ?? new PythonCadWorker();
   const drawingWorker = options.drawingWorker ?? new PythonDrawingWorker();
-  const allowedOrigin = options.allowedOrigin ?? defaultAllowedOrigin;
+  const allowedOrigins = new Set(
+    options.allowedOrigin === undefined
+      ? defaultAllowedOrigins
+      : typeof options.allowedOrigin === "string" ? [options.allowedOrigin] : options.allowedOrigin,
+  );
   const sessions = new Map<string, SessionRecord>();
   const activeRuns = new Map<string, ActiveRun>();
   const activeCadJobs = new Map<string, ActiveCadJob>();
@@ -251,12 +259,12 @@ export function createWorkbenchServer(options: {
         return writeJson(response, 403, { error: "HOST_NOT_ALLOWED" });
       }
       const origin = request.headers.origin;
-      if (origin && origin !== allowedOrigin) {
+      if (origin && !allowedOrigins.has(origin)) {
         return writeJson(response, 403, { error: "ORIGIN_NOT_ALLOWED" });
       }
       if (request.method === "OPTIONS") {
         response.writeHead(204, {
-          "access-control-allow-origin": allowedOrigin,
+          "access-control-allow-origin": origin ?? [...allowedOrigins][0]!,
           "access-control-allow-methods": "GET,POST,DELETE,OPTIONS",
           "access-control-allow-headers": "content-type,x-csrf-token,x-capability-token",
           "access-control-allow-credentials": "true",

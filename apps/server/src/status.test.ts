@@ -177,3 +177,22 @@ describe("workbench server", () => {
     expect(ledger.read(body.runId)?.run.status).toBe("cancelled");
   });
 });
+
+// 预览默认打开 localhost，服务端此前只认 127.0.0.1，助手在那个地址下静默不可用。
+describe("允许来源", () => {
+  it("两个回环地址都接受，其他来源仍拒绝", async () => {
+    const gateway: ModelGateway = {
+      configured: false, model: "kimi-k2.6",
+      execute: async () => { throw new Error("not called"); },
+    };
+    const { baseUrl } = await start(gateway);
+    for (const origin of ["http://127.0.0.1:5173", "http://localhost:5173"]) {
+      const response = await fetch(`${baseUrl}/api/session`, { headers: { origin } });
+      expect(response.status, origin).toBe(200);
+      expect(response.headers.get("access-control-allow-origin"), origin).toBe(origin);
+    }
+    const rejected = await fetch(`${baseUrl}/api/session`, { headers: { origin: "http://evil.example" } });
+    expect(rejected.status).toBe(403);
+    expect(await rejected.json()).toMatchObject({ error: "ORIGIN_NOT_ALLOWED" });
+  });
+});
