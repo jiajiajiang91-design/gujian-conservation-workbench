@@ -348,8 +348,9 @@ def _independent_view_line_sets(matrix: dict[str, Any], manifest: dict[str, Any]
     return output
 
 
-# 与 sheet_writer._horizontal_label 同一条规则：横轴沿 X 是面阔，沿 Y 是进深。
-# 这里按视图自己的 right 向量独立算一遍，不引用制图侧的实现。
+# 与 view_geometry._overall_dimension_label 同一条规则：横轴沿 X 是宽，沿 Y 是长。
+# 这里按视图自己的 right 向量独立算一遍，不引用制图侧的实现：
+# 引用了就只能验出"两边一致"，验不出规则本身是否对。
 def _horizontal_label_for(matrix: dict[str, Any], view_id: str) -> str:
     right = next(item["right"] for item in matrix["views"] if item["id"] == view_id)
     dominant = max(range(3), key=lambda index: abs(float(right[index])))

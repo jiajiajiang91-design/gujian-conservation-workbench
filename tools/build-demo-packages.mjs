@@ -215,3 +215,6 @@ try {
 } finally {
   server.close();
 }
+// server.close 只停止接受新连接。保持连接与作业留下的句柄会让进程继续挂着，
+// 端口也不释放，下一次构建报 EADDRINUSE。构建脚本跑完就该退出。
+process.exit(0);

@@ -665,19 +665,65 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
     return payload
 
 
+# 标注名称按视图横轴在模型里的方向定：沿 X 是宽，沿 Y 是长。
+#
+# 这条尺寸量的是图上画出来的全部内容，不只是建筑本体。项目带场地构件时
+# （覆盖步道、巷道顶棚一类），它比建筑的面阔大，因此不能叫总面阔：
+# 面阔在术语上指建筑本体的开间总宽，用来标图形外廓是标注错误。
+def _overall_dimension_label(requirement: dict[str, Any]) -> str:
+    right = requirement.get("right") or [1, 0, 0]
+    dominant = max(range(3), key=lambda index: abs(float(right[index])))
+    return {0: "图形总宽", 1: "图形总长", 2: "图形总高"}[dominant]
+
+
 def build_drawing_ir(matrix: dict[str, Any], manifest: dict[str, Any], views: list[dict[str, Any]]) -> dict[str, Any]:
     view_by_id = {item["viewId"]: item for item in views}
+    # 标注的唯一来源。写出器只按 kind 渲染，不再各自从视图 bounds 重新推
+    # 该标什么：此前 DXF 与 SVG 各推一遍，同一张图的图名一个画在图上方、
+    # 一个画在下方，且加一种标注要改三个地方。
+    #
+    # 每条标注给出模型坐标锚点（与 lines[].pointsMm 同一坐标系）、图层键、
+    # 纸面字高与出处。纸面偏移（尺寸线离图形多远）留在写出器作共用常量，
+    # 那是出图表达，不是图纸内容。
     annotations: list[dict[str, Any]] = []
     for view in matrix["views"]:
         bounds = view_by_id[view["id"]]["boundsMm"]
+        value = round(bounds[1][0] - bounds[0][0], 3)
         annotations.extend([
-            {"requirementId": f"title:{view['id']}", "kind": "viewTitle", "viewId": view["id"], "text": f"{view['displayLabelZh']}  1:{view['scaleDenominator']}", "sourceRefs": [view["id"]]},
-            {"requirementId": f"dimension:{view['id']}", "kind": "overallDimension", "viewId": view["id"], "valueMm": round(bounds[1][0] - bounds[0][0], 3), "sourceRefs": [manifest["geometryRevisionId"]]},
+            {
+                "requirementId": f"dimension:{view['id']}", "kind": "overallDimension", "viewId": view["id"],
+                "space": "view", "layerKey": "dimension", "paperTextHeightMm": 3.0,
+                "valueMm": value, "text": f"{_overall_dimension_label(view)} {value:.0f} mm",
+                # 尺寸的两个端点取图形下沿的左右极值
+                "anchorMm": [[bounds[0][0], bounds[0][1]], [bounds[1][0], bounds[0][1]]],
+                "sourceRefs": [manifest["geometryRevisionId"]],
+            },
+            {
+                "requirementId": f"title:{view['id']}", "kind": "viewTitle", "viewId": view["id"],
+                "space": "view", "layerKey": "text", "paperTextHeightMm": 4.0,
+                "text": f"{view['displayLabelZh']}  1:{view['scaleDenominator']}  {view['drawingRef']}",
+                "anchorMm": [[bounds[0][0], bounds[0][1]]],
+                "sourceRefs": [view["id"]],
+            },
+            {
+                # 模型空间没有图签，单取模型空间的人会丢掉资格声明，因此这一条
+                # 只出在模型空间；纸面成果由图签承载同一句话，不重复画。
+                "requirementId": f"qualification:{view['id']}", "kind": "qualification", "viewId": view["id"],
+                "space": "modelSpaceOnly", "layerKey": "text", "paperTextHeightMm": 2.5,
+                "text": "代理成果·未签发\n未经项目责任人员专业复核，不可用于正式交付或施工。",
+                "anchorMm": [[bounds[0][0], bounds[1][1]]],
+                "sourceRefs": [manifest["geometryRevisionId"]],
+            },
         ])
     for observation in matrix.get("observationCandidates", []):
+        view = matrix["views"][0]
+        bounds = view_by_id[view["id"]]["boundsMm"]
         annotations.append({
-            "requirementId": f"condition:{observation['id']}", "kind": "conditionCandidate", "viewId": matrix["views"][0]["id"],
-            "text": f"演示观察候选：{observation['displayLabelZh']}（未确认）", "sourceRefs": [observation["targetEntityId"]],
+            "requirementId": f"condition:{observation['id']}", "kind": "conditionCandidate", "viewId": view["id"],
+            "space": "view", "layerKey": "condition", "paperTextHeightMm": 3.0,
+            "text": f"演示观察候选：{observation['displayLabelZh']}（未确认）",
+            "anchorMm": [[(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2]],
+            "sourceRefs": [observation["targetEntityId"]],
         })
     ir = {
         "schemaVersion": "1.0",

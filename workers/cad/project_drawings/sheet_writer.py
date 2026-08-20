@@ -7,7 +7,7 @@ import io
 import json
 import re
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, NamedTuple
 
 from fontTools import subset
 from fontTools.ttLib import TTFont as FontToolsFont
@@ -58,9 +58,26 @@ def _title_block_rect(page_width: float) -> tuple[float, float, float, float]:
     return left, SHEET_MARGIN_MM, page_width - SHEET_MARGIN_MM, SHEET_MARGIN_MM + TITLE_BLOCK_HEIGHT_MM
 
 
-# 标注跟着图形走，不按视口固定位置放。视口下沿常常落在图签带里，
-# 固定位置会让尺寸与图名压在图签文字上。
-# 尺寸线在图形下方 8 mm，图名再下 7 mm；两者与图签横向重叠时抬到图签之上。
+# 标注排布的共用规则。三个渲染器（SVG、PDF、PNG）都从这里取纸面图元，
+# 各自只负责把图元翻成自己的输出格式，不再各写一遍该标什么、标在哪。
+#
+# 标注内容与模型坐标锚点来自 IR，这里只做两件事：把锚点按视图变换换算到
+# 纸面，再按制图惯例加纸面偏移。尺寸线在图形下方 8 mm，图名再下 7 mm；
+# 两者与图签横向重叠时抬到图签之上，否则会压在图签文字上。
+DIMENSION_OFFSET_PAPER_MM = 8.0
+TITLE_OFFSET_PAPER_MM = 15.0
+DIMENSION_TICK_PAPER_MM = 2.0
+
+
+class PaperPrimitive(NamedTuple):
+    kind: str                                  # line 或 text
+    points: tuple[tuple[float, float], ...]    # 纸面毫米，y 自页底向上
+    text: str | None
+    height_mm: float
+    align: str                                 # start 或 middle
+    tone: str                                  # ink、dim 或 condition
+
+
 def _annotation_rows(view: dict[str, Any], requirement: dict[str, Any], page_width: float) -> tuple[float, float, float, float]:
     bounds = view["boundsMm"]
     rect = requirement["viewportRectMm"]
@@ -74,12 +91,14 @@ def _annotation_rows(view: dict[str, Any], requirement: dict[str, Any], page_wid
     title_left, _title_bottom, title_right, title_top = _title_block_rect(page_width)
     floor = title_top + TITLE_BLOCK_CLEARANCE_MM
     label_x = min(x1, rect[0])
-    overlaps = lambda left, right: right > title_left and left < title_right
 
-    label_y = drawn_bottom - 15.0
+    def overlaps(left: float, right: float) -> bool:
+        return right > title_left and left < title_right
+
+    label_y = drawn_bottom - TITLE_OFFSET_PAPER_MM
     if overlaps(label_x, label_x + 60.0) and label_y < floor:
         label_y = floor
-    dimension_y = max(drawn_bottom - 8.0, label_y + 7.0)
+    dimension_y = max(drawn_bottom - DIMENSION_OFFSET_PAPER_MM, label_y + 7.0)
     if overlaps(x1, x2) and dimension_y < floor:
         dimension_y = floor
     if dimension_y >= drawn_bottom:
@@ -87,30 +106,48 @@ def _annotation_rows(view: dict[str, Any], requirement: dict[str, Any], page_wid
     return x1, x2, dimension_y, label_y
 
 
-# 标注名称按视图横轴在模型里的方向定：沿 X 是宽，沿 Y 是长。
-# 剖面与侧立面的横轴是长向，一律写宽属于标注错误。
-#
-# 这条尺寸量的是图上画出来的全部内容，不只是建筑本体。项目带场地构件时
-# （覆盖步道、巷道顶棚一类），它比建筑的面阔大，因此不能叫总面阔：
-# 面阔在术语上指建筑本体的开间总宽，用来标图形外廓是标注错误。
-def _horizontal_label(requirement: dict[str, Any]) -> str:
-    right = requirement.get("right") or [1, 0, 0]
-    dominant = max(range(3), key=lambda index: abs(float(right[index])))
-    return {0: "图形总宽", 1: "图形总长", 2: "图形总高"}[dominant]
-
-
-def _dimension_geometry(view: dict[str, Any], requirement: dict[str, Any], page_width: float) -> dict[str, float | str]:
+def annotation_primitives(
+    annotation: dict[str, Any], view: dict[str, Any], requirement: dict[str, Any], page_width: float,
+) -> list[PaperPrimitive]:
+    """把一条 IR 标注换算成纸面图元。space 为 modelSpaceOnly 的返回空列表。"""
+    if annotation.get("space") == "modelSpaceOnly":
+        # 资格声明只画在模型空间：纸面成果由图签承载同一句话，不重复画
+        return []
+    kind = annotation["kind"]
+    height = float(annotation["paperTextHeightMm"])
     x1, x2, dimension_y, label_y = _annotation_rows(view, requirement, page_width)
-    value = view["boundsMm"][1][0] - view["boundsMm"][0][0]
-    return {
-        "x1": x1,
-        "x2": x2,
-        "y": dimension_y,
-        "labelY": label_y,
-        "labelX": min(x1, requirement["viewportRectMm"][0]),
-        "text": f"{_horizontal_label(requirement)} {value:.0f} mm",
-    }
 
+    if kind == "overallDimension":
+        tick = DIMENSION_TICK_PAPER_MM
+        return [
+            PaperPrimitive("line", ((x1, dimension_y), (x2, dimension_y)), None, 0.0, "start", "dim"),
+            PaperPrimitive("line", ((x1, dimension_y - tick), (x1, dimension_y + tick)), None, 0.0, "start", "dim"),
+            PaperPrimitive("line", ((x2, dimension_y - tick), (x2, dimension_y + tick)), None, 0.0, "start", "dim"),
+            PaperPrimitive("text", (((x1 + x2) / 2, dimension_y + 1.5),), annotation["text"], height, "middle", "ink"),
+        ]
+
+    if kind == "viewTitle":
+        label_x = min(x1, requirement["viewportRectMm"][0])
+        return [PaperPrimitive("text", ((label_x, label_y),), annotation["text"], height, "start", "ink")]
+
+    if kind == "conditionCandidate":
+        rect = requirement["viewportRectMm"]
+        return [PaperPrimitive("text", ((rect[0] + 3, rect[1] + rect[3] - 6),), annotation["text"], height, "start", "condition")]
+
+    raise ValueError(f"unsupported annotation kind: {kind}")
+
+
+def sheet_primitives(ir: dict[str, Any], sheet: dict[str, Any], page_width: float) -> list[PaperPrimitive]:
+    """本张图纸的全部纸面标注图元，按 IR 的标注顺序。"""
+    views = {item["viewId"]: item for item in ir["views"] if item["viewId"] in sheet["viewIds"]}
+    requirements = {item["id"]: item for item in ir["viewRequirements"]}
+    out: list[PaperPrimitive] = []
+    for annotation in ir["annotations"]:
+        view = views.get(annotation["viewId"])
+        if view is None:
+            continue
+        out.extend(annotation_primitives(annotation, view, requirements[annotation["viewId"]], page_width))
+    return out
 
 # 本张图实际用到的字符。从已拼好的图形里取，不另维护一份清单，
 # 免得图上加了新文字而清单没跟上，裁出来的字体缺字。
@@ -186,18 +223,19 @@ class SheetArtifactWriter:
                 css = "cut" if line["lineClass"] == "cut" else "outline" if line["lineClass"] == "silhouette" else "projection"
                 parts.append(f'<line class="{css}" x1="{first[0]:.4f}" y1="{height-first[1]:.4f}" x2="{last[0]:.4f}" y2="{height-last[1]:.4f}" data-source-entity="{line["sourceEntityId"]}"/>')
             parts.append('</g>')
-            dimension = _dimension_geometry(view, requirement, width)
-            dimension_y = height - float(dimension["y"])
-            dimension_mid = (float(dimension["x1"]) + float(dimension["x2"])) / 2
-            parts.extend([
-                f'<g data-requirement-id="dimension:{html.escape(view["viewId"])}">',
-                f'<line class="projection" x1="{dimension["x1"]:.4f}" y1="{dimension_y:.4f}" x2="{dimension["x2"]:.4f}" y2="{dimension_y:.4f}"/>',
-                f'<line class="projection" x1="{dimension["x1"]:.4f}" y1="{dimension_y-2:.4f}" x2="{dimension["x1"]:.4f}" y2="{dimension_y+2:.4f}"/>',
-                f'<line class="projection" x1="{dimension["x2"]:.4f}" y1="{dimension_y-2:.4f}" x2="{dimension["x2"]:.4f}" y2="{dimension_y+2:.4f}"/>',
-                f'<text class="text" x="{dimension_mid:.4f}" y="{dimension_y-1.5:.4f}" text-anchor="middle" font-size="3">{dimension["text"]}</text>',
-                '</g>',
-            ])
-            parts.append(f'<text class="text" x="{float(dimension["labelX"]):.3f}" y="{height-float(dimension["labelY"]):.3f}" font-size="4">{html.escape(view["displayLabelZh"])}  1:{view["scaleDenominator"]}  {html.escape(view["drawingRef"])}</text>')
+        # 标注从共用图元取，不在此另算一遍
+        for item in sheet_primitives(self.ir, sheet, width):
+            if item.kind == "line":
+                (ax, ay), (bx, by) = item.points
+                parts.append(f'<line class="projection" x1="{ax:.4f}" y1="{height-ay:.4f}" x2="{bx:.4f}" y2="{height-by:.4f}"/>')
+                continue
+            (tx, ty) = item.points[0]
+            anchor = ' text-anchor="middle"' if item.align == "middle" else ""
+            fill = ' fill="#a43c32"' if item.tone == "condition" else ""
+            parts.append(
+                f'<text class="text" x="{tx:.4f}" y="{height-ty:.4f}"{anchor} font-size="{item.height_mm:g}"{fill}>'
+                f'{html.escape(item.text or "")}</text>'
+            )
         title_x, title_y = width - 226, height - 35
         parts.extend([
             f'<rect class="frame" x="{title_x}" y="{title_y}" width="221" height="30"/>',
@@ -205,11 +243,6 @@ class SheetArtifactWriter:
             f'<text class="text" x="{title_x+3}" y="{title_y+16}" font-size="4">{html.escape(sheet["displayLabelZh"])}</text>',
             f'<text class="text" x="{title_x+3}" y="{title_y+24}" font-size="3">{html.escape(sheet["drawingNumber"])}　代理成果·未签发　{html.escape(self.ir["revisionLabel"])}　日期：未签发</text>',
         ])
-        for annotation in self.ir["annotations"]:
-            if annotation["kind"] == "conditionCandidate" and annotation["viewId"] in sheet["viewIds"]:
-                requirement = requirements[annotation["viewId"]]
-                rect = requirement["viewportRectMm"]
-                parts.append(f'<text class="text" x="{rect[0]+3}" y="{height-(rect[1]+rect[3]-6)}" font-size="3" fill="#a43c32">{html.escape(annotation["text"])}</text>')
         parts.append('</svg>')
         body = "".join(parts)
         head = "".join([
@@ -253,22 +286,22 @@ class SheetArtifactWriter:
                     pdf.setLineWidth(width_mm * MM_TO_POINT)
                     pdf.setStrokeColorRGB(0.05, 0.05, 0.05)
                     pdf.line(first_point[0] * MM_TO_POINT, first_point[1] * MM_TO_POINT, last_point[0] * MM_TO_POINT, last_point[1] * MM_TO_POINT)
-                dimension = _dimension_geometry(view, requirements[view["viewId"]], width)
-                pdf.setLineWidth(0.18 * MM_TO_POINT)
-                pdf.line(float(dimension["x1"]) * MM_TO_POINT, float(dimension["y"]) * MM_TO_POINT, float(dimension["x2"]) * MM_TO_POINT, float(dimension["y"]) * MM_TO_POINT)
-                for x_value in (float(dimension["x1"]), float(dimension["x2"])):
-                    pdf.line(x_value * MM_TO_POINT, (float(dimension["y"]) - 2) * MM_TO_POINT, x_value * MM_TO_POINT, (float(dimension["y"]) + 2) * MM_TO_POINT)
-                pdf.setFont("GujianSansSC", 3 * MM_TO_POINT)
-                pdf.drawCentredString(((float(dimension["x1"]) + float(dimension["x2"])) / 2) * MM_TO_POINT, (float(dimension["y"]) + 1.5) * MM_TO_POINT, str(dimension["text"]))
-                pdf.setFont("GujianSansSC", 4 * MM_TO_POINT)
-                pdf.drawString(float(dimension["labelX"]) * MM_TO_POINT, float(dimension["labelY"]) * MM_TO_POINT, f"{view['displayLabelZh']}  1:{view['scaleDenominator']}  {view['drawingRef']}")
-            for annotation in self.ir["annotations"]:
-                if annotation["kind"] == "conditionCandidate" and annotation["viewId"] in sheet["viewIds"]:
-                    rect = requirements[annotation["viewId"]]["viewportRectMm"]
-                    pdf.setFillColorRGB(0.64, 0.16, 0.12)
-                    pdf.setFont("GujianSansSC", 3 * MM_TO_POINT)
-                    pdf.drawString((rect[0] + 3) * MM_TO_POINT, (rect[1] + rect[3] - 6) * MM_TO_POINT, annotation["text"])
-                    pdf.setFillColorRGB(0.05, 0.05, 0.05)
+            # 标注从共用图元取，与 SVG、PNG 同一份来源
+            for item in sheet_primitives(self.ir, sheet, width):
+                if item.kind == "line":
+                    (ax, ay), (bx, by) = item.points
+                    pdf.setLineWidth(0.18 * MM_TO_POINT)
+                    pdf.setStrokeColorRGB(0.05, 0.05, 0.05)
+                    pdf.line(ax * MM_TO_POINT, ay * MM_TO_POINT, bx * MM_TO_POINT, by * MM_TO_POINT)
+                    continue
+                tx, ty = item.points[0]
+                pdf.setFillColorRGB(*((0.64, 0.16, 0.12) if item.tone == "condition" else (0.05, 0.05, 0.05)))
+                pdf.setFont("GujianSansSC", item.height_mm * MM_TO_POINT)
+                if item.align == "middle":
+                    pdf.drawCentredString(tx * MM_TO_POINT, ty * MM_TO_POINT, item.text or "")
+                else:
+                    pdf.drawString(tx * MM_TO_POINT, ty * MM_TO_POINT, item.text or "")
+            pdf.setFillColorRGB(0.05, 0.05, 0.05)
             title_x = width - 226
             pdf.setLineWidth(0.35 * MM_TO_POINT)
             pdf.rect(title_x * MM_TO_POINT, 5 * MM_TO_POINT, 221 * MM_TO_POINT, 30 * MM_TO_POINT)
@@ -285,7 +318,6 @@ class SheetArtifactWriter:
         width_px, height_px = round(width_mm * PX_PER_MM_300), round(height_mm * PX_PER_MM_300)
         image = Image.new("RGB", (width_px, height_px), "white")
         draw = ImageDraw.Draw(image)
-        font = ImageFont.truetype(str(self.font_path), round(3.5 * PX_PER_MM_300))
         title_font = ImageFont.truetype(str(self.font_path), round(4 * PX_PER_MM_300))
         small_font = ImageFont.truetype(str(self.font_path), round(3 * PX_PER_MM_300))
         scale = PX_PER_MM_300
@@ -301,26 +333,29 @@ class SheetArtifactWriter:
                 y1, y2 = height_mm - first[1], height_mm - last[1]
                 line_width = .5 if line["lineClass"] == "cut" else .35 if line["lineClass"] == "silhouette" else .18
                 draw.line((first[0] * scale, y1 * scale, last[0] * scale, y2 * scale), fill="#111111", width=max(1, round(line_width * scale)))
-            dimension = _dimension_geometry(view, requirements[view["viewId"]], width_mm)
-            dim_y = (height_mm - float(dimension["y"])) * scale
-            dim_x1, dim_x2 = float(dimension["x1"]) * scale, float(dimension["x2"]) * scale
-            draw.line((dim_x1, dim_y, dim_x2, dim_y), fill="#444444", width=max(1, round(.18 * scale)))
-            draw.line((dim_x1, dim_y - 2 * scale, dim_x1, dim_y + 2 * scale), fill="#444444", width=max(1, round(.18 * scale)))
-            draw.line((dim_x2, dim_y - 2 * scale, dim_x2, dim_y + 2 * scale), fill="#444444", width=max(1, round(.18 * scale)))
-            text = str(dimension["text"])
-            bbox = draw.textbbox((0, 0), text, font=small_font)
-            draw.text(((dim_x1 + dim_x2 - (bbox[2] - bbox[0])) / 2, dim_y - (bbox[3] - bbox[1]) - 1.5 * scale), text, fill="#111111", font=small_font)
-            draw.text((float(dimension["labelX"]) * scale, (height_mm - float(dimension["labelY"]) - 4) * scale), f"{view['displayLabelZh']}  1:{view['scaleDenominator']}  {view['drawingRef']}", fill="#111111", font=font)
+        # 标注从共用图元取，与 SVG、PDF 同一份来源
+        fonts: dict[float, Any] = {}
+        for item in sheet_primitives(self.ir, sheet, width_mm):
+            if item.kind == "line":
+                (ax, ay), (bx, by) = item.points
+                draw.line((ax * scale, (height_mm - ay) * scale, bx * scale, (height_mm - by) * scale),
+                          fill="#444444", width=max(1, round(.18 * scale)))
+                continue
+            tx, ty = item.points[0]
+            if item.height_mm not in fonts:
+                fonts[item.height_mm] = ImageFont.truetype(str(self.font_path), round(item.height_mm * PX_PER_MM_300))
+            item_font = fonts[item.height_mm]
+            text = item.text or ""
+            colour = "#a43c32" if item.tone == "condition" else "#111111"
+            box = draw.textbbox((0, 0), text, font=item_font)
+            left = tx * scale - ((box[2] - box[0]) / 2 if item.align == "middle" else 0)
+            draw.text((left, (height_mm - ty) * scale - (box[3] - box[1]) - 1.5 * scale), text, fill=colour, font=item_font)
         title_x = width_mm - 226
         title_top = height_mm - 35
         draw.rectangle((title_x * scale, title_top * scale, (width_mm - 5) * scale, (height_mm - 5) * scale), outline="#111111", width=max(1, round(.35 * scale)))
         draw.text(((title_x + 3) * scale, (title_top + 3) * scale), self.ir["titleZh"], fill="#111111", font=title_font)
         draw.text(((title_x + 3) * scale, (title_top + 11) * scale), sheet["displayLabelZh"], fill="#111111", font=title_font)
         draw.text(((title_x + 3) * scale, (title_top + 21) * scale), f"{sheet['drawingNumber']}　代理成果·未签发　{self.ir['revisionLabel']}　日期：未签发", fill="#111111", font=small_font)
-        for annotation in self.ir["annotations"]:
-            if annotation["kind"] == "conditionCandidate" and annotation["viewId"] in sheet["viewIds"]:
-                rect = requirements[annotation["viewId"]]["viewportRectMm"]
-                draw.text(((rect[0] + 3) * scale, (height_mm - rect[1] - rect[3] + 3) * scale), annotation["text"], fill="#a43c32", font=small_font)
         image.save(output_path, dpi=(300, 300), optimize=True)
 
     def write(self, output_dir: Path) -> dict[str, Any]:

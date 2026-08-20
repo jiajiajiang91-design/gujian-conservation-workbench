@@ -98,6 +98,12 @@ class NativeDxfWriter:
         condition.add_line((-85, 85), (85, -85), dxfattribs={"layer": "GJ-CONDITION"})
         return doc
 
+    # 纸面标注排布的共用常量（GB/T 50001 图线与字体一章的取值区间内）。
+    # 模型空间按视图比例放大：纸上 8 mm 在 1:100 的图上是 800 mm。
+    DIMENSION_OFFSET_PAPER_MM = 8.0
+    TITLE_OFFSET_PAPER_MM = 15.0
+    QUALIFICATION_OFFSET_PAPER_MM = 6.0
+
     def _add_model_space(self, doc) -> None:
         msp = doc.modelspace()
         layer_map = self.ir["layerPolicy"]
@@ -119,40 +125,63 @@ class NativeDxfWriter:
                     "viewId": view["viewId"], "sourceEntityId": region["sourceEntityId"],
                     "geometryRevisionId": self.ir["geometryRevisionId"], "materialCode": region["materialCode"],
                 })
-            x1, y1, x2, y2 = stage["bounds"]
-            base_y = y1 + min(350.0, max(100.0, (y2 - y1) * 0.1))
-            dimension = msp.add_linear_dim(base=((x1 + x2) / 2, base_y), p1=(x1, y1), p2=(x2, y1), angle=0, dimstyle="GJ-DIM", dxfattribs={"layer": "GJ-DIMENSION"})
-            dimension.render()
-            self._register(dimension.dimension, _cad_id(self.ir["drawingIrSha256"], f"dimension:{view['viewId']}"), "annotation", {
-                "requirementId": f"dimension:{view['viewId']}", "viewId": view["viewId"], "sourceRefs": [self.ir["geometryRevisionId"]],
-            })
-            label = msp.add_text(
-                f"{view['displayLabelZh']}  1:{view['scaleDenominator']}",
-                dxfattribs={"layer": "GJ-TEXT", "height": 150, "style": "GJ-TEXT", "insert": (x1, y2 + 260)},
-            )
-            self._register(label, _cad_id(self.ir["drawingIrSha256"], f"title:{view['viewId']}"), "annotation", {
-                "requirementId": f"title:{view['viewId']}", "viewId": view["viewId"], "sourceRefs": [view["viewId"]],
-            })
-            qualification = msp.add_mtext(
-                "代理成果·未签发\n未经项目责任人员专业复核，不可用于正式交付或施工。",
-                dxfattribs={"layer": "GJ-TEXT", "char_height": 100, "style": "GJ-TEXT", "width": max(1200.0, (x2 - x1) * 0.45)},
-            )
-            qualification.set_location((x1, y2 + 520))
-            self._register(qualification, _cad_id(self.ir["drawingIrSha256"], f"qualification:{view['viewId']}"), "annotation", {
-                "requirementId": f"qualification:{view['viewId']}", "viewId": view["viewId"],
-                "geometryRevisionId": self.ir["geometryRevisionId"], "sourceRefs": [self.ir["geometryRevisionId"]],
-            })
+        # 标注只从 IR 取。写出器不再自己判断该标什么，只负责怎么画。
         for annotation in self.ir["annotations"]:
-            if annotation["kind"] != "conditionCandidate":
-                continue
-            view = next(item for item in self.ir["views"] if item["viewId"] == annotation["viewId"])
-            stage = self.stages[view["viewId"]]
-            x1, y1, x2, y2 = stage["bounds"]
-            insert = msp.add_blockref("GJ_CONDITION_MARK", ((x1 + x2) / 2, (y1 + y2) / 2), dxfattribs={"layer": "GJ-CONDITION"})
-            self._register(insert, _cad_id(self.ir["drawingIrSha256"], annotation["requirementId"]), "annotation", annotation)
-            note = msp.add_mtext(annotation["text"], dxfattribs={"layer": "GJ-CONDITION", "char_height": 125, "style": "GJ-TEXT"})
-            note.set_location(((x1 + x2) / 2 + 180, (y1 + y2) / 2 + 180))
+            self._add_annotation(msp, annotation)
+
+    def _add_annotation(self, msp, annotation: dict[str, Any]) -> None:
+        view = next((item for item in self.ir["views"] if item["viewId"] == annotation["viewId"]), None)
+        if view is None:
+            raise ValueError(f"annotation points at an unknown view: {annotation['requirementId']}")
+        stage = self.stages[view["viewId"]]
+        offset = stage["offset"]
+        scale = float(view["scaleDenominator"])
+        layer = self.ir["layerPolicy"][annotation["layerKey"]]
+        height = float(annotation["paperTextHeightMm"]) * scale
+        placed = [(point[0] + offset[0], point[1] + offset[1]) for point in annotation["anchorMm"]]
+        cad_id = _cad_id(self.ir["drawingIrSha256"], annotation["requirementId"])
+        kind = annotation["kind"]
+
+        if kind == "overallDimension":
+            first, second = placed[0], placed[1]
+            base_y = first[1] - self.DIMENSION_OFFSET_PAPER_MM * scale
+            dimension = msp.add_linear_dim(
+                base=((first[0] + second[0]) / 2, base_y), p1=first, p2=second, angle=0,
+                dimstyle="GJ-DIM", dxfattribs={"layer": layer},
+            )
+            dimension.render()
+            self._register(dimension.dimension, cad_id, "annotation", annotation)
+            return
+
+        if kind == "viewTitle":
+            anchor = (placed[0][0], placed[0][1] - self.TITLE_OFFSET_PAPER_MM * scale)
+            label = msp.add_text(annotation["text"], dxfattribs={
+                "layer": layer, "height": height, "style": "GJ-TEXT", "insert": anchor,
+            })
+            self._register(label, cad_id, "annotation", annotation)
+            return
+
+        if kind == "qualification":
+            anchor = (placed[0][0], placed[0][1] + self.QUALIFICATION_OFFSET_PAPER_MM * scale)
+            note = msp.add_mtext(annotation["text"], dxfattribs={
+                "layer": layer, "char_height": height, "style": "GJ-TEXT",
+                "width": max(1200.0, (stage["bounds"][2] - stage["bounds"][0]) * 0.45),
+            })
+            note.set_location(anchor)
+            self._register(note, cad_id, "annotation", annotation)
+            return
+
+        if kind == "conditionCandidate":
+            insert = msp.add_blockref("GJ_CONDITION_MARK", placed[0], dxfattribs={"layer": layer})
+            self._register(insert, cad_id, "annotation", annotation)
+            note = msp.add_mtext(annotation["text"], dxfattribs={
+                "layer": layer, "char_height": height, "style": "GJ-TEXT",
+            })
+            note.set_location((placed[0][0] + 180, placed[0][1] + 180))
             self._register(note, _cad_id(self.ir["drawingIrSha256"], annotation["requirementId"] + ":text"), "annotation", annotation)
+            return
+
+        raise ValueError(f"unsupported annotation kind: {kind}")
 
     def _add_paper_space(self, doc) -> None:
         first_name = self.ir["sheets"][0]["drawingNumber"]
