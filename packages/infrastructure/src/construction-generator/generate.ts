@@ -571,6 +571,127 @@ function buildRoofSurface(assembly: ConstructionAssembly, form: BuildingForm): v
   }
 }
 
+// 山面：博风板与山面脊饰。屋顶形式决定山面做法，判不出就不生成。
+// 补一种常见做法等于替资料下判断，与产品主张相反。
+function buildGable(assembly: ConstructionAssembly, form: BuildingForm): void {
+  const gable = form.gable;
+  if (!gable) {
+    assembly.addUnknown({
+      key: "gable-form-undetermined",
+      subjectRef: "form:gable",
+      reasonCode: "ROOF_FORM_NOT_DETERMINED",
+      descriptionZh: "资料判不出屋顶形式，山面做法随之无从确定，本次不生成博风板与山面脊饰。补齐山面照片或屋顶形式的形制定级记录后可重新生成。",
+      requiredEvidence: ["山面近景照片或测绘记录", "屋顶形式的形制定级记录"],
+      affectedRefs: ["form:gable"],
+    });
+    return;
+  }
+  const width = sum(form.bayWidthsMm);
+  const lines = [...purlinLines(form)].sort((left, right) => right.y - left.y);
+  const eave = lines[0]!;
+  const ridge = lines.find((line) => line.y === 0) ?? eave;
+  const deck = (line: { z: number }) => line.z + form.purlinDiameter.valueMm + form.rafterDiameter.valueMm;
+
+  for (const side of [1, -1]) {
+    const x = (side * width) / 2 + side * gable.overhang.valueMm;
+    // 博风沿两坡各一条，随举架折线走
+    for (let segment = 0; segment < lines.length - 1; segment += 1) {
+      const upper = lines[segment]!;
+      const lower = lines[segment + 1]!;
+      assembly.add({
+        stableKey: `barge-board:${side > 0 ? "east" : "west"}:${segment}`,
+        componentType: "gableBoard",
+        displayNameZh: `${side > 0 ? "东" : "西"}博风板 ${segment + 1}`,
+        materialCode: form.materials.gable,
+        solid: slopedBarSolid({
+          fromY: upper.y, fromZ: deck(upper), toY: lower.y, toZ: deck(lower),
+          thickness: gable.bargeBoardWidth.valueMm,
+          widthX: gable.bargeBoardThickness.valueMm,
+          xStart: x - (side > 0 ? 0 : gable.bargeBoardThickness.valueMm),
+        }),
+        dimensions: [["thickness", gable.bargeBoardThickness], ["width", gable.bargeBoardWidth]],
+      });
+    }
+    assembly.add({
+      stableKey: `gable-ridge-cap:${side > 0 ? "east" : "west"}`,
+      componentType: "gableRidgeCap",
+      displayNameZh: `${side > 0 ? "东" : "西"}山面脊饰`,
+      materialCode: form.materials.ridge,
+      solid: boxSolid({
+        sizeX: gable.bargeBoardThickness.valueMm * 2,
+        sizeY: form.tileCourseWidth.valueMm,
+        sizeZ: form.ridgeHeight.valueMm,
+        center: [x, 0, deck(ridge) + form.roofBoardThickness.valueMm + form.ridgeHeight.valueMm / 2],
+      }),
+      dimensions: [["height", form.ridgeHeight]],
+    });
+  }
+}
+
+// 飞椽与檐口封闭。有没有飞椽由资料说了算，判不出就记未知项。
+function buildEaveDetail(assembly: ConstructionAssembly, form: BuildingForm): void {
+  const fly = form.flyRafter;
+  if (!fly) {
+    assembly.addUnknown({
+      key: "fly-rafter-undetermined",
+      subjectRef: "form:eave",
+      reasonCode: "FLY_RAFTER_NOT_DETERMINED",
+      descriptionZh: "资料判不出檐口是否用飞椽，本次不生成飞椽与檐口封闭构件。补齐檐口近景照片或檐部做法记录后可重新生成。",
+      requiredEvidence: ["檐口近景照片", "檐部做法的形制定级记录"],
+      affectedRefs: ["form:eave"],
+    });
+    return;
+  }
+  const width = sum(form.bayWidthsMm) + form.eaveProjection.valueMm * 2;
+  const spacing = form.rafterSpacing.valueMm;
+  const count = Math.max(1, Math.floor(width / spacing));
+  const lines = [...purlinLines(form)].sort((left, right) => right.y - left.y);
+  const eave = lines[0]!;
+  const next = lines[1] ?? eave;
+  const deck = (line: { z: number }) => line.z + form.purlinDiameter.valueMm + form.rafterDiameter.valueMm;
+  // 飞椽压在檐椽之上，沿同一坡向再挑出一段
+  const run = eave.y - next.y;
+  const rise = deck(eave) - deck(next);
+  const length = Math.hypot(run, rise);
+  const unitY = length > 0 ? run / length : 1;
+  const unitZ = length > 0 ? rise / length : 0;
+
+  for (let index = 0; index < count; index += 1) {
+    const x = -width / 2 + spacing * (index + 0.5);
+    assembly.add({
+      stableKey: `fly-rafter:${index}`,
+      componentType: "flyRafter",
+      displayNameZh: `飞椽 ${index + 1}`,
+      materialCode: form.materials.flyRafter,
+      solid: slopedBarSolid({
+        fromY: eave.y + unitY * fly.projection.valueMm,
+        fromZ: deck(eave) + form.rafterDiameter.valueMm + unitZ * fly.projection.valueMm,
+        toY: eave.y - unitY * fly.projection.valueMm,
+        toZ: deck(eave) + form.rafterDiameter.valueMm - unitZ * fly.projection.valueMm,
+        thickness: fly.sectionSize.valueMm,
+        widthX: fly.sectionSize.valueMm,
+        xStart: x - fly.sectionSize.valueMm / 2,
+      }),
+      dimensions: [["section", fly.sectionSize], ["projection", fly.projection]],
+    });
+  }
+  assembly.add({
+    stableKey: "eave-closure",
+    componentType: "eaveClosure",
+    displayNameZh: "檐口封闭",
+    materialCode: form.materials.flyRafter,
+    solid: boxSolid({
+      sizeX: width, sizeY: fly.sectionSize.valueMm, sizeZ: fly.eaveClosureHeight.valueMm,
+      center: [
+        0,
+        eave.y + unitY * fly.projection.valueMm,
+        deck(eave) + form.rafterDiameter.valueMm + unitZ * fly.projection.valueMm + fly.eaveClosureHeight.valueMm / 2,
+      ],
+    }),
+    dimensions: [["height", fly.eaveClosureHeight], ["section", fly.sectionSize]],
+  });
+}
+
 function buildEnclosure(assembly: ConstructionAssembly, form: BuildingForm): void {
   const width = sum(form.bayWidthsMm);
   const halfDepth = sum(form.stepSpansMm);
@@ -636,6 +757,8 @@ export function generateConstruction(input: GenerateInput): GenerateResult {
   buildBeamFrame(assembly, form);
   buildRoofFrame(assembly, form);
   buildRoofSurface(assembly, form);
+  buildGable(assembly, form);
+  buildEaveDetail(assembly, form);
   buildEnclosure(assembly, form);
   return assembly.result();
 }

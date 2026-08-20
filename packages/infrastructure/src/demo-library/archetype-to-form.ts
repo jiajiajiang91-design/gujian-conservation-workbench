@@ -98,6 +98,23 @@ export function buildArchetypeGeometrySpec(input: ArchetypeGeometryInput): Proje
     tileThickness: sourced("tileThickness", requireDimension(archetype, "tileThickness")),
     ridgeHeight: sourced("ridgeHeight", requireDimension(archetype, "ridgeHeight")),
     enclosure: archetype.enclosure,
+    // 山面与飞椽由形制判断记录声明。判不出的项传 null，生成器记未知项，
+    // 不按常见做法默认补一种（08 演示项目定义第 8 节：不隐藏来源、不把推算显示为实测）。
+    gable: archetype.gable
+      ? {
+        roofFormZh: archetype.gable.roofFormZh,
+        bargeBoardThickness: sourced("bargeBoardThickness", archetype.gable.bargeBoardThicknessMm),
+        bargeBoardWidth: sourced("bargeBoardWidth", archetype.gable.bargeBoardWidthMm),
+        overhang: sourced("gableOverhang", archetype.gable.overhangMm),
+      }
+      : null,
+    flyRafter: archetype.flyRafter
+      ? {
+        sectionSize: sourced("flyRafterSection", archetype.flyRafter.sectionSizeMm),
+        projection: sourced("flyRafterProjection", archetype.flyRafter.projectionMm),
+        eaveClosureHeight: sourced("eaveClosureHeight", archetype.flyRafter.eaveClosureHeightMm),
+      }
+      : null,
     materials: archetype.materials as BuildingForm["materials"],
   };
 

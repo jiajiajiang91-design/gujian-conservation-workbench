@@ -522,6 +522,7 @@ export const GAODU_DEMO: DemoProjectDefinition = {
       terrace: "石作", stair: "石作", columnBase: "石作", column: "石作",
       architrave: "木作", beam: "木作", kingPost: "木作", bracket: "木作", purlin: "木作", rafter: "木作",
       roofBoard: "木作", tile: "瓦作", ridge: "瓦作", wall: "砖作",
+      gable: "木作", flyRafter: "木作",
     },
     estimatedDimensionKeys: [
       "bayWidth1", "bayWidth2", "bayWidth3",

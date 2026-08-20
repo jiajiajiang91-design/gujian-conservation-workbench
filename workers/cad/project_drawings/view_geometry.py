@@ -14,8 +14,8 @@ from OCP.BRepAdaptor import BRepAdaptor_Curve
 from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCP.gp import gp_Dir, gp_Pln, gp_Pnt
-from shapely.geometry import LineString, box
-from shapely.ops import polygonize
+from shapely.geometry import LineString, MultiPoint, Point, box
+from shapely.ops import polygonize, unary_union
 
 from .contracts import canonical_bytes, sha256_value
 
@@ -70,6 +70,151 @@ def _is_beyond_plane(mesh: SourceMesh, normal: np.ndarray, origin: np.ndarray, d
     return bool(offsets.min() < -1e-6)
 
 
+# 质量基准 4.3 图面细节层级。规则由矩阵下发（domain 的 drawing-detail-policy），
+# 这里只按规则执行，不含任何构件名清单，也不判断比例。
+def _detail_treatment(view: dict[str, Any], component_type: str) -> tuple[str, dict[str, Any] | None]:
+    for rule in view.get("detailRules", []):
+        if component_type in rule["componentTypes"]:
+            return rule["treatment"], rule
+    return "full", None
+
+
+# 构件表面在某个投影点的深度。外轮廓线要按自己的位置取深度，
+# 否则遮挡判定会把长构件的远端整段判掉。
+def _surface_depth(point: np.ndarray, triangles: list[tuple[np.ndarray, np.ndarray]], fallback: float) -> float:
+    nearest = None
+    for triangle_2d, depths in triangles:
+        value = _triangle_depth(point, triangle_2d, depths)
+        if value is not None and (nearest is None or value < nearest):
+            nearest = value
+    return fallback if nearest is None else float(nearest)
+
+
+# 重复构件的分组：瓦垄、斗栱攒、椽都是沿某一轴重复排布的。
+# 取质心取值更分散的那一轴作为重复轴，按相邻间隔的中位数一半切分，
+# 每一段就是一垄或一攒。不解析构件键，两个项目的命名规则不同，
+# 按几何分组才对两边都成立。
+def _repetition_clusters(hulls: list[tuple[SourceMesh, Any]]) -> list[list[int]]:
+    if len(hulls) < 2:
+        return [[index] for index in range(len(hulls))]
+    centroids = np.array([[hull.centroid.x, hull.centroid.y] for _mesh, hull in hulls], dtype=float)
+    spread = [len(set(np.round(centroids[:, axis], 1))) for axis in (0, 1)]
+    axis = 0 if spread[0] >= spread[1] else 1
+    order = list(np.argsort(centroids[:, axis]))
+    values = centroids[order, axis]
+    gaps = np.diff(values)
+    positive = gaps[gaps > 1e-6]
+    threshold = float(np.median(positive)) * 0.5 if positive.size else 0.0
+    clusters: list[list[int]] = [[int(order[0])]]
+    for position in range(1, len(order)):
+        if values[position] - values[position - 1] > threshold:
+            clusters.append([])
+        clusters[-1].append(int(order[position]))
+    return clusters
+
+
+# 同族构件在视图坐标下各取投影凸包，并集后只画外边界。
+# 相邻瓦件并成一垄，垄间分界保留，单块瓦的轮廓消失；一攒斗栱并成外轮廓。
+# 每条边界线按中点落在哪个构件的凸包内归属源构件，sourceEntityId 不丢。
+#
+# 凸包对瓦件、斗栱这类近凸构件够用。它是简化表示，视图产物里标明处置方式，
+# 不冒充真实断面（质量基准 3.5）。
+def _group_outline_lines(
+    view: dict[str, Any],
+    manifest: dict[str, Any],
+    meshes: list[SourceMesh],
+    right: np.ndarray,
+    up: np.ndarray,
+    direction: np.ndarray,
+    triangle_pool: "_TrianglePool",
+    crop_bounds: tuple[float, float, float, float] | None,
+    minimum_spacing_mm: float,
+    scale_denominator: float,
+    dropped: list[str],
+    all_triangles: dict[str, list[tuple[np.ndarray, np.ndarray]]] | None = None,
+) -> list[dict[str, Any]]:
+    hulls: list[tuple[SourceMesh, Any]] = []
+    # 每个构件自己的投影三角形，用来给外轮廓线按位置插值真实深度。
+    # 取构件最近点当整条线的深度会让长瓦垄的远端被误判成遮挡，图上成虚线。
+    own_triangles: dict[str, list[tuple[np.ndarray, np.ndarray]]] = {}
+    for mesh in meshes:
+        projected = np.column_stack((mesh.vertices @ right, mesh.vertices @ up))
+        hull = MultiPoint([tuple(point) for point in projected]).convex_hull
+        if hull.geom_type != "Polygon" or hull.area <= 1e-9:
+            continue
+        hulls.append((mesh, hull))
+        own_triangles[mesh.entity_id] = [
+            (np.column_stack((triangle @ right, triangle @ up)), triangle @ direction)
+            for triangle in mesh.vertices[mesh.faces]
+        ]
+    if not hulls:
+        return []
+
+    # 先按重复轴把同族构件分成一垄一组，再在组内取并集。
+    # 直接对全族取并集会把相邻两垄也并成一片，垄分界随之消失，
+    # 而 4.3 在 1:50 要的正是"单垄只画分界"。
+    groups = []
+    for cluster in _repetition_clusters(hulls):
+        merged = unary_union([hulls[index][1] for index in cluster])
+        parts = list(merged.geoms) if hasattr(merged, "geoms") else [merged]
+        groups.extend(part for part in parts if part.geom_type == "Polygon")
+
+    # 可辨间距守卫：并组之后若相邻组的排布间距在成图上仍小于阈值，
+    # 按间隔整组丢弃。丢弃数量写进视图产物，不做静默截断。
+    #
+    # 量的是重复图元的排布间距（质心间距），不是两组边界的间隙。
+    # 相邻瓦垄本来就贴合，边界间隙恒为零，按间隙判会把整片瓦垄丢光。
+    threshold_mm = minimum_spacing_mm * scale_denominator
+    groups.sort(key=lambda polygon: (polygon.centroid.x, polygon.centroid.y))
+    kept: list[Any] = []
+    for group in groups:
+        if kept and kept[-1].centroid.distance(group.centroid) < threshold_mm:
+            dropped.append(f"{len(dropped)}")
+            continue
+        kept.append(group)
+
+    segments: list[tuple[SourceMesh, np.ndarray, np.ndarray]] = []
+    for group in kept:
+        coordinates = list(group.exterior.coords)
+        for first, second in zip(coordinates, coordinates[1:]):
+            middle = ((first[0] + second[0]) / 2, (first[1] + second[1]) / 2)
+            owner = next(
+                (mesh for mesh, hull in hulls if hull.buffer(1e-6).contains(Point(middle))),
+                None,
+            )
+            if owner is None:
+                continue
+            projected = np.asarray([first, second], dtype=float)
+            fallback = float(np.min(owner.vertices @ direction))
+            depths = np.asarray([
+                _surface_depth(np.asarray(point, dtype=float), own_triangles[owner.entity_id], fallback)
+                for point in (first, second)
+            ], dtype=float)
+            segments.append((owner, projected, depths))
+
+    # 垄分界线正落在相邻两垄的交界上，两侧深度几乎相同，若拿同族瓦件当遮挡物
+    # 判定会在容差内反复翻转，图上成虚线。同族构件不参与本族外轮廓的遮挡判定。
+    own_ids = {mesh.entity_id for mesh in meshes}
+    outside_pool = _TrianglePool([
+        item for entity_id, items in all_triangles.items() if entity_id not in own_ids for item in items
+    ]) if all_triangles else triangle_pool
+    interval_results = _parallel_visibility([(item[1], item[2]) for item in segments], outside_pool)
+    lines: list[dict[str, Any]] = []
+    index = 0
+    for (owner, projected, _depths), intervals in zip(segments, interval_results, strict=True):
+        for interval_start, interval_end in intervals:
+            clipped = np.vstack((
+                projected[0] * (1 - interval_start) + projected[1] * interval_start,
+                projected[0] * (1 - interval_end) + projected[1] * interval_end,
+            ))
+            if np.linalg.norm(clipped[1] - clipped[0]) < 0.05:
+                continue
+            for view_clipped in _clip_to_view(clipped, crop_bounds):
+                lines.append(_line_record(view, manifest, owner, view_clipped, "componentBoundary", "detailGroupOutline", index))
+                index += 1
+    return lines
+
+
 def _projected_lines(
     view: dict[str, Any],
     manifest: dict[str, Any],
@@ -79,18 +224,56 @@ def _projected_lines(
     direction: np.ndarray,
     triangle_pool: "_TrianglePool",
     crop_bounds: tuple[float, float, float, float] | None,
+    dropped: list[str] | None = None,
 ) -> list[dict[str, Any]]:
+    # 先按图面细节层级分流（质量基准 4.3）：
+    # omit 不出线，groupOutline 走并集外边界，noJointLines 去掉分缝线，
+    # full 走逐构件出线。规则来自矩阵，这里不认识任何构件名。
+    dropped_groups: list[str] = dropped if dropped is not None else []
+    scale = float(view.get("scaleDenominator", 1))
+    outline_families: dict[str, tuple[list[SourceMesh], float]] = {}
+    direct: list[SourceMesh] = []
+    joint_lines_off: set[str] = set()
+    for mesh in meshes:
+        treatment, rule = _detail_treatment(view, mesh.component_type)
+        if treatment == "omit":
+            continue
+        if treatment == "groupOutline":
+            key = rule["familyZh"] if rule else mesh.component_type
+            bucket = outline_families.setdefault(key, ([], float(rule["minimumOnPaperSpacingMm"]) if rule else 0.5))
+            bucket[0].append(mesh)
+            continue
+        if treatment == "noJointLines":
+            joint_lines_off.add(mesh.entity_id)
+        direct.append(mesh)
+
+    lines: list[dict[str, Any]] = []
+    if outline_families:
+        all_triangles = {
+            mesh.entity_id: [
+                (np.column_stack((triangle @ right, triangle @ up)), triangle @ direction)
+                for triangle in mesh.vertices[mesh.faces]
+            ]
+            for mesh in meshes
+        }
+        for family_meshes, spacing in outline_families.values():
+            lines.extend(_group_outline_lines(
+                view, manifest, family_meshes, right, up, direction,
+                triangle_pool, crop_bounds, spacing, scale, dropped_groups, all_triangles,
+            ))
+
     edge_meta: list[tuple[SourceMesh, str, np.ndarray]] = []
     edge_jobs: list[tuple[np.ndarray, np.ndarray]] = []
-    for mesh in meshes:
+    for mesh in direct:
         for start, end, line_class in _candidate_edges(mesh, direction):
+            if line_class == "feature" and mesh.entity_id in joint_lines_off:
+                continue
             projected, depths = _project(np.vstack((start, end)), right, up, direction)
             if np.linalg.norm(projected[1] - projected[0]) < 0.05:
                 continue
             edge_meta.append((mesh, line_class, projected))
             edge_jobs.append((projected, depths))
     interval_results = _parallel_visibility(edge_jobs, triangle_pool)
-    lines: list[dict[str, Any]] = []
     line_index = 0
     for (mesh, line_class, projected), intervals in zip(edge_meta, interval_results, strict=True):
         for interval_start, interval_end in intervals:
@@ -413,6 +596,8 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
     triangle_pool = _TrianglePool(projected_triangles)
     lines: list[dict[str, Any]] = []
     material_regions: list[dict[str, Any]] = []
+    # 可辨间距守卫丢掉的组数随视图产物记录，不做静默截断
+    dropped_groups: list[str] = []
     if view.get("sectionPlane"):
         plane = view["sectionPlane"]
         normal = np.asarray(plane["normal"], dtype=float)
@@ -447,9 +632,9 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
         # 只剩几个柱截面，剖面上看不到后面那一榀的梁架，都不成图。
         # 剖切面与观察者之间的构件按剖切规则移除，其余按可见轮廓投影。
         beyond = [mesh for mesh in selected if _is_beyond_plane(mesh, normal, origin, direction)]
-        lines.extend(_projected_lines(view, manifest, beyond, right, up, direction, triangle_pool, crop_bounds))
+        lines.extend(_projected_lines(view, manifest, beyond, right, up, direction, triangle_pool, crop_bounds, dropped_groups))
     else:
-        lines.extend(_projected_lines(view, manifest, selected, right, up, direction, triangle_pool, crop_bounds))
+        lines.extend(_projected_lines(view, manifest, selected, right, up, direction, triangle_pool, crop_bounds, dropped_groups))
     if not lines:
         raise ValueError(f"view {view['key']} generated no source-bound lines")
     all_points = np.asarray([point for line in lines for point in line["pointsMm"]], dtype=float)
@@ -469,6 +654,9 @@ def generate_view_geometry(view: dict[str, Any], manifest: dict[str, Any], meshe
         "viewFrame": {"direction": view["direction"], "right": view["right"], "up": view["up"]},
         "sectionPlane": view.get("sectionPlane"),
         "cropBoundsMm": crop_bounds,
+        # 本视图实际执行的图面细节层级与按可辨间距丢弃的组数（质量基准 4.3）
+        "detailRules": view.get("detailRules", []),
+        "detailDroppedGroupCount": len(dropped_groups),
         "boundsMm": bounds,
         "lines": sorted(lines, key=lambda item: item["lineId"]),
         "materialRegions": sorted(material_regions, key=lambda item: item["regionId"]),

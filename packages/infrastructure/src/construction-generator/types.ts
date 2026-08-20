@@ -77,7 +77,31 @@ export interface BuildingForm {
   readonly ridgeHeight: SourcedLength;
 
   readonly enclosure: EnclosureForm;
+
+  // 山面做法。资料判不出屋顶形式时传 null，生成器跳过博风与山面脊饰
+  // 并记未知项，不按常见做法默认补一种。
+  readonly gable: GableForm | null;
+  // 飞椽。清式大式带斗栱做法有飞椽，但有没有要由资料说了算，
+  // 判不出时传 null，生成器记未知项。
+  readonly flyRafter: FlyRafterForm | null;
+
   readonly materials: Readonly<Record<ConstructionPart, string>>;
+}
+
+export interface GableForm {
+  // 屋顶形式的中文名，随构件显示，取自形制判断记录
+  readonly roofFormZh: string;
+  readonly bargeBoardThickness: SourcedLength;
+  readonly bargeBoardWidth: SourcedLength;
+  // 山面挑出。硬山为零，悬山按出挑值。
+  readonly overhang: SourcedLength;
+}
+
+export interface FlyRafterForm {
+  readonly sectionSize: SourcedLength;
+  readonly projection: SourcedLength;
+  // 檐口封闭构件（里口木、闸挡板一类）的高度
+  readonly eaveClosureHeight: SourcedLength;
 }
 
 export interface BeamSection {
@@ -93,6 +117,8 @@ export type ConstructionPart =
   | "architrave"
   | "beam"
   | "kingPost"
+  | "gable"
+  | "flyRafter"
   | "bracket"
   | "purlin"
   | "rafter"

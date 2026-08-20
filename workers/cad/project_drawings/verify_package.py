@@ -17,7 +17,7 @@ import trimesh
 from PIL import Image
 from fontTools.ttLib import TTFont
 from pypdf import PdfReader
-from shapely.geometry import LineString, Point, Polygon, box
+from shapely.geometry import LineString, MultiPoint, Point, Polygon, box
 from OCP.BRepAdaptor import BRepAdaptor_Curve
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCP.GCPnts import GCPnts_QuasiUniformDeflection
@@ -84,7 +84,11 @@ def _independent_ocp_section(shape: cq.Shape, normal: np.ndarray, offset: float)
     return segments
 
 
-def _independent_candidate_edges(vertices: np.ndarray, faces: np.ndarray, direction: np.ndarray) -> list[tuple[np.ndarray, np.ndarray]]:
+# skip_features 对应细节层级的 noJointLines：只去掉分缝线（相邻面夹角超限
+# 的折线），构件轮廓线保留。
+def _independent_candidate_edges(
+    vertices: np.ndarray, faces: np.ndarray, direction: np.ndarray, skip_features: bool = False,
+) -> list[tuple[np.ndarray, np.ndarray]]:
     triangles = vertices[faces]
     normals = np.cross(triangles[:, 1] - triangles[:, 0], triangles[:, 2] - triangles[:, 0])
     lengths = np.linalg.norm(normals, axis=1)
@@ -100,7 +104,8 @@ def _independent_candidate_edges(vertices: np.ndarray, faces: np.ndarray, direct
             facing = [float(np.dot(normals[index], direction)) for index in attached]
             normal_dot = float(np.dot(normals[attached[0]], normals[attached[1]]))
             keep = facing[0] * facing[1] <= 0 and max(abs(facing[0]), abs(facing[1])) > 1e-5
-            keep = keep or (normal_dot < math.cos(math.radians(15.0)) and min(facing) <= 1e-5)
+            if not keep and not skip_features:
+                keep = normal_dot < math.cos(math.radians(15.0)) and min(facing) <= 1e-5
         if keep:
             result.append((vertices[start], vertices[end]))
     return result
@@ -183,17 +188,130 @@ def _independent_view_line_sets(matrix: dict[str, Any], manifest: dict[str, Any]
         crop_bounds = view.get("cropBoundsMm")
         expected: set[tuple[str, tuple[float, float], tuple[float, float]]] = set()
 
+        # 图面细节层级（质量基准 4.3）。规则来自矩阵，这里按同一份规则
+        # 独立实现一遍：omit 不出线，groupOutline 走凸包并集外边界，
+        # noJointLines 去掉分缝线。制图侧的函数一个都不引用。
+        rules = view.get("detailRules", [])
+
+        def treatment_of(entity_id: str) -> tuple[str, dict[str, Any] | None]:
+            kind = component_type[entity_id]
+            for rule in rules:
+                if kind in rule["componentTypes"]:
+                    return rule["treatment"], rule
+            return "full", None
+
+        def add_group_outline(family_ids: list[str], spacing_mm: float) -> None:
+            hulls: list[tuple[str, Any]] = []
+            for entity_id in family_ids:
+                vertices, _faces = selected[entity_id]
+                points = np.column_stack((vertices @ right_vector, vertices @ up_vector))
+                hull = MultiPoint([tuple(point) for point in points]).convex_hull
+                if hull.geom_type == "Polygon" and hull.area > 1e-9:
+                    hulls.append((entity_id, hull))
+            if not hulls:
+                return
+            # 先按重复轴分组再在组内取并集，否则相邻两垄会并成一片
+            centroids = np.array([[hull.centroid.x, hull.centroid.y] for _entity_id, hull in hulls], dtype=float)
+            groups = []
+            if len(hulls) < 2:
+                clusters = [[index] for index in range(len(hulls))]
+            else:
+                spread = [len(set(np.round(centroids[:, axis], 1))) for axis in (0, 1)]
+                axis = 0 if spread[0] >= spread[1] else 1
+                order = list(np.argsort(centroids[:, axis]))
+                values = centroids[order, axis]
+                gaps = np.diff(values)
+                positive = gaps[gaps > 1e-6]
+                cut = float(np.median(positive)) * 0.5 if positive.size else 0.0
+                clusters = [[int(order[0])]]
+                for position in range(1, len(order)):
+                    if values[position] - values[position - 1] > cut:
+                        clusters.append([])
+                    clusters[-1].append(int(order[position]))
+            for cluster in clusters:
+                merged = unary_union([hulls[index][1] for index in cluster])
+                parts = list(merged.geoms) if hasattr(merged, "geoms") else [merged]
+                groups.extend(part for part in parts if part.geom_type == "Polygon")
+            threshold = spacing_mm * float(view["scaleDenominator"])
+            groups.sort(key=lambda polygon: (polygon.centroid.x, polygon.centroid.y))
+            kept: list[Any] = []
+            for group in groups:
+                # 量重复图元的排布间距（质心间距），不是边界间隙
+                if kept and kept[-1].centroid.distance(group.centroid) < threshold:
+                    continue
+                kept.append(group)
+            # 同族构件不参与本族外轮廓的遮挡判定：垄分界正落在两垄交界上，
+            # 两侧深度几乎相同，拿同族当遮挡物会在容差内反复翻转
+            own = set(family_ids)
+            projected_triangles: list[tuple[np.ndarray, np.ndarray]] = []
+            for other_id, (vertices, faces) in selected.items():
+                if other_id in own:
+                    continue
+                for triangle in vertices[faces]:
+                    projected_triangles.append((np.column_stack((triangle @ right_vector, triangle @ up_vector)), triangle @ direction))
+            for group in kept:
+                coordinates = list(group.exterior.coords)
+                for first, second in zip(coordinates, coordinates[1:]):
+                    middle = ((first[0] + second[0]) / 2, (first[1] + second[1]) / 2)
+                    owner = next((entity_id for entity_id, hull in hulls if hull.buffer(1e-6).contains(Point(middle))), None)
+                    if owner is None:
+                        continue
+                    segment_2d = np.asarray([first, second], dtype=float)
+                    # 外轮廓线按自己的位置取深度，取构件最近点会误判遮挡
+                    owner_vertices, owner_faces = selected[owner]
+                    owner_triangles = [
+                        (np.column_stack((triangle @ right_vector, triangle @ up_vector)), triangle @ direction)
+                        for triangle in owner_vertices[owner_faces]
+                    ]
+                    fallback = float(np.min(owner_vertices @ direction))
+                    segment_depths = np.asarray([
+                        min(
+                            (value for value in (
+                                _independent_triangle_depth(np.asarray(point, dtype=float), triangle_2d, depths)
+                                for triangle_2d, depths in owner_triangles
+                            ) if value is not None),
+                            default=fallback,
+                        )
+                        for point in (first, second)
+                    ], dtype=float)
+                    for left, right in _independent_visibility_intervals(segment_2d, segment_depths, projected_triangles):
+                        clipped = np.vstack((
+                            segment_2d[0] * (1 - left) + segment_2d[1] * left,
+                            segment_2d[0] * (1 - right) + segment_2d[1] * right,
+                        ))
+                        if np.linalg.norm(clipped[1] - clipped[0]) >= 0.05:
+                            for view_clipped in _independent_crop(clipped, crop_bounds):
+                                expected.add(_segment_key(owner, view_clipped))
+
         # 遮挡投影对全模型判可见，投影集合本身可以另选一部分构件。
         # 剖面与平面只投影剖切面之外的部分，剖切面与观察者之间的构件被移除。
         def add_projection(projection_ids: set[str]) -> None:
+            families: dict[str, tuple[list[str], float]] = {}
+            direct: set[str] = set()
+            joint_off: set[str] = set()
+            for entity_id in projection_ids:
+                treatment, rule = treatment_of(entity_id)
+                if treatment == "omit":
+                    continue
+                if treatment == "groupOutline":
+                    key = rule["familyZh"] if rule else component_type[entity_id]
+                    bucket = families.setdefault(key, ([], float(rule["minimumOnPaperSpacingMm"]) if rule else 0.5))
+                    bucket[0].append(entity_id)
+                    continue
+                if treatment == "noJointLines":
+                    joint_off.add(entity_id)
+                direct.add(entity_id)
+            for family_ids, spacing in families.values():
+                add_group_outline(family_ids, spacing)
+
             projected_triangles: list[tuple[np.ndarray, np.ndarray]] = []
             for vertices, faces in selected.values():
                 for triangle in vertices[faces]:
                     projected_triangles.append((np.column_stack((triangle @ right_vector, triangle @ up_vector)), triangle @ direction))
             for entity_id, (vertices, faces) in selected.items():
-                if entity_id not in projection_ids:
+                if entity_id not in direct:
                     continue
-                for start, end in _independent_candidate_edges(vertices, faces, direction):
+                for start, end in _independent_candidate_edges(vertices, faces, direction, skip_features=entity_id in joint_off):
                     segment_3d = np.vstack((start, end))
                     segment_2d = np.column_stack((segment_3d @ right_vector, segment_3d @ up_vector))
                     if np.linalg.norm(segment_2d[1] - segment_2d[0]) < 0.05:

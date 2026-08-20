@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 import type { AddressInfo } from "node:net";
 import { PassThrough } from "node:stream";
 
-import type { ArtifactRequirementMatrix } from "@gujian/domain";
+import { resolveDetailRules, type ArtifactRequirementMatrix } from "@gujian/domain";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { CadJobLedger } from "./cad-ledger.js";
@@ -42,6 +42,7 @@ function matrix(projectId: string, projectRevisionId: string, geometryRevisionId
       id: viewId, key: "floor-plan", displayLabelZh: "平面图", drawingRef: "平-01", kind: "floorPlan",
       scaleDenominator: 50, sheetId, viewportRectMm: [20, 70, 380, 220], direction: [0, 0, 1], right: [1, 0, 0], up: [0, 1, 0],
       sectionPlane: { normal: [0, 0, 1], offsetMm: 500 }, sourceTypes: [], sourceEntityIds: [], sourceEvidenceRefs: [],
+      detailRules: resolveDetailRules(50),
     }],
     sheets: [{ id: sheetId, drawingNumber: "P-01", displayLabelZh: "平面图", pageMm: [841, 594], viewIds: [viewId] }],
   };

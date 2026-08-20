@@ -59,11 +59,14 @@ function gaoduForm(overrides: Partial<BuildingForm> = {}): BuildingForm {
     tileThickness: length(18),
     ridgeHeight: length(600, "demo"),
     enclosure: { front: "open", sides: "walled", back: "walled" },
+    gable: null,
+    flyRafter: null,
     materials: {
       terrace: "stone", stair: "stone", columnBase: "stone", column: "stone",
       architrave: "timber", beam: "timber", kingPost: "timber",
       bracket: "timber", purlin: "timber", rafter: "timber",
       roofBoard: "timber", tile: "ceramic", ridge: "ceramic", wall: "brick",
+      gable: "timber", flyRafter: "timber",
     },
     ...overrides,
   };
@@ -286,5 +289,69 @@ describe("屋面沿举架斜置", () => {
     };
     expect(zStart("roof-board:0")).toBeGreaterThan(zStart("rafter:0:0"));
     expect(zStart("pan-tile:0:0")).toBeGreaterThan(zStart("roof-board:0"));
+  });
+});
+
+// 质量基准 2.3 要求演示项目之间构件深度一致。高都缺的类型不能默认省略：
+// 判得出就按形制生成，判不出就记未知项写清需要什么资料。
+describe("山面与檐口做法", () => {
+  const gable = {
+    roofFormZh: "悬山",
+    bargeBoardThickness: length(40, "demo"),
+    bargeBoardWidth: length(300, "demo"),
+    overhang: length(400, "demo"),
+  };
+  const flyRafter = {
+    sectionSize: length(70, "demo"),
+    projection: length(500, "demo"),
+    eaveClosureHeight: length(120, "demo"),
+  };
+
+  it("屋顶形式判不出时不生成山面，记未知项并写清需要什么资料", () => {
+    const result = generate();
+    expect(result.partCounts.gableBoard ?? 0).toBe(0);
+    const unknown = result.unknowns.find((item) => item.reasonCode === "ROOF_FORM_NOT_DETERMINED");
+    expect(unknown?.requiredEvidence.length).toBeGreaterThan(0);
+    expect(unknown?.blocksFormalEligibility).toBe(true);
+  });
+
+  it("檐口做法判不出时不生成飞椽，同样记未知项", () => {
+    const result = generate();
+    expect(result.partCounts.flyRafter ?? 0).toBe(0);
+    expect(result.unknowns.some((item) => item.reasonCode === "FLY_RAFTER_NOT_DETERMINED")).toBe(true);
+  });
+
+  // 博风沿前后两坡各三段，两山共十二段；山面脊饰两山各一件
+  it("声明了屋顶形式就生成博风板与山面脊饰，两山各一组", () => {
+    const result = generate(gaoduForm({ gable }));
+    expect(result.partCounts.gableBoard).toBe(12);
+    expect(result.partCounts.gableRidgeCap).toBe(2);
+    expect(result.unknowns.some((item) => item.reasonCode === "ROOF_FORM_NOT_DETERMINED")).toBe(false);
+  });
+
+  it("声明了飞椽就生成飞椽与檐口封闭", () => {
+    const result = generate(gaoduForm({ flyRafter }));
+    expect(result.partCounts.flyRafter).toBeGreaterThan(10);
+    expect(result.partCounts.eaveClosure).toBe(1);
+    expect(result.unknowns.some((item) => item.reasonCode === "FLY_RAFTER_NOT_DETERMINED")).toBe(false);
+  });
+
+  it("补出来的构件同样通过几何契约校验", () => {
+    const result = generate(gaoduForm({ gable, flyRafter }));
+    const parsed = ProjectDrivenGeometrySpecSchema.safeParse({
+      schemaVersion: "2.0",
+      id: "3b241101-e2bb-4255-8caf-4136c566a962",
+      projectId: "2fa4684c-f640-5c45-99cd-407305343f3f",
+      projectRevisionId: "d2511b25-9b51-562d-bb39-a05305712053",
+      buildingId: "9f8e7d6c-5b4a-4392-8170-fedcba987654",
+      inputHash: "a".repeat(64),
+      coordinateSystem: { name: "项目局部坐标", axisOrder: "XYZ", upAxis: "Z", lengthUnit: "mm", origin: [0, 0, 0] },
+      tolerances: { modellingMm: 0.01, interfaceMm: 0.5, tessellationMm: 0.5 },
+      objects: result.objects,
+      interfaces: result.interfaces,
+      unknowns: result.unknowns,
+      createdAt: "2026-08-19T00:00:00Z",
+    });
+    expect(parsed.success, parsed.success ? "" : JSON.stringify(parsed.error.issues.slice(0, 3))).toBe(true);
   });
 });

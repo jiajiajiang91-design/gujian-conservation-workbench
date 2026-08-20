@@ -1,6 +1,7 @@
 import type { ProjectHead } from "@gujian/application";
 import {
   ArtifactRequirementMatrixSchema,
+  resolveDetailRules,
   type ArtifactRequirementMatrix,
   type GeometryRevision,
   type ProjectDrivenGeometrySpec,
@@ -56,6 +57,9 @@ export function buildArtifactMatrix(head: ProjectHead, geometry: GeometryRevisio
     sourceTypes: [...new Set(view.targetStableKeys.map((key) => objectsByStableKey.get(key)!.componentType))],
     sourceEntityIds: view.targetStableKeys.map((key) => objectsByStableKey.get(key)!.id),
     sourceEvidenceRefs: view.sourceEvidenceRefs,
+    // 图面细节层级按本视图比例解析（质量基准 4.3）。规则随矩阵下发，
+    // 制图侧不自己判断构件族与比例的对应关系。
+    detailRules: resolveDetailRules(view.scaleDenominator),
   }));
   const viewByKey = new Map(requirements.views.map((item, index) => [item.key, views[index]!]));
   const sheets = requirements.sheets.map((sheet) => ({

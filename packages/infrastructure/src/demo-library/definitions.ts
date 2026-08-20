@@ -132,6 +132,19 @@ export interface DemoArchetype {
   readonly columnSection: "round" | "square";
   readonly bracketSetsPerBay: number;
   readonly enclosure: { readonly front: "open" | "walled"; readonly sides: "walled" | "open"; readonly back: "walled" | "open" };
+  // 山面做法与飞椽都要有形制判断依据才声明。资料判不出就整项省略，
+  // 生成器据此记未知项，不按常见做法默认补一种。
+  readonly gable?: {
+    readonly roofFormZh: string;
+    readonly bargeBoardThicknessMm: number;
+    readonly bargeBoardWidthMm: number;
+    readonly overhangMm: number;
+  };
+  readonly flyRafter?: {
+    readonly sectionSizeMm: number;
+    readonly projectionMm: number;
+    readonly eaveClosureHeightMm: number;
+  };
   readonly materials: Readonly<Record<string, string>>;
   // 哪些尺寸是照片估算，其余按规则推算标注
   readonly estimatedDimensionKeys: readonly string[];

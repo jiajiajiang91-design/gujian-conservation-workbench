@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { DrawingDetailRuleSchema } from "./drawing-detail-policy.js";
+
 const Vec3Schema = z.tuple([z.number(), z.number(), z.number()]);
 const RectSchema = z.tuple([z.number(), z.number(), z.number().positive(), z.number().positive()]);
 const CropBoundsSchema = z.tuple([z.number(), z.number(), z.number(), z.number()])
@@ -32,6 +34,9 @@ export const ArtifactViewRequirementSchema = z.object({
   sourceEntityIds: z.array(z.uuid()).default([]),
   sourceEvidenceRefs: z.array(z.string().min(1)).default([]),
   cropBoundsMm: CropBoundsSchema.optional(),
+  // 质量基准 4.3 的图面细节层级，按本视图比例解析后随矩阵下发。
+  // 制图侧只执行这里的规则，不自己判断比例与构件族的对应关系。
+  detailRules: z.array(DrawingDetailRuleSchema).default([]),
 }).strict();
 
 export const ArtifactSheetRequirementSchema = z.object({
