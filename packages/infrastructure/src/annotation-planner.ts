@@ -4,7 +4,7 @@ import {
   type DrawingAnnotationKind,
   type ProjectDrivenGeometrySpec,
 } from "@gujian/domain";
-import { AXIS_SOURCE_PRIORITY, LEVEL_SOURCES } from "@gujian/domain";
+import { AXIS_MINIMUM_ON_PAPER_SPACING_MM, AXIS_SOURCE_PRIORITY, LEVEL_SOURCES } from "@gujian/domain";
 
 // 图面标注的规划：把项目事实与几何派生成一份标注请求，随成果矩阵下发。
 //
@@ -20,6 +20,9 @@ type GeometryObject = ProjectDrivenGeometrySpec["objects"][number];
 
 export interface PlannedAxis {
   readonly label: string;
+  // 这条轴线在图面上的走向：u 表示位置沿视图横轴、线竖着画；
+  // v 表示位置沿视图纵轴、线横着画。平面两族都有，立面剖面只有 u。
+  readonly along: "u" | "v";
   // 视图二维坐标里的位置，与投影线同一坐标系
   readonly positionMm: number;
   // 这条轴线是按什么定的，随图面显示
@@ -177,6 +180,8 @@ function weakestBasis(objects: readonly GeometryObject[]): string {
 function planAxisFamily(
   spec: ProjectDrivenGeometrySpec,
   along: "x" | "y",
+  onPaper: "u" | "v",
+  scaleDenominator: number,
   maxCount: number,
 ): { axes: PlannedAxis[]; dropped: number } {
   // 只有声明了位置出处的构件才能定轴。位置由生成器自行排布的构件
@@ -197,14 +202,30 @@ function planAxisFamily(
       return { position: along === "x" ? point[0] : point[1], id: item.id };
     }));
     if (clusters.length < 2) continue;
+    // 可辨间距守卫：轴号圈在成图上挤到一起就读不出是哪一条。
+    // 间距不足的整条丢弃并计数，不缩圈也不压线。
+    const threshold = AXIS_MINIMUM_ON_PAPER_SPACING_MM * scaleDenominator;
+    const legible: typeof clusters = [];
+    let crowded = 0;
+    for (const cluster of clusters) {
+      const previous = legible[legible.length - 1];
+      // 首尾两条是建筑外轮廓，无论多挤都保留：丢掉它们等于丢掉总尺寸的依据
+      const isEdge = cluster === clusters[0] || cluster === clusters[clusters.length - 1];
+      if (previous && !isEdge && cluster.position - previous.position < threshold) {
+        crowded += 1;
+        continue;
+      }
+      legible.push(cluster);
+    }
     const suffix = groupIndex === 0 ? "柱心线" : "墙心线";
-    const axes = clusters.slice(0, maxCount).map((cluster, index) => ({
+    const axes = legible.slice(0, maxCount).map((cluster, index) => ({
       label: axisLabel(index, along === "y"),
+      along: onPaper,
       positionMm: Math.round(cluster.position * 10) / 10,
       basisZh: `${BASIS_LABEL[weakestBasis(cluster.ids.map((id) => byId.get(id)!))] ?? "来源不明"}${suffix}`,
       sourceEntityIds: cluster.ids,
     }));
-    return { axes, dropped: Math.max(0, clusters.length - maxCount) };
+    return { axes, dropped: crowded + Math.max(0, legible.length - maxCount) };
   }
   return { axes: [], dropped: 0 };
 }
@@ -366,10 +387,16 @@ export function planViewAnnotations(input: AnnotationPlanInput): ViewAnnotationP
   // 视图横轴指向哪一族，就取哪一族的轴线。平面的横轴通常是 X，
   // 纵剖面的横轴是 Y，两者取到的是不同的一族，轴号因此互不冲突。
   const along: "x" | "y" = Math.abs(view.right[0] ?? 0) >= Math.abs(view.right[1] ?? 0) ? "x" : "y";
+  const crossAlong: "x" | "y" = along === "x" ? "y" : "x";
   const axisResult = cap("axisGrid") > 0
-    ? planAxisFamily(spec, along, cap("axisGrid"))
+    ? planAxisFamily(spec, along, "u", view.scaleDenominator, cap("axisGrid"))
     : { axes: [], dropped: 0 };
-  note("axisGrid", axisResult.dropped);
+  // 平面两个方向的轴网都要出，一张只有一族轴号的平面是半套轴网。
+  // 立面与剖面只出与画面平行的那一族，另一族在这类视图上退化成一个点。
+  const crossResult = isPlan && cap("axisGrid") > 0
+    ? planAxisFamily(spec, crossAlong, "v", view.scaleDenominator, cap("axisGrid"))
+    : { axes: [], dropped: 0 };
+  note("axisGrid", axisResult.dropped + crossResult.dropped);
 
   const levelResult = cap("levelMark") > 0
     ? planLevels(spec, documentedElevations(input.head), cap("levelMark"))
@@ -403,7 +430,7 @@ export function planViewAnnotations(input: AnnotationPlanInput): ViewAnnotationP
   }
 
   return {
-    axes: axisResult.axes,
+    axes: [...axisResult.axes, ...crossResult.axes],
     levels: levelResult.levels,
     labels: labelResult.labels,
     sectionMarks,

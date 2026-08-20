@@ -100,8 +100,12 @@ class NativeDxfWriter:
 
     # 纸面标注排布的共用常量（GB/T 50001 图线与字体一章的取值区间内）。
     # 模型空间按视图比例放大：纸上 8 mm 在 1:100 的图上是 800 mm。
-    DIMENSION_OFFSET_PAPER_MM = 8.0
-    TITLE_OFFSET_PAPER_MM = 15.0
+    CHAIN_OFFSET_PAPER_MM = 8.0
+    DIMENSION_OFFSET_PAPER_MM = 16.0
+    AXIS_BUBBLE_OFFSET_PAPER_MM = 26.0
+    AXIS_BUBBLE_RADIUS_PAPER_MM = 3.5
+    TITLE_OFFSET_PAPER_MM = 36.0
+    LEVEL_OFFSET_PAPER_MM = 4.0
     QUALIFICATION_OFFSET_PAPER_MM = 6.0
 
     def _add_model_space(self, doc) -> None:
@@ -169,6 +173,61 @@ class NativeDxfWriter:
             })
             note.set_location(anchor)
             self._register(note, cad_id, "annotation", annotation)
+            return
+
+        if kind == "axisGrid":
+            far, near = placed[0], placed[1]
+            along = annotation["along"]
+            reach = self.AXIS_BUBBLE_OFFSET_PAPER_MM * scale
+            radius = self.AXIS_BUBBLE_RADIUS_PAPER_MM * scale
+            if along == "u":
+                end = (near[0], near[1] - reach + radius)
+                bubble = (near[0], near[1] - reach)
+            else:
+                end = (near[0] - reach + radius, near[1])
+                bubble = (near[0] - reach, near[1])
+            line = msp.add_line(far, end, dxfattribs={"layer": layer})
+            self._register(line, cad_id, "annotation", annotation)
+            circle = msp.add_circle(bubble, radius, dxfattribs={"layer": layer})
+            self._register(circle, _cad_id(self.ir["drawingIrSha256"], annotation["requirementId"] + ":bubble"), "annotation", annotation)
+            label = msp.add_text(annotation["text"], dxfattribs={
+                "layer": layer, "height": height, "style": "GJ-TEXT",
+                "insert": (bubble[0] - height / 3, bubble[1] - height / 2),
+            })
+            self._register(label, _cad_id(self.ir["drawingIrSha256"], annotation["requirementId"] + ":text"), "annotation", annotation)
+            return
+
+        if kind == "axisDimensionChain":
+            first, second = placed[0], placed[1]
+            offset = self.CHAIN_OFFSET_PAPER_MM * scale
+            if annotation["along"] == "u":
+                base = ((first[0] + second[0]) / 2, first[1] - offset)
+                angle = 0
+            else:
+                base = (first[0] - offset, (first[1] + second[1]) / 2)
+                angle = 90
+            dimension = msp.add_linear_dim(
+                base=base, p1=first, p2=second, angle=angle,
+                dimstyle="GJ-DIM", dxfattribs={"layer": layer},
+            )
+            dimension.render()
+            self._register(dimension.dimension, cad_id, "annotation", annotation)
+            return
+
+        if kind == "levelMark":
+            point = placed[0]
+            offset = self.LEVEL_OFFSET_PAPER_MM * scale
+            arrow = self.AXIS_BUBBLE_RADIUS_PAPER_MM * scale
+            base = (point[0] + offset, point[1])
+            leader = msp.add_line(point, base, dxfattribs={"layer": layer})
+            self._register(leader, cad_id, "annotation", annotation)
+            for target in ((base[0] + arrow, base[1] + arrow), (base[0] + arrow, base[1] - arrow)):
+                msp.add_line(base, target, dxfattribs={"layer": layer})
+            label = msp.add_text(annotation["text"], dxfattribs={
+                "layer": layer, "height": height, "style": "GJ-TEXT",
+                "insert": (base[0] + arrow + height / 2, base[1] + height / 4),
+            })
+            self._register(label, _cad_id(self.ir["drawingIrSha256"], annotation["requirementId"] + ":text"), "annotation", annotation)
             return
 
         if kind == "conditionCandidate":

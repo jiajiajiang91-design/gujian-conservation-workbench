@@ -15,6 +15,10 @@ import { z } from "zod";
 
 export const ANNOTATION_TEXT_HEIGHT_MM = 3.0;
 
+// 相邻轴号圈在成图上的最小中心间距。圈直径 7 mm，再留 1 mm 净距。
+// 间距不足的轴线按规则丢弃并计数，不允许两个轴号叠在一起。
+export const AXIS_MINIMUM_ON_PAPER_SPACING_MM = 8.0;
+
 export const DrawingAnnotationKindSchema = z.enum([
   // 图面基础：图名、图形总尺寸、资格声明、演示观察候选
   "viewTitle",

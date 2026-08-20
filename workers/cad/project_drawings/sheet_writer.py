@@ -25,16 +25,36 @@ def _hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def annotation_bands(requirement: dict[str, Any]) -> tuple[float, float, float]:
+    """本视图要留的左、右、下三条标注带宽度，单位纸面毫米。"""
+    plan = requirement.get("annotationPlan") or {}
+    axes = plan.get("axes", [])
+    has_u_axes = any(item["along"] == "u" for item in axes)
+    has_v_axes = any(item["along"] == "v" for item in axes)
+    has_levels = bool(plan.get("levels"))
+    left = AXIS_BUBBLE_OFFSET_PAPER_MM + AXIS_BUBBLE_RADIUS_PAPER_MM if has_v_axes else EDGE_CLEARANCE_PAPER_MM
+    right = LEVEL_BAND_PAPER_MM if has_levels else EDGE_CLEARANCE_PAPER_MM
+    bottom = ANNOTATION_BAND_PAPER_MM if has_u_axes else TITLE_OFFSET_PAPER_MM - AXIS_BUBBLE_OFFSET_PAPER_MM + 12.0
+    return left, right, bottom
+
+
 def _view_transform(view: dict[str, Any], requirement: dict[str, Any]) -> Callable[[list[float]], tuple[float, float]]:
     bounds = view["boundsMm"]
     rect = requirement["viewportRectMm"]
     scale = float(requirement["scaleDenominator"])
     model_center = ((bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2)
-    paper_center = (rect[0] + rect[2] / 2, rect[1] + rect[3] / 2)
     model_width = (bounds[1][0] - bounds[0][0]) / scale
     model_height = (bounds[1][1] - bounds[0][1]) / scale
-    if model_width > rect[2] - 8 or model_height > rect[3] - 12:
-        raise ValueError(f"view {view['viewKey']} does not fit its frozen viewport at 1:{int(scale)}")
+    left, right, bottom = annotation_bands(requirement)
+    drawing_width = rect[2] - left - right
+    drawing_height = rect[3] - bottom - EDGE_CLEARANCE_PAPER_MM
+    paper_center = (rect[0] + left + drawing_width / 2, rect[1] + bottom + drawing_height / 2)
+    if model_width > drawing_width or model_height > drawing_height:
+        raise ValueError(
+            f"view {view['viewKey']} does not fit its frozen viewport at 1:{int(scale)}: "
+            f"needs {model_width + left + right:.0f} x {model_height + bottom + EDGE_CLEARANCE_PAPER_MM:.0f} mm, "
+            f"viewport is {rect[2]:.0f} x {rect[3]:.0f} mm"
+        )
     def transform(point: list[float]) -> tuple[float, float]:
         return paper_center[0] + (point[0] - model_center[0]) / scale, paper_center[1] + (point[1] - model_center[1]) / scale
     return transform
@@ -62,48 +82,47 @@ def _title_block_rect(page_width: float) -> tuple[float, float, float, float]:
 # 各自只负责把图元翻成自己的输出格式，不再各写一遍该标什么、标在哪。
 #
 # 标注内容与模型坐标锚点来自 IR，这里只做两件事：把锚点按视图变换换算到
-# 纸面，再按制图惯例加纸面偏移。尺寸线在图形下方 8 mm，图名再下 7 mm；
-# 两者与图签横向重叠时抬到图签之上，否则会压在图签文字上。
-DIMENSION_OFFSET_PAPER_MM = 8.0
-TITLE_OFFSET_PAPER_MM = 15.0
+# 纸面，再按制图惯例加纸面偏移。
+#
+# 图形下沿之外自上而下依次是：轴间尺寸链、图形总尺寸、轴号圈、图名。
+# 视口按本视图实际会画的标注预留边带，图形在余下的范围里居中，不再简单
+# 居中后往外画——那样标注会越出视口落到图签上。边带按需留：没有轴网的
+# 视图不必白留轴号圈的位置，否则每张图都要为不存在的标注放大一圈。
+CHAIN_OFFSET_PAPER_MM = 8.0
+DIMENSION_OFFSET_PAPER_MM = 16.0
+AXIS_BUBBLE_OFFSET_PAPER_MM = 26.0
+AXIS_BUBBLE_RADIUS_PAPER_MM = 3.5
+TITLE_OFFSET_PAPER_MM = 36.0
+ANNOTATION_BAND_PAPER_MM = 42.0
 DIMENSION_TICK_PAPER_MM = 2.0
+# 标高符号排在图形右沿之外
+LEVEL_OFFSET_PAPER_MM = 4.0
+LEVEL_BAND_PAPER_MM = 30.0
+# 图形与视口边的最小净距
+EDGE_CLEARANCE_PAPER_MM = 4.0
 
 
 class PaperPrimitive(NamedTuple):
-    kind: str                                  # line 或 text
+    kind: str                                  # line、circle 或 text
     points: tuple[tuple[float, float], ...]    # 纸面毫米，y 自页底向上
     text: str | None
-    height_mm: float
+    height_mm: float                           # text 用字高，circle 用半径
     align: str                                 # start 或 middle
-    tone: str                                  # ink、dim 或 condition
+    tone: str                                  # ink、dim、axis 或 condition
 
 
 def _annotation_rows(view: dict[str, Any], requirement: dict[str, Any], page_width: float) -> tuple[float, float, float, float]:
+    """图形下沿的纸面位置与两条标注行的高度。视口已含标注带，无需再避让图签。"""
     bounds = view["boundsMm"]
     rect = requirement["viewportRectMm"]
-    scale = float(requirement["scaleDenominator"])
-    drawn_height = (bounds[1][1] - bounds[0][1]) / scale
-    drawn_bottom = rect[1] + rect[3] / 2 - drawn_height / 2
     transform = _view_transform(view, requirement)
-    x1 = transform([bounds[0][0], bounds[0][1]])[0]
+    x1, drawn_bottom = transform([bounds[0][0], bounds[0][1]])
     x2 = transform([bounds[1][0], bounds[0][1]])[0]
-
     title_left, _title_bottom, title_right, title_top = _title_block_rect(page_width)
-    floor = title_top + TITLE_BLOCK_CLEARANCE_MM
-    label_x = min(x1, rect[0])
-
-    def overlaps(left: float, right: float) -> bool:
-        return right > title_left and left < title_right
-
-    label_y = drawn_bottom - TITLE_OFFSET_PAPER_MM
-    if overlaps(label_x, label_x + 60.0) and label_y < floor:
-        label_y = floor
-    dimension_y = max(drawn_bottom - DIMENSION_OFFSET_PAPER_MM, label_y + 7.0)
-    if overlaps(x1, x2) and dimension_y < floor:
-        dimension_y = floor
-    if dimension_y >= drawn_bottom:
-        raise ValueError(f"view {view['viewKey']} leaves no room for its dimension row above the title block")
-    return x1, x2, dimension_y, label_y
+    # 视口若落在图签带内属于版面定义错误，交由可打印区检查报出，这里只断言
+    if rect[1] < title_top + TITLE_BLOCK_CLEARANCE_MM and rect[0] + rect[2] > title_left and rect[0] < title_right:
+        raise ValueError(f"view {view['viewKey']} viewport overlaps the title block")
+    return x1, x2, drawn_bottom - DIMENSION_OFFSET_PAPER_MM, drawn_bottom - TITLE_OFFSET_PAPER_MM
 
 
 def annotation_primitives(
@@ -116,6 +135,7 @@ def annotation_primitives(
     kind = annotation["kind"]
     height = float(annotation["paperTextHeightMm"])
     x1, x2, dimension_y, label_y = _annotation_rows(view, requirement, page_width)
+    drawn_bottom = dimension_y + DIMENSION_OFFSET_PAPER_MM
 
     if kind == "overallDimension":
         tick = DIMENSION_TICK_PAPER_MM
@@ -129,6 +149,57 @@ def annotation_primitives(
     if kind == "viewTitle":
         label_x = min(x1, requirement["viewportRectMm"][0])
         return [PaperPrimitive("text", ((label_x, label_y),), annotation["text"], height, "start", "ink")]
+
+    if kind == "axisGrid":
+        transform = _view_transform(view, requirement)
+        far, near = (transform(point) for point in annotation["anchorMm"])
+        along = annotation["along"]
+        if along == "u":
+            end = (near[0], drawn_bottom - AXIS_BUBBLE_OFFSET_PAPER_MM + AXIS_BUBBLE_RADIUS_PAPER_MM)
+            bubble = (near[0], drawn_bottom - AXIS_BUBBLE_OFFSET_PAPER_MM)
+        else:
+            left = min(x1, x2) - AXIS_BUBBLE_OFFSET_PAPER_MM
+            end = (left + AXIS_BUBBLE_RADIUS_PAPER_MM, near[1])
+            bubble = (left, near[1])
+        return [
+            PaperPrimitive("line", (far, end), None, 0.0, "start", "axis"),
+            PaperPrimitive("circle", (bubble,), None, AXIS_BUBBLE_RADIUS_PAPER_MM, "middle", "axis"),
+            PaperPrimitive("text", ((bubble[0], bubble[1] - height / 3),), annotation["text"], height, "middle", "axis"),
+        ]
+
+    if kind == "axisDimensionChain":
+        transform = _view_transform(view, requirement)
+        first, second = (transform(point) for point in annotation["anchorMm"])
+        tick = DIMENSION_TICK_PAPER_MM
+        if annotation["along"] == "u":
+            row = drawn_bottom - CHAIN_OFFSET_PAPER_MM
+            ends = ((first[0], row), (second[0], row))
+            ticks = [
+                PaperPrimitive("line", ((value, row - tick), (value, row + tick)), None, 0.0, "start", "dim")
+                for value in (first[0], second[0])
+            ]
+            label = PaperPrimitive("text", (((first[0] + second[0]) / 2, row + 1.0),), annotation["text"], height, "middle", "dim")
+        else:
+            column = min(x1, x2) - CHAIN_OFFSET_PAPER_MM
+            ends = ((column, first[1]), (column, second[1]))
+            ticks = [
+                PaperPrimitive("line", ((column - tick, value), (column + tick, value)), None, 0.0, "start", "dim")
+                for value in (first[1], second[1])
+            ]
+            label = PaperPrimitive("text", ((column - 1.0, (first[1] + second[1]) / 2),), annotation["text"], height, "middle", "dim")
+        return [PaperPrimitive("line", ends, None, 0.0, "start", "dim"), *ticks, label]
+
+    if kind == "levelMark":
+        transform = _view_transform(view, requirement)
+        point = transform(annotation["anchorMm"][0])
+        base = max(x1, x2) + LEVEL_OFFSET_PAPER_MM
+        arrow = AXIS_BUBBLE_RADIUS_PAPER_MM
+        return [
+            PaperPrimitive("line", ((point[0], point[1]), (base, point[1])), None, 0.0, "start", "dim"),
+            PaperPrimitive("line", ((base, point[1]), (base + arrow, point[1] + arrow)), None, 0.0, "start", "dim"),
+            PaperPrimitive("line", ((base, point[1]), (base + arrow, point[1] - arrow)), None, 0.0, "start", "dim"),
+            PaperPrimitive("text", ((base + arrow + 1.0, point[1] + 0.5),), annotation["text"], height, "start", "dim"),
+        ]
 
     if kind == "conditionCandidate":
         rect = requirement["viewportRectMm"]
@@ -202,7 +273,7 @@ class SheetArtifactWriter:
         # 字体在正文拼好之后再按实际用字裁剪内嵌，这里先占位
         parts = [
             "@@SVG_HEAD@@",
-            '.cut{stroke:#111;stroke-width:.5}.outline{stroke:#111;stroke-width:.35}.projection{stroke:#4b514d;stroke-width:.18}.hatch{fill:url(#hatch);stroke:none}.frame{fill:none;stroke:#111;stroke-width:.35}.condition{fill:none;stroke:#a43c32;stroke-width:.3}.text{font-family:"Gujian Sans SC";fill:#111}',
+            '.cut{stroke:#111;stroke-width:.5}.outline{stroke:#111;stroke-width:.35}.projection{stroke:#4b514d;stroke-width:.18}.hatch{fill:url(#hatch);stroke:none}.frame{fill:none;stroke:#111;stroke-width:.35}.condition{fill:none;stroke:#a43c32;stroke-width:.3}.axis{stroke:#7a6a52;stroke-width:.18;fill:none;stroke-dasharray:6 2 1 2}.text{font-family:"Gujian Sans SC";fill:#111}',
             '</style><pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="#999" stroke-width=".12"/></pattern>',
             '</defs>',
             f'<rect class="frame" x="5" y="5" width="{width-10}" height="{height-10}"/>',
@@ -227,7 +298,12 @@ class SheetArtifactWriter:
         for item in sheet_primitives(self.ir, sheet, width):
             if item.kind == "line":
                 (ax, ay), (bx, by) = item.points
-                parts.append(f'<line class="projection" x1="{ax:.4f}" y1="{height-ay:.4f}" x2="{bx:.4f}" y2="{height-by:.4f}"/>')
+                css = "axis" if item.tone == "axis" else "projection"
+                parts.append(f'<line class="{css}" x1="{ax:.4f}" y1="{height-ay:.4f}" x2="{bx:.4f}" y2="{height-by:.4f}"/>')
+                continue
+            if item.kind == "circle":
+                (cx, cy) = item.points[0]
+                parts.append(f'<circle cx="{cx:.4f}" cy="{height-cy:.4f}" r="{item.height_mm:g}" fill="none" stroke="#7a6a52" stroke-width=".25"/>')
                 continue
             (tx, ty) = item.points[0]
             anchor = ' text-anchor="middle"' if item.align == "middle" else ""
@@ -288,14 +364,22 @@ class SheetArtifactWriter:
                     pdf.line(first_point[0] * MM_TO_POINT, first_point[1] * MM_TO_POINT, last_point[0] * MM_TO_POINT, last_point[1] * MM_TO_POINT)
             # 标注从共用图元取，与 SVG、PNG 同一份来源
             for item in sheet_primitives(self.ir, sheet, width):
-                if item.kind == "line":
-                    (ax, ay), (bx, by) = item.points
+                if item.kind in ("line", "circle"):
                     pdf.setLineWidth(0.18 * MM_TO_POINT)
-                    pdf.setStrokeColorRGB(0.05, 0.05, 0.05)
-                    pdf.line(ax * MM_TO_POINT, ay * MM_TO_POINT, bx * MM_TO_POINT, by * MM_TO_POINT)
+                    pdf.setStrokeColorRGB(*((0.48, 0.42, 0.32) if item.tone == "axis" else (0.05, 0.05, 0.05)))
+                    if item.kind == "circle":
+                        (cx, cy) = item.points[0]
+                        pdf.circle(cx * MM_TO_POINT, cy * MM_TO_POINT, item.height_mm * MM_TO_POINT, stroke=1, fill=0)
+                    else:
+                        (ax, ay), (bx, by) = item.points
+                        pdf.line(ax * MM_TO_POINT, ay * MM_TO_POINT, bx * MM_TO_POINT, by * MM_TO_POINT)
                     continue
                 tx, ty = item.points[0]
-                pdf.setFillColorRGB(*((0.64, 0.16, 0.12) if item.tone == "condition" else (0.05, 0.05, 0.05)))
+                pdf.setFillColorRGB(*(
+                    (0.64, 0.16, 0.12) if item.tone == "condition"
+                    else (0.48, 0.42, 0.32) if item.tone == "axis"
+                    else (0.05, 0.05, 0.05)
+                ))
                 pdf.setFont("GujianSansSC", item.height_mm * MM_TO_POINT)
                 if item.align == "middle":
                     pdf.drawCentredString(tx * MM_TO_POINT, ty * MM_TO_POINT, item.text or "")
@@ -336,17 +420,26 @@ class SheetArtifactWriter:
         # 标注从共用图元取，与 SVG、PDF 同一份来源
         fonts: dict[float, Any] = {}
         for item in sheet_primitives(self.ir, sheet, width_mm):
+            stroke = "#7a6a52" if item.tone == "axis" else "#444444"
             if item.kind == "line":
                 (ax, ay), (bx, by) = item.points
                 draw.line((ax * scale, (height_mm - ay) * scale, bx * scale, (height_mm - by) * scale),
-                          fill="#444444", width=max(1, round(.18 * scale)))
+                          fill=stroke, width=max(1, round(.18 * scale)))
+                continue
+            if item.kind == "circle":
+                (cx, cy) = item.points[0]
+                radius = item.height_mm * scale
+                draw.ellipse(
+                    (cx * scale - radius, (height_mm - cy) * scale - radius,
+                     cx * scale + radius, (height_mm - cy) * scale + radius),
+                    outline=stroke, width=max(1, round(.25 * scale)))
                 continue
             tx, ty = item.points[0]
             if item.height_mm not in fonts:
                 fonts[item.height_mm] = ImageFont.truetype(str(self.font_path), round(item.height_mm * PX_PER_MM_300))
             item_font = fonts[item.height_mm]
             text = item.text or ""
-            colour = "#a43c32" if item.tone == "condition" else "#111111"
+            colour = "#a43c32" if item.tone == "condition" else "#7a6a52" if item.tone == "axis" else "#111111"
             box = draw.textbbox((0, 0), text, font=item_font)
             left = tx * scale - ((box[2] - box[0]) / 2 if item.align == "middle" else 0)
             draw.text((left, (height_mm - ty) * scale - (box[3] - box[1]) - 1.5 * scale), text, fill=colour, font=item_font)

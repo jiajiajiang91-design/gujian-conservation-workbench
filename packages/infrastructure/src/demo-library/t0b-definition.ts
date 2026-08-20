@@ -104,7 +104,7 @@ function views(): DemoDrawingView[] {
     {
       key: "floor", displayLabelZh: "底层平面图", drawingRef: "D-01-1", kind: "floorPlan",
       scaleDenominator: 50, sheetKey: "sheet-a2",
-      viewportRectMm: [15, 215, 275, 165], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+      viewportRectMm: [15, 180, 250, 200], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
       // 平面图是水平剖切，不是俯视投影。没有剖切面时画出来的是屋顶，
       // 与同一张图上的屋顶平面完全一样，等于少一张图。
       // 剖切标高取台明顶面（600）之上 1200 mm，按建筑制图惯例。
@@ -114,19 +114,19 @@ function views(): DemoDrawingView[] {
     {
       key: "roof", displayLabelZh: "屋顶平面图", drawingRef: "D-01-2", kind: "roofPlan",
       scaleDenominator: 50, sheetKey: "sheet-a2",
-      viewportRectMm: [305, 215, 275, 165], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+      viewportRectMm: [290, 180, 250, 200], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
       sourceEvidenceKeys: ["geometry-manifest"],
     },
     {
       key: "south", displayLabelZh: "南立面图", drawingRef: "D-01-3", kind: "elevation",
-      scaleDenominator: 50, sheetKey: "sheet-a2",
-      viewportRectMm: [15, 40, 275, 175], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
+      scaleDenominator: 50, sheetKey: "sheet-a3",
+      viewportRectMm: [15, 165, 250, 215], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
       sourceEvidenceKeys: ["geometry-manifest"],
     },
     {
       key: "axon", displayLabelZh: "轴测图", drawingRef: "D-01-4", kind: "axonometric",
       scaleDenominator: 100, sheetKey: "sheet-a2",
-      viewportRectMm: [305, 40, 275, 175],
+      viewportRectMm: [15, 20, 250, 150],
       direction: [0.5773502691896258, 0.5773502691896258, -0.5773502691896258],
       right: [0.7071067811865476, -0.7071067811865476, 0],
       up: [0.4082482904638631, 0.4082482904638631, 0.8164965809277261],
@@ -135,7 +135,7 @@ function views(): DemoDrawingView[] {
     {
       key: "transverse", displayLabelZh: "横剖面图", drawingRef: "D-02-1", kind: "transverseSection",
       scaleDenominator: 75, sheetKey: "sheet-a3",
-      viewportRectMm: [15, 140, 190, 122], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+      viewportRectMm: [290, 165, 200, 215], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
       // 剖切面落在柱缝上（柱心 x = 正负 2400）。切在两缝之间只能切到檩与瓦，
       // 柱、斗栱、瓜柱一根都切不到，质量基准 3.5 要的一榀构造链就断了。
       sectionPlane: { normal: [1, 0, 0], offsetMm: -2400 },
@@ -144,7 +144,7 @@ function views(): DemoDrawingView[] {
     {
       key: "longitudinal", displayLabelZh: "纵剖面图", drawingRef: "D-02-2", kind: "longitudinalSection",
       scaleDenominator: 75, sheetKey: "sheet-a3",
-      viewportRectMm: [215, 140, 190, 122], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
+      viewportRectMm: [15, 20, 200, 145], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
       // 纵向的缝在 y = 0（tieBeam 与中间瓜柱所在），保持原位
       sectionPlane: { normal: [0, 1, 0], offsetMm: 0 },
       sourceEvidenceKeys: ["geometry-manifest"],
@@ -152,7 +152,7 @@ function views(): DemoDrawingView[] {
     {
       key: "support-detail", displayLabelZh: "檐下承托组合详图", drawingRef: "D-02-3", kind: "detail",
       scaleDenominator: 20, sheetKey: "sheet-a3",
-      viewportRectMm: [15, 40, 390, 94], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+      viewportRectMm: [240, 45, 250, 115], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
       // 详图取另一条柱缝，与横剖面不同面，否则成果矩阵按重复详图拒收。
       sectionPlane: { normal: [1, 0, 0], offsetMm: 2400 },
       // 裁剪框是 [uMin, vMin, uMax, vMax]，u 沿 right、v 沿 up，与 shapely 的
@@ -243,7 +243,7 @@ export function buildT0bDefinition(manifest: T0bManifest): DemoProjectDefinition
         geometryTargetRoles: ["column", "roofBoard", "panTile"],
         sheets: [
           { key: "sheet-a2", drawingNumber: "D-01", displayLabelZh: "总体与立面", pageMm: [594, 420] },
-          { key: "sheet-a3", drawingNumber: "D-02", displayLabelZh: "剖面与承托组合", pageMm: [420, 297] },
+          { key: "sheet-a3", drawingNumber: "D-02", displayLabelZh: "剖面与承托组合", pageMm: [594, 420] },
         ],
         views: views(),
       },

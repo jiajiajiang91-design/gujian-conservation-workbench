@@ -448,34 +448,34 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
         {
           key: "first-floor-plan", displayLabelZh: "首层平面图", drawingRef: "DL-01-1", kind: "floorPlan",
           scaleDenominator: 100, sheetKey: "sheet-plans",
-          viewportRectMm: [30, 40, 136, 228], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          viewportRectMm: [30, 45, 180, 300], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
           sectionPlane: { normal: [0, 0, 1], offsetMm: 1400 },
           sourceEvidenceKeys: ["sheet-16"],
         },
         {
           key: "second-floor-plan", displayLabelZh: "二层平面图", drawingRef: "DL-01-2", kind: "floorPlan",
           scaleDenominator: 100, sheetKey: "sheet-plans",
-          viewportRectMm: [200, 40, 136, 228], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          viewportRectMm: [240, 45, 190, 300], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
           sectionPlane: { normal: [0, 0, 1], offsetMm: 4300 },
           sourceEvidenceKeys: ["sheet-16"],
         },
         {
           key: "west-elevation", displayLabelZh: "西立面图", drawingRef: "DL-02-1", kind: "elevation",
           scaleDenominator: 100, sheetKey: "sheet-sections",
-          viewportRectMm: [30, 40, 136, 100], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
+          viewportRectMm: [30, 40, 190, 150], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
           sourceEvidenceKeys: ["sheet-17"],
         },
         {
           key: "section-aa", displayLabelZh: "纵剖面 A-A", drawingRef: "DL-02-2", kind: "longitudinalSection",
           scaleDenominator: 100, sheetKey: "sheet-sections",
-          viewportRectMm: [200, 40, 240, 100], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          viewportRectMm: [260, 40, 290, 150], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
           sectionPlane: { normal: [1, 0, 0], offsetMm: -1244 },
           sourceEvidenceKeys: ["sheet-17"],
         },
         {
           key: "section-bb", displayLabelZh: "纵剖面 B-B", drawingRef: "DL-02-3", kind: "longitudinalSection",
           scaleDenominator: 100, sheetKey: "sheet-sections",
-          viewportRectMm: [200, 170, 240, 100], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          viewportRectMm: [260, 210, 290, 150], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
           sectionPlane: { normal: [1, 0, 0], offsetMm: 3657 },
           sourceEvidenceKeys: ["sheet-18"],
         },
@@ -671,14 +671,14 @@ export const GAODU_DEMO: DemoProjectDefinition = {
       revisionLabel: "A",
       geometryTargetRoles: ["column", "roof"],
       sheets: [
-        { key: "sheet-elevation", drawingNumber: "GD-01", displayLabelZh: "正立面图", pageMm: [420, 297] },
+        { key: "sheet-elevation", drawingNumber: "GD-01", displayLabelZh: "正立面图", pageMm: [594, 420] },
         { key: "sheet-plan-section", drawingNumber: "GD-02", displayLabelZh: "平面与剖面图", pageMm: [420, 297] },
       ],
       views: [
         {
           key: "front-elevation", displayLabelZh: "正立面图", drawingRef: "GD-01-1", kind: "elevation",
           scaleDenominator: 50, sheetKey: "sheet-elevation",
-          viewportRectMm: [20, 40, 380, 222], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
+          viewportRectMm: [30, 40, 340, 300], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
           sourceEvidenceKeys: ["recognition-record"],
         },
         {

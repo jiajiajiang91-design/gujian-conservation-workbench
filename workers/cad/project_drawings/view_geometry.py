@@ -676,6 +676,73 @@ def _overall_dimension_label(requirement: dict[str, Any]) -> str:
     return {0: "图形总宽", 1: "图形总长", 2: "图形总高"}[dominant]
 
 
+
+# 把矩阵下发的标注请求解析成带模型坐标锚点的标注。规划在 TypeScript 侧
+# 完成（哪条轴、取自哪个构件、位置多少），这里只负责给出画在哪。
+#
+# 轴线沿 u 的竖着画、沿 v 的横着画。轴号圈与尺寸链都排在图形下沿或左沿
+# 之外的标注带里，纸面偏移由写出器按比例换算，这里只给锚点。
+def _plan_annotations(view: dict[str, Any], bounds: list[list[float]]) -> list[dict[str, Any]]:
+    plan = view.get("annotationPlan") or {}
+    view_id = view["id"]
+    out: list[dict[str, Any]] = []
+    (u0, v0), (u1, v1) = bounds
+
+    axes = plan.get("axes", [])
+    for index, axis in enumerate(axes):
+        along = axis["along"]
+        position = axis["positionMm"]
+        # 轴线从图形另一端画到标注带：沿 u 的从上沿画到下沿之外，
+        # 沿 v 的从右沿画到左沿之外，末端放轴号圈。
+        anchor = [[position, v1], [position, v0]] if along == "u" else [[u1, position], [u0, position]]
+        out.append({
+            "requirementId": f"axis:{view_id}:{axis['label']}",
+            "kind": "axisGrid", "viewId": view_id,
+            "space": "view", "layerKey": "axis", "paperTextHeightMm": 3.0,
+            "text": axis["label"], "along": along, "basisZh": axis["basisZh"],
+            "anchorMm": anchor,
+            "sourceRefs": list(axis["sourceEntityIds"]),
+        })
+
+    # 尺寸链按同一族相邻两条轴线之间的净距，逐段标。总尺寸另有一条，
+    # 由 overallDimension 承担，这里不重复。
+    for along in ("u", "v"):
+        family = sorted(
+            (item for item in axes if item["along"] == along),
+            key=lambda item: item["positionMm"],
+        )
+        for first, second in zip(family, family[1:]):
+            span = round(second["positionMm"] - first["positionMm"], 1)
+            if span <= 0:
+                continue
+            anchor = (
+                [[first["positionMm"], v0], [second["positionMm"], v0]] if along == "u"
+                else [[u0, first["positionMm"]], [u0, second["positionMm"]]]
+            )
+            out.append({
+                "requirementId": f"chain:{view_id}:{first['label']}-{second['label']}",
+                "kind": "axisDimensionChain", "viewId": view_id,
+                "space": "view", "layerKey": "dimension", "paperTextHeightMm": 2.5,
+                "valueMm": span, "text": f"{span:.0f}", "along": along,
+                "anchorMm": anchor,
+                "sourceRefs": list(first["sourceEntityIds"]) + list(second["sourceEntityIds"]),
+            })
+
+    for level in plan.get("levels", []):
+        # 标高符号画在图形右沿之外，指向该标高所在的高度
+        out.append({
+            "requirementId": f"level:{view_id}:{level['label']}",
+            "kind": "levelMark", "viewId": view_id,
+            "space": "view", "layerKey": "dimension", "paperTextHeightMm": 2.5,
+            "text": f"{level['label']} {level['elevationMm'] / 1000:.3f}",
+            "basisZh": level["basisZh"],
+            "anchorMm": [[u1, level["elevationMm"]]],
+            "sourceRefs": list(level["sourceEntityIds"]),
+        })
+
+    return out
+
+
 def build_drawing_ir(matrix: dict[str, Any], manifest: dict[str, Any], views: list[dict[str, Any]]) -> dict[str, Any]:
     view_by_id = {item["viewId"]: item for item in views}
     # 标注的唯一来源。写出器只按 kind 渲染，不再各自从视图 bounds 重新推
@@ -715,6 +782,7 @@ def build_drawing_ir(matrix: dict[str, Any], manifest: dict[str, Any], views: li
                 "sourceRefs": [manifest["geometryRevisionId"]],
             },
         ])
+        annotations.extend(_plan_annotations(view, bounds))
     for observation in matrix.get("observationCandidates", []):
         view = matrix["views"][0]
         bounds = view_by_id[view["id"]]["boundsMm"]
@@ -748,6 +816,7 @@ def build_drawing_ir(matrix: dict[str, Any], manifest: dict[str, Any], views: li
             "cut": "GJ-CUT", "silhouette": "GJ-OUTLINE", "feature": "GJ-PROJECTION",
             "componentBoundary": "GJ-PROJECTION", "dimension": "GJ-DIMENSION", "text": "GJ-TEXT",
             "hatch": "GJ-HATCH", "condition": "GJ-CONDITION", "frame": "GJ-FRAME",
+            "axis": "GJ-AXIS",
         },
     }
     ir["drawingIrSha256"] = sha256_value(ir)

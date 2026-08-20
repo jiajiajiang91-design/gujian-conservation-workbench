@@ -45,6 +45,7 @@ export const ArtifactViewRequirementSchema = z.object({
   annotationPlan: z.object({
     axes: z.array(z.object({
       label: z.string().min(1).max(8),
+      along: z.enum(["u", "v"]),
       positionMm: z.number(),
       basisZh: z.string().min(1).max(40),
       sourceEntityIds: z.array(z.uuid()).min(1),
