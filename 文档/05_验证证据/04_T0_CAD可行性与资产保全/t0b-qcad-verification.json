@@ -54,27 +54,27 @@
     {
       "name": "source DXF exists",
       "passed": true,
-      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-outputs\\t0b-professional-sheet.dxf"
+      "evidence": "<REPO_ROOT>\\验证材料\\06_T0_CAD可行性验证\\t0b-outputs\\t0b-professional-sheet.dxf"
     },
     {
       "name": "QCAD roundtrip DXF exists",
       "passed": true,
-      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip.dxf"
+      "evidence": "<REPO_ROOT>\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip.dxf"
     },
     {
       "name": "QCAD PDF exists",
       "passed": true,
-      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip.pdf"
+      "evidence": "<REPO_ROOT>\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip.pdf"
     },
     {
       "name": "QCAD PDF render exists",
       "passed": true,
-      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-print.png"
+      "evidence": "<REPO_ROOT>\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-print.png"
     },
     {
       "name": "AutoCAD cross-audit log exists",
       "passed": true,
-      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip-autocad-audit.log"
+      "evidence": "<REPO_ROOT>\\验证材料\\06_T0_CAD可行性验证\\t0b-qcad-roundtrip-autocad-audit.log"
     },
     {
       "name": "source DXF audit clean",

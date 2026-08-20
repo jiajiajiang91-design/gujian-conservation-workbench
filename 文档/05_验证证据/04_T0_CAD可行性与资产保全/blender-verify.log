@@ -1,3 +1,6 @@
+# 公开前处理：本文件由工具自动写出，原文含本机绝对路径。
+# 已把 Windows 用户名段替换为 USER，仓库根路径替换为 <仓库根>，
+# 其余内容原样保留，未改动任何审计结论、时间戳或校验值。
 00:45:09 | INFO: Data are loaded, start creating Blender stuff
 00:45:09 | INFO: Blender create Mesh node cb118595-0a66-558c-9d43-b08f1a3afaa6
 00:45:09 | INFO: Blender create Mesh node 5a87ed12-c51c-5ad1-825a-4a9172d7a5d4
@@ -30,6 +33,6 @@
 00:45:09 | INFO: Blender create Mesh node 8b72b5a9-1ed4-5a4f-9178-f8567219224f
 00:45:09 | INFO: Blender create Mesh node 2a626a4f-156f-5602-8273-154c31bc7731
 00:45:09 | INFO: glTF import finished in 0.02s
-00:04.062  render           | Saved: 'D:\Claude_jiajia\06_古建保护归档\验证材料\06_T0_CAD可行性验证\blender-preview.png'
+00:04.062  render           | Saved: '<仓库根>\验证材料\06_T0_CAD可行性验证\blender-preview.png'
 Blender 5.0.1 (hash a3db93c5b259 built 2025-12-16 01:32:30)
-{"status": "passed", "meshObjects": 30, "bounds": {"min": [-0.6000000238418579, -6.78000020980835, -0.6000000238418579], "max": [12.0, 0.0, 7.800000190734863]}, "preview": "D:\\Claude_jiajia\\06_\u53e4\u5efa\u4fdd\u62a4\u5f52\u6863\\\u9a8c\u8bc1\u6750\u6599\\06_T0_CAD\u53ef\u884c\u6027\u9a8c\u8bc1\\blender-preview.png"}
+{"status": "passed", "meshObjects": 30, "bounds": {"min": [-0.6000000238418579, -6.78000020980835, -0.6000000238418579], "max": [12.0, 0.0, 7.800000190734863]}, "preview": "<REPO_ROOT>\\\u9a8c\u8bc1\u6750\u6599\\06_T0_CAD\u53ef\u884c\u6027\u9a8c\u8bc1\\blender-preview.png"}

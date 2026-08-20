@@ -25,7 +25,7 @@
     {
       "name": "manifest exists",
       "passed": true,
-      "evidence": "D:\\Claude_jiajia\\06_古建保护归档\\验证材料\\06_T0_CAD可行性验证\\t0b-outputs\\manifest.json"
+      "evidence": "<REPO_ROOT>\\验证材料\\06_T0_CAD可行性验证\\t0b-outputs\\manifest.json"
     },
     {
       "name": "spec hash matches",

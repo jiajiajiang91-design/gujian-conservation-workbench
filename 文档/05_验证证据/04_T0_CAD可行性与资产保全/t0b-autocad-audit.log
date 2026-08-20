@@ -1,13 +1,13 @@
-# 公开前处理：本文件由 AutoCAD 自动写出，原文含本机 Windows 用户名。
-# 已把 C:\Users\<用户名> 中的用户名段替换为 USER，其余内容原样保留，
-# 未改动任何审计结论、时间戳或校验值。
+# 公开前处理：本文件由工具自动写出，原文含本机绝对路径。
+# 已把 Windows 用户名段替换为 USER，仓库根路径替换为 <仓库根>，
+# 其余内容原样保留，未改动任何审计结论、时间戳或校验值。
 Redirect stdout (file: C:\Users\USER\AppData\Local\Temp\accc213962).
 AcCoreConsole: StdOutConsoleMode: processed-output: disabled,auto
 AutoCAD Core Engine Console - Copyright 2023 Autodesk, Inc.  All rights reserved. (U.61.0.0)
 
 Execution Path:
 D:\AutoCAD 2024\accoreconsole.exe
-Current Directory: D:\Claude_jiajia\06_古建保护归档
+Current Directory: <仓库根>
 Isolating to regkey=gujian-t0, userDataFolder=C:\Users\USER\AppData\Local\Temp\gujian-t0-autocad\profile.
 
 Version Number: U.61.0.0 (UNICODE)
