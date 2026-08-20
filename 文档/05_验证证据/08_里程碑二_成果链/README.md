@@ -47,7 +47,7 @@ pnpm run dev
 
 ### 当前成组图纸
 
-成果要求来自项目 TaskDefinition 和持久化 ArtifactRequirementMatrix，不是固定十视图或固定两张 A1。当前成果包含任务要求的平面、屋架平面投影、立面、横纵剖和局部证据节点，以及 DXF、SVG、PDF、PNG、Drawing IR、ViewGeometry 和来源映射。
+成果要求来自项目 TaskDefinition 和持久化 ArtifactRequirementMatrix，图种随任务定义确定。当前成果包含任务要求的平面、屋架平面投影、立面、横纵剖和局部证据节点，以及 DXF、SVG、PDF、PNG、Drawing IR、ViewGeometry 和来源映射。
 
 规范 DXF 为 R2018、毫米模型空间，包含原生业务线型、TEXT/MTEXT、HATCH、INSERT、布局和锁定视口；结构对象保留来源 XDATA。图纸仍带有专业复核、现场笔记未数字化和正式签发阻断。
 
