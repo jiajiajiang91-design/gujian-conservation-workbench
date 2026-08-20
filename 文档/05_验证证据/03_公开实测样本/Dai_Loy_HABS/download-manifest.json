@@ -5,7 +5,7 @@
   "surveyId": "HABS CA-2071 W",
   "officialRecordUrl": "https://www.loc.gov/pictures/item/ca0469/",
   "downloadedAt": "2026-08-10",
-  "totalBytes": 1354283,
+  "totalBytes": 4469853,
   "rightsSummary": "No known restrictions on images made by the U.S. Government; images copied from other sources may be restricted.",
   "files": [
     {
@@ -61,6 +61,55 @@
       "sourceUrl": "https://tile.loc.gov/storage-services/master/pnp/habshaer/ca/ca0400/ca0492/data/ca0492data.pdf",
       "sourceOrganization": "Historic American Buildings Survey",
       "contentRole": "historical-architectural-description"
+    },
+    {
+      "path": "highres_00016a.tif",
+      "mediaType": "image/tiff",
+      "bytes": 829016,
+      "sha256": "3edc5e5bc884dcb0b3aa2e7fbc886e2abd1b56c3f849c6793c723c051ab7fd58",
+      "sourceUrl": "https://tile.loc.gov/storage-services/master/pnp/habshaer/ca/ca0400/ca0469/sheet/00016a.tif",
+      "sourceOrganization": "Library of Congress",
+      "contentRole": "measured-plans",
+      "pixelSize": [
+        14450,
+        9632
+      ],
+      "downloadedAt": "2026-08-20",
+      "supersedesForReading": "03_HABS图纸16_首层与二层平面.jpg",
+      "usageBoundaryZh": "尺寸转写的唯一可信输入。同名低分辨率 JPEG 为 1024 x 683，图上小字号标注在该分辨率下会被读成错值，只可用于版面预览，不得作为尺寸依据。"
+    },
+    {
+      "path": "highres_00017a.tif",
+      "mediaType": "image/tiff",
+      "bytes": 1311550,
+      "sha256": "aee0075f67496324937064842c0048008930be5afb3062b0745b3450db32ab1f",
+      "sourceUrl": "https://tile.loc.gov/storage-services/master/pnp/habshaer/ca/ca0400/ca0469/sheet/00017a.tif",
+      "sourceOrganization": "Library of Congress",
+      "contentRole": "measured-section-elevation",
+      "pixelSize": [
+        14442,
+        9632
+      ],
+      "downloadedAt": "2026-08-20",
+      "supersedesForReading": "04_HABS图纸17_剖面与西立面.jpg",
+      "usageBoundaryZh": "尺寸转写的唯一可信输入。同名低分辨率 JPEG 为 1024 x 683，图上小字号标注在该分辨率下会被读成错值，只可用于版面预览，不得作为尺寸依据。"
+    },
+    {
+      "path": "highres_00018a.tif",
+      "mediaType": "image/tiff",
+      "bytes": 975004,
+      "sha256": "5fa0825b4e7a1b81050881da0f72b1a14f1b035bd4e4c8abfdd90bdf95f97c63",
+      "sourceUrl": "https://tile.loc.gov/storage-services/master/pnp/habshaer/ca/ca0400/ca0469/sheet/00018a.tif",
+      "sourceOrganization": "Library of Congress",
+      "contentRole": "measured-section",
+      "pixelSize": [
+        14464,
+        9632
+      ],
+      "downloadedAt": "2026-08-20",
+      "supersedesForReading": "05_HABS图纸18_剖面.jpg",
+      "usageBoundaryZh": "尺寸转写的唯一可信输入。同名低分辨率 JPEG 为 1024 x 683，图上小字号标注在该分辨率下会被读成错值，只可用于版面预览，不得作为尺寸依据。"
     }
-  ]
+  ],
+  "highResolutionNote": "2026-08-20 补充三张存档级 TIFF。起因是低分辨率 JPEG 上的标注被模型读成错值：8'-2\" 读成 8'-3\"、7'-9\" 读成 1'-9\"、屋脊 19'-6\" 读成 36'-0\"，且多数标为确定。高分辨率下同一批标注全部读对。低分辨率原件保留作对照，不删除。"
 }
