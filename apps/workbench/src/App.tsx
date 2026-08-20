@@ -861,12 +861,17 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     URL.revokeObjectURL(url);
   };
 
+  // 重新识别：有图像资料就认构件，没有就退回资料要点整理。
+  // 前者产出带图上位置的构件，框选修正才能按位置对应到构件。
   const runModel = async () => {
     if (!selected) return;
     setError(null);
     setModelProgress(null);
     try {
-      const outcome = await modelRuns.runEvidenceSummary(selected, localActorId(), setModelProgress);
+      const imageIds = readableDrawingEvidenceIds;
+      const outcome = imageIds.length
+        ? await modelRuns.runComponentRecognition(selected, localActorId(), imageIds, setModelProgress)
+        : await modelRuns.runEvidenceSummary(selected, localActorId(), setModelProgress);
       const evaluated = await workflow.evaluate(outcome.head, localActorId());
       setSelected(evaluated);
       setProjectModelRuns(await projectRepository.getProjectModelRuns(selected.projectId));

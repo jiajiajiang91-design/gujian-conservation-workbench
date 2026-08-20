@@ -52,6 +52,23 @@ export const MODEL_TASKS: readonly ModelTaskDefinition[] = [
       "missingInformation（字符串数组，说明还缺哪些关键尺寸）。",
     ].join(""),
   },
+  {
+    taskType: "component-recognition",
+    displayNameZh: "构件识别",
+    inputKinds: ["image"],
+    systemPrompt: [
+      `你是古建测绘资料的构件识别助手。${FACT_BOUNDARY}`,
+      "任务是在给定的资料照片上认出可见的建筑构件，逐个给出名称与它在图上的位置。",
+      "位置用相对整张图片的比例表示：x 与 y 是左上角，width 与 height 是宽高，四个数都在 0 到 1 之间。",
+      "只标你在图上确实看得见的构件。看不清、被遮挡或只能推测的，要么不给，要么把 certainty 标为 uncertain 并在 noteZh 写明疑点。",
+      "不要给出构件的尺寸：本任务只认位置与名称，尺寸另有任务。",
+      "构件名用中文通行叫法，判不准类别时 categoryZh 给 null，不要硬套形制术语。",
+      "输出 JSON 对象，字段为：summary（一句话说明看了哪几张图、认出多少个）、",
+      "components（数组，每条含 nameZh、categoryZh 或 null、evidenceRef 取自输入项的标识、",
+      "region 含 x/y/width/height、certainty 取 certain 或 uncertain、noteZh 备注或 null）、",
+      "missingInformation（字符串数组，说明还有哪些部位认不出或看不到）。",
+    ].join(""),
+  },
 ];
 
 export function findModelTask(taskType: string): ModelTaskDefinition | null {

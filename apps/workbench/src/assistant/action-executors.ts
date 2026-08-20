@@ -184,6 +184,41 @@ export class AssistantExecutors {
     return { kind: "committed", messageZh: `已新增构件记录：${input.name}` };
   }
 
+  // 识别产出的构件确认后入库。与框选新增走同一条命令，只是 origin 不同：
+  // 一个是人工在图上圈出来的，一个是模型认出来再由人确认的，两者要分得开。
+  async commitRecognizedComponents(head: ProjectHead, components: readonly {
+    nameZh: string;
+    categoryZh: string | null;
+    evidenceRef: string;
+    region: { x: number; y: number; width: number; height: number };
+  }[]): Promise<ExecutionOutcome> {
+    const building = head.snapshot.buildings[0];
+    if (!building) return { kind: "rejected", reasonZh: "项目里还没有建筑，无法写入构件" };
+    if (!components.length) return { kind: "rejected", reasonZh: "没有可写入的构件" };
+    await this.#deps.commands.execute({
+      commandType: "CommitEntities",
+      commandId: crypto.randomUUID(),
+      projectId: head.projectId,
+      actorId: this.#deps.actorId(),
+      expectedRevisionId: head.revisionId,
+      issuedAt: new Date().toISOString(),
+      payload: {
+        entities: components.map((item) => ({
+          id: crypto.randomUUID(),
+          projectId: head.projectId,
+          buildingId: building.id,
+          parentId: null,
+          entityType: item.categoryZh ?? "待确认",
+          name: item.nameZh,
+          locationText: null,
+          imageRegion: { evidenceRef: item.evidenceRef, ...item.region },
+          origin: "recognition",
+        })),
+      },
+    });
+    return { kind: "committed", messageZh: `已写入 ${components.length} 个构件记录，来源为识别后人工确认` };
+  }
+
   async commitExclusion(head: ProjectHead, input: {
     subjectDescriptionZh: string;
     categoryZh: string | null;

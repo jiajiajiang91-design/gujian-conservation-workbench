@@ -65,9 +65,10 @@ function toProjectEvent(event: ServerEvent): ModelRunEvent {
 
 // 模型按任务的输出结构返回 JSON，判别字段 kind 由任务类型补上再交领域层校验。
 // 手写字段检查会随任务增多而漂移，改用同一份 schema。
-const OUTPUT_KIND: Record<string, "evidenceSummary" | "measurementTranscription"> = {
+const OUTPUT_KIND: Record<string, "evidenceSummary" | "measurementTranscription" | "componentRecognition"> = {
   "evidence-summary": "evidenceSummary",
   "measurement-transcription": "measurementTranscription",
+  "component-recognition": "componentRecognition",
 };
 
 const IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -91,6 +92,30 @@ function parseStructured(content: string, taskType: string): ModelCandidate["str
   } catch {
     return null;
   }
+}
+
+
+// 已排除的对象不再进候选（框选修正规格第四节口径三）。
+// 只作用于构件识别：另两个任务的产出是文字要点与尺寸，没有构件可对应，
+// 硬套一层过滤只会让人以为过滤生效了。
+export function dropExcluded(
+  structured: ModelCandidate["structured"],
+  exclusions: readonly { subjectDescriptionZh: string }[],
+): ModelCandidate["structured"] {
+  if (!structured || structured.kind !== "componentRecognition" || !exclusions.length) return structured;
+  const excluded = new Set(exclusions.map((item) => item.subjectDescriptionZh.trim()));
+  const kept = structured.components.filter((item) => !excluded.has(item.nameZh.trim()));
+  if (kept.length === structured.components.length) return structured;
+  const dropped = structured.components.length - kept.length;
+  return {
+    ...structured,
+    components: kept,
+    // 过滤掉几条要看得见，不静默减少
+    missingInformation: [
+      ...structured.missingInformation,
+      `按排除记录过滤掉 ${dropped} 条已判定不存在或不适用的构件。`,
+    ],
+  };
 }
 
 async function errorCode(response: Response): Promise<string> {
@@ -191,11 +216,41 @@ export class ModelRunClient {
     return this.#run(head, actorId, "evidence-summary", evidences, onProgress);
   }
 
-  // 两个任务共用同一条流式与留痕通路，只有输入项与任务类型不同
+  // 构件识别：在资料照片上认出构件并给出图上位置。只收图像项，
+  // 文字记录里没有位置可认。位置进候选，确认后才写成构件记录。
+  async runComponentRecognition(
+    head: ProjectHead,
+    actorId: string,
+    evidenceIds: readonly string[],
+    onProgress: (progress: ModelRunProgress) => void,
+  ): Promise<ModelRunOutcome> {
+    if (this.#active) throw new Error("MODEL_RUN_ALREADY_ACTIVE");
+    if (!evidenceIds.length) throw new Error("NO_IMAGE_EVIDENCE_SELECTED");
+    const projectAssets = await this.#repository.getProjectAssets(head.projectId);
+    const assetById = new Map(projectAssets.map((asset) => [asset.record.id, asset]));
+    const evidences: { evidenceId: string; assetSha256: string; mediaType: string; base64: string; titleZh: string }[] = [];
+    for (const evidenceId of evidenceIds) {
+      const evidence = head.snapshot.evidences.find((item) => item.id === evidenceId);
+      const asset = evidence ? assetById.get(evidence.assetId) : undefined;
+      if (!evidence || !asset || asset.record.contentStatus !== "available" || !asset.content) continue;
+      if (!IMAGE_MEDIA_TYPES.includes(asset.record.mimeType)) continue;
+      evidences.push({
+        evidenceId: evidence.id,
+        assetSha256: asset.record.sha256,
+        mediaType: asset.record.mimeType,
+        base64: await blobToBase64(asset.content),
+        titleZh: evidence.title,
+      });
+    }
+    if (!evidences.length) throw new Error("NO_IMAGE_EVIDENCE_FOR_MODEL");
+    return this.#run(head, actorId, "component-recognition", evidences, onProgress);
+  }
+
+  // 三个任务共用同一条流式与留痕通路，只有输入项与任务类型不同
   async #run(
     head: ProjectHead,
     actorId: string,
-    taskType: "evidence-summary" | "measurement-transcription",
+    taskType: "evidence-summary" | "measurement-transcription" | "component-recognition",
     evidences: readonly { readonly evidenceId: string }[],
     onProgress: (progress: ModelRunProgress) => void,
   ): Promise<ModelRunOutcome> {
@@ -304,7 +359,7 @@ export class ModelRunClient {
           inputRevisionId: head.revisionId,
           taskType,
           contentText: streamedText,
-          structured: parseStructured(streamedText, taskType),
+          structured: dropExcluded(parseStructured(streamedText, taskType), head.snapshot.exclusionRecords),
           producer: { producerType: "model", runId },
           evidenceRefs: evidences.map((item) => item.evidenceId),
           reviewStatus: "unreviewed",

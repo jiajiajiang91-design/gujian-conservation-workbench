@@ -147,9 +147,36 @@ export const MeasurementTranscriptionOutputSchema = z.object({
   missingInformation: z.array(z.string().min(1).max(5_000)).max(200),
 }).strict();
 
+// 构件识别：在资料图片上认出构件并给出它在图上的位置。
+//
+// 位置按图片宽高归一化，与图片实际像素无关。模型看得到这张图，因此这里
+// 由模型给坐标是成立的；框选修正里坐标不由模型给，是因为那时模型看不到图。
+// 两处的判断依据不同，不是同一条规则的例外。
+export const RecognizedComponentSchema = z.object({
+  nameZh: z.string().min(1).max(120),
+  categoryZh: z.string().min(1).max(120).nullable(),
+  evidenceRef: NonEmptyRefSchema,
+  region: z.object({
+    x: z.number().min(0).max(1),
+    y: z.number().min(0).max(1),
+    width: z.number().gt(0).max(1),
+    height: z.number().gt(0).max(1),
+  }).strict(),
+  certainty: z.enum(["certain", "uncertain"]),
+  noteZh: z.string().max(2_000).nullable(),
+}).strict();
+
+export const ComponentRecognitionOutputSchema = z.object({
+  kind: z.literal("componentRecognition"),
+  summary: z.string().min(1).max(20_000),
+  components: z.array(RecognizedComponentSchema).max(300),
+  missingInformation: z.array(z.string().min(1).max(5_000)).max(200),
+}).strict();
+
 export const ModelCandidateOutputSchema = z.discriminatedUnion("kind", [
   EvidenceSummaryOutputSchema,
   MeasurementTranscriptionOutputSchema,
+  ComponentRecognitionOutputSchema,
 ]);
 
 export const ModelCandidateSchema = z.object({
@@ -173,5 +200,6 @@ export type ModelRunEvent = z.infer<typeof ModelRunEventSchema>;
 export type ModelCandidate = z.infer<typeof ModelCandidateSchema>;
 export type ModelCandidateOutput = z.infer<typeof ModelCandidateOutputSchema>;
 export type TranscribedDimension = z.infer<typeof TranscribedDimensionSchema>;
+export type RecognizedComponent = z.infer<typeof RecognizedComponentSchema>;
 export type RuleRun = z.infer<typeof RuleRunSchema>;
 export type Decision = z.infer<typeof DecisionSchema>;
