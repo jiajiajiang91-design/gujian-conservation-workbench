@@ -87,12 +87,16 @@ def _annotation_rows(view: dict[str, Any], requirement: dict[str, Any], page_wid
     return x1, x2, dimension_y, label_y
 
 
-# 标注名称按视图横轴在模型里的方向定：沿 X 是面阔，沿 Y 是进深。
-# 剖面与侧立面的横轴是进深，一律写总宽属于标注错误。
+# 标注名称按视图横轴在模型里的方向定：沿 X 是宽，沿 Y 是长。
+# 剖面与侧立面的横轴是长向，一律写宽属于标注错误。
+#
+# 这条尺寸量的是图上画出来的全部内容，不只是建筑本体。项目带场地构件时
+# （覆盖步道、巷道顶棚一类），它比建筑的面阔大，因此不能叫总面阔：
+# 面阔在术语上指建筑本体的开间总宽，用来标图形外廓是标注错误。
 def _horizontal_label(requirement: dict[str, Any]) -> str:
     right = requirement.get("right") or [1, 0, 0]
     dominant = max(range(3), key=lambda index: abs(float(right[index])))
-    return {0: "总面阔", 1: "总进深", 2: "总高"}[dominant]
+    return {0: "图形总宽", 1: "图形总长", 2: "图形总高"}[dominant]
 
 
 def _dimension_geometry(view: dict[str, Any], requirement: dict[str, Any], page_width: float) -> dict[str, float | str]:

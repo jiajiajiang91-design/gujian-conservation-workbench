@@ -353,7 +353,7 @@ def _independent_view_line_sets(matrix: dict[str, Any], manifest: dict[str, Any]
 def _horizontal_label_for(matrix: dict[str, Any], view_id: str) -> str:
     right = next(item["right"] for item in matrix["views"] if item["id"] == view_id)
     dominant = max(range(3), key=lambda index: abs(float(right[index])))
-    return {0: "总面阔", 1: "总进深", 2: "总高"}[dominant]
+    return {0: "图形总宽", 1: "图形总长", 2: "图形总高"}[dominant]
 
 
 def _hash(path: Path) -> str:

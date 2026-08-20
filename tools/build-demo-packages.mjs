@@ -9,7 +9,8 @@ import {
   CadJobClient, DeliveryService, DrawingJobClient,
   DEMO_PROJECTS, HERITAGE_BASELINE_RULE_DATA,
   IndexedDbProjectRepository, LocalAuthorization,
-  buildArchetypeGeometrySpec, buildFullDemoProject, buildT0bDefinition, demoSeededUuid,
+  buildArchetypeGeometrySpec, buildFullDemoProject, buildT0bDefinition,
+  buildTimberFrameGeometrySpec, demoSeededUuid,
   openWorkbenchDatabase, resolveViewTargets, sha256Hex, translateLegacyGeometry,
 } from "../packages/infrastructure/dist/index.js";
 
@@ -17,8 +18,8 @@ import {
 // 全程走产品自身的命令服务与真实作业进程，不为演示另做一套代码路径。
 //
 // 几何来源按项目不同：高都由形制参数经构件生成器产出；团队构造样板由
-// 已验收的 r2 成果翻译得到；Dai Loy 的尺寸要先从 HABS 图纸读出来，
-// 本轮不出三维，前面的环节照常保留。
+// 已验收的 r2 成果翻译得到；Dai Loy 由 HABS 实测图纸上转写与量取到的
+// 尺寸经木构架生成器产出，不套用中国官式形制规则。
 //
 // 三个项目共用一条链路。团队构造样板此前走独立脚本只跑几何，
 // 图纸、检查与交付三格因此是空的，08 表 3 判定为演示不成立。
@@ -100,7 +101,12 @@ const fetchImpl = (input, init = {}) => new Promise((settle, fail) => {
 // 团队构造样板的定义由已验收的 r2 清单现算，数值不抄进源码
 const t0bManifestPath = "文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v3-outputs/r2-geometry/geometry-manifest.json";
 const t0bManifest = JSON.parse(await readFile(resolve(root, t0bManifestPath), "utf8"));
-const definitions = [buildT0bDefinition(t0bManifest), ...DEMO_PROJECTS];
+const allDefinitions = [buildT0bDefinition(t0bManifest), ...DEMO_PROJECTS];
+// 只重建指定项目时传 demoId：改一个项目不必等另外两个的制图作业。
+// 不传则全建，manifest 也只在全建时重写，避免留下缺项的清单。
+const only = process.argv.slice(2).filter((item) => !item.startsWith("-"));
+const definitions = only.length ? allDefinitions.filter((item) => only.includes(item.demoId)) : allDefinitions;
+if (only.length && definitions.length !== only.length) throw new Error(`UNKNOWN_DEMO_ID:${only.join(",")}`);
 
 const entries = [];
 try {
@@ -126,6 +132,8 @@ try {
         deliveries: new DeliveryService({ repository, commands }),
         geometrySourceZh: definition.demoId === "t0b-construction-sample"
           ? "已验收的构造样板几何成果翻译为本产品的几何契约，构件不改动"
+          : definition.timberFrame
+          ? "实测图纸上转写与量取到的尺寸经木构架生成器产出，不套用形制规则"
           : "形制参数经构件生成器产出，尺寸来自照片估算与规则推算",
         geometrySpec: (head) => definition.demoId === "t0b-construction-sample"
           ? translateLegacyGeometry({
@@ -141,6 +149,15 @@ try {
             projectRevisionId: head.revisionId,
             manifestEvidenceId: demoSeededUuid(definition.demoId, "evidence/geometry-manifest"),
           }).spec
+          : definition.timberFrame
+          ? buildTimberFrameGeometrySpec({
+            head,
+            demoId: definition.demoId,
+            timberFrame: definition.timberFrame,
+            fixtureId: definition.demoId,
+            keyPrefix: definition.demoId,
+            createdAt: definition.createdAt,
+          })
           : definition.archetype
           ? buildArchetypeGeometrySpec({
             head,
@@ -182,6 +199,10 @@ try {
     console.log(`${definition.demoId} ${(result.packageBytes.byteLength / 1024 / 1024).toFixed(2)} MiB 环节 ${result.stagesCompleted.length}`);
   }
 
+  if (only.length) {
+    console.log(`只重建了 ${only.join("、")}，manifest.json 未更新；全量重建后再提交清单。`);
+    process.exit(0);
+  }
   const manifest = {
     schemaVersion: "demo-library-1",
     generatedFrom: "tools/build-demo-packages.mjs",

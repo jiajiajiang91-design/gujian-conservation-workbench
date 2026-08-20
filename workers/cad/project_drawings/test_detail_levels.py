@@ -104,7 +104,7 @@ class SvgFontSubsetTests(unittest.TestCase):
 
     def test_只取用到的字不另维护清单(self) -> None:
         from .sheet_writer import _svg_text_characters
-        markup = '<text class="text" x="1" y="2">总面阔 8400 mm</text><line x1="0"/><text>图名</text>'
+        markup = '<text class="text" x="1" y="2">图形总宽 8400 mm</text><line x1="0"/><text>图名</text>'
         found = _svg_text_characters(markup)
         self.assertIn("总", found)
         self.assertIn("图", found)
@@ -119,7 +119,7 @@ class SvgFontSubsetTests(unittest.TestCase):
     def test_裁剪后的字体远小于整份(self) -> None:
         from .sheet_writer import _subset_font_base64
         whole = _subset_font_base64(FONT, set())
-        subsetted = _subset_font_base64(FONT, set("总面阔 8400 mm"))
+        subsetted = _subset_font_base64(FONT, set("图形总宽 8400 mm"))
         self.assertLess(len(subsetted), len(whole) / 20)
 
     def test_缺字直接报错不静默出豆腐块(self) -> None:

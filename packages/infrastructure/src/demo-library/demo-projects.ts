@@ -32,7 +32,7 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
       parser: "binary-metadata",
       parseStatus: "metadataOnly",
       extractedText: null,
-      parseWarnings: ["原始文件已保存；图面标注未做自动识别，尺寸为人工转写。"],
+      parseWarnings: ["原始文件已保存；图面标注未做自动识别。写明的标注为人工转写，没有标注的竖向尺寸为图上量取，两者已按存档级高分辨率版本核对。"],
     },
     {
       key: "sheet-17",
@@ -47,7 +47,7 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
       parser: "binary-metadata",
       parseStatus: "metadataOnly",
       extractedText: null,
-      parseWarnings: ["原始文件已保存；图面标注未做自动识别，尺寸为人工转写。"],
+      parseWarnings: ["原始文件已保存；图面标注未做自动识别。写明的标注为人工转写，没有标注的竖向尺寸为图上量取，两者已按存档级高分辨率版本核对。"],
     },
     {
       key: "sheet-18",
@@ -62,7 +62,7 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
       parser: "binary-metadata",
       parseStatus: "metadataOnly",
       extractedText: null,
-      parseWarnings: ["原始文件已保存；图面标注未做自动识别，尺寸为人工转写。"],
+      parseWarnings: ["原始文件已保存；图面标注未做自动识别。写明的标注为人工转写，没有标注的竖向尺寸为图上量取，两者已按存档级高分辨率版本核对。"],
     },
     {
       key: "site-photo",
@@ -157,6 +157,12 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
       dataStatus: "available",
     },
   ],
+  // 尺寸分两类：图纸上写明的标注，与按图上量取的。两者精度差一个量级，
+  // dataStatus 与 methodZh 都分开写，界面不把量取值当实测显示。
+  //
+  // 所有标注按同一批图纸的存档级高分辨率版本核对过。低分辨率版本上
+  // 多条标注会被读错且读错时仍显得确定，核对记录见
+  // 文档/05_验证证据/12_图纸差距与一致性核对/Dai_Loy读图与文字转写实测记录.md。
   measurements: [
     {
       key: "overall-width",
@@ -171,15 +177,15 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
       subject: "building",
       quantity: { name: "overallDepthMm", value: feetInches(60, 7), unit: "mm" },
       evidenceKey: "sheet-16",
-      methodZh: "转写自图纸 16 平面标注 60'-7\"",
+      methodZh: "转写自图纸 16 二层平面标注 60'-7\"",
       dataStatus: "available",
     },
     {
-      key: "covered-walk-width",
+      key: "covered-alleyway-width",
       subject: "building",
-      quantity: { name: "coveredWalkWidthMm", value: feetInches(8, 2), unit: "mm" },
+      quantity: { name: "coveredAlleywayWidthMm", value: feetInches(8, 2), unit: "mm" },
       evidenceKey: "sheet-16",
-      methodZh: "转写自图纸 16 平面标注 8'-2\"",
+      methodZh: "转写自图纸 16 平面标注 8'-2\"，尺寸线端点落在建筑北侧外墙线上，对应平面标注的 COVERED ALLEYWAY",
       dataStatus: "available",
     },
     {
@@ -187,16 +193,48 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
       subject: "building",
       quantity: { name: "alleywayWidthMm", value: feetInches(7, 9), unit: "mm" },
       evidenceKey: "sheet-16",
-      methodZh: "转写自图纸 16 平面标注 7'-9\"",
+      methodZh: "转写自图纸 16 平面标注 7'-9\"，尺寸线端点落在建筑南侧外墙线上，对应平面标注的 ALLEYWAY",
       dataStatus: "available",
+    },
+    {
+      key: "covered-walk-depth",
+      subject: "building",
+      quantity: { name: "coveredWalkDepthMm", value: feetInches(7, 6), unit: "mm" },
+      evidenceKey: "sheet-16",
+      methodZh: "转写自图纸 16 二层平面标注 7'-6\"。该尺寸接在 60'-7\" 之外的西端，按图面位置判为二层挑出覆盖步道的进深，图上没有文字说明这一归属",
+      dataStatus: "uncertain",
     },
     {
       key: "ridge-elevation",
       subject: "building",
-      quantity: { name: "ridgeElevationMm", value: feetInches(14, 6), unit: "mm" },
+      quantity: { name: "ridgeElevationMm", value: feetInches(19, 6), unit: "mm" },
       evidenceKey: "sheet-17",
-      methodZh: "转写自图纸 17 标高 RIDGE ELEV 14'-6\"，基准为 FLOOR ELEV 0'",
+      methodZh: "转写自图纸 17 与图纸 18 标高 RIDGE ELEV 19'-6\"，基准为 FLOOR ELEV 0'",
       dataStatus: "available",
+    },
+    {
+      key: "eave-elevation-scaled",
+      subject: "building",
+      quantity: { name: "scaledEaveElevationMm", value: 4460, unit: "mm" },
+      evidenceKey: "sheet-17",
+      methodZh: "图上量取，非实测。以图纸 17 上 RIDGE ELEV 19'-6\" 与 FLOOR ELEV 0' 两条标高线的间距校准（99.5 像素每英尺），再取西立面屋面在外墙面处的高度。量取误差约 ±50 mm",
+      dataStatus: "uncertain",
+    },
+    {
+      key: "second-floor-elevation-scaled",
+      subject: "building",
+      quantity: { name: "scaledSecondFloorElevationMm", value: 4130, unit: "mm" },
+      evidenceKey: "sheet-18",
+      methodZh: "图上量取，非实测。以图纸 18 的两条标高线校准，取剖面 B-B 上通长的二层楼面线。量取误差约 ±50 mm",
+      dataStatus: "uncertain",
+    },
+    {
+      key: "floor-above-grade-scaled",
+      subject: "building",
+      quantity: { name: "scaledFloorAboveGradeMm", value: 640, unit: "mm" },
+      evidenceKey: "sheet-18",
+      methodZh: "图上量取，非实测。取剖面 B-B 上楼面线与地坪线的间距。量取误差约 ±50 mm",
+      dataStatus: "uncertain",
     },
   ],
   issues: [
@@ -221,7 +259,177 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
       impactEvidenceKeys: ["history-note"],
       blocksProxyOutcome: false,
     },
+    {
+      key: "overall-depth-source-conflict",
+      issueType: "ruleConflict",
+      descriptionZh: "建筑总进深两个来源不一致：历史与建筑说明写 approximately sixty feet deep，折 18288 mm；图纸 16 标注 60'-7\"，折 18470.6 mm。差 182.6 mm。文字是概述性表述，图纸是精确标注，但不自动选值，两个来源并列记录，由项目负责人核定后再改。本模型按图纸标注建。",
+      impactEvidenceKeys: ["history-note", "sheet-16"],
+      blocksProxyOutcome: false,
+    },
+    {
+      key: "vertical-dimensions-scaled",
+      issueType: "professionalUncertainty",
+      descriptionZh: "图纸只标了屋脊与楼面两个标高，檐口高、二层楼面标高、层高与屋面坡度都没有标注。本项目的这几项按图上量取，以图纸自带的两条标高线校准，误差约 ±50 mm，坡度随檐口高的误差变化。量取值不能当实测用，须现场补测或取得带标注的剖面图后替换。",
+      impactEvidenceKeys: ["sheet-17", "sheet-18"],
+      blocksProxyOutcome: false,
+    },
+    {
+      key: "low-resolution-misread",
+      issueType: "highRisk",
+      descriptionZh: "同一批图纸的低分辨率版本上，多条标注会被读成错值且读错时仍标为确定：8'-2\" 读成 8'-3\"、7'-9\" 读成 1'-9\"、屋脊 19'-6\" 两次分别读成 36'-0\" 与 31'-6\"。本项目全部标注已按存档级高分辨率版本核对。资料入库时应检查图纸分辨率，低分辨率图纸不能作为尺寸来源。",
+      impactEvidenceKeys: ["sheet-16", "sheet-17", "sheet-18"],
+      blocksProxyOutcome: false,
+    },
+    {
+      key: "porch-extent-undocumented",
+      issueType: "missingEvidence",
+      descriptionZh: "首层平面在东端画出 PORCH，但没有标注它的进深与宽度，本模型未建前廊。补测或取得带标注的平面图后再补。",
+      impactEvidenceKeys: ["sheet-16"],
+      blocksProxyOutcome: false,
+    },
   ],
+  // 建筑局部坐标：X 沿总宽，0 在北侧（覆盖巷道一侧）外墙外皮；
+  // Y 沿总长，0 在西端（主街一侧）外墙外皮；Z 自楼面标高 0' 起算。
+  timberFrame: {
+    sourceDeclarationZh: "尺寸分两类：drawn 是图纸上写明的标注，scaled 是按图上量取。量取以图纸自带的 RIDGE ELEV 19'-6\" 与 FLOOR ELEV 0' 两条标高线校准，误差约 ±50 mm。不套用任何中国官式形制规则。",
+    dimensions: {
+      width: {
+        valueMm: feetInches(24, 0), source: "drawn", measurementKey: "overall-width",
+        methodZh: "图纸 16 平面标注 24'-0\"", evidenceKeys: ["sheet-16"],
+      },
+      depth: {
+        valueMm: feetInches(60, 7), source: "drawn", measurementKey: "overall-depth",
+        methodZh: "图纸 16 二层平面标注 60'-7\"", evidenceKeys: ["sheet-16"],
+      },
+      ridgeElevation: {
+        valueMm: feetInches(19, 6), source: "drawn", measurementKey: "ridge-elevation",
+        methodZh: "图纸 17 与图纸 18 标高 RIDGE ELEV 19'-6\"", evidenceKeys: ["sheet-17", "sheet-18"],
+      },
+      eaveElevation: {
+        valueMm: 4460, source: "scaled", measurementKey: "eave-elevation-scaled",
+        methodZh: "图上量取西立面屋面在外墙面处的高度", evidenceKeys: ["sheet-17"],
+      },
+      secondFloorElevation: {
+        valueMm: 4130, source: "scaled", measurementKey: "second-floor-elevation-scaled",
+        methodZh: "图上量取剖面 B-B 的二层楼面线", evidenceKeys: ["sheet-18"],
+      },
+      floorAboveGrade: {
+        valueMm: 640, source: "scaled", measurementKey: "floor-above-grade-scaled",
+        methodZh: "图上量取剖面 B-B 楼面线与地坪线的间距", evidenceKeys: ["sheet-18"],
+      },
+      wallThickness: {
+        valueMm: 140, source: "scaled",
+        methodZh: "图上量取首层平面的外墙内外两条墙线间距", evidenceKeys: ["sheet-16"],
+      },
+      floorStructureDepth: {
+        valueMm: 200, source: "scaled",
+        methodZh: "图上量取剖面 B-B 楼面线与搁栅底线的间距", evidenceKeys: ["sheet-18"],
+      },
+      roofThickness: {
+        valueMm: 60, source: "scaled",
+        methodZh: "图上量取剖面上屋面构造层的厚度，板型与实际厚度未记录", evidenceKeys: ["sheet-17"],
+      },
+      eaveOverhang: {
+        valueMm: 280, source: "scaled",
+        methodZh: "图上量取西立面屋面挑出外墙面的水平距离", evidenceKeys: ["sheet-17"],
+      },
+      gableOverhang: {
+        valueMm: 280, source: "scaled",
+        methodZh: "图上量取西立面屋面挑出山墙面的水平距离", evidenceKeys: ["sheet-17"],
+      },
+      girderDepth: {
+        valueMm: 200, source: "scaled",
+        methodZh: "图上量取剖面 B-B 承台梁的高度", evidenceKeys: ["sheet-18"],
+      },
+      pierSize: {
+        valueMm: 200, source: "scaled",
+        methodZh: "图上量取剖面 B-B 木桩的宽度", evidenceKeys: ["sheet-18"],
+      },
+      partitionThickness: {
+        valueMm: 120, source: "scaled",
+        methodZh: "图上量取首层平面隔墙两条墙线的间距", evidenceKeys: ["sheet-16"],
+      },
+      pierSpacing: {
+        valueMm: 2400, source: "scaled",
+        methodZh: "图上量取剖面 B-B 木桩的中距，桩位在 1/4 英寸比例下量不准，实际排布记未知项", evidenceKeys: ["sheet-18"],
+      },
+    },
+    // 两个气窗的平面位置在首层平面与剖面 B-B 上各量一次，互相吻合到 0.3 m 以内。
+    // 西侧气窗横向大致骑在屋脊上，东侧偏在北坡，按量到的位置摆，不按对称摆正。
+    monitors: [
+      {
+        key: "monitor/west",
+        fromXMm: feetInches(6, 10), toXMm: feetInches(16, 7),
+        startYMm: feetInches(3, 6), endYMm: feetInches(12, 2), riseMm: 790,
+        source: "scaled", evidenceKeys: ["sheet-16", "sheet-17", "sheet-18"],
+        methodZh: "平面位置取首层平面 MONITOR ABOVE 虚线框，高出屋脊的高度取剖面 B-B 量取",
+      },
+      {
+        key: "monitor/east",
+        fromXMm: feetInches(4, 7), toXMm: feetInches(12, 6),
+        startYMm: feetInches(19, 10), endYMm: feetInches(29, 6), riseMm: 1380,
+        source: "scaled", evidenceKeys: ["sheet-16", "sheet-17", "sheet-18"],
+        methodZh: "平面位置取首层平面 MONITOR ABOVE 虚线框，高出屋脊的高度取剖面 B-B 量取",
+      },
+    ],
+    planScaled: {
+      valueMm: 0, source: "scaled",
+      methodZh: "在平面图上按 100 像素每英尺量取，量取误差约 ±80 mm。隔墙与二层楼板的范围都由此得出",
+      evidenceKeys: ["sheet-16"],
+    },
+    // 首层隔墙取自首层平面，二层隔墙取自二层平面。房间名照抄图上标注，
+    // 不另起中文名，避免把原图没有的判断带进来。
+    partitions: [
+      { key: "vestibule-east", displayNameZh: "门厅东隔墙 VESTIBULE", level: "first", fromXMm: feetInches(7, 10), toXMm: feetInches(8, 3), fromYMm: 0, toYMm: feetInches(5, 7) },
+      { key: "vestibule-south", displayNameZh: "门厅南隔墙 VESTIBULE", level: "first", fromXMm: 0, toXMm: feetInches(8, 3), fromYMm: feetInches(5, 3), toYMm: feetInches(5, 8) },
+      { key: "lottery-north", displayNameZh: "彩票室北隔墙 LOTTERY ROOM", level: "first", fromXMm: feetInches(16, 0), toXMm: feetInches(24, 0), fromYMm: feetInches(30, 2), toYMm: feetInches(30, 7) },
+      { key: "lottery-west", displayNameZh: "彩票室西隔墙 LOTTERY ROOM", level: "first", fromXMm: feetInches(15, 10), toXMm: feetInches(16, 3), fromYMm: feetInches(30, 2), toYMm: feetInches(39, 6) },
+      { key: "lottery-south", displayNameZh: "彩票室南隔墙 LOTTERY ROOM", level: "first", fromXMm: feetInches(16, 0), toXMm: feetInches(24, 0), fromYMm: feetInches(39, 3), toYMm: feetInches(39, 8) },
+      { key: "money-north", displayNameZh: "账房北隔墙 MONEY ROOM", level: "first", fromXMm: feetInches(16, 0), toXMm: feetInches(24, 0), fromYMm: feetInches(42, 3), toYMm: feetInches(42, 8) },
+      { key: "money-west", displayNameZh: "账房西隔墙 MONEY ROOM", level: "first", fromXMm: feetInches(15, 10), toXMm: feetInches(16, 3), fromYMm: feetInches(42, 3), toYMm: feetInches(50, 6) },
+      { key: "money-south", displayNameZh: "账房南隔墙 MONEY ROOM", level: "first", fromXMm: feetInches(16, 0), toXMm: feetInches(24, 0), fromYMm: feetInches(50, 3), toYMm: feetInches(50, 8) },
+      { key: "toilet-north", displayNameZh: "厕所北隔墙 TOILET", level: "first", fromXMm: 0, toXMm: feetInches(5, 6), fromYMm: feetInches(52, 7), toYMm: feetInches(53, 0) },
+      { key: "toilet-east", displayNameZh: "厕所东隔墙 TOILET", level: "first", fromXMm: feetInches(5, 3), toXMm: feetInches(5, 8), fromYMm: feetInches(52, 7), toYMm: feetInches(60, 7) },
+      { key: "store-north", displayNameZh: "储藏室北隔墙 STORE ROOM", level: "first", fromXMm: feetInches(10, 0), toXMm: feetInches(21, 0), fromYMm: feetInches(52, 10), toYMm: feetInches(53, 3) },
+      { key: "store-west", displayNameZh: "储藏室西隔墙 STORE ROOM", level: "first", fromXMm: feetInches(9, 10), toXMm: feetInches(10, 3), fromYMm: feetInches(52, 10), toYMm: feetInches(60, 7) },
+      { key: "store-middle", displayNameZh: "两间储藏室之间隔墙 STORE ROOM", level: "first", fromXMm: feetInches(15, 10), toXMm: feetInches(16, 3), fromYMm: feetInches(52, 10), toYMm: feetInches(60, 7) },
+      { key: "bedroom-east-west", displayNameZh: "东卧室西隔墙 BEDROOM", level: "second", fromXMm: feetInches(15, 4), toXMm: feetInches(15, 9), fromYMm: feetInches(29, 6), toYMm: feetInches(53, 0) },
+      { key: "bedroom-east-north", displayNameZh: "东卧室北隔墙 BEDROOM", level: "second", fromXMm: feetInches(15, 4), toXMm: feetInches(24, 0), fromYMm: feetInches(29, 6), toYMm: feetInches(29, 11) },
+      { key: "south-rooms-north", displayNameZh: "南侧房间北隔墙 BEDROOM 与 STAIR HALL", level: "second", fromXMm: 0, toXMm: feetInches(15, 9), fromYMm: feetInches(52, 9), toYMm: feetInches(53, 2) },
+      { key: "bedroom-south-east", displayNameZh: "南卧室东隔墙 BEDROOM", level: "second", fromXMm: feetInches(10, 10), toXMm: feetInches(11, 3), fromYMm: feetInches(53, 0), toYMm: feetInches(60, 7) },
+    ],
+    // 二层只在东侧卧室与南端房间处铺板，中部标 OPEN BELOW 不铺
+    secondFloorDecks: [
+      { key: "bedroom-east", displayNameZh: "二层东卧室楼板 BEDROOM", level: "second", fromXMm: feetInches(15, 4), toXMm: feetInches(24, 0), fromYMm: feetInches(29, 6), toYMm: feetInches(53, 0) },
+      { key: "south-rooms", displayNameZh: "二层南端楼板 BEDROOM 与 STAIR HALL", level: "second", fromXMm: 0, toXMm: feetInches(24, 0), fromYMm: feetInches(52, 9), toYMm: feetInches(60, 7) },
+    ],
+    canopies: [
+      {
+        key: "canopy/covered-walk", displayNameZh: "覆盖步道顶棚",
+        fromXMm: -feetInches(8, 2), toXMm: feetInches(24, 0) + feetInches(7, 9),
+        fromYMm: -feetInches(7, 6), toYMm: 0,
+        elevationMm: 3610, thicknessMm: 100,
+        postXsMm: [-2510, 50, 2420, 4760, 7220], postSizeMm: 150,
+        source: "scaled", evidenceKeys: ["sheet-16", "sheet-17"],
+        methodZh: "横向范围按平面尺寸线的三段标注取满，进深取二层平面标注 7'-6\"，标高与柱位按图上量取",
+      },
+      {
+        key: "canopy/covered-alleyway", displayNameZh: "覆盖巷道顶棚",
+        fromXMm: -feetInches(8, 2), toXMm: 0,
+        fromYMm: 0, toYMm: feetInches(60, 7),
+        elevationMm: 3610, thicknessMm: 100,
+        postXsMm: [], postSizeMm: 150,
+        source: "scaled", evidenceKeys: ["sheet-16", "sheet-17"],
+        methodZh: "宽度取平面标注 8'-2\"，标高按图上量取。顶棚为搭在相邻建筑上的单坡棚，图上看不出独立支柱",
+      },
+    ],
+    materials: {
+      pier: "木作", girder: "木作", floorStructure: "木作",
+      wall: "木作", gableWall: "木作", partition: "木作",
+      roofPlane: "金属板", monitorWall: "木作", monitorRoof: "金属板",
+      canopy: "木作", canopyPost: "木作",
+    },
+  },
   task: {
     name: "Dai Loy 主楼现状测绘归档",
     scope: ["主楼本体", "覆盖步道与巷道范围"],
@@ -231,42 +439,44 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
     artifactRequirements: {
       titleZh: "Dai Loy 主楼现状测绘成组图纸",
       revisionLabel: "A",
-      geometryTargetRoles: ["wall", "floor", "roof", "column"],
+      geometryTargetRoles: ["exteriorWall", "floorStructure", "roofPlane", "foundationPier", "canopy"],
       sheets: [
-        { key: "sheet-plans", drawingNumber: "DL-01", displayLabelZh: "平面图", pageMm: [420, 297] },
-        { key: "sheet-sections", drawingNumber: "DL-02", displayLabelZh: "立面与剖面图", pageMm: [420, 297] },
+        { key: "sheet-plans", drawingNumber: "DL-01", displayLabelZh: "平面图", pageMm: [594, 420] },
+        { key: "sheet-sections", drawingNumber: "DL-02", displayLabelZh: "立面与剖面图", pageMm: [594, 420] },
       ],
       views: [
         {
           key: "first-floor-plan", displayLabelZh: "首层平面图", drawingRef: "DL-01-1", kind: "floorPlan",
-          scaleDenominator: 50, sheetKey: "sheet-plans",
-          viewportRectMm: [20, 40, 180, 222], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          scaleDenominator: 100, sheetKey: "sheet-plans",
+          viewportRectMm: [30, 40, 136, 228], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          sectionPlane: { normal: [0, 0, 1], offsetMm: 1400 },
           sourceEvidenceKeys: ["sheet-16"],
         },
         {
           key: "second-floor-plan", displayLabelZh: "二层平面图", drawingRef: "DL-01-2", kind: "floorPlan",
-          scaleDenominator: 50, sheetKey: "sheet-plans",
-          viewportRectMm: [220, 40, 180, 222], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          scaleDenominator: 100, sheetKey: "sheet-plans",
+          viewportRectMm: [200, 40, 136, 228], direction: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0],
+          sectionPlane: { normal: [0, 0, 1], offsetMm: 4300 },
           sourceEvidenceKeys: ["sheet-16"],
         },
         {
           key: "west-elevation", displayLabelZh: "西立面图", drawingRef: "DL-02-1", kind: "elevation",
-          scaleDenominator: 50, sheetKey: "sheet-sections",
-          viewportRectMm: [20, 40, 180, 100], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          scaleDenominator: 100, sheetKey: "sheet-sections",
+          viewportRectMm: [30, 40, 136, 100], direction: [0, 1, 0], right: [1, 0, 0], up: [0, 0, 1],
           sourceEvidenceKeys: ["sheet-17"],
         },
         {
           key: "section-aa", displayLabelZh: "纵剖面 A-A", drawingRef: "DL-02-2", kind: "longitudinalSection",
-          scaleDenominator: 50, sheetKey: "sheet-sections",
-          viewportRectMm: [220, 40, 180, 100], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
-          sectionPlane: { normal: [1, 0, 0], offsetMm: feetInches(12, 0) },
+          scaleDenominator: 100, sheetKey: "sheet-sections",
+          viewportRectMm: [200, 40, 240, 100], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          sectionPlane: { normal: [1, 0, 0], offsetMm: -1244 },
           sourceEvidenceKeys: ["sheet-17"],
         },
         {
           key: "section-bb", displayLabelZh: "纵剖面 B-B", drawingRef: "DL-02-3", kind: "longitudinalSection",
-          scaleDenominator: 50, sheetKey: "sheet-sections",
-          viewportRectMm: [220, 142, 180, 118], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
-          sectionPlane: { normal: [1, 0, 0], offsetMm: feetInches(6, 0) },
+          scaleDenominator: 100, sheetKey: "sheet-sections",
+          viewportRectMm: [200, 170, 240, 100], direction: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1],
+          sectionPlane: { normal: [1, 0, 0], offsetMm: 3657 },
           sourceEvidenceKeys: ["sheet-18"],
         },
       ],

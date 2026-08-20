@@ -117,6 +117,67 @@ export interface DemoProjectDefinition {
   // 形制参数。有它才能由规则推算出尺寸并驱动构件生成，
   // 08 演示项目定义表 3 的实测基准这一格也靠它才有内容。
   readonly archetype?: DemoArchetype;
+  // 实测图纸驱动的木构架参数。没有形制规则可依的项目走这一条，
+  // 尺寸全部来自图纸转写或图上量取，不做任何形制推算。
+  readonly timberFrame?: DemoTimberFrame;
+}
+
+// 一条尺寸连同它是怎么来的。drawn 是图纸上写明的标注，scaled 是按图上量取；
+// 两者精度差一个量级，界面必须分开显示，不能都算成实测。
+export interface DemoSourcedDimension {
+  readonly valueMm: number;
+  readonly source: "drawn" | "scaled";
+  readonly methodZh: string;
+  // 对应 measurements 里的条目键，写明的标注才有；量取值不进尺寸事实
+  readonly measurementKey?: string;
+  readonly evidenceKeys: readonly string[];
+}
+
+export interface DemoPlanRect {
+  readonly key: string;
+  readonly displayNameZh: string;
+  readonly level: "first" | "second";
+  readonly fromXMm: number;
+  readonly toXMm: number;
+  readonly fromYMm: number;
+  readonly toYMm: number;
+}
+
+interface DemoDimensionGroup {
+  readonly source: "drawn" | "scaled";
+  readonly methodZh: string;
+  readonly evidenceKeys: readonly string[];
+}
+
+export interface DemoTimberFrame {
+  readonly sourceDeclarationZh: string;
+  // 键与 TimberFrameForm 的字段同名
+  readonly dimensions: Readonly<Record<string, DemoSourcedDimension>>;
+  readonly monitors: readonly (DemoDimensionGroup & {
+    readonly key: string;
+    readonly fromXMm: number;
+    readonly toXMm: number;
+    readonly startYMm: number;
+    readonly endYMm: number;
+    readonly riseMm: number;
+  })[];
+  // 平面上量取的矩形共用一条来源说明
+  readonly planScaled: DemoSourcedDimension;
+  readonly partitions: readonly DemoPlanRect[];
+  readonly secondFloorDecks: readonly DemoPlanRect[];
+  readonly canopies: readonly (DemoDimensionGroup & {
+    readonly key: string;
+    readonly displayNameZh: string;
+    readonly fromXMm: number;
+    readonly toXMm: number;
+    readonly fromYMm: number;
+    readonly toYMm: number;
+    readonly elevationMm: number;
+    readonly thicknessMm: number;
+    readonly postXsMm: readonly number[];
+    readonly postSizeMm: number;
+  })[];
+  readonly materials: Readonly<Record<string, string>>;
 }
 
 // 形制参数与由它驱动的构件生成配置。数值全部来自照片估算或规则推算，
