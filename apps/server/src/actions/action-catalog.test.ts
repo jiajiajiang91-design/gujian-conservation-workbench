@@ -26,7 +26,13 @@ describe("动作目录", () => {
   // 等于把前端的缺口转嫁成对话里的失败，而不是在目录层如实缺席。
   it("模型可见目录只投影 executable 的动作", () => {
     expect(modelFacingCatalog().map((a) => a.name).sort()).toEqual(executableActionNames());
-    expect(modelFacingCatalog().map((a) => a.name)).not.toContain("marquee_correction");
+    // 具体哪个动作未交付随实现变化，这里只断言投影范围等于登记表，
+    // 不写死某个动作名：写死会在它接入后变成一条永远为真的空断言。
+    const definedOnly = Object.entries(ASSISTANT_ACTION_DELIVERY)
+      .filter(([, item]) => item.state === "definedOnly").map(([name]) => name);
+    for (const name of definedOnly) {
+      expect(modelFacingCatalog().map((a) => a.name)).not.toContain(name);
+    }
   });
 
   it("模型侧目录只含名称、描述、参数三字段", () => {
@@ -107,21 +113,21 @@ describe("动作调用校验", () => {
   });
 });
 
-// 界面文档表 11 的实现状态列必须与登记表逐条一致。
-// 之前表 11 没有这一列，只读表的人看到 14 个动作全部交付，而其中一个
+// 界面文档表 10 的实现状态列必须与登记表逐条一致。
+// 之前表 10 没有这一列，只读表的人看到 14 个动作全部交付，而其中一个
 // 前端只有桩。文档能单方面宣称已交付，是这次虚报的直接成因。
-describe("界面文档表 11 与交付登记表一致", () => {
+describe("界面文档表 10 与交付登记表一致", () => {
   const path = fileURLToPath(new URL(
-    "../../../../文档/01_产品/05_界面与交互形态.md",
+    "../../../../文档/01_产品/03_界面与交互形态.md",
     import.meta.url,
   ));
   const markdown = readFileSync(path, "utf8");
 
-  it("表 11 每行的实现状态取自登记表，且覆盖全部动作", () => {
+  it("表 10 每行的实现状态取自登记表，且覆盖全部动作", () => {
     const header = "| 动作 | 实现状态 | 触发方式 | 前置条件 | 确认级别 | 留痕 |";
     const start = markdown.indexOf(header);
-    expect(start, "表 11 的表头变了，实现状态列可能被删掉").toBeGreaterThan(-1);
-    // 取到第一条非表格行为止：后面还有表 12、表 13，用 filter 会一路吃过去
+    expect(start, "表 10 的表头变了，实现状态列可能被删掉").toBeGreaterThan(-1);
+    // 取到第一条非表格行为止：后面还有表 11、表 12，用 filter 会一路吃过去
     const body: string[] = [];
     for (const line of markdown.slice(start).split(/\r?\n/).slice(2)) {
       if (!line.startsWith("| ")) break;

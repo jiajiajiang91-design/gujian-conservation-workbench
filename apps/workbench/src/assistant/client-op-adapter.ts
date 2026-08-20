@@ -36,9 +36,25 @@ const warn = (text: string): ClientOpResult => ({ text, tone: "risk" });
 // 只有桩、还没有真执行体的客户端操作。集中写在这里而不是散在 switch 里，
 // 交付状态测试据此与 domain 的登记表逐条比对：少一条是漏实现，
 // 多一条是登记表说已交付而前端其实没做。
-export const STUB_CLIENT_OP_TEXT: Readonly<Record<string, string>> = {
-  "ui:marquee-correction": "框选修正需要在照片上框选位置，图片框选界面尚未接入，本条未执行",
-};
+export const STUB_CLIENT_OP_TEXT: Readonly<Record<string, string>> = {};
+
+
+// 两个归一化矩形是否相交。框选命中构件用它判，不做面积占比阈值：
+// 框到一角也算指到了这个构件，阈值多少是个没有出处的数。
+function overlaps(
+  first: { x: number; y: number; width: number; height: number },
+  second: { x: number; y: number; width: number; height: number },
+): boolean {
+  return !(
+    first.x + first.width <= second.x || second.x + second.width <= first.x
+    || first.y + first.height <= second.y || second.y + second.height <= first.y
+  );
+}
+
+function toResult(outcome: { kind: string; messageZh?: string; reasonZh?: string }): ClientOpResult {
+  if (outcome.kind === "rejected") return warn(outcome.reasonZh ?? "本条未执行");
+  return ok(outcome.messageZh ?? "已执行");
+}
 
 function factValueText(head: ProjectHead | null, subjectRef: string, field: string): string {
   const fact = head?.snapshot.facts.find((item) => item.subjectRef === subjectRef && item.field === field);
@@ -115,8 +131,82 @@ export async function runClientOp(
       deps.presentProposal(proposal);
       return ok(`已生成修改建议：${proposal.subjectName} 的 ${proposal.field}，逐条确认后才会生效${proposal.warnings.length ? `（${proposal.warnings.length} 条核对警示）` : ""}`);
     }
-    case "ui:marquee-correction":
-      return warn(STUB_CLIENT_OP_TEXT[input.clientOp]!);
+    case "ui:marquee-correction": {
+      if (!head) return warn("请先选择项目");
+      const selection = args.selection as {
+        evidenceId?: string;
+        rectNormalized?: { x: number; y: number; width: number; height: number };
+      } | undefined;
+      if (!selection?.evidenceId || !selection.rectNormalized) {
+        return warn("这条要在照片上先框出位置。请在资料区的图片上框选，再说要改什么");
+      }
+      const evidence = head.snapshot.evidences.find((item) => item.id === selection.evidenceId);
+      if (!evidence) return warn("框选所在的资料不在当前项目里，本条未执行");
+      const instruction = String(args.instruction ?? "").trim();
+      if (!instruction) return warn("框选之后还要说一句要改什么，本条未执行");
+      const changeType = String(args.changeType ?? "");
+      const rect = selection.rectNormalized;
+      const positionText = `${evidence.title} 上 ${(rect.x * 100).toFixed(1)}%、${(rect.y * 100).toFixed(1)}% 起`
+        + `，宽 ${(rect.width * 100).toFixed(1)}%、高 ${(rect.height * 100).toFixed(1)}%`;
+
+      if (changeType === "新增") {
+        const label = String(args.label ?? "").trim() || instruction.slice(0, 40);
+        // 类别未定就如实写未定，不按名称猜类型
+        return toResult(await deps.executors.commitMarqueeEntity(head, {
+          name: label,
+          entityType: "待确认",
+          imageRegion: { evidenceRef: evidence.id, ...rect },
+          locationText: positionText,
+        }));
+      }
+
+      // 其余四类要先确定改的是哪个构件。只有带图上位置的构件能被框选命中；
+      // 由形制参数或几何管线产出的构件没有图上位置，命不中时按表 11 提问，不猜。
+      const hits = head.snapshot.entities.filter((item) => item.imageRegion
+        && item.imageRegion.evidenceRef === evidence.id
+        && overlaps(rect, item.imageRegion));
+      if (hits.length === 0) {
+        const positioned = head.snapshot.entities.filter((item) => item.imageRegion).length;
+        return warn(positioned === 0
+          ? `框选位置已记下，但本项目还没有任何构件带图上位置，无法按框选对应到构件。`
+            + `请说明是哪个构件，或先用框选新增把它记下来。`
+          : `框选位置上没有已登记的构件。请说明是哪个构件，或换一个位置重框。`);
+      }
+      if (hits.length > 1) {
+        return warn(`框选位置上有 ${hits.length} 个构件：${hits.map((item) => item.name).join("、")}。`
+          + `请说明是哪一个，或把框收小一些。`);
+      }
+
+      const target = hits[0]!;
+      if (changeType === "删除") {
+        return toResult(await deps.executors.commitExclusion(head, {
+          subjectDescriptionZh: target.name,
+          categoryZh: target.entityType,
+          reasonZh: `用户在${positionText}框选并说明：${instruction}`,
+          originRef: target.id,
+        }));
+      }
+
+      const field = changeType === "类别修改" ? "entityType"
+        : changeType === "位置调整" ? "imageRegion"
+        : "visibility";
+      const value = changeType === "类别修改" ? (String(args.label ?? "").trim() || instruction)
+        : changeType === "位置调整" ? { evidenceRef: evidence.id, ...rect }
+        : { state: "不可见", needsReshoot: true, reasonZh: instruction };
+      const proposal = buildModificationProposal({
+        subjectRef: target.id,
+        subjectName: target.name,
+        field,
+        oldValueText: changeType === "类别修改" ? target.entityType : JSON.stringify(target.imageRegion ?? null),
+        newValueText: typeof value === "string" ? value : JSON.stringify(value),
+        value,
+        rationaleZh: `用户在${positionText}框选并说明：${instruction}`,
+        modelRunId: null,
+        measurements: deps.measurements(),
+      });
+      deps.presentProposal(proposal);
+      return ok(`已按框选位置对${target.name}生成${changeType}建议，逐条确认后才会生效`);
+    }
     case "ui:draft-delivery-note":
       return head ? ok(deliveryDraftSummary(head)) : warn("请先选择项目");
     case "ui:export": {

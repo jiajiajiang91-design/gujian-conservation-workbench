@@ -19,6 +19,17 @@ export const TurnRequestSchema = z.object({
   turnId: z.uuid(),
   text: z.string().min(1).max(4_000),
   snapshot: WorkspaceSnapshotSchema,
+  // 用户在证据图片上框选的位置。坐标按图片宽高归一化，与图片实际像素无关，
+  // 换一张分辨率不同的原件不影响已留痕的位置。
+  selection: z.object({
+    evidenceId: z.uuid(),
+    rectNormalized: z.object({
+      x: z.number().min(0).max(1),
+      y: z.number().min(0).max(1),
+      width: z.number().gt(0).max(1),
+      height: z.number().gt(0).max(1),
+    }).strict(),
+  }).strict().optional(),
 }).strict();
 
 export const ConfirmRequestSchema = z.object({
@@ -97,7 +108,7 @@ export class AssistantRuntime {
       emit({ type: "failed", text: "请求格式不正确", issues: parsed.error.issues.map((issue) => issue.message) });
       return;
     }
-    const { text, snapshot } = parsed.data;
+    const { text, snapshot, selection } = parsed.data;
     emit({ type: "progress", text: "正在理解你的指令" });
 
     const runModel: ModelDispatchRunner = async ({ userText, retryIssues }) => {
@@ -133,7 +144,12 @@ export class AssistantRuntime {
       return;
     }
 
-    const { action, args } = decision;
+    const { action, args: dispatchedArgs } = decision;
+    // 位置在进入执行之前由服务端从回合选区注入，模型不参与。注入后留痕、
+    // 确认卡片与实际执行用的是同一份参数，符合通用约定 2。
+    const args = action.name === "marquee_correction" && selection
+      ? { ...(dispatchedArgs as Record<string, unknown>), selection }
+      : dispatchedArgs;
     const precondition = evaluatePrecondition(action.preconditionCode, snapshot);
     if (!precondition.satisfied) {
       this.#ledger.recordInvocation({

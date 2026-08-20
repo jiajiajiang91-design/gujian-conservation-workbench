@@ -27,6 +27,12 @@ export class AssistantClient {
   async sendTurn(input: {
     text: string;
     snapshot: WorkspaceSnapshot;
+    // 证据图片上的框选位置，坐标按图片宽高归一化。模型不出坐标，
+    // 位置由这里上送，服务端在派发前注入动作参数。
+    selection?: {
+      evidenceId: string;
+      rectNormalized: { x: number; y: number; width: number; height: number };
+    };
     onEvent: (event: AssistantTurnEvent) => void;
   }): Promise<void> {
     if (this.#active) throw new Error("ASSISTANT_TURN_ALREADY_ACTIVE");
@@ -45,6 +51,7 @@ export class AssistantClient {
           turnId: crypto.randomUUID(),
           text: input.text,
           snapshot: input.snapshot,
+          ...(input.selection ? { selection: input.selection } : {}),
         }),
       });
       if (!response.ok) throw new Error(`ASSISTANT_TURN_HTTP_${response.status}`);

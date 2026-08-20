@@ -1,16 +1,16 @@
 {
   "schemaVersion": "assistant-dispatch-benchmark-1",
-  "ranAt": "2026-08-16T11:53:09.716Z",
+  "ranAt": "2026-08-20T20:38:21.350Z",
   "modelAvailable": true,
   "model": "kimi-k2.6",
-  "caseCount": 44,
+  "caseCount": 47,
   "tiers": {
-    "modelDirect": 42,
+    "modelDirect": 44,
     "modelRetry": 0,
     "keyword": 0,
-    "miss": 2
+    "miss": 3
   },
-  "hitRate": 95.5,
+  "hitRate": 93.6,
   "rows": [
     {
       "text": "看看构件清单",
@@ -140,7 +140,7 @@
       "hit": true,
       "tier": "modelDirect",
       "attempts": [
-        "model:TEXT_REPLY"
+        "model:OK"
       ],
       "note": null
     },
@@ -444,6 +444,17 @@
     {
       "text": "这个规范原文第几条说的",
       "expected": "answer_question",
+      "actual": "answer_question",
+      "hit": true,
+      "tier": "modelDirect",
+      "attempts": [
+        "model:OK"
+      ],
+      "note": "边界：只读回答"
+    },
+    {
+      "text": "你建议用什么比例",
+      "expected": "answer_question",
       "actual": "switch_view",
       "hit": false,
       "tier": "miss",
@@ -453,22 +464,11 @@
       "note": "边界：只读回答"
     },
     {
-      "text": "你建议用什么比例",
-      "expected": "answer_question",
-      "actual": "answer_question",
-      "hit": true,
-      "tier": "modelDirect",
-      "attempts": [
-        "model:OK"
-      ],
-      "note": "边界：只读回答"
-    },
-    {
       "text": "什么是实测基准",
       "expected": "answer_question",
-      "actual": "answer_question",
-      "hit": true,
-      "tier": "modelDirect",
+      "actual": "switch_view",
+      "hit": false,
+      "tier": "miss",
       "attempts": [
         "model:OK"
       ],
@@ -495,6 +495,39 @@
         "model:TEXT_REPLY"
       ],
       "note": "边界：只读回答并拒绝，不触发动作"
+    },
+    {
+      "text": "这里漏了一个雀替，和右边那个对称的",
+      "expected": "marquee_correction",
+      "actual": "marquee_correction",
+      "hit": true,
+      "tier": "modelDirect",
+      "attempts": [
+        "model:OK"
+      ],
+      "note": null
+    },
+    {
+      "text": "框住的这块砖有裂缝，标一下",
+      "expected": "marquee_correction",
+      "actual": "marquee_correction",
+      "hit": true,
+      "tier": "modelDirect",
+      "attempts": [
+        "model:OK"
+      ],
+      "note": null
+    },
+    {
+      "text": "我圈的位置多识别了一根椽，去掉",
+      "expected": "marquee_correction",
+      "actual": "marquee_correction",
+      "hit": true,
+      "tier": "modelDirect",
+      "attempts": [
+        "model:OK"
+      ],
+      "note": null
     }
   ]
 }

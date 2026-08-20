@@ -28,11 +28,7 @@ export const ASSISTANT_ACTION_DELIVERY: Readonly<Record<string, ActionDelivery>>
   query_job_progress: { state: "executable", clientOp: "ui:job-progress" },
   answer_question: { state: "executable", clientOp: null },
   propose_modification: { state: "executable", clientOp: "ui:propose-modification" },
-  marquee_correction: {
-    state: "definedOnly",
-    clientOp: "ui:marquee-correction",
-    gapZh: "证据图片上的框选界面未接入，前端只有提示未执行的桩。接入后改为 executable。",
-  },
+  marquee_correction: { state: "executable", clientOp: "ui:marquee-correction" },
   rerun_recognition: { state: "executable", clientOp: "job:model-recognition" },
   advance_workflow: { state: "executable", clientOp: "ui:advance" },
   run_data_check: { state: "executable", clientOp: "ui:run-check" },

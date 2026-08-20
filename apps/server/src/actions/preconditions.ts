@@ -30,6 +30,10 @@ const evaluators: Record<string, (s: WorkspaceSnapshot) => PreconditionResult> =
     s.hasDrawings === true ? ok : no("还没有图纸，请先生成图纸"),
   DELIVERABLE_EXISTS: (s) =>
     s.hasDeliverable === true ? ok : no("还没有可交付内容"),
+  IMAGE_SELECTION_PRESENT: (s) =>
+    s.hasImageSelection === true
+      ? ok
+      : no("这条要在照片上先框出位置。请在资料区的图片上框选，再说要改什么"),
   EVIDENCE_EXISTS: (s) =>
     (s.unparsedEvidenceCount ?? 0) > 0 ? ok : no("项目内没有待解析的资料，请先上传任务书或其他资料"),
 };

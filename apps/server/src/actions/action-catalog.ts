@@ -26,6 +26,9 @@ const CHANGE_TYPES = [
   "参数修改", "类别修改", "标记存疑", "标记不可用", "标记不可见", "新增", "删除",
 ] as const;
 
+// 框选修正的五类说明方式（界面与交互形态表 6）
+const MARQUEE_CHANGE_TYPES = ["新增", "类别修改", "位置调整", "删除", "标记不可见"] as const;
+
 const EXPORT_FORMATS = ["dxf", "svg", "pdf", "zip"] as const;
 const JOB_TYPES = ["model", "cad", "drawing"] as const;
 
@@ -127,31 +130,27 @@ export const ACTION_DEFINITIONS: readonly ActionDefinition[] = [
     name: "marquee_correction",
     displayNameZh: "框选修正",
     description: "按用户在照片上框选的位置修正构件记录。仅当消息带框选位置时使用。",
+    // 模型只出说明，不出坐标。模型看不到那张照片，要它给 x/y/width/height
+    // 只能编一组数出来，而这组数会被当成用户框选的位置写进修改记录。
+    // 位置由客户端选区随回合上送，服务端在派发前注入（见 assistant-routes）。
+    // 修正类型由模型判，坐标不由模型给。判断用户想做哪一类是语言任务，
+    // 模型看得到用户的话；坐标是视觉任务，模型看不到那张照片。
     parameters: z.object({
-      bbox: z.object({
-        x: z.number(), y: z.number(),
-        width: z.number().positive(), height: z.number().positive(),
-      }).strict(),
+      changeType: z.enum(MARQUEE_CHANGE_TYPES),
       instruction: z.string().min(1).max(2_000),
+      label: z.string().min(1).max(120).optional(),
     }).strict(),
     parametersJsonSchema: {
       type: "object",
       properties: {
-        bbox: {
-          type: "object",
-          description: "框选区域",
-          properties: {
-            x: { type: "number" }, y: { type: "number" },
-            width: { type: "number" }, height: { type: "number" },
-          },
-          required: ["x", "y", "width", "height"],
-        },
+        changeType: jsonEnum(MARQUEE_CHANGE_TYPES, "本次修正属于哪一类"),
         instruction: { type: "string", description: "用户对框选位置的说明" },
+        label: { type: "string", description: "用户说到的构件名称，没说则省略" },
       },
-      required: ["bbox", "instruction"],
+      required: ["changeType", "instruction"],
     },
     confirmLevel: "per_item",
-    preconditionCode: null,
+    preconditionCode: "IMAGE_SELECTION_PRESENT",
     costly: false,
     generation: 1,
   },

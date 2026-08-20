@@ -13,7 +13,7 @@ afterEach(cleanup);
 const snapshot: WorkspaceSnapshot = {
   projectId: null, currentStage: "evidence", openDockItems: 0, componentCount: 0,
   hasGeometryRevision: false, hasDrawings: false, hasDeliverable: false,
-  modelRouteAvailable: false, unparsedEvidenceCount: 0,
+  modelRouteAvailable: false, unparsedEvidenceCount: 0, hasImageSelection: false,
 };
 
 function clientWithEvents(events: readonly AssistantTurnEvent[]): AssistantClient {

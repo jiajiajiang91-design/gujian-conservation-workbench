@@ -13,6 +13,9 @@ export const WorkspaceSnapshotSchema = z.object({
   hasDeliverable: z.boolean().optional(),
   modelRouteAvailable: z.boolean().optional(),
   unparsedEvidenceCount: z.number().int().nonnegative().optional(),
+  // 用户当前是否在某张证据图片上框了一个位置。框选修正的前置条件，
+  // 也是模型可见目录里该动作是否可选的依据。
+  hasImageSelection: z.boolean().optional(),
 }).strict();
 
 export type WorkspaceSnapshot = z.infer<typeof WorkspaceSnapshotSchema>;

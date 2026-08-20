@@ -150,6 +150,69 @@ export class AssistantExecutors {
     return { kind: "committed", messageZh: "检查完成，结果已写入检查记录" };
   }
 
+  // 框选新增的构件直接入库并留痕，不走逐条确认：表 10 规定新增与遮挡标记
+  // 直接执行并留痕，只有删除进排除记录。
+  async commitMarqueeEntity(head: ProjectHead, input: {
+    name: string;
+    entityType: string;
+    imageRegion: { evidenceRef: string; x: number; y: number; width: number; height: number };
+    locationText: string;
+  }): Promise<ExecutionOutcome> {
+    const building = head.snapshot.buildings[0];
+    if (!building) return { kind: "rejected", reasonZh: "项目里还没有建筑，无法新增构件" };
+    await this.#deps.commands.execute({
+      commandType: "CommitEntities",
+      commandId: crypto.randomUUID(),
+      projectId: head.projectId,
+      actorId: this.#deps.actorId(),
+      expectedRevisionId: head.revisionId,
+      issuedAt: new Date().toISOString(),
+      payload: {
+        entities: [{
+          id: crypto.randomUUID(),
+          projectId: head.projectId,
+          buildingId: building.id,
+          parentId: null,
+          entityType: input.entityType,
+          name: input.name,
+          locationText: input.locationText,
+          imageRegion: input.imageRegion,
+          origin: "marquee",
+        }],
+      },
+    });
+    return { kind: "committed", messageZh: `已新增构件记录：${input.name}` };
+  }
+
+  async commitExclusion(head: ProjectHead, input: {
+    subjectDescriptionZh: string;
+    categoryZh: string | null;
+    reasonZh: string;
+    originRef: string | null;
+  }): Promise<ExecutionOutcome> {
+    await this.#deps.commands.execute({
+      commandType: "CommitExclusionRecords",
+      commandId: crypto.randomUUID(),
+      projectId: head.projectId,
+      actorId: this.#deps.actorId(),
+      expectedRevisionId: head.revisionId,
+      issuedAt: new Date().toISOString(),
+      payload: {
+        records: [{
+          id: crypto.randomUUID(),
+          projectId: head.projectId,
+          subjectDescriptionZh: input.subjectDescriptionZh,
+          categoryZh: input.categoryZh,
+          reasonZh: input.reasonZh,
+          excludedBy: this.#deps.actorId(),
+          occurredAt: new Date().toISOString(),
+          originRef: input.originRef,
+        }],
+      },
+    });
+    return { kind: "committed", messageZh: `已记入排除记录：${input.subjectDescriptionZh}` };
+  }
+
   async commitConfirmedModification(head: ProjectHead, proposal: ModificationProposal): Promise<ExecutionOutcome> {
     const command = buildCommitFactsCommand({
       head,

@@ -24,6 +24,7 @@ describe("前置条件求值", () => {
       hasDeliverable: true,
       modelRouteAvailable: true,
       unparsedEvidenceCount: 3,
+      hasImageSelection: true,
     });
     for (const code of KNOWN_PRECONDITION_CODES) {
       expect(evaluatePrecondition(code, snapshot).satisfied, code).toBe(true);

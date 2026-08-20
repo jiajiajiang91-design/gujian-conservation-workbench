@@ -10,6 +10,8 @@ export interface WorkspaceSnapshot {
   hasDeliverable: boolean;
   modelRouteAvailable: boolean;
   unparsedEvidenceCount: number;
+  // 用户当前是否在某张证据图片上框了位置
+  hasImageSelection: boolean;
 }
 
 export interface SnapshotInput {
@@ -22,6 +24,7 @@ export interface SnapshotInput {
   deliveryCount: number;
   serverModelConfigured: boolean;
   unparsedEvidenceCount: number;
+  hasImageSelection: boolean;
 }
 
 export function buildWorkspaceSnapshot(input: SnapshotInput): WorkspaceSnapshot {
@@ -35,5 +38,6 @@ export function buildWorkspaceSnapshot(input: SnapshotInput): WorkspaceSnapshot 
     hasDeliverable: input.deliveryCount > 0,
     modelRouteAvailable: input.serverModelConfigured,
     unparsedEvidenceCount: Math.max(0, input.unparsedEvidenceCount),
+    hasImageSelection: input.hasImageSelection === true,
   };
 }

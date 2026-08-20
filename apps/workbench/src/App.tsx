@@ -14,6 +14,7 @@ import type { ArtifactRecord, Decision, ModelRun, RuleRun } from "@gujian/domain
 
 import type { ModelRunProgress } from "./model-run-client";
 import type { CadJobProgress } from "@gujian/infrastructure";
+import { EvidenceMarquee, type NormalizedRect } from "./EvidenceMarquee";
 import { GlbViewer } from "./GlbViewer";
 import {
   bootstrapDemoProjects, cadJobs, createLocalProject, deliveries, drawingJobs, evidenceIngestion,
@@ -196,6 +197,8 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
   // 证据半区（05 界面与交互形态 §三）：中栏右半区显示选中资料原件，数据与证据并置
   const [activeEvidenceId, setActiveEvidenceId] = useState<string | null>(null);
   const [evidencePreview, setEvidencePreview] = useState<{ evidenceId: string; url: string; mimeType: string; fileName: string } | null>(null);
+  // 证据图片上的框选。换资料就清掉：位置只对它所属的那张图有意义。
+  const [imageSelection, setImageSelection] = useState<{ evidenceId: string; rectNormalized: NormalizedRect } | null>(null);
   // 数据与证据双半区默认各占一半，分隔条可拖动，比例限制在 30% 至 70%（07 第 6 节）
   const [dataPaneRatio, setDataPaneRatio] = useState(50);
   const splitRef = useRef<HTMLDivElement | null>(null);
@@ -350,6 +353,7 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
 
   // 选中资料后读取原件生成预览地址；切换或卸载时释放
   useEffect(() => {
+    setImageSelection(null);
     if (!activeEvidenceId) { setEvidencePreview(null); return; }
     let cancelled = false;
     let created: string | null = null;
@@ -550,6 +554,7 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     deliveryCount: projectDeliveries.length,
     serverModelConfigured: serverStatus?.modelConfigured ?? false,
     unparsedEvidenceCount: Math.max(0, (selected?.snapshot.evidences.length ?? 0) - parsedEvidenceCount),
+    hasImageSelection: imageSelection !== null,
   });
 
   const handleAssistantClientOp = (input: { clientOp: string; actionName: string; args: unknown }) => runClientOp({
@@ -1259,7 +1264,16 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
           )}
           {evidencePreview ? (
             evidencePreview.mimeType.startsWith("image/")
-              ? <img src={evidencePreview.url} alt={`${evidencePreview.fileName} 原件`} />
+              ? (
+                <EvidenceMarquee
+                  src={evidencePreview.url}
+                  alt={`${evidencePreview.fileName} 原件`}
+                  selection={imageSelection?.evidenceId === evidencePreview.evidenceId ? imageSelection.rectNormalized : null}
+                  onSelect={(rect) => setImageSelection(
+                    rect ? { evidenceId: evidencePreview.evidenceId, rectNormalized: rect } : null,
+                  )}
+                />
+              )
               : evidencePreview.mimeType === "application/pdf"
                 ? <object data={evidencePreview.url} type="application/pdf" aria-label={`${evidencePreview.fileName} 原件`} />
                 : <div className="gj-empty"><p>该类型的文件无法在页内显示。</p><button className="gj-btn gj-btn--text" type="button" onClick={() => { const evidence = selected?.snapshot.evidences.find((item) => item.id === activeEvidenceId); if (evidence) void downloadEvidence(evidence.assetId); }}>下载原文件核对</button></div>
@@ -1953,7 +1967,21 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
           <p>{currentStatusText}</p>
         </div>
         <div className="assistant-body">
-        {selected && <ChatPanel client={assistantChatClient} buildSnapshot={buildAssistantSnapshot} onClientOp={handleAssistantClientOp} />}
+        {selected && (
+          <ChatPanel
+            client={assistantChatClient}
+            buildSnapshot={buildAssistantSnapshot}
+            onClientOp={handleAssistantClientOp}
+            selection={imageSelection
+              ? {
+                evidenceId: imageSelection.evidenceId,
+                evidenceTitle: selected.snapshot.evidences.find((item) => item.id === imageSelection.evidenceId)?.title ?? "资料原件",
+                rectNormalized: imageSelection.rectNormalized,
+              }
+              : null}
+            onClearSelection={() => setImageSelection(null)}
+          />
+        )}
         {pendingProposal && (
           <div className="assistant-pending-confirm">
             <strong>修改建议待确认</strong>

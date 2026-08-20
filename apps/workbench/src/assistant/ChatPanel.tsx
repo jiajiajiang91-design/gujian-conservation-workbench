@@ -14,6 +14,13 @@ export interface ChatPanelProps {
   client: AssistantClient;
   buildSnapshot: () => WorkspaceSnapshot;
   onClientOp: (input: { clientOp: string; actionName: string; args: unknown }) => Promise<ClientOpResult>;
+  // 当前的图片框选。有选区时输入区显示位置引用，回合随消息一起上送。
+  selection?: {
+    evidenceId: string;
+    evidenceTitle: string;
+    rectNormalized: { x: number; y: number; width: number; height: number };
+  } | null;
+  onClearSelection?: () => void;
 }
 
 interface PendingConfirm {
@@ -21,7 +28,7 @@ interface PendingConfirm {
   card: ActionCardData;
 }
 
-export function ChatPanel({ client, buildSnapshot, onClientOp }: ChatPanelProps) {
+export function ChatPanel({ client, buildSnapshot, onClientOp, selection, onClearSelection }: ChatPanelProps) {
   const [messages, setMessages] = useState<readonly AssistantMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -89,7 +96,12 @@ export function ChatPanel({ client, buildSnapshot, onClientOp }: ChatPanelProps)
     setBusy(true);
     append(newMessage({ who: "user", kind: "plain", text }));
     try {
-      await client.sendTurn({ text, snapshot: buildSnapshot(), onEvent: handleEvent });
+      await client.sendTurn({
+        text, snapshot: buildSnapshot(), onEvent: handleEvent,
+        ...(selection
+          ? { selection: { evidenceId: selection.evidenceId, rectNormalized: selection.rectNormalized } }
+          : {}),
+      });
     } catch (error) {
       // 助手消息与错误横幅走同一套中文说法，不显示错误码原文（07 界面视觉规范 5.6）。
       const notice = describeFailure(error, "助手请求失败");
@@ -101,7 +113,7 @@ export function ChatPanel({ client, buildSnapshot, onClientOp }: ChatPanelProps)
     } finally {
       setBusy(false);
     }
-  }, [append, buildSnapshot, busy, client, handleEvent, input]);
+  }, [append, buildSnapshot, busy, client, handleEvent, input, selection]);
 
   const decide = useCallback(async (decision: "allow_once" | "deny" | "user_withdrawn") => {
     if (!pendingConfirm) return;
@@ -130,10 +142,20 @@ export function ChatPanel({ client, buildSnapshot, onClientOp }: ChatPanelProps)
           <ConfirmBar disabled={busy} onDecision={(decision) => void decide(decision)} />
         </div>
       )}
+      {selection && (
+        <div className="assistant-selection-chip">
+          <span>已框选：{selection.evidenceTitle}</span>
+          {onClearSelection && (
+            <button type="button" className="gj-btn gj-btn--text" onClick={onClearSelection}>取消框选</button>
+          )}
+        </div>
+      )}
       <div className="assistant-input-row">
         <textarea
           value={input}
-          placeholder="对助手说要做什么，例如：把 P48 的长度改成 620，或：生成图纸"
+          placeholder={selection
+            ? "说要在框选位置改什么，例如：这里漏了一个雀替，和右边那个对称的"
+            : "对助手说要做什么，例如：把 P48 的长度改成 620，或：生成图纸"}
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
