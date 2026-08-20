@@ -77,6 +77,18 @@ export const CommitEntitiesCommandSchema = CommandHeaderSchema.extend({
   }).strict(),
 }).strict();
 
+// 构件记录的修订。类别修改、位置调整、遮挡标记改的是已有那条记录本身，
+// 不是新写一条。此前这三类只写一条事实，构件记录原样不动：采纳了把类别
+// 改成撑栱之后，构件表仍显示待确认；位置调整之后，下一次框选命中仍按旧框判，
+// 等于位置没有调整过。事实那条仍然写，它承载来源与理由，两者不互相替代。
+export const ReviseEntitiesCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ReviseEntities"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    entities: z.array(HeritageEntitySchema).min(1).max(500),
+  }).strict(),
+}).strict();
+
 // 排除记录写入。用户判定不存在或不适用的对象进这里，重新识别按它过滤。
 export const CommitExclusionRecordsCommandSchema = CommandHeaderSchema.extend({
   commandType: z.literal("CommitExclusionRecords"),
@@ -269,6 +281,7 @@ export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CommitFactsCommandSchema,
   CommitObservationsCommandSchema,
   CommitEntitiesCommandSchema,
+  ReviseEntitiesCommandSchema,
   CommitExclusionRecordsCommandSchema,
   ReplaceTaskDefinitionCommandSchema,
   ImportProjectSnapshotCommandSchema,

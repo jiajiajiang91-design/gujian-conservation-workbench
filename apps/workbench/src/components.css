@@ -241,3 +241,6 @@ button.gj-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
 
 /* 输入区的位置引用（界面文档原型 P6） */
 .assistant-selection-chip { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); }
+
+/* 构件行上的状态标记：排除与遮挡要一眼看得出来，不能只有助手回复里提过 */
+.entity-flag { color: var(--warning); font: var(--text-label); }

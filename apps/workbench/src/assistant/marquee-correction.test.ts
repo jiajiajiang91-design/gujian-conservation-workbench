@@ -35,6 +35,7 @@ function deps(current: ReturnType<typeof head>, overrides: Record<string, unknow
     executors: {
       commitMarqueeEntity: vi.fn(async () => ({ kind: "committed", messageZh: "已新增构件记录：雀替" })),
       commitExclusion: vi.fn(async () => ({ kind: "committed", messageZh: "已记入排除记录：雀替" })),
+      markEntityHidden: vi.fn(async () => ({ kind: "committed", messageZh: "已标记为不可见并记下原因：雀替" })),
     },
     ...overrides,
   } as never;
@@ -74,6 +75,31 @@ describe("框选修正", () => {
     expect(passed.entityType).toBe("待确认");
   });
 
+  // 实测里模型省了 label，缺名时旧写法拿整句说明的前 40 字当构件名，
+  // 构件表于是出现一行写着一整句话的记录。缺名要问，不猜也不凑。
+  it("新增缺构件名时提问，不拿整句说明当名字", async () => {
+    const current = head([]);
+    const dependencies = deps(current);
+    const result = await call(current, { changeType: "新增", instruction: "这里漏了一个雀替，和右边那个对称的" }, dependencies);
+    expect(result.tone).toBe("risk");
+    expect(result.text).toContain("构件名称");
+    const executors = (dependencies as unknown as { executors: { commitMarqueeEntity: ReturnType<typeof vi.fn> } }).executors;
+    expect(executors.commitMarqueeEntity).not.toHaveBeenCalled();
+  });
+
+  // 写入型动作要告诉挂载方项目变了。少了这个标记，执行体写完库、助手回报
+  // 已新增，而构件表要退出项目再进来才看得到那条记录。
+  it("新增与删除标记为已写入，提问类不标记", async () => {
+    const 新增 = await call(head([]), { changeType: "新增", instruction: "这里漏了一个雀替", label: "雀替" });
+    expect(新增.mutated).toBe(true);
+
+    const 无名 = await call(head([]), { changeType: "新增", instruction: "这里漏了一个雀替" });
+    expect(无名.mutated).toBeUndefined();
+
+    const 命不中 = await call(head([{ id: ENTITY_ID, name: "柱 1", entityType: "柱" }]), { changeType: "删除", instruction: "去掉" });
+    expect(命不中.mutated).toBeUndefined();
+  });
+
   it("项目里没有带图上位置的构件时，删除类提问而不是猜", async () => {
     const current = head([{ id: ENTITY_ID, name: "柱 1", entityType: "柱" }]);
     const result = await call(current, { changeType: "删除", instruction: "这个多识别了，去掉" });
@@ -104,14 +130,29 @@ describe("框选修正", () => {
     expect(result.text).toContain("请说明是哪一个");
   });
 
-  it("类别修改与标记不可见走逐条确认，不直接改数据", async () => {
+  it("类别修改与位置调整走逐条确认，不直接改数据", async () => {
     const current = head([{ id: ENTITY_ID, name: "雀替", entityType: "待确认", imageRegion: region(0.22, 0.22) }]);
-    for (const changeType of ["类别修改", "标记不可见"]) {
+    for (const changeType of ["类别修改", "位置调整"]) {
       const dependencies = deps(current);
       const result = await call(current, { changeType, instruction: "这块被树挡住了", label: "额枋" }, dependencies);
       expect(result.tone).toBe("result");
       expect(result.text).toContain("逐条确认");
       expect((dependencies as unknown as { presentProposal: ReturnType<typeof vi.fn> }).presentProposal).toHaveBeenCalledOnce();
     }
+  });
+
+  // 按 2026-08-20 的处置，新增与遮挡标记直接执行并留痕，不走逐条确认：
+  // 用户已经在图上圈了位置又说明了看不见什么，再要一次确认拿不到新信息。
+  it("遮挡标记直接执行，原因写进记录", async () => {
+    const current = head([{ id: ENTITY_ID, name: "雀替", entityType: "待确认", imageRegion: region(0.22, 0.22) }]);
+    const dependencies = deps(current);
+    const result = await call(current, { changeType: "标记不可见", instruction: "这块被树挡住了" }, dependencies);
+    expect(result.tone).toBe("result");
+    expect(result.mutated).toBe(true);
+    const executors = (dependencies as unknown as { executors: { markEntityHidden: ReturnType<typeof vi.fn> } }).executors;
+    expect(executors.markEntityHidden).toHaveBeenCalledOnce();
+    expect(executors.markEntityHidden.mock.calls[0]![1]).toMatchObject({ entityId: ENTITY_ID });
+    expect(String(executors.markEntityHidden.mock.calls[0]![1].reasonZh)).toContain("这块被树挡住了");
+    expect((dependencies as unknown as { presentProposal: ReturnType<typeof vi.fn> }).presentProposal).not.toHaveBeenCalled();
   });
 });

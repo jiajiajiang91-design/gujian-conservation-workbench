@@ -1,6 +1,6 @@
 import { ProjectCommandService, type ProjectHead } from "@gujian/application";
 import {
-  ModelCandidateOutputSchema,
+  ModelCandidateOutputSchema, RecognizedComponentSchema,
   ModelCandidateSchema,
   ModelRunSchema,
   type ModelCandidate,
@@ -83,15 +83,41 @@ async function blobToBase64(blob: Blob): Promise<string> {
   return btoa(binary);
 }
 
-function parseStructured(content: string, taskType: string): ModelCandidate["structured"] {
+// 导出供测试直接调用：这条解析路径决定一份识别结果是全留、部分留还是全丢
+export function parseStructured(content: string, taskType: string): ModelCandidate["structured"] {
   const kind = OUTPUT_KIND[taskType];
   if (!kind) return null;
   try {
-    const parsed = ModelCandidateOutputSchema.safeParse({ ...JSON.parse(content) as object, kind });
-    return parsed.success ? parsed.data : null;
+    const raw = { ...JSON.parse(content) as object, kind };
+    const parsed = ModelCandidateOutputSchema.safeParse(raw);
+    if (parsed.success) return parsed.data;
+    return kind === "componentRecognition" ? salvageComponents(raw) : null;
   } catch {
     return null;
   }
+}
+
+// 一条构件写坏不该让整份识别结果作废。实测里 25 条中有一条的 region 键名被
+// 模型写崩（x、0.735、空格、height），整份被判为未结构化全部丢弃，界面只说
+// 未结构化，不说坏在哪、丢了几条。
+//
+// 改为逐条校验：留下合规的，丢掉的按条数写进 missingInformation，与排除记录
+// 过滤同一个做法，丢弃看得见。整份的 summary 或 missingInformation 本身坏了
+// 就仍然返回 null，那时已经没有可信的骨架可留。
+function salvageComponents(raw: Record<string, unknown>): ModelCandidate["structured"] {
+  const candidates = Array.isArray(raw.components) ? raw.components : [];
+  const kept = candidates.filter((item) => RecognizedComponentSchema.safeParse(item).success);
+  if (!kept.length) return null;
+  const dropped = candidates.length - kept.length;
+  const rebuilt = ModelCandidateOutputSchema.safeParse({
+    ...raw,
+    components: kept,
+    missingInformation: [
+      ...(Array.isArray(raw.missingInformation) ? raw.missingInformation : []),
+      ...(dropped ? [`模型返回的 ${candidates.length} 条构件里有 ${dropped} 条格式不合规，已丢弃，未计入识别结果。`] : []),
+    ],
+  });
+  return rebuilt.success ? rebuilt.data : null;
 }
 
 

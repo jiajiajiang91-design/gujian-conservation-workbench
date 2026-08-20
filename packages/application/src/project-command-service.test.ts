@@ -221,6 +221,50 @@ describe("ProjectCommandService", () => {
     expect(repository.commitCount).toBe(2);
   });
 
+  // 构件记录的写入与修订此前在应用层一条测试都没有。类别修改与位置调整
+  // 采纳后要真改这条记录，改错对象或改到不存在的记录都必须挡住。
+  it("构件记录写入后可按 id 修订，修订不存在的记录被拒", async () => {
+    const { repository, service } = setup();
+    const created = await service.execute(createProjectCommand());
+    const entityId = "00000000-0000-4000-8000-00000000000b";
+    const entity = (overrides: Record<string, unknown> = {}) => ({
+      id: entityId,
+      projectId: ids.project,
+      buildingId: ids.building,
+      parentId: null,
+      entityType: "待确认",
+      name: "雀替",
+      locationText: null,
+      origin: "marquee",
+      ...overrides,
+    });
+    const command = (commandId: string, revisionId: string, commandType: string, payloadEntity: unknown) => ({
+      commandType,
+      commandId,
+      projectId: ids.project,
+      actorId: ids.actor,
+      expectedRevisionId: revisionId,
+      issuedAt: "2026-08-20T00:00:00Z",
+      payload: { entities: [payloadEntity] },
+    });
+
+    const written = await service.execute(command("00000000-0000-4000-8000-00000000000c", created.revisionId, "CommitEntities", entity()));
+    expect((repository.head?.snapshot as ProjectSnapshot).entities).toHaveLength(1);
+
+    const revised = await service.execute(command("00000000-0000-4000-8000-00000000000d", written.revisionId, "ReviseEntities", entity({ entityType: "撑栱" })));
+    const after = (repository.head?.snapshot as ProjectSnapshot).entities;
+    // 修订是替换不是追加：条数不变，类别变了
+    expect(after).toHaveLength(1);
+    expect(after[0]?.entityType).toBe("撑栱");
+
+    await expect(service.execute(command(
+      "00000000-0000-4000-8000-00000000000e",
+      revised.revisionId,
+      "ReviseEntities",
+      entity({ id: "00000000-0000-4000-8000-00000000000f" }),
+    ))).rejects.toMatchObject({ code: "COMMAND_INVALID" });
+  });
+
   it("现状记录写入人工来源并拒绝无证据引用的记录", async () => {
     const { repository, service } = setup();
     const created = await service.execute(createProjectCommand());

@@ -145,7 +145,7 @@ export const ACTION_DEFINITIONS: readonly ActionDefinition[] = [
       properties: {
         changeType: jsonEnum(MARQUEE_CHANGE_TYPES, "本次修正属于哪一类"),
         instruction: { type: "string", description: "用户对框选位置的说明" },
-        label: { type: "string", description: "用户说到的构件名称，没说则省略" },
+        label: { type: "string", description: "构件名称或类别名，从用户的话里取，只填名词不填整句。新增时填构件名，例如用户说这里漏了一个雀替就填雀替；类别修改时填改成哪一类，例如用户说改成撑栱就填撑栱。这两类缺了会被退回重问" },
       },
       required: ["changeType", "instruction"],
     },

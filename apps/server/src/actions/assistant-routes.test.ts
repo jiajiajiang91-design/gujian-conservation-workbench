@@ -15,6 +15,18 @@ const SNAPSHOT_FULL = {
   modelRouteAvailable: true,
 };
 
+// 记录系统提示的假网关。框选一节实测里模型答消息中没有包含框选位置信息，
+// 原因是提示从不提这件事，靠读代码看不出来，只能把提示本身断言下来。
+function promptCapturingGateway(seen: { text: string | null }) {
+  return {
+    configured: true,
+    executeWithTools: async (input: { systemPrompt: string }) => {
+      seen.text = input.systemPrompt;
+      return { kind: "text" as const, content: "好的", raw: "raw-text" };
+    },
+  };
+}
+
 function fakeGateway(reply: { name: string; args: unknown } | { text: string }) {
   return {
     configured: true,
@@ -142,5 +154,39 @@ describe("助手回合", () => {
     expect(ledger.orphanAsks()).toHaveLength(1);
     expect(rt.reconcileOrphanAsks()).toBe(1);
     expect(ledger.orphanAsks()).toHaveLength(0);
+  });
+});
+
+describe("系统提示里的框选告知", () => {
+  const selection = {
+    evidenceId: "9f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f",
+    rectNormalized: { x: 0.2, y: 0.55, width: 0.16, height: 0.25 },
+  };
+
+  async function promptFor(snapshot: Record<string, unknown>, withSelection: boolean) {
+    const seen: { text: string | null } = { text: null };
+    const runner = new AssistantRuntime({
+      gateway: promptCapturingGateway(seen),
+      ledger: new ActionLedger(":memory:"),
+      tokens: new ConfirmationTokenStore(),
+    });
+    await runner.handleTurn({
+      turnId: "0f8fad5b-d9cb-469f-a165-70867728950e",
+      text: "框住的这块砖有裂缝，标一下",
+      snapshot,
+      ...(withSelection ? { selection } : {}),
+    }, "session-ref", () => {}, new AbortController().signal);
+    return seen.text ?? "";
+  }
+
+  it("有框选时告知模型，并说明坐标由系统带上", async () => {
+    const prompt = await promptFor({ ...SNAPSHOT_FULL, hasImageSelection: true }, true);
+    expect(prompt).toContain("框出一处位置");
+    expect(prompt).toContain("你不要给坐标");
+  });
+
+  it("没有框选时不提这件事，免得模型去选一个必然被前置条件挡下的动作", async () => {
+    const prompt = await promptFor({ ...SNAPSHOT_FULL, hasImageSelection: false }, false);
+    expect(prompt).not.toContain("框出一处位置");
   });
 });

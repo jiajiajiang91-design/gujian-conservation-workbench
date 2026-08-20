@@ -16,6 +16,8 @@ import { buildWorkspaceSnapshot } from "./workspace-snapshot.js";
 const HEAD = {
   projectId: "3b241101-e2bb-4255-8caf-4136c566a962",
   revisionId: "9f8e7d6c-5b4a-4392-8170-fedcba987654",
+  // 采纳建议时要看这条建议指的是不是某个构件记录，指向构件就同步改那条记录
+  snapshot: { entities: [] },
 } as unknown as ProjectHead;
 
 const DESIGN_VIEWS = [...ALL_SWITCHABLE_VIEW_NAMES];
@@ -193,6 +195,89 @@ describe("动作执行体", () => {
     const producer = command.payload.facts[0]?.producer;
     expect(producer?.producerType).toBe("human");
     expect(producer?.actionRef?.commandId).toBe(command.commandId);
+  });
+
+  // 采纳指向构件的建议要写两条命令：事实与构件记录。第二条的版本号必须取
+  // 第一条回执里的新版本，拿旧版本会撞乐观并发，表现是采纳了但记录没变，
+  // 界面上看不出失败，只有翻库才发现。
+  it("采纳指向构件的建议时同步改记录，版本号接上一条回执", async () => {
+    const executed: { commandType: string; expectedRevisionId: string; payload: Record<string, unknown> }[] = [];
+    const entityId = "5c2f1a3b-9d84-4f6e-a1b7-2c3d4e5f6a7b";
+    const executors = new AssistantExecutors({
+      commands: {
+        execute: async (c: unknown) => {
+          executed.push(c as typeof executed[number]);
+          return { revisionId: `rev-${executed.length}` };
+        },
+      },
+      workflow: { evaluate: async () => ({}) },
+      actorId: () => "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    } as unknown as ConstructorParameters<typeof AssistantExecutors>[0]);
+
+    const head = {
+      projectId: "3b241101-e2bb-4255-8caf-4136c566a962",
+      revisionId: "rev-0",
+      snapshot: {
+        entities: [{
+          id: entityId, projectId: "3b241101-e2bb-4255-8caf-4136c566a962",
+          buildingId: "8f14e45f-ceea-4d4e-9f4a-9b1c8d2e3f40", parentId: null,
+          entityType: "待确认", name: "雀替", locationText: null,
+        }],
+      },
+    } as unknown as ProjectHead;
+
+    const proposal = buildModificationProposal({
+      subjectRef: entityId, subjectName: "雀替", field: "entityType",
+      oldValueText: "待确认", newValueText: "撑栱", value: "撑栱",
+      rationaleZh: "用户框选并说明", modelRunId: null, measurements: [],
+    });
+
+    const outcome = await executors.commitConfirmedModification(head, proposal);
+    expect(outcome.kind).toBe("committed");
+    expect(executed.map((c) => c.commandType)).toEqual(["CommitFacts", "ReviseEntities"]);
+    expect(executed[1]!.expectedRevisionId).toBe("rev-1");
+    expect((executed[1]!.payload.entities as { entityType: string }[])[0]!.entityType).toBe("撑栱");
+  });
+
+  // 位置与位置说明分开存，只改一个就会出现记录说 30%、65%，同一行的说明写着
+  // 20%、55%，读的人不知道该信哪个。实测里出现过一次。
+  it("位置调整同时改位置与位置说明", async () => {
+    const executed: { commandType: string; payload: Record<string, unknown> }[] = [];
+    const entityId = "5c2f1a3b-9d84-4f6e-a1b7-2c3d4e5f6a7b";
+    const evidenceId = "6d3e2b4c-ae95-4a7f-b2c8-3d4e5f6a7b8c";
+    const executors = new AssistantExecutors({
+      commands: { execute: async (c: unknown) => { executed.push(c as typeof executed[number]); return { revisionId: "rev-1" }; } },
+      workflow: { evaluate: async () => ({}) },
+      actorId: () => "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    } as unknown as ConstructorParameters<typeof AssistantExecutors>[0]);
+
+    const head = {
+      projectId: "3b241101-e2bb-4255-8caf-4136c566a962",
+      revisionId: "rev-0",
+      snapshot: {
+        evidences: [{ id: evidenceId, title: "现场照片：馆内现状" }],
+        entities: [{
+          id: entityId, projectId: "3b241101-e2bb-4255-8caf-4136c566a962",
+          buildingId: "8f14e45f-ceea-4d4e-9f4a-9b1c8d2e3f40", parentId: null,
+          entityType: "待确认", name: "雀替",
+          locationText: "现场照片：馆内现状 上 20.0%、55.0% 起，宽 16.0%、高 25.0%",
+          imageRegion: { evidenceRef: evidenceId, x: 0.2, y: 0.55, width: 0.16, height: 0.25 },
+        }],
+      },
+    } as unknown as ProjectHead;
+
+    const moved = { evidenceRef: evidenceId, x: 0.3, y: 0.65, width: 0.16, height: 0.23 };
+    await executors.commitConfirmedModification(head, buildModificationProposal({
+      subjectRef: entityId, subjectName: "雀替", field: "imageRegion",
+      oldValueText: "旧位置", newValueText: "新位置", value: moved,
+      rationaleZh: "用户框选并说明", modelRunId: null, measurements: [],
+    }));
+
+    const revised = (executed.find((c) => c.commandType === "ReviseEntities")!.payload.entities as {
+      imageRegion: { x: number }; locationText: string;
+    }[])[0]!;
+    expect(revised.imageRegion.x).toBe(0.3);
+    expect(revised.locationText).toBe("现场照片：馆内现状 上 30.0%、65.0% 起，宽 16.0%、高 23.0%");
   });
 
   it("运行数据检查走 workflow.evaluate", async () => {

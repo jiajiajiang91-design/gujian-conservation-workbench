@@ -1,4 +1,5 @@
 import type { ProjectHead } from "@gujian/application";
+import type { HeritageEntity } from "@gujian/domain";
 
 import { checkModification, type MeasurementForCheck } from "./value-check.js";
 import { resolveView } from "./view-map.js";
@@ -74,6 +75,16 @@ export function buildModificationProposal(input: {
 
 // 用户确认一条建议后落库：值的生产者按来源标记（模型建议为 model，
 // 否则为 human），人工确认经 acceptanceRef 指向本次命令。
+// 图上位置的中文说明。构件记录里位置与位置说明分开存，两处都要用这一个
+// 写法，各拼各的迟早会分叉。
+export function describeImageRegion(
+  evidenceTitle: string,
+  region: { x: number; y: number; width: number; height: number },
+): string {
+  return `${evidenceTitle} 上 ${(region.x * 100).toFixed(1)}%、${(region.y * 100).toFixed(1)}% 起`
+    + `，宽 ${(region.width * 100).toFixed(1)}%、高 ${(region.height * 100).toFixed(1)}%`;
+}
+
 export function buildCommitFactsCommand(input: {
   head: ProjectHead;
   actorId: string;
@@ -254,7 +265,73 @@ export class AssistantExecutors {
       actorId: this.#deps.actorId(),
       proposal,
     });
-    await this.#deps.commands.execute(command);
-    return { kind: "committed", messageZh: `已生效：${proposal.subjectName} 的 ${proposal.field}` };
+    const receipt = await this.#deps.commands.execute(command) as { revisionId?: string } | undefined;
+    // 事实写完还要把构件记录本身改掉。只写事实的话，采纳了把类别改成撑栱
+    // 之后构件表仍显示待确认，位置调整之后下一次框选命中仍按旧框判。
+    // 事实那条不删：它承载来源、理由与复核状态，两者各管各的。
+    //
+    // 版本号取回执里的那个。写事实已经推进了一版，再拿入参那个旧版本去改
+    // 构件记录必然撞上乐观并发，表现是采纳了但类别没变，界面上看不出失败。
+    const revised = await this.#reviseEntityFromProposal(head, proposal, receipt?.revisionId ?? head.revisionId);
+    return {
+      kind: "committed",
+      messageZh: revised
+        ? `已生效：${proposal.subjectName} 的 ${proposal.field}，构件记录已同步更新`
+        : `已生效：${proposal.subjectName} 的 ${proposal.field}`,
+    };
+  }
+
+  // 修改建议指向的是构件记录时，把那条记录同步改掉。指向别的对象就不动，
+  // 返回 false 让调用方如实说只写了事实。
+  async #reviseEntityFromProposal(head: ProjectHead, proposal: ModificationProposal, revisionId: string): Promise<boolean> {
+    const target = head.snapshot.entities.find((item) => item.id === proposal.subjectRef);
+    if (!target) return false;
+    // 位置改了，位置说明要跟着改。两者分开存，只改一个就会出现记录说位置在
+    // 30%、65%，同一行的说明写着 20%、55%，读的人不知道该信哪个。
+    const movedRegion = proposal.value as HeritageEntity["imageRegion"];
+    const next = proposal.field === "entityType" ? { ...target, entityType: String(proposal.value) }
+      : proposal.field === "imageRegion" ? {
+        ...target,
+        imageRegion: movedRegion,
+        locationText: movedRegion
+          ? describeImageRegion(head.snapshot.evidences.find((item) => item.id === movedRegion.evidenceRef)?.title ?? "资料原件", movedRegion)
+          : target.locationText,
+      }
+      : proposal.field === "visibility" ? { ...target, visibility: proposal.value as HeritageEntity["visibility"] }
+      : null;
+    if (!next) return false;
+    await this.#deps.commands.execute({
+      commandType: "ReviseEntities",
+      commandId: crypto.randomUUID(),
+      projectId: head.projectId,
+      actorId: this.#deps.actorId(),
+      expectedRevisionId: revisionId,
+      issuedAt: new Date().toISOString(),
+      payload: { entities: [next] },
+    });
+    return true;
+  }
+
+  // 遮挡标记直接执行。按 2026-08-20 的处置，新增与遮挡标记不走逐条确认：
+  // 用户已经在图上圈了位置又说明了看不见什么，再要一次确认没有新增信息。
+  // 理由写进记录本身，因此不依赖修改历史视图也留得住。
+  async markEntityHidden(head: ProjectHead, input: {
+    entityId: string;
+    reasonZh: string;
+  }): Promise<ExecutionOutcome> {
+    const target = head.snapshot.entities.find((item) => item.id === input.entityId);
+    if (!target) return { kind: "rejected", reasonZh: "要标记的构件不在当前项目里，本条未执行" };
+    await this.#deps.commands.execute({
+      commandType: "ReviseEntities",
+      commandId: crypto.randomUUID(),
+      projectId: head.projectId,
+      actorId: this.#deps.actorId(),
+      expectedRevisionId: head.revisionId,
+      issuedAt: new Date().toISOString(),
+      payload: {
+        entities: [{ ...target, visibility: { state: "不可见", needsReshoot: true, reasonZh: input.reasonZh } }],
+      },
+    });
+    return { kind: "committed", messageZh: `已标记为不可见并记下原因：${target.name}` };
   }
 }

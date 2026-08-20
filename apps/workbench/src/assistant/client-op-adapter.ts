@@ -1,6 +1,6 @@
 import type { ProjectHead } from "@gujian/application";
 
-import { buildModificationProposal, type AssistantExecutors, type ModificationProposal } from "./action-executors.js";
+import { buildModificationProposal, describeImageRegion, type AssistantExecutors, type ModificationProposal } from "./action-executors.js";
 import type { MeasurementForCheck } from "./value-check.js";
 
 // clientOp 适配器：把服务端 action 事件的 clientOp 前缀翻译为真实执行。
@@ -28,6 +28,9 @@ export interface ClientOpDeps {
 export interface ClientOpResult {
   text: string;
   tone: "result" | "risk";
+  // 本次动作是否改了项目数据。挂载方据此把项目重新读一遍：不重读的话，
+  // 助手回报已新增而界面纹丝不动，要退出项目再进来才看得到那条记录。
+  mutated?: boolean;
 }
 
 const ok = (text: string): ClientOpResult => ({ text, tone: "result" });
@@ -53,7 +56,7 @@ function overlaps(
 
 function toResult(outcome: { kind: string; messageZh?: string; reasonZh?: string }): ClientOpResult {
   if (outcome.kind === "rejected") return warn(outcome.reasonZh ?? "本条未执行");
-  return ok(outcome.messageZh ?? "已执行");
+  return { ...ok(outcome.messageZh ?? "已执行"), mutated: true };
 }
 
 function factValueText(head: ProjectHead | null, subjectRef: string, field: string): string {
@@ -146,11 +149,15 @@ export async function runClientOp(
       if (!instruction) return warn("框选之后还要说一句要改什么，本条未执行");
       const changeType = String(args.changeType ?? "");
       const rect = selection.rectNormalized;
-      const positionText = `${evidence.title} 上 ${(rect.x * 100).toFixed(1)}%、${(rect.y * 100).toFixed(1)}% 起`
-        + `，宽 ${(rect.width * 100).toFixed(1)}%、高 ${(rect.height * 100).toFixed(1)}%`;
+      const positionText = describeImageRegion(evidence.title, rect);
 
       if (changeType === "新增") {
-        const label = String(args.label ?? "").trim() || instruction.slice(0, 40);
+        const label = String(args.label ?? "").trim();
+        // 没给构件名就问。此前缺名时拿整句说明的前 40 字当名字，构件表里
+        // 于是出现一行写着一整句话的记录，既不是构件名也对不上词表。
+        if (!label) {
+          return warn("这条要给出构件名称，例如雀替、檐柱。请说明框选位置上的是什么构件");
+        }
         // 类别未定就如实写未定，不按名称猜类型
         return toResult(await deps.executors.commitMarqueeEntity(head, {
           name: label,
@@ -187,18 +194,39 @@ export async function runClientOp(
         }));
       }
 
+      // 遮挡标记直接执行，不走逐条确认。界面文档表 10 与 2026-08-20 的处置
+      // 都写明新增与遮挡标记直接执行并留痕：用户已经在图上圈了位置又说明了
+      // 看不见什么，再要一次确认拿不到新信息。原因写进记录本身，留得住。
+      if (changeType === "标记不可见") {
+        return toResult(await deps.executors.markEntityHidden(head, {
+          entityId: target.id,
+          reasonZh: `用户在${positionText}框选并说明：${instruction}`,
+        }));
+      }
+
       const field = changeType === "类别修改" ? "entityType"
         : changeType === "位置调整" ? "imageRegion"
         : "visibility";
-      const value = changeType === "类别修改" ? (String(args.label ?? "").trim() || instruction)
+      // 类别修改缺 label 时，旧写法拿整句说明当类别，建议卡上于是出现
+      // entityType：待确认 → 框里这个不是雀替，类别改成撑栱。与新增同一个毛病。
+      if (changeType === "类别修改" && !String(args.label ?? "").trim()) {
+        return warn("这条要给出改成哪一类，例如撑栱、额枋。请说明框选位置上的构件属于哪一类");
+      }
+      const value = changeType === "类别修改" ? String(args.label ?? "").trim()
         : changeType === "位置调整" ? { evidenceRef: evidence.id, ...rect }
         : { state: "不可见", needsReshoot: true, reasonZh: instruction };
       const proposal = buildModificationProposal({
         subjectRef: target.id,
         subjectName: target.name,
         field,
-        oldValueText: changeType === "类别修改" ? target.entityType : JSON.stringify(target.imageRegion ?? null),
-        newValueText: typeof value === "string" ? value : JSON.stringify(value),
+        // 建议卡是给人看的，三类各有各的读法。原来除类别修改外一律打印
+        // imageRegion 的 JSON，标记不可见的卡片上于是出现一串坐标对象当旧值。
+        oldValueText: changeType === "类别修改" ? target.entityType
+          : changeType === "位置调整" ? (target.locationText ?? "未记位置")
+          : "未标记为不可见",
+        newValueText: changeType === "类别修改" ? String(value)
+          : changeType === "位置调整" ? positionText
+          : `不可见，需补拍。原因：${instruction}`,
         value,
         rationaleZh: `用户在${positionText}框选并说明：${instruction}`,
         modelRunId: null,

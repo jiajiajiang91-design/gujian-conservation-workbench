@@ -60,7 +60,7 @@ describe("已交付动作不落兜底分支", () => {
     for (const [name, item] of delivered) {
       let text: string;
       try {
-        text = (await runClientOp(deps, { clientOp: item.clientOp, actionName: name, args: {} })).text;
+        text = (await runClientOp(deps, { clientOp: item.clientOp!, actionName: name, args: {} })).text;
       } catch {
         continue;
       }

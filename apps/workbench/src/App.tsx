@@ -73,6 +73,11 @@ const OBSERVATION_LABELS = {
 export const PRODUCER_LABELS: Record<string, string> = {
   model: "AI 识别", human: "人工确认", rule: "自动核对", demo: "示例资料",
 };
+// 记录级构件的来源。框选新增与识别确认写的是同一类记录，来源必须分得开：
+// 一个是人在图上圈出来的，一个是模型认出来再由人确认的。
+export const ENTITY_ORIGIN_LABELS: Record<string, string> = {
+  marquee: "框选新增", recognition: "识别确认", import: "随包导入",
+};
 export const REVIEW_LABELS: Record<string, string> = {
   unreviewed: "待确认", confirmed: "已确认", rejected: "已驳回", superseded: "已被替代",
 };
@@ -548,7 +553,7 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     projectId: selected?.projectId ?? null,
     currentStage: activeStage,
     openIssueCount: openIssues.length,
-    entityCount: geometrySpec?.objects.length ?? selected?.snapshot.entities.length ?? 0,
+    entityCount: (geometrySpec?.objects.length ?? 0) + (selected?.snapshot.entities.length ?? 0),
     geometryRevisionCount: selected?.snapshot.geometryRevisions.length ?? 0,
     artifactCount: projectArtifacts.length,
     deliveryCount: projectDeliveries.length,
@@ -557,7 +562,8 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     hasImageSelection: imageSelection !== null,
   });
 
-  const handleAssistantClientOp = (input: { clientOp: string; actionName: string; args: unknown }) => runClientOp({
+  const handleAssistantClientOp = async (input: { clientOp: string; actionName: string; args: unknown }) => {
+    const outcome = await runClientOp({
     executors: assistantExecutors,
     getHead: () => selected,
     getOpenDockItems: () => openIssues.length,
@@ -601,7 +607,12 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
       await loadProject(selected.projectId);
     },
     presentProposal: setPendingProposal,
-  }, input);
+    }, input);
+    // 写入型动作把项目重新读一遍。执行体只写库不碰组件状态，不重读的话
+    // 助手回报已新增而构件表纹丝不动，要退出项目再进来才看得到。
+    if (outcome.mutated && selected) await loadProject(selected.projectId);
+    return outcome;
+  };
 
   const registerArchetype = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1511,11 +1522,28 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
 
             {activeStage === "objects" && (
               <section className="evidence-board">
-                <header className="board-heading"><div><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? selected.snapshot.entities.length} 个对象</span></header>
+                <header className="board-heading"><div><h3>对象、构件与稳定标识</h3></div><span className="board-count">{geometrySpec?.objects.length ?? 0} 个对象{selected.snapshot.entities.length ? ` · ${selected.snapshot.entities.length} 条构件记录` : ""}</span></header>
                 {renderSplit(<>
                 <div className="object-table">
                   {(geometrySpec?.objects ?? []).map((object) => <button type="button" key={object.id} onClick={() => { setSelectedGeometryEntityId(object.id); setActiveStage("geometry"); }}><span>{object.displayNameZh}</span><small>{typeLabel(object.componentType, object.conceptRef)}</small><small>{PRODUCER_LABELS[object.producer.producerType]}</small><strong>{object.unknownRefs.length ? `${object.unknownRefs.length} 项待确认` : "来源已记录"}</strong></button>)}
-                  {!geometrySpec?.objects.length && selected.snapshot.entities.map((entity) => <article key={entity.id}><strong>{entity.name}</strong><span>{entity.entityType}</span></article>)}
+                  {/* 记录级构件与几何对象并列显示，不是二选一。框选新增与识别确认写的是
+                      记录级构件，项目一旦生成了几何就再也看不到它们，助手回报已新增而界面
+                      毫无变化。两者来源不同，用标记分开，不合并计数。 */}
+                  {selected.snapshot.entities.map((entity) => {
+                    // 排除与遮挡都要在行上看得出来。用户说了去掉或看不见，
+                    // 界面毫无变化就等于没执行。排除不删记录，只标出来。
+                    const excluded = selected.snapshot.exclusionRecords.some((record) => record.originRef === entity.id);
+                    return (
+                      <article key={entity.id}>
+                        <strong>{entity.name}</strong>
+                        <span>{entity.entityType}</span>
+                        <small>{ENTITY_ORIGIN_LABELS[entity.origin ?? "import"]}</small>
+                        {excluded && <small className="entity-flag">已排除</small>}
+                        {entity.visibility && <small className="entity-flag">不可见 · {entity.visibility.needsReshoot ? "需补拍" : "无需补拍"}</small>}
+                        <small>{entity.locationText ?? "未记位置"}</small>
+                      </article>
+                    );
+                  })}
                   {!geometrySpec?.objects.length && !selected.snapshot.entities.length && <div className="panel-empty">还没有构件。构件只能来自本项目的资料，或本项目已核对过的三维模型。</div>}
                 </div>
 
@@ -1585,7 +1613,11 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
                   </button>
                 </header>
                 <div className="pane-body">
-                <div className="transmission-note"><ShieldCheck size={15} /><span>只把本项目已识别出的文字发给助手核对。照片、图纸等原文件保存在本机，不会上传。</span></div>
+                {/* 这句必须与实际行为一致。构件识别要把图片本身送出去，原来那句
+                    只把文字发出去、原文件不上传，在构件识别接入后就不成立了。 */}
+                <div className="transmission-note"><ShieldCheck size={15} /><span>{readableDrawingEvidenceIds.length
+                  ? "本项目有图像资料，识别时会把这些图片发给助手。其余原文件保存在本机，不发送。"
+                  : "只把本项目已识别出的文字发给助手核对。照片、图纸等原文件保存在本机，不会上传。"}</span></div>
                 {!serverStatus?.modelConfigured && <p className="inline-warning">服务端尚未配置 KIMI_API_KEY，真实运行按钮已锁定。</p>}
                 {!parsedEvidenceCount && <p className="inline-warning">先上传一份可解析的 UTF-8 文本或 JSON 资料。</p>}
                 <div className="candidate-list">

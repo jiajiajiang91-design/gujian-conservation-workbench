@@ -78,6 +78,14 @@ function systemPrompt(snapshot: WorkspaceSnapshot): string {
     `当前工作区：环节 ${snapshot.currentStage ?? "未知"}，` +
     `停靠事项 ${snapshot.openDockItems ?? "未知"} 项，构件 ${snapshot.componentCount ?? "未知"} 个，` +
     `几何版本${snapshot.hasGeometryRevision ? "已有" : "没有"}，图纸${snapshot.hasDrawings ? "已有" : "没有"}。`,
+    // 模型必须知道有没有框选，否则只能靠用户措辞猜。实测里用户说框住的这块砖
+    // 有裂缝，模型答消息中没有包含框选位置信息，就是因为提示里从没提过这件事。
+    // 坐标仍然不给模型：模型看不到那张照片，给了也只能编。位置由客户端选区
+    // 随回合上送，服务端在派发前注入。
+    ...(snapshot.hasImageSelection
+      ? ["用户已在证据图片上框出一处位置。要按这个位置改构件记录时直接选框选修正，"
+        + "位置坐标由系统自动带上，你不要给坐标，也不要因为看不到坐标就说信息不足。"]
+      : []),
   ].join("\n");
 }
 

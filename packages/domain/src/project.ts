@@ -168,6 +168,13 @@ export const HeritageEntitySchema = z.object({
   imageRegion: ImageRegionSchema.optional(),
   // 这条构件记录是怎么来的。人工框选新增与识别产出要分得开。
   origin: z.enum(["marquee", "recognition", "import"]).optional(),
+  // 遮挡标记。缺省表示图上看得见，只有被判定看不见时才有这一项，
+  // 因此不设可见这个取值：可见是常态，不需要一条记录来声明。
+  visibility: z.object({
+    state: z.literal("不可见"),
+    needsReshoot: z.boolean(),
+    reasonZh: z.string().min(1).max(2_000),
+  }).strict().optional(),
 }).strict();
 
 export const RelationSchema = z.object({

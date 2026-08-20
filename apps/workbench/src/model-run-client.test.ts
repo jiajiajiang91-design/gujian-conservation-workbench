@@ -2,7 +2,7 @@ import type { ProjectCommandService, ProjectHead } from "@gujian/application";
 import type { IndexedDbProjectRepository } from "@gujian/infrastructure";
 import { describe, expect, it, vi } from "vitest";
 
-import { ModelRunClient } from "./model-run-client";
+import { ModelRunClient, parseStructured as parseStructuredForTest } from "./model-run-client";
 
 function head(): ProjectHead {
   const projectId = crypto.randomUUID();
@@ -141,5 +141,37 @@ describe("图纸尺寸转写的输入边界", () => {
     await expect(stubClient(calls, current).runMeasurementTranscription(current, crypto.randomUUID(), [textEvidenceId], () => {}))
       .rejects.toThrow("NO_READABLE_DRAWING_FOR_MODEL");
     expect(calls).toEqual([]);
+  });
+});
+
+// 实测里 25 条构件中有一条的 region 键名被模型写崩，整份被判为未结构化全部
+// 丢弃，用户什么也没拿到。逐条校验后坏的那条丢掉、好的留下、丢了几条写出来。
+describe("构件识别的逐条解析", () => {
+  const good = {
+    nameZh: "墙", categoryZh: "墙体", evidenceRef: "71de28f7-26df-5db4-96e0-59e4b8af2e76",
+    region: { x: 0.1, y: 0.2, width: 0.3, height: 0.4 }, certainty: "certain", noteZh: null,
+  };
+  const broken = { ...good, nameZh: "门", region: { x: 0.7, height: 0.2 } };
+
+  function parse(payload: unknown) {
+    return parseStructuredForTest(JSON.stringify(payload), "component-recognition");
+  }
+
+  it("坏的一条丢掉，好的留下，丢弃条数写进缺失信息", () => {
+    const out = parse({ summary: "认出两条", components: [good, broken], missingInformation: ["原有一条"] });
+    expect(out?.kind).toBe("componentRecognition");
+    expect(out?.kind === "componentRecognition" && out.components.length).toBe(1);
+    expect(out?.kind === "componentRecognition" && out.components[0]!.nameZh).toBe("墙");
+    expect(out?.missingInformation.join("")).toContain("2 条构件里有 1 条格式不合规");
+    expect(out?.missingInformation).toContain("原有一条");
+  });
+
+  it("全都合规时不添加丢弃说明", () => {
+    const out = parse({ summary: "认出一条", components: [good], missingInformation: [] });
+    expect(out?.missingInformation).toEqual([]);
+  });
+
+  it("一条都不合规时仍返回空，不编一个空壳出来", () => {
+    expect(parse({ summary: "认出零条", components: [broken], missingInformation: [] })).toBeNull();
   });
 });

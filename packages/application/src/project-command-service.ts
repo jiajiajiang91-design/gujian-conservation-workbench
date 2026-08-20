@@ -215,6 +215,21 @@ function appendEntities(head: ProjectHead, entities: readonly HeritageEntity[]):
   });
 }
 
+// 按 id 替换已有构件记录。不存在就报错而不是顺手新增：修订一条不存在的记录
+// 说明调用方拿的是过期快照，静默变成新增会凭空多出一条谁也没写过的构件。
+function reviseEntities(head: ProjectHead, entities: readonly HeritageEntity[]): ProjectSnapshot {
+  const byId = new Map(head.snapshot.entities.map((item) => [item.id, item]));
+  const missing = entities.find((item) => !byId.has(item.id));
+  if (missing) {
+    throw new CommandError("COMMAND_INVALID", "entity does not exist", { entityId: missing.id });
+  }
+  for (const item of entities) byId.set(item.id, item);
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
+    entities: head.snapshot.entities.map((item) => byId.get(item.id) ?? item),
+  });
+}
+
 function appendExclusionRecords(head: ProjectHead, records: readonly ExclusionRecord[]): ProjectSnapshot {
   const existingIds = new Set(head.snapshot.exclusionRecords.map((item) => item.id));
   const duplicate = records.find((item) => existingIds.has(item.id));
@@ -653,6 +668,8 @@ export class ProjectCommandService {
         ? appendObservations(head, command.payload.observations)
         : command.commandType === "CommitEntities"
         ? appendEntities(head, command.payload.entities)
+        : command.commandType === "ReviseEntities"
+        ? reviseEntities(head, command.payload.entities)
         : command.commandType === "CommitExclusionRecords"
         ? appendExclusionRecords(head, command.payload.records)
         : command.commandType === "ImportEvidence"
@@ -695,7 +712,7 @@ export class ProjectCommandService {
           ? command.payload.facts.map((fact) => fact.id)
           : command.commandType === "CommitObservations"
             ? command.payload.observations.map((item) => item.id)
-          : command.commandType === "CommitEntities"
+          : command.commandType === "CommitEntities" || command.commandType === "ReviseEntities"
             ? command.payload.entities.map((item) => item.id)
           : command.commandType === "CommitExclusionRecords"
             ? command.payload.records.map((item) => item.id)
