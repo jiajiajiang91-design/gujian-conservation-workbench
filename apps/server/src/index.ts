@@ -67,22 +67,10 @@ const RunRequestSchema = z.discriminatedUnion("taskType", [
     evidences: z.array(z.union([ImageEvidenceSchema, TranscriptionTextEvidenceSchema])).min(1),
   }).strict(),
 ]).superRefine((value, context) => {
-  // 条目数与输入字节按任务注册表限（技术架构 7.1 的输入字节预算）。
-  // 超限直接拒绝，不截断后继续：截断会让模型只看到半张图还照常出结果。
-  const task = findModelTask(value.taskType);
-  if (!task) {
+  // 只校验任务类型在册。输入条目数与字节数不再设人为上限：
+  // 之前那组数字是估出来的，真实约束由请求体上限 maxBodyBytes 与上游 API 承担。
+  if (!findModelTask(value.taskType)) {
     context.addIssue({ code: "custom", message: "unknown task type", path: ["taskType"] });
-    return;
-  }
-  if (value.evidences.length > task.maxItems) {
-    context.addIssue({ code: "custom", message: "evidence count exceeds the task limit", path: ["evidences"] });
-  }
-  const bytes = value.evidences.reduce(
-    (sum, item) => sum + ("base64" in item ? item.base64.length : Buffer.byteLength(item.text, "utf8")),
-    0,
-  );
-  if (bytes > task.maxInputBytes) {
-    context.addIssue({ code: "custom", message: "input bytes exceed the task budget", path: ["evidences"] });
   }
 });
 
@@ -148,7 +136,6 @@ export interface ModelGateway {
     userContent: string;
     // 系统提示与输入种类由任务注册表决定（技术架构 7.2），不由调用方现编
     systemPrompt?: string;
-    maxOutputTokens?: number;
     images?: readonly { readonly mediaType: string; readonly base64: string }[];
     signal: AbortSignal;
     onStatus: (type: "running" | "retrying", attempt: number, detail: string | null) => void;
@@ -516,7 +503,6 @@ export function createWorkbenchServer(options: {
           const result = await gateway.execute({
             userContent: taskContent(parsed.data),
             systemPrompt: findModelTask(parsed.data.taskType)!.systemPrompt,
-            maxOutputTokens: findModelTask(parsed.data.taskType)!.maxOutputTokens,
             ...(parsed.data.taskType === "measurement-transcription"
               ? {
                 images: parsed.data.evidences

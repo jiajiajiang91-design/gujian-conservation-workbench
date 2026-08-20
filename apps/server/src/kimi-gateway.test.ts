@@ -55,9 +55,23 @@ describe("KimiGateway", () => {
       stream: true,
       thinking: { type: "disabled" },
     });
-    // 架构 v1.4 §7.3 口径：使用 max_completion_tokens，不显式设置 temperature
-    expect(requestBody.max_completion_tokens).toBeGreaterThan(0);
+    // 不设输出上限：曾经的默认 1024 把逐条尺寸的结构化输出截断在半途，
+    // 而任何替代数字都是估的。默认不发这个字段，长度交给上游按模型能力决定。
+    expect(requestBody.max_completion_tokens).toBeUndefined();
     expect(requestBody.temperature).toBeUndefined();
+  });
+
+  it("显式配置输出上限时才发 max_completion_tokens", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => sseResponse());
+    const gateway = new KimiGateway({ apiKey: "k", fetchImpl, maxOutputTokens: 2_048 });
+    await gateway.execute({
+      userContent: "任务",
+      signal: new AbortController().signal,
+      onStatus: () => {},
+      onChunk: () => {},
+    });
+    const body = JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body));
+    expect(body.max_completion_tokens).toBe(2_048);
   });
 
   it("超时后重试并给出稳定错误码", async () => {

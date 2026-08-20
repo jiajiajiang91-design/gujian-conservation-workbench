@@ -22,10 +22,14 @@ describe("模型任务注册表", () => {
     expect(new Set(types).size).toBe(types.length);
   });
 
-  it("每条都有预算，不存在无上限的任务", () => {
+  // 注册表只固定提示、输入种类与输出结构，不设人为的条目数、字节数与
+  // 输出 token 上限。编出来的上限不保护任何东西，只会在真实输入变大时
+  // 无声地截断或拒绝；真实约束由请求体上限与上游 API 承担。
+  it("注册表不带任何人为上限字段", () => {
     for (const task of MODEL_TASKS) {
-      expect(task.maxItems, task.taskType).toBeGreaterThan(0);
-      expect(task.maxInputBytes, task.taskType).toBeGreaterThan(0);
+      for (const field of ["maxItems", "maxInputBytes", "maxOutputTokens"]) {
+        expect(field in task, `${task.taskType} 仍带 ${field}`).toBe(false);
+      }
     }
   });
 
@@ -47,10 +51,10 @@ describe("模型任务注册表", () => {
     expect(prompt).toContain("uncertain");
   });
 
-  // 三张 HABS 实测图各约 1 MiB，转 base64 后约 4 MiB
-  it("图像任务的预算容得下三张实测图", () => {
-    const task = findModelTask("measurement-transcription")!;
-    expect(task.maxItems).toBeGreaterThanOrEqual(3);
-    expect(task.maxInputBytes).toBeGreaterThan(4 * 1024 * 1024);
+  it("每条都写明可接受的输入种类", () => {
+    for (const task of MODEL_TASKS) {
+      expect(task.inputKinds.length, task.taskType).toBeGreaterThan(0);
+      for (const kind of task.inputKinds) expect(["text", "image"]).toContain(kind);
+    }
   });
 });

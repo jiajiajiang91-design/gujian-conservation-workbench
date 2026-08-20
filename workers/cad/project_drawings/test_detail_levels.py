@@ -8,7 +8,7 @@ from pathlib import Path
 from workers.cad.project_geometry.kernel import build_geometry_package
 from workers.cad.project_geometry.test_project_geometry import spec_a
 
-from .test_project_drawings import matrix
+from .test_project_drawings import FONT, matrix
 from .view_geometry import generate_view_geometry, load_source_meshes
 
 
@@ -92,6 +92,47 @@ class DetailLevelTests(unittest.TestCase):
         self.assertEqual(result["detailRules"], rules)
         self.assertIsInstance(result["detailDroppedGroupCount"], int)
         self.assertGreaterEqual(result["detailDroppedGroupCount"], 0)
+
+
+
+class SvgFontSubsetTests(unittest.TestCase):
+    """SVG 内嵌字体按本张图实际用字裁剪。
+
+    整份字体三万零八百九十字，一张图只用到几十字。不裁剪时每张 SVG 要背
+    十三兆多的无用字形，用户下载的每一张图都在背这个包袱。
+    """
+
+    def test_只取用到的字不另维护清单(self) -> None:
+        from .sheet_writer import _svg_text_characters
+        markup = '<text class="text" x="1" y="2">总面阔 8400 mm</text><line x1="0"/><text>图名</text>'
+        found = _svg_text_characters(markup)
+        self.assertIn("总", found)
+        self.assertIn("图", found)
+        self.assertIn("8", found)
+        # 图形元素里的属性值不算文字
+        self.assertNotIn("x", found)
+
+    def test_转义字符按原文计入(self) -> None:
+        from .sheet_writer import _svg_text_characters
+        self.assertIn("&", _svg_text_characters("<text>甲&amp;乙</text>"))
+
+    def test_裁剪后的字体远小于整份(self) -> None:
+        from .sheet_writer import _subset_font_base64
+        whole = _subset_font_base64(FONT, set())
+        subsetted = _subset_font_base64(FONT, set("总面阔 8400 mm"))
+        self.assertLess(len(subsetted), len(whole) / 20)
+
+    def test_缺字直接报错不静默出豆腐块(self) -> None:
+        from .sheet_writer import _subset_font_base64
+        # 派生字体按语料裁过，取一个几乎不会在建筑图上出现的生僻字
+        with self.assertRaises(ValueError) as caught:
+            _subset_font_base64(FONT, {"\U0002a6a5"})
+        self.assertIn("missing glyphs", str(caught.exception))
+
+    def test_同样的字集裁出同样的字节(self) -> None:
+        from .sheet_writer import _subset_font_base64
+        chars = set("横剖面图 1:100")
+        self.assertEqual(_subset_font_base64(FONT, chars), _subset_font_base64(FONT, chars))
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ export class KimiGateway {
   readonly #model: string;
   readonly #timeoutMs: number;
   readonly #maxAttempts: number;
-  readonly #maxOutputTokens: number;
+  readonly #maxOutputTokens: number | null;
   readonly #fetch: typeof fetch;
 
   constructor(input: {
@@ -33,7 +33,10 @@ export class KimiGateway {
     this.#model = input.model ?? process.env.KIMI_MODEL ?? "kimi-k2.6";
     this.#timeoutMs = input.timeoutMs ?? Number(process.env.KIMI_TIMEOUT_MS ?? 45_000);
     this.#maxAttempts = input.maxAttempts ?? Number(process.env.KIMI_MAX_ATTEMPTS ?? 2);
-    this.#maxOutputTokens = input.maxOutputTokens ?? Number(process.env.KIMI_MAX_OUTPUT_TOKENS ?? 1_024);
+    const configuredOutputTokens = input.maxOutputTokens ?? process.env.KIMI_MAX_OUTPUT_TOKENS;
+    this.#maxOutputTokens = configuredOutputTokens === undefined || configuredOutputTokens === ""
+      ? null
+      : Number(configuredOutputTokens);
     this.#fetch = input.fetchImpl ?? fetch;
   }
 
@@ -45,8 +48,6 @@ export class KimiGateway {
     // 系统提示来自任务注册表（technical 架构 7.2）。留空时用资料整理任务的提示，
     // 保持既有调用方行为不变。
     systemPrompt?: string;
-    // 输出上限按任务定，缺省时用网关的全局值
-    maxOutputTokens?: number;
     // 图像输入。本机文件按 data URI 传，浏览器不提交模型标识、提示或密钥。
     images?: readonly { readonly mediaType: string; readonly base64: string }[];
     signal: AbortSignal;
@@ -89,8 +90,10 @@ export class KimiGateway {
             thinking: { type: "disabled" },
             stream: true,
             stream_options: { include_usage: true },
-            // 架构 v1.4 §7.3 口径：max_completion_tokens，不显式设置 temperature
-            max_completion_tokens: input.maxOutputTokens ?? this.#maxOutputTokens,
+            // 不设输出上限：曾经的 1024 把逐条尺寸的结构化输出截断在半途，
+            // 而任何替代数字都是估的。长度交给上游按模型能力决定。
+            // 需要压成本时由 KIMI_MAX_OUTPUT_TOKENS 显式指定，默认不发这个字段。
+            ...(this.#maxOutputTokens === null ? {} : { max_completion_tokens: this.#maxOutputTokens }),
           }),
           signal,
         });

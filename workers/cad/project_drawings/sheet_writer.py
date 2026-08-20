@@ -3,10 +3,14 @@ from __future__ import annotations
 import base64
 import hashlib
 import html
+import io
 import json
+import re
 from pathlib import Path
 from typing import Any, Callable
 
+from fontTools import subset
+from fontTools.ttLib import TTFont as FontToolsFont
 from PIL import Image, ImageDraw, ImageFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -104,6 +108,46 @@ def _dimension_geometry(view: dict[str, Any], requirement: dict[str, Any], page_
     }
 
 
+# 本张图实际用到的字符。从已拼好的图形里取，不另维护一份清单，
+# 免得图上加了新文字而清单没跟上，裁出来的字体缺字。
+def _svg_text_characters(markup: str) -> set[str]:
+    found: set[str] = set()
+    for chunk in re.findall(r">([^<]*)</text>", markup):
+        found.update(html.unescape(chunk))
+    return found
+
+
+# 字体按本张图用到的字符裁剪后再内嵌。整份字体三万零八百九十字，
+# 一张图只用到几十字；不裁剪时每张 SVG 要背十三兆多的无用字形，
+# 用户下载的每一张图都在背这个包袱。
+def _subset_font_base64(font_path: Path, characters: set[str]) -> str:
+    wanted = {ord(item) for item in characters if item.strip()}
+    if not wanted:
+        return base64.b64encode(font_path.read_bytes()).decode("ascii")
+    # 时间戳与包围盒都不重算：同一输入必须产出逐字节相同的包，
+    # 重算会把当前时刻写进 head 表，两次构建就对不上。
+    font = FontToolsFont(str(font_path), recalcTimestamp=False, recalcBBoxes=False)
+    available: set[int] = set()
+    for table in font["cmap"].tables:
+        available.update(table.cmap.keys())
+    missing = sorted(wanted - available)
+    if missing:
+        # 缺字不能静默出豆腐块：图面上显示为空白方块而没人察觉
+        font.close()
+        raise ValueError("font is missing glyphs for: " + "".join(chr(item) for item in missing))
+    options = subset.Options()
+    options.notdef_outline = True
+    options.recalc_bounds = False
+    options.recalc_timestamp = False
+    subsetter = subset.Subsetter(options=options)
+    subsetter.populate(unicodes=sorted(wanted))
+    subsetter.subset(font)
+    buffer = io.BytesIO()
+    font.save(buffer)
+    font.close()
+    return base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
 class SheetArtifactWriter:
     def __init__(self, ir: dict[str, Any], font_path: Path):
         self.ir = ir
@@ -114,12 +158,9 @@ class SheetArtifactWriter:
     def _svg(self, sheet: dict[str, Any], output_path: Path) -> None:
         width, height = sheet["pageMm"]
         views, requirements = _sheet_content(self.ir, sheet)
-        font_data = base64.b64encode(self.font_path.read_bytes()).decode("ascii")
+        # 字体在正文拼好之后再按实际用字裁剪内嵌，这里先占位
         parts = [
-            '<?xml version="1.0" encoding="UTF-8"?>',
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}mm" height="{height}mm" viewBox="0 0 {width} {height}">',
-            '<defs><style>',
-            f'@font-face{{font-family:"Gujian Sans SC";src:url(data:font/ttf;base64,{font_data}) format("truetype");font-weight:400;}}',
+            "@@SVG_HEAD@@",
             '.cut{stroke:#111;stroke-width:.5}.outline{stroke:#111;stroke-width:.35}.projection{stroke:#4b514d;stroke-width:.18}.hatch{fill:url(#hatch);stroke:none}.frame{fill:none;stroke:#111;stroke-width:.35}.condition{fill:none;stroke:#a43c32;stroke-width:.3}.text{font-family:"Gujian Sans SC";fill:#111}',
             '</style><pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="#999" stroke-width=".12"/></pattern>',
             '</defs>',
@@ -166,7 +207,16 @@ class SheetArtifactWriter:
                 rect = requirement["viewportRectMm"]
                 parts.append(f'<text class="text" x="{rect[0]+3}" y="{height-(rect[1]+rect[3]-6)}" font-size="3" fill="#a43c32">{html.escape(annotation["text"])}</text>')
         parts.append('</svg>')
-        output_path.write_text("".join(parts), encoding="utf-8", newline="\n")
+        body = "".join(parts)
+        head = "".join([
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}mm" height="{height}mm" viewBox="0 0 {width} {height}">',
+            '<defs><style>',
+            f'@font-face{{font-family:"Gujian Sans SC";'
+            f'src:url(data:font/ttf;base64,{_subset_font_base64(self.font_path, _svg_text_characters(body))})'
+            f' format("truetype");font-weight:400;}}',
+        ])
+        output_path.write_text(body.replace("@@SVG_HEAD@@", head, 1), encoding="utf-8", newline="\n")
 
     def _pdf(self, output_path: Path) -> None:
         pdfmetrics.registerFont(TTFont("GujianSansSC", str(self.font_path)))
