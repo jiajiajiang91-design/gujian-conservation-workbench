@@ -10,6 +10,7 @@ export * from "./vocabulary-resolver.js";
 export * from "./vocabulary/heritage-concepts-v1.js";
 export * from "./archetype-derivation.js";
 export * from "./geometry-spec-builder.js";
+export * from "./annotation-planner.js";
 export * from "./artifact-matrix-builder.js";
 export * from "./cad-job-client.js";
 export * from "./drawing-job-client.js";

@@ -302,6 +302,9 @@ function translateManifest(input: DemoConversionInput, evidenceId: string, fixtu
       componentType: entity.componentType, displayNameZh: readableName(entity),
       materialCode: entity.materialFact?.materialCode ?? "demo-material-unknown",
       producer: { producerType: "demo" as const, fixtureId },
+      // 构件位置照抄已验收的构造样板成果，不是本产品排布出来的，
+      // 因此位置有出处，可用于定轴。样板本身的资格另计。
+      positionBasis: "measured" as const,
       factRefs: [`demo:v3-entity:${entity.entityId}`], evidenceRefs: [evidenceId],
     };
     objects.push({

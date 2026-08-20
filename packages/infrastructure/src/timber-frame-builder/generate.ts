@@ -162,6 +162,8 @@ function buildPartitions(assembly: ConstructionAssembly, form: TimberFrameForm):
         center: [(rect.fromX + rect.toX) / 2, (rect.fromY + rect.toY) / 2, (bottom + top) / 2],
       }),
       dimensions: [["thicknessMm", sourced(form.partitionThickness)], ...planDimensions(form, rect)],
+      // 隔墙位置按平面量取，是人工在图上读出来的
+      positionBasis: form.planScaled.source === "drawn" ? "measured" : "human",
       unknownKeys: ["partitionAssembly", "openings"],
     });
   }
@@ -189,6 +191,8 @@ function buildWalls(assembly: ConstructionAssembly, form: TimberFrameForm): void
         ["thicknessMm", sourced(form.wallThickness)], ["lengthMm", sourced(form.depth)],
         ["heightMm", sourced(form.eaveElevation)],
       ],
+      // 外墙位置就是图纸标注的建筑轮廓
+      positionBasis: form.depth.source === "drawn" ? "measured" : "human",
       unknownKeys: ["wallAssembly", "openings"],
     });
     assembly.connect({
@@ -216,6 +220,7 @@ function buildWalls(assembly: ConstructionAssembly, form: TimberFrameForm): void
         ["thicknessMm", sourced(form.wallThickness)], ["lengthMm", sourced(form.width)],
         ["heightMm", sourced(form.eaveElevation)],
       ],
+      positionBasis: form.width.source === "drawn" ? "measured" : "human",
       unknownKeys: ["wallAssembly", "openings"],
     });
     // 山尖三角形。挤出面为 XZ，沿 -Y 出料，起点取该端外皮。

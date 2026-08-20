@@ -1,11 +1,14 @@
 import type { ProjectHead } from "@gujian/application";
 import {
   ArtifactRequirementMatrixSchema,
+  resolveAnnotationRules,
   resolveDetailRules,
   type ArtifactRequirementMatrix,
   type GeometryRevision,
   type ProjectDrivenGeometrySpec,
 } from "@gujian/domain";
+
+import { planViewAnnotations } from "./annotation-planner.js";
 
 function samePlane(left: { normal: readonly number[]; offsetMm: number }, right: { normal: readonly number[]; offsetMm: number }): boolean {
   return left.normal.every((value, index) => Math.abs(value - right.normal[index]!) < 1e-9)
@@ -60,6 +63,21 @@ export function buildArtifactMatrix(head: ProjectHead, geometry: GeometryRevisio
     // 图面细节层级按本视图比例解析（质量基准 4.3）。规则随矩阵下发，
     // 制图侧不自己判断构件族与比例的对应关系。
     detailRules: resolveDetailRules(view.scaleDenominator),
+    // 标注体系同理：哪类视图必须有哪几种标注是策略，标什么、取自哪个构件
+    // 是项目事实与几何决定的，两者都在这里解析好，制图侧只执行。
+    annotationRules: resolveAnnotationRules(view.kind, view.scaleDenominator),
+    annotationPlan: planViewAnnotations({
+      head, spec,
+      view: {
+        key: view.key, kind: view.kind, scaleDenominator: view.scaleDenominator,
+        right: view.right, up: view.up,
+        sourceEntityIds: view.targetStableKeys.map((key) => objectsByStableKey.get(key)!.id),
+      },
+      allViews: requirements.views.map((item) => ({
+        key: item.key, kind: item.kind,
+        ...(item.sectionPlane ? { sectionPlane: item.sectionPlane } : {}),
+      })),
+    }),
   }));
   const viewByKey = new Map(requirements.views.map((item, index) => [item.key, views[index]!]));
   const sheets = requirements.sheets.map((sheet) => ({

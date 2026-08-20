@@ -223,6 +223,23 @@ function buildTerraceAndStairs(assembly: ConstructionAssembly, form: BuildingFor
   }
 }
 
+// 构件位置的出处取决定该位置的那几条尺寸里最弱的一条。
+// 由规则推算出来的位置，如果输入是照片估算的，它仍然是估算，
+// 不能因为中间过了一道规则就升格成推算。
+const BASIS_STRENGTH: Record<SourcedLength["basis"], number> = { measured: 3, human: 2, rule: 1, demo: 0 };
+
+function weakestBasis(lengths: readonly SourcedLength[]): SourcedLength["basis"] {
+  return lengths.reduce<SourcedLength["basis"]>(
+    (weakest, item) => (BASIS_STRENGTH[item.basis] < BASIS_STRENGTH[weakest] ? item.basis : weakest),
+    "measured",
+  );
+}
+
+// 柱网与墙位由面阔与步架决定，两者的最弱来源就是它们的位置来源
+function layoutBasis(form: BuildingForm): SourcedLength["basis"] {
+  return weakestBasis([...form.bayWidthsMm, ...form.stepSpansMm]);
+}
+
 function buildColumnsAndArchitraves(assembly: ConstructionAssembly, form: BuildingForm): void {
   const axes = columnAxes(form);
   const halfDepth = sum(form.stepSpansMm);
@@ -249,6 +266,7 @@ function buildColumnsAndArchitraves(assembly: ConstructionAssembly, form: Buildi
         }),
         dimensions: [["height", form.columnBaseHeight], ["size", form.columnSize]],
         parentKey: "terrace",
+        positionBasis: layoutBasis(form),
       });
       assembly.add({
         stableKey: columnKey,
@@ -265,6 +283,7 @@ function buildColumnsAndArchitraves(assembly: ConstructionAssembly, form: Buildi
             center: [x, row.y, baseTop + form.columnHeight.valueMm / 2],
           }),
         dimensions: [["height", form.columnHeight], ["size", form.columnSize]],
+        positionBasis: layoutBasis(form),
       });
       assembly.connect({
         fromKey: baseKey, toKey: "terrace", interfaceType: "bearing",
@@ -760,6 +779,7 @@ function buildEnclosure(assembly: ConstructionAssembly, form: BuildingForm): voi
       materialCode: form.materials.wall,
       solid: boxSolid(side.solid),
       dimensions: [["height", form.columnHeight], ["thickness", form.columnSize]],
+      positionBasis: layoutBasis(form),
     });
   }
 }

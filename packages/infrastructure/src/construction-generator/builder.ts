@@ -78,6 +78,9 @@ export class ConstructionAssembly {
     parentKey?: string;
     conceptRef?: string;
     unknownKeys?: readonly string[];
+    // 位置的出处。不传表示位置是生成器为几何完整性自行排布的，
+    // 该构件不参与定轴与定位尺寸标注。
+    positionBasis?: GeometryObject["positionBasis"];
   }): string {
     const id = this.idFor(input.stableKey);
     if (this.#idByKey.has(input.stableKey)) throw new Error(`CONSTRUCTION_DUPLICATE_KEY:${input.stableKey}`);
@@ -95,6 +98,7 @@ export class ConstructionAssembly {
       ...(input.conceptRef ? { conceptRef: input.conceptRef } : {}),
       displayNameZh: input.displayNameZh,
       materialCode: input.materialCode,
+      ...(input.positionBasis ? { positionBasis: input.positionBasis } : {}),
       solid: input.solid,
       parameters: this.#parameters(input.stableKey, input.dimensions),
       producer: this.#producer,

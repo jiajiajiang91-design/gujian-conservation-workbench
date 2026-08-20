@@ -134,6 +134,13 @@ export const ProjectGeometryObjectSchema = z.object({
   conceptRef: z.string().min(1).max(120).optional(),
   displayNameZh: z.string().min(1).max(200),
   materialCode: z.string().min(1).max(120),
+  // 这个构件为什么在这个位置。缺省表示位置没有出处，是生成器为几何完整性
+  // 自行排布的（例如按等距摆的木桩），此类构件不得用于定轴或标注定位尺寸，
+  // 否则等于把生成器的排布显示成实测定位。
+  //
+  // 与 parameters[].basis 的区别：那是某条尺寸的来源，这是构件位置的来源。
+  // 一个构件可以有量取来的截面尺寸，位置却是排布出来的。
+  positionBasis: z.enum(["measured", "rule", "human", "demo"]).optional(),
   solid: z.discriminatedUnion("kind", [BoxSolidSchema, CylinderSolidSchema, ExtrudedProfileSolidSchema]),
   parameters: z.array(TypedParameterSchema).max(500),
   producer: ProducerRefSchema,
