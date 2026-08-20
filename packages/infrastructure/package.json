@@ -21,6 +21,7 @@
     "@gujian/domain": "workspace:*",
     "@noble/hashes": "2.2.0",
     "fflate": "0.8.2",
+    "pdfjs-dist": "^6.2.108",
     "zod": "4.0.17"
   }
 }

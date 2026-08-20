@@ -21,18 +21,69 @@ function evidenceType(file: UploadFile): "photo" | "document" | "drawing" | "aud
   return "other";
 }
 
-async function parseFile(file: UploadFile): Promise<{
+export interface ParseOutcome {
   parser: string;
   status: "parsed" | "metadataOnly" | "pending" | "failed";
   extractedText: string | null;
   warnings: string[];
-}> {
+}
+
+// PDF 逐页取文字层。任务书、历史记录、修缮档案都是 PDF，用户旅程第一步
+// 用户拖进来的就是任务书，因此这是常规入口不是特例。
+//
+// 解析器按需导入：PDF 上传是低频动作，为它常驻一兆多的解析器不合算。
+async function parsePdf(file: UploadFile): Promise<ParseOutcome> {
+  try {
+    const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    // 不允许求值、不取系统字体：解析的是不可信来源，只要文字内容
+    const document = await pdfjs.getDocument({
+      data: new Uint8Array(await file.arrayBuffer()),
+      useSystemFonts: false,
+      disableFontFace: true,
+    }).promise;
+    const pages: string[] = [];
+    for (let page = 1; page <= document.numPages; page += 1) {
+      const content = await (await document.getPage(page)).getTextContent();
+      pages.push(content.items.map((item) => ("str" in item ? item.str : "")).join(" "));
+    }
+    const text = pages.join("\n").replace(/[ \t]+/g, " ").trim();
+    if (!text) {
+      // 纯扫描件没有文字层。如实说明缺什么，不返回空字符串装作解析成功。
+      return {
+        parser: "pdf-text",
+        status: "metadataOnly",
+        extractedText: null,
+        warnings: [`该 PDF 共 ${document.numPages} 页但没有文字层，需要 OCR 或人工转录后才能作为文字依据；原文件已保存。`],
+      };
+    }
+    const truncated = text.length > TEXT_LIMIT;
+    return {
+      parser: "pdf-text",
+      status: "parsed",
+      extractedText: text.slice(0, TEXT_LIMIT),
+      warnings: [
+        `已从 ${document.numPages} 页取出文字层。扫描件的文字层由 OCR 生成，可能有错字与断字，引用前需核对原件。`,
+        ...(truncated ? [`提取文本已按 ${TEXT_LIMIT} 字符上限截断；原文件未截断。`] : []),
+      ],
+    };
+  } catch (reason) {
+    return {
+      parser: "pdf-text",
+      status: "failed",
+      extractedText: null,
+      warnings: [`PDF 读取失败：${reason instanceof Error ? reason.message : "未知原因"}；原文件仍已保存。`],
+    };
+  }
+}
+
+export async function parseEvidenceFile(file: UploadFile): Promise<ParseOutcome> {
   const extension = file.name.toLowerCase().split(".").at(-1) ?? "";
+  if (extension === "pdf" || file.type === "application/pdf") return parsePdf(file);
   const textLike = file.type.startsWith("text/") || ["txt", "md", "json", "csv", "xml"].includes(extension);
   if (!textLike) {
     return {
       parser: "binary-metadata",
-      status: ["pdf", "dwg", "dxf"].includes(extension) ? "pending" : "metadataOnly",
+      status: ["dwg", "dxf"].includes(extension) ? "pending" : "metadataOnly",
       extractedText: null,
       warnings: ["原始文件已保存；本里程碑未对该格式提取正文。"],
     };
@@ -76,7 +127,7 @@ export class EvidenceIngestionService {
     const now = new Date().toISOString();
     const assetId = crypto.randomUUID();
     const evidenceId = crypto.randomUUID();
-    const parse = await parseFile(file);
+    const parse = await parseEvidenceFile(file);
     const asset = AssetRecordSchema.parse({
       id: assetId,
       projectId: head.projectId,

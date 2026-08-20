@@ -104,10 +104,12 @@ export const DAI_LOY_DEMO: DemoProjectDefinition = {
       rightsDeclaration: HABS_RIGHTS,
       intendedUse: "年代、材料与用途说明",
       recordedAt: null,
-      parser: "binary-metadata",
-      parseStatus: "pending",
+      // 由产品自己的解析器在构建期读文字层，正文与警告都不抄进定义
+      parser: "pdf-text",
+      parseStatus: "parsed",
       extractedText: null,
-      parseWarnings: ["原始文件已保存；本里程碑未对该格式提取正文。"],
+      parseWarnings: [],
+      parseWithProduct: true,
     },
     {
       key: "field-notes",

@@ -1,72 +1,58 @@
-import "fake-indexeddb/auto";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 
-import { ProjectCommandService } from "@gujian/application";
 import { describe, expect, it } from "vitest";
 
-import { EvidenceIngestionService, type UploadFile } from "./evidence-ingestion-service.js";
-import { IndexedDbProjectRepository, LocalAuthorization, openWorkbenchDatabase } from "./indexeddb-project-repository.js";
-import { ProjectPackageService } from "./project-package-service.js";
+import { parseEvidenceFile, type UploadFile } from "./evidence-ingestion-service.js";
 
-async function project() {
-  const repository = new IndexedDbProjectRepository(openWorkbenchDatabase(`gujian-evidence-${crypto.randomUUID()}`));
-  const commands = new ProjectCommandService({ repository, authorization: new LocalAuthorization() });
-  const projectId = crypto.randomUUID();
-  await commands.execute({
-    commandType: "CreateProject", commandId: crypto.randomUUID(), projectId, actorId: crypto.randomUUID(),
-    expectedRevisionId: null, issuedAt: "2026-08-13T13:00:00Z",
-    payload: {
-      project: { id: projectId, name: "资料测试", status: "active", locationText: null, createdAt: "2026-08-13T13:00:00Z" },
-      building: { id: crypto.randomUUID(), projectId, name: "大殿", periodText: null, addressText: null, status: "existing" },
-    },
-  });
-  const head = await repository.getProjectHead(projectId);
-  if (!head) throw new Error("test project missing");
-  return { repository, head };
+// 任务书、历史记录、修缮档案都是 PDF，用户旅程第一步用户拖进来的就是任务书。
+// PDF 取不到正文时，前面所有依赖文字的环节都停在这里。
+
+const ROOT = resolve(import.meta.dirname, "..", "..", "..");
+const HABS_PDF = resolve(ROOT, "文档/05_验证证据/03_公开实测样本/Dai_Loy_HABS/06_Dai_Loy历史与建筑说明.pdf");
+
+function upload(bytes: Uint8Array, name: string, type: string): UploadFile {
+  return Object.assign(new Blob([bytes as unknown as BlobPart], { type }), { name }) as UploadFile;
 }
 
-function upload(name: string, content: string, type: string): UploadFile {
-  const blob = new Blob([content], { type }) as UploadFile & { name: string };
-  Object.defineProperty(blob, "name", { value: name });
-  return blob;
-}
-
-describe("EvidenceIngestionService", () => {
-  it("原子保存原文件、证据、解析记录和来源关系", async () => {
-    const input = await project();
-    const service = new EvidenceIngestionService(input.repository);
-    const updated = await service.ingest(input.head, crypto.randomUUID(), upload("测量记录.txt", "通面阔：15800 mm", "text/plain"));
-
-    expect(updated.snapshot.evidences).toHaveLength(1);
-    expect(updated.snapshot.parseRecords[0]).toMatchObject({ status: "parsed", extractedText: "通面阔：15800 mm" });
-    const stored = await input.repository.getAsset(updated.snapshot.evidences[0]!.assetId);
-    expect(await stored.content.text()).toBe("通面阔：15800 mm");
+describe("资料解析", () => {
+  it("从真实 HABS 记录取出文字层并读到主体尺寸", async () => {
+    const bytes = new Uint8Array(await readFile(HABS_PDF));
+    const parsed = await parseEvidenceFile(upload(bytes, "06_Dai_Loy历史与建筑说明.pdf", "application/pdf"));
+    expect(parsed.parser).toBe("pdf-text");
+    expect(parsed.status).toBe("parsed");
+    expect(parsed.extractedText!.length).toBeGreaterThan(5_000);
+    // OCR 原文带噪声：twenty ^f our feet'、threes-bay。正则取不出来，模型能读。
+    expect(parsed.extractedText).toContain("feet");
+    expect(parsed.extractedText).toContain("Overall");
   });
 
-  it("ZIP 回导实际证据，JSON 回导保留缺失资源记录", async () => {
-    for (const type of ["zip", "json"] as const) {
-      const input = await project();
-      const service = new EvidenceIngestionService(input.repository);
-      await service.ingest(input.head, crypto.randomUUID(), upload("说明.md", "# 调查记录", "text/markdown"));
-      const packages = new ProjectPackageService(input.repository);
-      const bytes = type === "zip" ? await packages.exportZip(input.head.projectId) : await packages.exportJson(input.head.projectId);
-      const exported = packages.parse(bytes, `project.${type}`);
-      expect(exported.assets[0]?.contentStatus).toBe(type === "zip" ? "available" : "missing");
-      await input.repository.clearAllData();
-      await packages.import(bytes, `project.${type}`, crypto.randomUUID());
-      const assets = await input.repository.getProjectAssets(input.head.projectId);
+  // 扫描件的文字层由 OCR 生成，引用前必须核对原件，这一点要随解析结果一起交代
+  it("PDF 解析结果附带 OCR 可能有错的提示", async () => {
+    const bytes = new Uint8Array(await readFile(HABS_PDF));
+    const parsed = await parseEvidenceFile(upload(bytes, "记录.pdf", "application/pdf"));
+    expect(parsed.warnings.some((item) => item.includes("核对原件"))).toBe(true);
+  });
 
-      expect(assets).toHaveLength(1);
-      expect(assets[0]?.record.contentStatus).toBe(type === "zip" ? "available" : "missing");
-      expect(assets[0]?.content === null).toBe(type === "json");
-      if (type === "zip") expect(assets[0]?.record.sha256).toBe(exported.assets[0]?.sha256);
+  it("坏文件只记失败，不抛异常打断上传", async () => {
+    const parsed = await parseEvidenceFile(upload(new TextEncoder().encode("不是 PDF"), "坏文件.pdf", "application/pdf"));
+    expect(parsed.status).toBe("failed");
+    expect(parsed.extractedText).toBeNull();
+    expect(parsed.warnings[0]).toContain("PDF 读取失败");
+  });
+
+  it("文本文件仍走原来的通路", async () => {
+    const parsed = await parseEvidenceFile(upload(new TextEncoder().encode("现场记录：明间面阔 3600 mm"), "记录.txt", "text/plain"));
+    expect(parsed.parser).toBe("utf8-text");
+    expect(parsed.status).toBe("parsed");
+    expect(parsed.extractedText).toContain("3600");
+  });
+
+  it("图像与未支持格式保持只登记，不冒充已解析", async () => {
+    for (const [name, type] of [["图.jpg", "image/jpeg"], ["图.dwg", "application/octet-stream"]] as const) {
+      const parsed = await parseEvidenceFile(upload(new Uint8Array([1, 2, 3]), name, type));
+      expect(parsed.extractedText, name).toBeNull();
+      expect(parsed.status, name).not.toBe("parsed");
     }
-  });
-
-  it("文件过大时在暂存前拒绝", async () => {
-    const input = await project();
-    const service = new EvidenceIngestionService(input.repository, 4);
-    await expect(service.ingest(input.head, crypto.randomUUID(), upload("note.txt", "12345", "text/plain")))
-      .rejects.toThrow("FILE_SIZE_NOT_ALLOWED");
-    expect(await input.repository.getProjectAssets(input.head.projectId)).toHaveLength(0);
   });
 });

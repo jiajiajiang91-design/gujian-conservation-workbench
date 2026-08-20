@@ -7,8 +7,9 @@ import { MODEL_TASKS, findModelTask } from "./model-tasks.js";
 
 describe("模型任务注册表", () => {
   it("首期任务类型里的资料整理与测量转写都在册", () => {
-    expect(findModelTask("evidence-summary")?.inputKind).toBe("text");
-    expect(findModelTask("measurement-transcription")?.inputKind).toBe("image");
+    expect(findModelTask("evidence-summary")?.inputKinds).toEqual(["text"]);
+    // 测量转写两种输入都收：读的是资料里写明的尺寸，来源是文字还是图纸不改变任务性质
+    expect(findModelTask("measurement-transcription")?.inputKinds).toEqual(["text", "image"]);
   });
 
   it("不认识的任务类型返回空，不静默套用别的提示", () => {
@@ -34,6 +35,10 @@ describe("模型任务注册表", () => {
     for (const task of MODEL_TASKS) {
       expect(task.systemPrompt, task.taskType).toContain("不补写缺失的测量");
     }
+  });
+
+  it("测量转写的提示交代 OCR 噪声的判读方式", () => {
+    expect(findModelTask("measurement-transcription")!.systemPrompt).toContain("OCR");
   });
 
   it("测量转写的提示禁止按比例量取与经验推算", () => {

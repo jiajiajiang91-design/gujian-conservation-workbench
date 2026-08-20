@@ -7,7 +7,7 @@ import {
   type ModelRun,
   type ModelRunEvent,
 } from "@gujian/domain";
-import { IndexedDbProjectRepository } from "@gujian/infrastructure";
+import { IndexedDbProjectRepository, parseEvidenceFile } from "@gujian/infrastructure";
 
 interface SessionResponse {
   csrfToken: string;
@@ -133,19 +133,34 @@ export class ModelRunClient {
     if (!evidenceIds.length) throw new Error("NO_DRAWING_EVIDENCE_SELECTED");
     const projectAssets = await this.#repository.getProjectAssets(head.projectId);
     const assetById = new Map(projectAssets.map((asset) => [asset.record.id, asset]));
-    const evidences: {
-      evidenceId: string; assetSha256: string; mediaType: string; base64: string; titleZh: string;
-    }[] = [];
+    // 按资料本体分派：图像走图像项，其余交给产品自己的解析器取文字。
+    // 一次运行里既有实测图纸也有文字记录是常态，两种混传。
+    const evidences: (
+      | { evidenceId: string; assetSha256: string; mediaType: string; base64: string; titleZh: string }
+      | { evidenceId: string; assetSha256: string; text: string; titleZh: string }
+    )[] = [];
     for (const evidenceId of evidenceIds) {
       const evidence = head.snapshot.evidences.find((item) => item.id === evidenceId);
       const asset = evidence ? assetById.get(evidence.assetId) : undefined;
       if (!evidence || !asset || asset.record.contentStatus !== "available" || !asset.content) continue;
-      if (!IMAGE_MEDIA_TYPES.includes(asset.record.mimeType)) continue;
+      if (IMAGE_MEDIA_TYPES.includes(asset.record.mimeType)) {
+        evidences.push({
+          evidenceId: evidence.id,
+          assetSha256: asset.record.sha256,
+          mediaType: asset.record.mimeType,
+          base64: await blobToBase64(asset.content),
+          titleZh: evidence.title,
+        });
+        continue;
+      }
+      const parsed = await parseEvidenceFile(
+        new File([asset.content], asset.record.fileName, { type: asset.record.mimeType }),
+      );
+      if (parsed.status !== "parsed" || !parsed.extractedText?.trim()) continue;
       evidences.push({
         evidenceId: evidence.id,
         assetSha256: asset.record.sha256,
-        mediaType: asset.record.mimeType,
-        base64: await blobToBase64(asset.content),
+        text: parsed.extractedText.slice(0, 200_000),
         titleZh: evidence.title,
       });
     }

@@ -22,6 +22,10 @@ export interface DemoLibrarySource {
   readonly parseStatus: "parsed" | "metadataOnly" | "pending" | "failed";
   readonly extractedText: string | null;
   readonly parseWarnings: readonly string[];
+  // 声明后由产品自己的解析器在构建期读文件内容，parser、正文与警告都以
+  // 解析结果为准，定义里声明的对应字段被忽略。这样演示展示的解析结果
+  // 就是产品真实的解析结果，不是抄进定义的副本。
+  readonly parseWithProduct?: boolean;
   readonly absenceReasonZh?: string;
 }
 

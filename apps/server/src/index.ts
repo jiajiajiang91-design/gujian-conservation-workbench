@@ -233,6 +233,7 @@ function taskContent(input: RunRequest): string {
       `资料 ${index + 1}`,
       `evidenceRef: ${item.evidenceId}`,
       `标题：${item.titleZh}`,
+      ...("text" in item ? ["正文：", item.text] : ["形式：图像，随本次请求一并发送"]),
     ].join("\n")).join("\n\n");
     return [
       "任务：读出以下实测图纸上已经标注的尺寸，逐条给出图上原文、对应部位和所在位置。",

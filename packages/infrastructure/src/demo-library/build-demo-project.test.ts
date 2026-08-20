@@ -1,5 +1,8 @@
 import "fake-indexeddb/auto";
 
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { IndexedDbProjectRepository, openWorkbenchDatabase } from "../indexeddb-project-repository.js";
@@ -14,17 +17,23 @@ function repository(tag: string): IndexedDbProjectRepository {
   return new IndexedDbProjectRepository(openWorkbenchDatabase(`gujian-demo-${tag}-${crypto.randomUUID()}`));
 }
 
+const ROOT = resolve(import.meta.dirname, "..", "..", "..", "..");
+
 // 用小体量替身跑构建，避免测试依赖大文件；真实文件由生成脚本读盘。
-function stubFiles(definition: DemoProjectDefinition): Map<string, Uint8Array> {
+// 声明了由产品解析的资料例外：替身字节解析不出来，读真实文件才有意义。
+async function stubFiles(definition: DemoProjectDefinition): Promise<Map<string, Uint8Array>> {
   const files = new Map<string, Uint8Array>();
   for (const source of definition.sources) {
-    if (source.filePath) files.set(source.filePath, new TextEncoder().encode(`stub:${source.key}`));
+    if (!source.filePath) continue;
+    files.set(source.filePath, source.parseWithProduct
+      ? new Uint8Array(await readFile(resolve(ROOT, source.filePath)))
+      : new TextEncoder().encode(`stub:${source.key}`));
   }
   return files;
 }
 
 async function build(definition: DemoProjectDefinition, tag: string) {
-  return buildDemoProject({ definition, files: stubFiles(definition), repository: repository(tag) });
+  return buildDemoProject({ definition, files: await stubFiles(definition), repository: repository(tag) });
 }
 
 describe("演示项目包生成", () => {

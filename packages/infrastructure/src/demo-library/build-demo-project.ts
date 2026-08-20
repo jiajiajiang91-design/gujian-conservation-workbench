@@ -10,6 +10,7 @@ import {
 
 import { sha256Hex } from "../hash.js";
 import { IndexedDbProjectRepository, LocalAuthorization } from "../indexeddb-project-repository.js";
+import { parseEvidenceFile } from "../evidence-ingestion-service.js";
 import { ProjectPackageService } from "../project-package-service.js";
 import type { DemoDrawingView, DemoProjectDefinition } from "./definitions.js";
 
@@ -123,12 +124,21 @@ export async function seedDemoProject(input: DemoBuildInput): Promise<SeededDemo
       recordedAt: source.recordedAt, relatedEntityRefs: [buildingId],
       dataStatus: bytes ? "available" : "missing",
     });
+    // 声明了由产品解析的资料，构建期用产品自己的解析器读文件字节。
+    // 这样演示里展示的解析结果就是产品真实的解析结果，不是抄进定义的副本。
+    // 解析不出来直接报错停下，不静默降级成只登记。
+    const parsed = bytes && source.parseWithProduct
+      ? await parseEvidenceFile(new File([bytes as BlobPart], source.fileName, { type: source.mimeType }))
+      : null;
+    if (parsed && (parsed.status !== "parsed" || !parsed.extractedText)) {
+      throw new Error(`DEMO_SOURCE_PARSE_FAILED:${source.key}:${parsed.warnings[0] ?? parsed.status}`);
+    }
     const parseRecord = ParseRecordSchema.parse({
       id: id(`parse/${source.key}`), projectId, assetId, evidenceId,
-      parser: source.parser, parserVersion: "1.0.0",
-      status: bytes ? source.parseStatus : "failed",
-      extractedText: bytes ? source.extractedText : null,
-      warnings: bytes ? [...source.parseWarnings] : [source.absenceReasonZh ?? "原始文件未随包提供。"],
+      parser: parsed ? parsed.parser : source.parser, parserVersion: "1.0.0",
+      status: bytes ? (parsed ? parsed.status : source.parseStatus) : "failed",
+      extractedText: parsed ? parsed.extractedText : bytes ? source.extractedText : null,
+      warnings: bytes ? [...(parsed ? parsed.warnings : source.parseWarnings)] : [source.absenceReasonZh ?? "原始文件未随包提供。"],
       createdAt: at,
     });
     const sessionId = id(`staging/${source.key}`);
