@@ -33,6 +33,13 @@ export interface ClientOpResult {
 const ok = (text: string): ClientOpResult => ({ text, tone: "result" });
 const warn = (text: string): ClientOpResult => ({ text, tone: "risk" });
 
+// 只有桩、还没有真执行体的客户端操作。集中写在这里而不是散在 switch 里，
+// 交付状态测试据此与 domain 的登记表逐条比对：少一条是漏实现，
+// 多一条是登记表说已交付而前端其实没做。
+export const STUB_CLIENT_OP_TEXT: Readonly<Record<string, string>> = {
+  "ui:marquee-correction": "框选修正需要在照片上框选位置，图片框选界面尚未接入，本条未执行",
+};
+
 function factValueText(head: ProjectHead | null, subjectRef: string, field: string): string {
   const fact = head?.snapshot.facts.find((item) => item.subjectRef === subjectRef && item.field === field);
   return fact ? JSON.stringify(fact.value) : "无既有记录";
@@ -109,7 +116,7 @@ export async function runClientOp(
       return ok(`已生成修改建议：${proposal.subjectName} 的 ${proposal.field}，逐条确认后才会生效${proposal.warnings.length ? `（${proposal.warnings.length} 条核对警示）` : ""}`);
     }
     case "ui:marquee-correction":
-      return warn("框选修正需要在照片上框选位置，图片框选界面尚未接入，本条未执行");
+      return warn(STUB_CLIENT_OP_TEXT[input.clientOp]!);
     case "ui:draft-delivery-note":
       return head ? ok(deliveryDraftSummary(head)) : warn("请先选择项目");
     case "ui:export": {

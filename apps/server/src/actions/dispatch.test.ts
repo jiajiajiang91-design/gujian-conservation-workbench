@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
-import { ALL_SWITCHABLE_VIEW_NAMES } from "@gujian/domain";
+import { ALL_SWITCHABLE_VIEW_NAMES, executableActionNames } from "@gujian/domain";
 
 import { dispatchUserText, keywordFallback, VIEW_JUMP, type ModelDispatchRunner } from "./dispatch.js";
 
@@ -151,4 +154,29 @@ describe("切视图与作业动作的边界", () => {
       expect(keywordFallback(text).name).toBe(action);
     });
   }
+});
+
+// 正式分发用例集必须覆盖每一个端到端可用的动作。
+// 之前没有这条断言，框选修正在 44 条用例里一条都没有，命中率是在一个
+// 静默漏掉该动作的集合上算出来的，从数字上看不出缺口。动作转为
+// executable 时这条测试会强制补用例。
+describe("正式分发用例集覆盖", () => {
+  const path = fileURLToPath(new URL(
+    "../../../../文档/05_验证证据/10_动作层验证/dispatch-cases-official.json",
+    import.meta.url,
+  ));
+  const cases = JSON.parse(readFileSync(path, "utf8")) as { text: string; expected: string }[];
+
+  it("每个端到端可用的动作至少三条用例", () => {
+    const counts = new Map<string, number>();
+    for (const item of cases) counts.set(item.expected, (counts.get(item.expected) ?? 0) + 1);
+    const missing = executableActionNames().filter((name) => (counts.get(name) ?? 0) < 3);
+    expect(missing, `用例不足三条的动作：${missing.join("、")}`).toEqual([]);
+  });
+
+  it("用例集里不出现目录外或未交付的动作", () => {
+    const allowed = new Set(executableActionNames());
+    const unexpected = [...new Set(cases.map((item) => item.expected))].filter((name) => !allowed.has(name));
+    expect(unexpected, `用例期望了不可派发的动作：${unexpected.join("、")}`).toEqual([]);
+  });
 });

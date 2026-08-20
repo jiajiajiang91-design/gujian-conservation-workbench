@@ -1,4 +1,4 @@
-import { ALL_SWITCHABLE_VIEW_NAMES } from "@gujian/domain";
+import { ALL_SWITCHABLE_VIEW_NAMES, actionDelivery } from "@gujian/domain";
 import { z } from "zod";
 
 // 动作目录：05 界面与交互形态表 11、表 12 的代码形态。
@@ -291,12 +291,18 @@ export interface ModelFacingAction {
 }
 
 // 模型侧目录：只投影三字段，任何执行字段不得出现在返回值里。
+//
+// 只投影前端执行体真实可跑的动作（通用约定 5）。定义齐全但前端只有桩的动作
+// 不进目录：让模型选中一个必然失败的动作，是把缺口转嫁成对话里的失败，
+// 而不是在目录层如实缺席。交付状态的唯一来源是 domain 的登记表。
 export function modelFacingCatalog(): ModelFacingAction[] {
-  return ACTION_DEFINITIONS.map((a) => ({
-    name: a.name,
-    description: a.description,
-    parameters: a.parametersJsonSchema,
-  }));
+  return ACTION_DEFINITIONS
+    .filter((a) => actionDelivery(a.name)?.state === "executable")
+    .map((a) => ({
+      name: a.name,
+      description: a.description,
+      parameters: a.parametersJsonSchema,
+    }));
 }
 
 export type ActionCallValidation =

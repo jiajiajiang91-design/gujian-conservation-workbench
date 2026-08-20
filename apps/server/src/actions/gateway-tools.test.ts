@@ -1,3 +1,4 @@
+import { executableActionNames } from "@gujian/domain";
 import { describe, expect, it } from "vitest";
 
 import { KimiGateway } from "../kimi-gateway.js";
@@ -52,7 +53,8 @@ describe("executeWithTools", () => {
       signal: new AbortController().signal,
     });
     const body = bodies[0] as { tools: Array<{ type: string; function: Record<string, unknown> }> };
-    expect(body.tools).toHaveLength(14);
+    // 条数取自交付登记表，不写死：投影范围随动作实现状态变化
+    expect(body.tools).toHaveLength(executableActionNames().length);
     for (const tool of body.tools) {
       expect(tool.type).toBe("function");
       expect(Object.keys(tool.function).sort()).toEqual(["description", "name", "parameters"]);

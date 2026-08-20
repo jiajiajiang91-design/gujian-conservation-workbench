@@ -1,5 +1,6 @@
 import type { AddressInfo } from "node:net";
 
+import { executableActionNames } from "@gujian/domain";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createWorkbenchServer, type ModelGateway } from "./index.js";
@@ -125,7 +126,8 @@ describe("workbench server", () => {
     });
     expect(response.status).toBe(200);
     const body = await response.json() as { actions: Array<Record<string, unknown>> };
-    expect(body.actions).toHaveLength(14);
+    // 条数取自交付登记表，不写死：只投影端到端可用的动作
+    expect(body.actions).toHaveLength(executableActionNames().length);
     expect(body.actions.map((action) => action.name)).toContain("switch_view");
     for (const action of body.actions) {
       expect(Object.keys(action).sort()).toEqual(["description", "name", "parameters"]);

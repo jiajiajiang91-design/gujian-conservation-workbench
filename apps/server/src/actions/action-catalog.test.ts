@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+import { ASSISTANT_ACTION_DELIVERY, executableActionNames } from "@gujian/domain";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -13,9 +17,21 @@ describe("动作目录", () => {
     expect(new Set(names).size).toBe(14);
   });
 
+  it("交付登记表与目录一一对应，无孤项无缺项", () => {
+    expect(Object.keys(ASSISTANT_ACTION_DELIVERY).sort())
+      .toEqual(ACTION_DEFINITIONS.map((a) => a.name).sort());
+  });
+
+  // 通用约定 5：目录只投影已实现动作。让模型选中一个必然失败的动作，
+  // 等于把前端的缺口转嫁成对话里的失败，而不是在目录层如实缺席。
+  it("模型可见目录只投影 executable 的动作", () => {
+    expect(modelFacingCatalog().map((a) => a.name).sort()).toEqual(executableActionNames());
+    expect(modelFacingCatalog().map((a) => a.name)).not.toContain("marquee_correction");
+  });
+
   it("模型侧目录只含名称、描述、参数三字段", () => {
     const catalog = modelFacingCatalog();
-    expect(catalog).toHaveLength(14);
+    expect(catalog).toHaveLength(executableActionNames().length);
     for (const entry of catalog) {
       expect(Object.keys(entry).sort()).toEqual(["description", "name", "parameters"]);
       const serialized = JSON.stringify(entry);
@@ -88,5 +104,35 @@ describe("动作调用校验", () => {
       payload: { diameterMm: 300 },
     });
     expect(good.ok).toBe(true);
+  });
+});
+
+// 界面文档表 11 的实现状态列必须与登记表逐条一致。
+// 之前表 11 没有这一列，只读表的人看到 14 个动作全部交付，而其中一个
+// 前端只有桩。文档能单方面宣称已交付，是这次虚报的直接成因。
+describe("界面文档表 11 与交付登记表一致", () => {
+  const path = fileURLToPath(new URL(
+    "../../../../文档/01_产品/05_界面与交互形态.md",
+    import.meta.url,
+  ));
+  const markdown = readFileSync(path, "utf8");
+
+  it("表 11 每行的实现状态取自登记表，且覆盖全部动作", () => {
+    const header = "| 动作 | 实现状态 | 触发方式 | 前置条件 | 确认级别 | 留痕 |";
+    const start = markdown.indexOf(header);
+    expect(start, "表 11 的表头变了，实现状态列可能被删掉").toBeGreaterThan(-1);
+    // 取到第一条非表格行为止：后面还有表 12、表 13，用 filter 会一路吃过去
+    const body: string[] = [];
+    for (const line of markdown.slice(start).split(/\r?\n/).slice(2)) {
+      if (!line.startsWith("| ")) break;
+      body.push(line);
+    }
+    const rows = body.map((line) => line.split("|").map((cell) => cell.trim()));
+    const states = rows.map((cells) => cells[2]);
+    expect(rows.length).toBe(Object.keys(ASSISTANT_ACTION_DELIVERY).length);
+    expect(new Set(states)).toEqual(new Set(Object.values(ASSISTANT_ACTION_DELIVERY).map((item) => item.state)));
+    const counts = (values: string[]) => values.filter((value) => value === "definedOnly").length;
+    expect(counts(states as string[]))
+      .toBe(counts(Object.values(ASSISTANT_ACTION_DELIVERY).map((item) => item.state)));
   });
 });

@@ -1,5 +1,6 @@
 export * from "./geometry.js";
 export * from "./drawing-detail-policy.js";
+export * from "./assistant-action-delivery.js";
 export * from "./drawings.js";
 export * from "./delivery.js";
 export * from "./primitives.js";

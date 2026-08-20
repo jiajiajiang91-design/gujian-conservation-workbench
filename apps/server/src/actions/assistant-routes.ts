@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+
+import { actionDelivery } from "@gujian/domain";
 import { z } from "zod";
 
 import { ActionLedger, type ConfirmationDecision } from "./action-ledger.js";
@@ -39,22 +41,10 @@ interface ToolGateway {
   >;
 }
 
-// 动作到客户端操作的映射：ui 类由执行体处理，job 类由客户端作业单例触发。
-const CLIENT_OPS: Record<string, string> = {
-  switch_view: "ui:switch-view",
-  locate_evidence: "ui:locate",
-  advance_workflow: "ui:advance",
-  query_job_progress: "ui:job-progress",
-  propose_modification: "ui:propose-modification",
-  marquee_correction: "ui:marquee-correction",
-  rerun_recognition: "job:model-recognition",
-  run_data_check: "ui:run-check",
-  draft_delivery_note: "ui:draft-delivery-note",
-  generate_geometry: "job:cad",
-  generate_drawings: "job:drawing",
-  export_deliverable: "ui:export",
-  parse_task_brief: "job:model-parse",
-};
+// 动作到客户端操作的映射取自 domain 的交付登记表：ui 类由执行体处理，
+// job 类由客户端作业单例触发。映射不在此另写一份，否则与前端的执行体
+// 会各自漂移，而两侧谁也校验不了谁。
+const clientOpFor = (name: string): string | undefined => actionDelivery(name)?.clientOp ?? undefined;
 
 function argsHash(args: unknown): string {
   return createHash("sha256").update(JSON.stringify(args ?? {})).digest("hex");
@@ -187,7 +177,7 @@ export class AssistantRuntime {
       type: "action",
       actionName: action.name,
       text: `执行${action.displayNameZh}`,
-      clientOp: CLIENT_OPS[action.name] ?? "ui:unknown",
+      clientOp: clientOpFor(action.name) ?? "ui:unknown",
       args,
     });
   }
@@ -228,7 +218,7 @@ export class AssistantRuntime {
       type: "action",
       actionName: pending.action.name,
       text: `已确认，执行${pending.action.displayNameZh}`,
-      clientOp: CLIENT_OPS[pending.action.name] ?? "ui:unknown",
+      clientOp: clientOpFor(pending.action.name) ?? "ui:unknown",
       args: pending.args,
     });
   }
