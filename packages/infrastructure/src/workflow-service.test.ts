@@ -50,7 +50,7 @@ async function addCandidate(commands: ProjectCommandService, head: ProjectHead, 
       candidate: {
         id: candidateId, projectId: head.projectId, runId, inputRevisionId: head.revisionId,
         taskType: "evidence-summary", contentText: "资料缺少现场尺寸",
-        structured: { summary: "资料摘要", findings: ["已有照片"], missingInformation: ["现场尺寸"] },
+        structured: { kind: "evidenceSummary", summary: "资料摘要", findings: ["已有照片"], missingInformation: ["现场尺寸"] },
         producer: { producerType: "model", runId }, evidenceRefs: [], reviewStatus: "unreviewed", createdAt: now,
       },
     },

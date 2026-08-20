@@ -1,5 +1,6 @@
 import { ProjectCommandService, type ProjectHead } from "@gujian/application";
 import {
+  ModelCandidateOutputSchema,
   ModelCandidateSchema,
   ModelRunSchema,
   type ModelCandidate,
@@ -62,16 +63,19 @@ function toProjectEvent(event: ServerEvent): ModelRunEvent {
   };
 }
 
-function parseStructured(content: string): ModelCandidate["structured"] {
+// 模型按任务的输出结构返回 JSON，判别字段 kind 由任务类型补上再交领域层校验。
+// 手写字段检查会随任务增多而漂移，改用同一份 schema。
+const OUTPUT_KIND: Record<string, "evidenceSummary" | "measurementTranscription"> = {
+  "evidence-summary": "evidenceSummary",
+  "measurement-transcription": "measurementTranscription",
+};
+
+function parseStructured(content: string, taskType: string): ModelCandidate["structured"] {
+  const kind = OUTPUT_KIND[taskType];
+  if (!kind) return null;
   try {
-    const value = JSON.parse(content) as Record<string, unknown>;
-    if (typeof value.summary !== "string" || !Array.isArray(value.findings) || !Array.isArray(value.missingInformation)) return null;
-    if (!value.findings.every((item) => typeof item === "string") || !value.missingInformation.every((item) => typeof item === "string")) return null;
-    return {
-      summary: value.summary,
-      findings: value.findings as string[],
-      missingInformation: value.missingInformation as string[],
-    };
+    const parsed = ModelCandidateOutputSchema.safeParse({ ...JSON.parse(content) as object, kind });
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }
@@ -230,7 +234,7 @@ export class ModelRunClient {
           inputRevisionId: head.revisionId,
           taskType: "evidence-summary",
           contentText: streamedText,
-          structured: parseStructured(streamedText),
+          structured: parseStructured(streamedText, "evidence-summary"),
           producer: { producerType: "model", runId },
           evidenceRefs: evidences.map((item) => item.evidenceId),
           reviewStatus: "unreviewed",

@@ -1487,9 +1487,29 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
                 <div className="candidate-list">
                   {selected.snapshot.candidates.map((candidate) => (
                     <article className="candidate-card" key={candidate.id}>
-                      <div className="candidate-meta"><span className="producer-badge model">模型</span><span>{candidate.reviewStatus === "unreviewed" ? "待处理" : candidate.reviewStatus}</span></div>
+                      <div className="candidate-meta"><span className="producer-badge model">模型</span><span>{REVIEW_LABELS[candidate.reviewStatus] ?? candidate.reviewStatus}</span></div>
                       <h4>{candidate.structured?.summary ?? "模型返回了未结构化候选"}</h4>
-                      {!!candidate.structured?.findings.length && <div><strong>资料发现</strong><ul>{candidate.structured.findings.map((item) => <li key={item}>{item}</li>)}</ul></div>}
+                      {candidate.structured?.kind === "evidenceSummary" && !!candidate.structured.findings.length
+                        && <div><strong>资料发现</strong><ul>{candidate.structured.findings.map((item) => <li key={item}>{item}</li>)}</ul></div>}
+                      {/* 图纸尺寸转写：读准的与读不准的分开列，读不准的由人工判断，不由模型替人决定 */}
+                      {candidate.structured?.kind === "measurementTranscription" && (["certain", "uncertain"] as const).map((certainty) => {
+                        const rows = candidate.structured?.kind === "measurementTranscription"
+                          ? candidate.structured.dimensions.filter((item) => item.certainty === certainty)
+                          : [];
+                        if (!rows.length) return null;
+                        return (
+                          <div key={certainty}>
+                            <strong>{certainty === "certain" ? `读出的尺寸 ${rows.length} 条` : `需要你确认的 ${rows.length} 条`}</strong>
+                            <ul>{rows.map((row) => (
+                              <li key={`${row.evidenceRef}:${row.valueText}:${row.locationZh ?? ""}`}>
+                                {row.partZh ?? "部位待确认"} {row.valueText}
+                                {row.valueMm ? `（${row.valueMm} mm）` : ""}
+                                <small>{evidenceTitle(row.evidenceRef)}{row.locationZh ? ` · ${row.locationZh}` : ""}{row.noteZh ? ` · ${row.noteZh}` : ""}</small>
+                              </li>
+                            ))}</ul>
+                          </div>
+                        );
+                      })}
                       {!!candidate.structured?.missingInformation.length && <div><strong>缺失信息</strong><ul>{candidate.structured.missingInformation.map((item) => <li key={item}>{item}</li>)}</ul></div>}
                     </article>
                   ))}

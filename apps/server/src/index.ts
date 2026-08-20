@@ -4,6 +4,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { ArtifactRequirementMatrixSchema, ProjectDrivenGeometrySpecSchema } from "@gujian/domain";
 import { z } from "zod";
 
+import { findModelTask } from "./model-tasks.js";
 import { ActionLedger } from "./actions/action-ledger.js";
 import { modelFacingCatalog } from "./actions/action-catalog.js";
 import { AssistantRuntime } from "./actions/assistant-routes.js";
@@ -23,23 +24,54 @@ const defaultAllowedOrigins = (process.env.GUJIAN_ALLOWED_ORIGIN ?? "http://127.
 const sessionLifetimeMs = 30 * 60 * 1_000;
 // GeometrySpec 随项目构件数增长（三方项目 1258 实体约 3.7 MB），上限按最大预期项目留余量
 const maxBodyBytes = 32 * 1_024 * 1_024;
-const maxEvidenceTextChars = 120_000;
 
-const RunRequestSchema = z.object({
+const RunHeaderSchema = z.object({
   runId: z.uuid(),
   clientRequestId: z.uuid(),
   projectId: z.uuid(),
   projectRevisionId: z.uuid(),
-  taskType: z.literal("evidence-summary"),
-  evidences: z.array(z.object({
-    evidenceId: z.uuid(),
-    assetSha256: z.string().regex(/^[a-f0-9]{64}$/),
-    text: z.string().min(1).max(50_000),
-  }).strict()).min(1).max(50),
-}).strict().superRefine((value, context) => {
-  const total = value.evidences.reduce((sum, evidence) => sum + evidence.text.length, 0);
-  if (total > maxEvidenceTextChars) {
-    context.addIssue({ code: "custom", message: "evidence text exceeds the task limit", path: ["evidences"] });
+});
+
+const TextEvidenceSchema = z.object({
+  evidenceId: z.uuid(),
+  assetSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  text: z.string().min(1).max(50_000),
+}).strict();
+
+// 图像资料按 base64 传。浏览器只提交内容，不提交模型标识、系统提示或上游地址。
+const ImageEvidenceSchema = z.object({
+  evidenceId: z.uuid(),
+  assetSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  mediaType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+  base64: z.string().min(1).max(16 * 1_024 * 1_024),
+  titleZh: z.string().min(1).max(200),
+}).strict();
+
+const RunRequestSchema = z.discriminatedUnion("taskType", [
+  RunHeaderSchema.extend({
+    taskType: z.literal("evidence-summary"),
+    evidences: z.array(TextEvidenceSchema).min(1),
+  }).strict(),
+  RunHeaderSchema.extend({
+    taskType: z.literal("measurement-transcription"),
+    evidences: z.array(ImageEvidenceSchema).min(1),
+  }).strict(),
+]).superRefine((value, context) => {
+  // 条目数与输入字节按任务注册表限（技术架构 7.1 的输入字节预算）。
+  // 超限直接拒绝，不截断后继续：截断会让模型只看到半张图还照常出结果。
+  const task = findModelTask(value.taskType);
+  if (!task) {
+    context.addIssue({ code: "custom", message: "unknown task type", path: ["taskType"] });
+    return;
+  }
+  if (value.evidences.length > task.maxItems) {
+    context.addIssue({ code: "custom", message: "evidence count exceeds the task limit", path: ["evidences"] });
+  }
+  const bytes = value.taskType === "evidence-summary"
+    ? value.evidences.reduce((sum, item) => sum + Buffer.byteLength(item.text, "utf8"), 0)
+    : value.evidences.reduce((sum, item) => sum + item.base64.length, 0);
+  if (bytes > task.maxInputBytes) {
+    context.addIssue({ code: "custom", message: "input bytes exceed the task budget", path: ["evidences"] });
   }
 });
 
@@ -103,6 +135,9 @@ export interface ModelGateway {
   readonly model: string;
   execute(input: {
     userContent: string;
+    // 系统提示与输入种类由任务注册表决定（技术架构 7.2），不由调用方现编
+    systemPrompt?: string;
+    images?: readonly { readonly mediaType: string; readonly base64: string }[];
     signal: AbortSignal;
     onStatus: (type: "running" | "retrying", attempt: number, detail: string | null) => void;
     onChunk: (content: string, attempt: number) => void;
@@ -193,6 +228,20 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
 }
 
 function taskContent(input: RunRequest): string {
+  if (input.taskType === "measurement-transcription") {
+    const list = input.evidences.map((item, index) => [
+      `资料 ${index + 1}`,
+      `evidenceRef: ${item.evidenceId}`,
+      `标题：${item.titleZh}`,
+    ].join("\n")).join("\n\n");
+    return [
+      "任务：读出以下实测图纸上已经标注的尺寸，逐条给出图上原文、对应部位和所在位置。",
+      "限制：只转写图面上写明的数字；图上没有标注的尺寸不给，不按比例量取也不按经验推算。",
+      "读不准或不确定量的是哪个部位时把该条标为 uncertain 并写明疑点。",
+      "每条的 evidenceRef 必须取自下列清单，不得自造。",
+      list,
+    ].join("\n\n");
+  }
   const evidence = input.evidences.map((item, index) => [
     `资料 ${index + 1}`,
     `evidenceId: ${item.evidenceId}`,
@@ -453,6 +502,10 @@ export function createWorkbenchServer(options: {
         try {
           const result = await gateway.execute({
             userContent: taskContent(parsed.data),
+            systemPrompt: findModelTask(parsed.data.taskType)!.systemPrompt,
+            ...(parsed.data.taskType === "measurement-transcription"
+              ? { images: parsed.data.evidences.map((item) => ({ mediaType: item.mediaType, base64: item.base64 })) }
+              : {}),
             signal: active.controller.signal,
             onStatus(type, attempt, detail) {
               if (active.state !== "running") return recordLate(attempt, `ignored-${type}`);

@@ -91,3 +91,28 @@ describe("词表条目提交与持久化", () => {
     expect(updated?.revisionId).not.toBe(head!.revisionId);
   });
 });
+
+// 质量基准 2.3 要求演示项目之间构件深度一致。构件类型在词表里没有条目时，
+// 界面只能显示英文标识符，等于 08 第 8 节禁止的只显示标识符。
+describe("生成器产出的构件类型都在词表里", () => {
+  const GENERATED_TYPES: readonly string[] = [
+    "terrace", "step", "columnBase", "column", "eaveBeam",
+    "beam", "kingPost", "bracketSeat", "bracketArm", "bearingBlock",
+    "purlin", "rafter", "roofBoard", "panTile", "coverTile", "ridgeTile",
+    "wall", "gableBoard", "gableRidgeCap", "flyRafter", "eaveClosure",
+  ];
+
+  it("逐个构件类型都能查到中文名", () => {
+    const ids = new Set<string>(HERITAGE_CONCEPTS_V1.entries.map((entry) => entry.conceptId));
+    expect(GENERATED_TYPES.filter((type) => !ids.has(type))).toEqual([]);
+  });
+
+  it("每条都挂在某个族下，不是孤立条目", () => {
+    const byId = new Map<string, ConceptEntry>(HERITAGE_CONCEPTS_V1.entries.map((entry) => [entry.conceptId, entry]));
+    for (const type of GENERATED_TYPES) {
+      const entry = byId.get(type)!;
+      expect(entry.broader, type).not.toBeNull();
+      expect(byId.has(entry.broader!), `${type} 的上位 ${entry.broader} 不在词表里`).toBe(true);
+    }
+  });
+});

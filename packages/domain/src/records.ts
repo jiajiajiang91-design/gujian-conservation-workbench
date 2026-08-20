@@ -118,6 +118,40 @@ export const ModelRunSchema = z.object({
   completedAt: IsoDateTimeSchema,
 }).strict();
 
+// 模型候选的结构化输出按任务类型分。判别字段是 kind，消费方据此分支，
+// 不靠字段有无来猜。任务注册表见 apps/server/src/model-tasks.ts。
+export const EvidenceSummaryOutputSchema = z.object({
+  kind: z.literal("evidenceSummary"),
+  summary: z.string().min(1).max(20_000),
+  findings: z.array(z.string().min(1).max(5_000)).max(200),
+  missingInformation: z.array(z.string().min(1).max(5_000)).max(200),
+}).strict();
+
+// 图纸尺寸转写（技术架构 7.2 首期任务类型之一，用户旅程第二步）。
+// 每条尺寸必须能追到图上原文与所在资料；读不准的单独标出来由人工判断，
+// 不由模型替人决定。
+export const TranscribedDimensionSchema = z.object({
+  valueText: z.string().min(1).max(120),
+  valueMm: z.string().max(40).nullable(),
+  partZh: z.string().max(120).nullable(),
+  evidenceRef: NonEmptyRefSchema,
+  locationZh: z.string().max(200).nullable(),
+  certainty: z.enum(["certain", "uncertain"]),
+  noteZh: z.string().max(500).nullable(),
+}).strict();
+
+export const MeasurementTranscriptionOutputSchema = z.object({
+  kind: z.literal("measurementTranscription"),
+  summary: z.string().min(1).max(20_000),
+  dimensions: z.array(TranscribedDimensionSchema).max(200),
+  missingInformation: z.array(z.string().min(1).max(5_000)).max(200),
+}).strict();
+
+export const ModelCandidateOutputSchema = z.discriminatedUnion("kind", [
+  EvidenceSummaryOutputSchema,
+  MeasurementTranscriptionOutputSchema,
+]);
+
 export const ModelCandidateSchema = z.object({
   id: UuidSchema,
   projectId: UuidSchema,
@@ -125,11 +159,7 @@ export const ModelCandidateSchema = z.object({
   inputRevisionId: UuidSchema,
   taskType: z.string().min(1).max(120),
   contentText: z.string().min(1).max(200_000),
-  structured: z.object({
-    summary: z.string().min(1).max(20_000),
-    findings: z.array(z.string().min(1).max(5_000)).max(200),
-    missingInformation: z.array(z.string().min(1).max(5_000)).max(200),
-  }).strict().nullable(),
+  structured: ModelCandidateOutputSchema.nullable(),
   producer: z.object({ producerType: z.literal("model"), runId: UuidSchema }).strict(),
   evidenceRefs: z.array(NonEmptyRefSchema).max(500),
   reviewStatus: z.enum(["unreviewed", "confirmed", "rejected", "superseded"]),
@@ -141,5 +171,7 @@ export type AuditEvent = z.infer<typeof AuditEventSchema>;
 export type ModelRun = z.infer<typeof ModelRunSchema>;
 export type ModelRunEvent = z.infer<typeof ModelRunEventSchema>;
 export type ModelCandidate = z.infer<typeof ModelCandidateSchema>;
+export type ModelCandidateOutput = z.infer<typeof ModelCandidateOutputSchema>;
+export type TranscribedDimension = z.infer<typeof TranscribedDimensionSchema>;
 export type RuleRun = z.infer<typeof RuleRunSchema>;
 export type Decision = z.infer<typeof DecisionSchema>;

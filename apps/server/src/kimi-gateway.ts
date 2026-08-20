@@ -42,6 +42,11 @@ export class KimiGateway {
 
   async execute(input: {
     userContent: string;
+    // 系统提示来自任务注册表（technical 架构 7.2）。留空时用资料整理任务的提示，
+    // 保持既有调用方行为不变。
+    systemPrompt?: string;
+    // 图像输入。本机文件按 data URI 传，浏览器不提交模型标识、提示或密钥。
+    images?: readonly { readonly mediaType: string; readonly base64: string }[];
     signal: AbortSignal;
     onStatus: (type: "running" | "retrying", attempt: number, detail: string | null) => void;
     onChunk: (content: string, attempt: number) => void;
@@ -61,9 +66,22 @@ export class KimiGateway {
             messages: [
               {
                 role: "system",
-                content: "你是古建保护项目资料整理助手。只根据输入资料生成候选，不补写缺失的测量、年代、材料或病害结论。输出 JSON 对象，字段为 summary、findings、missingInformation，后两项为字符串数组。",
+                content: input.systemPrompt
+                  ?? "你是古建保护项目资料整理助手。只根据输入资料生成候选，不补写缺失的测量、年代、材料或病害结论。输出 JSON 对象，字段为 summary、findings、missingInformation，后两项为字符串数组。",
               },
-              { role: "user", content: input.userContent },
+              {
+                role: "user",
+                // 纯文本任务保持字符串形式，带图时才改成内容块数组
+                content: input.images?.length
+                  ? [
+                    { type: "text", text: input.userContent },
+                    ...input.images.map((image) => ({
+                      type: "image_url",
+                      image_url: { url: `data:${image.mediaType};base64,${image.base64}` },
+                    })),
+                  ]
+                  : input.userContent,
+              },
             ],
             response_format: { type: "json_object" },
             thinking: { type: "disabled" },

@@ -716,6 +716,30 @@ function buildEnclosure(assembly: ConstructionAssembly, form: BuildingForm): voi
       solid: { sizeX: thickness, sizeY: halfDepth * 2, sizeZ: wallHeight, center: [width / 2, 0, base + wallHeight / 2] },
     },
   ];
+  // 有墙的面上是否开门窗，形制参数里没有这一项。前檐照片拍不到后檐与山面，
+  // 因此不生成门窗构件，也不默认判为无。质量基准 2.3 要求演示项目之间构件
+  // 深度一致，缺的类型要么补出来要么说明依据，不能默认省略。
+  if (sides.some((side) => !side.open)) {
+    assembly.addUnknown({
+      key: "fitment-openings-undetermined",
+      subjectRef: "form:fitment",
+      reasonCode: "WALL_OPENINGS_NOT_DETERMINED",
+      descriptionZh: "有墙的各面是否设门窗、以及门窗的分格与格心做法，现有资料判不出，本次不生成门窗构件。补齐各面现状照片或门窗实测记录后可重新生成。",
+      requiredEvidence: ["后檐与两山现状照片", "门窗分格与格心的实测记录"],
+      affectedRefs: sides.filter((side) => !side.open).map((side) => `form:${side.key}`),
+    });
+  }
+
+  // 基础在地面以下，照片与形制规则都给不出分层做法
+  assembly.addUnknown({
+    key: "foundation-layers-undetermined",
+    subjectRef: "form:foundation",
+    reasonCode: "FOUNDATION_LAYERS_NOT_DETERMINED",
+    descriptionZh: "台明以下的基础分层与做法在地面以下，照片看不到，形制规则也不推定，本次不生成基础构件。需要探槽记录或既有工程档案才能补。",
+    requiredEvidence: ["基础探槽或开挖记录", "既有修缮工程的基础做法档案"],
+    affectedRefs: ["form:foundation"],
+  });
+
   for (const side of sides) {
     if (side.open) {
       // 敞廊是形制不是省略，如实记录该面无围护

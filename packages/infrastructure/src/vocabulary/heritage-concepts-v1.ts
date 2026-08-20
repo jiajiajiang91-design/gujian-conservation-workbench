@@ -32,6 +32,12 @@ export const HERITAGE_CONCEPTS_V1 = {
     { conceptId: "interiorPost", prefLabelZh: "室内立柱", altLabels: [], broader: "column-family", sourceText: "v3 团队 demo 中性术语", roleZh: null, descZh: null, confirmedBy: null },
 
     { conceptId: "eaveBeam", prefLabelZh: "檐部横梁", altLabels: [], broader: "beam-family", sourceText: "v3 团队 demo 中性术语", roleZh: null, descZh: null, confirmedBy: null },
+    // 七架梁一类的主梁与联系梁承担的荷载不同，瓜柱立在梁背上而室内立柱落地，
+    // 两组不是同一角色的两套名，因此各自成条，不做别名对照。
+    { conceptId: "beam", prefLabelZh: "梁", altLabels: ["七架梁", "五架梁", "三架梁"], broader: "beam-family", sourceText: "清工程做法则例梁架分层（本项目整理）", roleZh: "跨在前后檐之间承托上层梁架与檩", descZh: null, confirmedBy: null },
+    { conceptId: "kingPost", prefLabelZh: "瓜柱", altLabels: ["脊瓜柱", "金瓜柱"], broader: "column-family", sourceText: "清工程做法则例梁架分层（本项目整理）", roleZh: "立在下层梁背上支起上层梁或脊檩", descZh: null, confirmedBy: null },
+    { conceptId: "gableBoard", prefLabelZh: "博风板", altLabels: [], broader: "roof-frame", sourceText: "v3 团队 demo 中性术语", roleZh: "封护山面檩端与屋面边沿", descZh: null, confirmedBy: null },
+    { conceptId: "gableRidgeCap", prefLabelZh: "山面脊饰", altLabels: [], broader: "tile-family", sourceText: "v3 团队 demo 中性术语", roleZh: "山面与屋脊交接处的压顶饰件", descZh: null, confirmedBy: null },
     { conceptId: "tieBeam", prefLabelZh: "联系梁", altLabels: [], broader: "beam-family", sourceText: "v3 团队 demo 中性术语", roleZh: null, descZh: null, confirmedBy: null },
     { conceptId: "crescent-beam", prefLabelZh: "月梁", altLabels: ["顶梁"], broader: "beam-family", sourceText: "jiangshu aliases.json：月梁又称顶梁", roleZh: null, descZh: null, confirmedBy: null },
 

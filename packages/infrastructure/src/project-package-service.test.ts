@@ -208,7 +208,7 @@ describe("ProjectPackageService", () => {
         candidate: {
           id: crypto.randomUUID(), projectId: seeded.projectId, runId, inputRevisionId: head.revisionId,
           taskType: "evidence-summary", contentText: "候选摘要",
-          structured: { summary: "候选摘要", findings: [], missingInformation: ["现场尺寸"] },
+          structured: { kind: "evidenceSummary", summary: "候选摘要", findings: [], missingInformation: ["现场尺寸"] },
           producer: { producerType: "model", runId }, evidenceRefs: [], reviewStatus: "unreviewed", createdAt: now,
         },
       },

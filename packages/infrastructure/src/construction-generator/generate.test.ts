@@ -355,3 +355,34 @@ describe("山面与檐口做法", () => {
     expect(parsed.success, parsed.success ? "" : JSON.stringify(parsed.error.issues.slice(0, 3))).toBe(true);
   });
 });
+
+// 质量基准 2.3：演示项目之间构件深度一致。缺的类型不能默认省略，
+// 判不出就记未知项并写清需要什么资料。
+describe("资料判不出的部位记未知项", () => {
+  const reasons = (result: ReturnType<typeof generate>) =>
+    result.unknowns.map((item) => item.reasonCode);
+
+  it("有墙的面是否开门窗判不出时记未知项", () => {
+    const result = generate();
+    expect(reasons(result)).toContain("WALL_OPENINGS_NOT_DETERMINED");
+    const unknown = result.unknowns.find((item) => item.reasonCode === "WALL_OPENINGS_NOT_DETERMINED")!;
+    expect(unknown.requiredEvidence.length).toBeGreaterThan(0);
+    expect(unknown.affectedRefs.length).toBeGreaterThan(0);
+  });
+
+  it("四面全敞时不记门窗未知项，没有墙就没有开口问题", () => {
+    const result = generate(gaoduForm({ enclosure: { front: "open", sides: "open", back: "open" } }));
+    expect(reasons(result)).not.toContain("WALL_OPENINGS_NOT_DETERMINED");
+  });
+
+  it("基础分层在地面以下，恒记未知项", () => {
+    expect(reasons(generate())).toContain("FOUNDATION_LAYERS_NOT_DETERMINED");
+  });
+
+  it("每条未知项都阻断正式资格但不阻断代理成果", () => {
+    for (const unknown of generate().unknowns) {
+      expect(unknown.blocksFormalEligibility, unknown.reasonCode).toBe(true);
+      expect(unknown.blocksProxyOutcome, unknown.reasonCode).toBe(false);
+    }
+  });
+});
