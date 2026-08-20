@@ -39,3 +39,32 @@ describe("动作交付状态与前端执行体一致", () => {
     }
   });
 });
+
+// 桩清单清空后，上面四条会全部落在空集上通过，不再能发现任何漂移。
+// 这条补位：登记表说已交付的动作，必须在 switch 里真有 case。
+// 没有 case 就落到兜底分支，那条分支同样回"尚未接入"，与桩没有区别。
+describe("已交付动作不落兜底分支", () => {
+  it("每个 executable 的 clientOp 在适配器里都有对应 case", async () => {
+    // 除 getHead 外的依赖一律触即抛：进了真分支必然碰依赖或提前返回，
+    // 落到兜底分支则一个依赖都不碰，直接返回未执行文案，两者由此区分。
+    const trip = () => { throw new Error("依赖被触达"); };
+    const deps = new Proxy({}, {
+      get: (_target, key) => (key === "getHead" ? () => null : new Proxy(trip, { get: () => trip })),
+    }) as unknown as Parameters<typeof runClientOp>[0];
+
+    const delivered = Object.entries(ASSISTANT_ACTION_DELIVERY)
+      .filter(([, item]) => item.state === "executable" && item.clientOp !== null);
+    // 防止这条测试自己变成空过：登记表若被清空，遍历零次也会绿
+    expect(delivered.length).toBeGreaterThan(10);
+
+    for (const [name, item] of delivered) {
+      let text: string;
+      try {
+        text = (await runClientOp(deps, { clientOp: item.clientOp, actionName: name, args: {} })).text;
+      } catch {
+        continue;
+      }
+      expect(text, `${name} 的 ${item.clientOp} 没有 case，落到兜底分支`).not.toContain("尚未接入");
+    }
+  });
+});

@@ -66,6 +66,11 @@ const RunRequestSchema = z.discriminatedUnion("taskType", [
     // 文字与图像可混传：一次运行里既有实测图纸也有文字记录是常态
     evidences: z.array(z.union([ImageEvidenceSchema, TranscriptionTextEvidenceSchema])).min(1),
   }).strict(),
+  RunHeaderSchema.extend({
+    // 构件识别只收图像：文字记录里没有位置可认
+    taskType: z.literal("component-recognition"),
+    evidences: z.array(ImageEvidenceSchema).min(1),
+  }).strict(),
 ]).superRefine((value, context) => {
   // 只校验任务类型在册。输入条目数与字节数不再设人为上限：
   // 之前那组数字是估出来的，真实约束由请求体上限 maxBodyBytes 与上游 API 承担。
@@ -238,6 +243,22 @@ function taskContent(input: RunRequest): string {
       "任务：读出以下实测图纸上已经标注的尺寸，逐条给出图上原文、对应部位和所在位置。",
       "限制：只转写图面上写明的数字；图上没有标注的尺寸不给，不按比例量取也不按经验推算。",
       "读不准或不确定量的是哪个部位时把该条标为 uncertain 并写明疑点。",
+      "每条的 evidenceRef 必须取自下列清单，不得自造。",
+      list,
+    ].join("\n\n");
+  }
+  if (input.taskType === "component-recognition") {
+    const list = input.evidences.map((item, index) => [
+      `资料 ${index + 1}`,
+      `evidenceRef: ${item.evidenceId}`,
+      `标题：${item.titleZh}`,
+      "形式：图像，随本次请求一并发送",
+    ].join("\n")).join("\n\n");
+    return [
+      "任务：在以下资料照片上认出可见的建筑构件，逐个给出名称与它在图上的位置。",
+      "位置用相对整张图片的比例：x 与 y 是左上角，width 与 height 是宽高，四个数都在 0 到 1 之间。",
+      "限制：只标图上确实看得见的构件；看不清、被遮挡或只能推测的标 uncertain 并写明疑点。",
+      "不要给尺寸，本任务只认位置与名称。判不准类别时 categoryZh 给 null，不硬套形制术语。",
       "每条的 evidenceRef 必须取自下列清单，不得自造。",
       list,
     ].join("\n\n");
@@ -503,7 +524,11 @@ export function createWorkbenchServer(options: {
           const result = await gateway.execute({
             userContent: taskContent(parsed.data),
             systemPrompt: findModelTask(parsed.data.taskType)!.systemPrompt,
-            ...(parsed.data.taskType === "measurement-transcription"
+            // 凡是任务声明收图像，输入里的图像项就要真的送出去。
+            // 这里原先只对尺寸转写附图，构件识别落进空分支：模型没看到照片，
+            // 却凭"古建"这个上下文编出了一套中国官式构件名，看起来完全正常。
+            // 判据取任务注册表的 inputKinds，不再逐个任务名写死。
+            ...(findModelTask(parsed.data.taskType)!.inputKinds.includes("image")
               ? {
                 images: parsed.data.evidences
                   .filter((item): item is Extract<typeof item, { base64: string }> => "base64" in item)
