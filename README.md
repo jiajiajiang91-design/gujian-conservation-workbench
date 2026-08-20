@@ -33,6 +33,17 @@
 
 ```bash
 corepack pnpm install
+```
+
+`交互原型/02_AI工作台` 是早期原型，不在 pnpm workspace 里，有自己的锁文件，回归测试仍在跑它。装它的依赖：
+
+```bash
+corepack pnpm run install:legacy
+```
+
+两步装完后跑全量检查：
+
+```bash
 corepack pnpm check
 ```
 
