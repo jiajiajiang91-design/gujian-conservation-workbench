@@ -254,6 +254,11 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     [projects, query],
   );
   const parsedEvidenceCount = selected?.snapshot.parseRecords.filter((record) => record.status === "parsed" && record.extractedText?.trim()).length ?? 0;
+  // 可读图的资料：图纸类且文件在本机。是不是图像格式由运行侧按资料本体判定，
+  // 界面不重复一份格式清单。
+  const readableDrawingEvidenceIds = selected?.snapshot.evidences
+    .filter((item) => item.evidenceType === "drawing" && item.dataStatus === "available")
+    .map((item) => item.id) ?? [];
   const modelRunning = modelProgress && !["succeeded", "failed", "cancelled"].includes(modelProgress.phase);
   // 三个长任务的运行判定与指示器门槛（07 表 7）：短于 300 ms 不显示指示器
   const geometryRunning = geometryStarting
@@ -869,6 +874,80 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     }
   };
 
+  // 图纸尺寸转写：读出图上已标注的尺寸进待确认区。
+  // 只对图像类资料可用，人工确认后才写入尺寸事实。
+  const transcribeDrawings = async () => {
+    if (!selected) return;
+    const drawingIds = readableDrawingEvidenceIds;
+    if (!drawingIds.length) {
+      setError(inputError("本项目没有可读取的图纸资料。先上传 JPEG、PNG 或 WebP 格式的实测图。"));
+      return;
+    }
+    setError(null);
+    setModelProgress(null);
+    try {
+      const outcome = await modelRuns.runMeasurementTranscription(selected, localActorId(), drawingIds, setModelProgress);
+      const evaluated = await workflow.evaluate(outcome.head, localActorId());
+      setSelected(evaluated);
+      setProjectModelRuns(await projectRepository.getProjectModelRuns(selected.projectId));
+      setActiveStage("candidates");
+      const count = outcome.candidate?.structured?.kind === "measurementTranscription"
+        ? outcome.candidate.structured.dimensions.length
+        : 0;
+      setNotice(count
+        ? `从图纸读出 ${count} 条尺寸，请在待确认区逐条核对后再写入项目`
+        : "本次读取没有得到可用尺寸");
+      await refresh();
+    } catch (reason) {
+      setError(describeFailure(reason, "图纸尺寸读取失败"));
+    }
+  };
+
+  // 确认后把读准的尺寸写成事实。来源标为实测转录并注明取自哪份资料，
+  // producer 为 human：数值出自模型，采信与否是人的决定。
+  const confirmTranscribedDimensions = async (candidate: ProjectHead["snapshot"]["candidates"][number]) => {
+    if (!selected || candidate.structured?.kind !== "measurementTranscription") return;
+    const rows = candidate.structured.dimensions.filter((item) => item.certainty === "certain" && item.valueMm);
+    if (!rows.length) {
+      setError(inputError("这条结果里没有可直接写入的尺寸。读不准的条目需要先人工核实原图。"));
+      return;
+    }
+    setError(null);
+    try {
+      const at = new Date().toISOString();
+      await projectCommands.execute({
+        commandType: "CommitFacts",
+        commandId: crypto.randomUUID(),
+        projectId: selected.projectId,
+        actorId: localActorId(),
+        expectedRevisionId: selected.revisionId,
+        issuedAt: at,
+        payload: {
+          facts: rows.map((row, index) => ({
+            id: crypto.randomUUID(),
+            subjectRef: selected.snapshot.buildings[0]?.id ?? selected.projectId,
+            field: `documentedDimension.transcribed${index + 1}`,
+            value: {
+              name: row.partZh ?? "未定名尺寸",
+              value: Number(row.valueMm),
+              unit: "mm",
+              methodZh: `转写自${evidenceTitle(row.evidenceRef)}${row.locationZh ? ` ${row.locationZh}` : ""}标注 ${row.valueText}`,
+            },
+            producer: { producerType: "human" as const, actorId: localActorId() },
+            evidenceRefs: [row.evidenceRef],
+            reviewStatus: "confirmed" as const,
+            dataStatus: "available" as const,
+          })),
+        },
+      });
+      await loadProject(selected.projectId);
+      await refresh();
+      setNotice(`已写入 ${rows.length} 条尺寸，来源标为实测转录`);
+    } catch (reason) {
+      setError(describeFailure(reason, "尺寸写入失败"));
+    }
+  };
+
   const confirmTaskSetup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) return;
@@ -1325,6 +1404,12 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
               <section className="evidence-board">
                 <header className="board-heading">
                   <div><h3>原始资料与解析记录</h3></div>
+                  {/* 读图提取尺寸：结果进待确认区，人工核对后才写入项目 */}
+                  {!!readableDrawingEvidenceIds.length && (
+                    <button className="gj-btn" type="button" disabled={Boolean(modelRunning)} onClick={() => void transcribeDrawings()}>
+                      <Ruler size={14} /> 从图纸读尺寸
+                    </button>
+                  )}
                   <button className="gj-btn gj-btn--primary" type="button" onClick={() => evidenceInput.current?.click()}><Upload size={14} /> 上传原始资料</button>
                   <input ref={evidenceInput} className="sr-only" type="file" multiple onChange={(event) => { const files = Array.from(event.target.files ?? []); if (files.length) void uploadEvidenceFiles(files); }} />
                 </header>
@@ -1511,6 +1596,11 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
                         );
                       })}
                       {!!candidate.structured?.missingInformation.length && <div><strong>缺失信息</strong><ul>{candidate.structured.missingInformation.map((item) => <li key={item}>{item}</li>)}</ul></div>}
+                      {candidate.structured?.kind === "measurementTranscription" && candidate.reviewStatus === "unreviewed" && (
+                        <button className="gj-btn" type="button" onClick={() => void confirmTranscribedDimensions(candidate)}>
+                          确认读准的尺寸并写入项目
+                        </button>
+                      )}
                     </article>
                   ))}
                   {!selected.snapshot.candidates.length && <div className="panel-empty">助手的识别结果只进入待确认区，需要你确认后才写入项目。</div>}

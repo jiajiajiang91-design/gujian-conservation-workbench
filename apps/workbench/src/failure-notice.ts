@@ -78,6 +78,14 @@ const EXACT: Record<string, FailureRule> = {
     summaryZh: "项目里没有已解析的资料，模型没有可用输入。",
     nextStepZh: "先上传资料并完成解析，再运行模型。",
   },
+  NO_READABLE_DRAWING_FOR_MODEL: {
+    summaryZh: "本项目没有可读取的图纸资料，没有发起读图。",
+    nextStepZh: "先上传 JPEG、PNG 或 WebP 格式的实测图，再从图纸读尺寸。",
+  },
+  NO_DRAWING_EVIDENCE_SELECTED: {
+    summaryZh: "没有选中任何图纸资料，没有发起读图。",
+    nextStepZh: "在资料清单里选一份实测图后重试。",
+  },
   DOCUMENTED_DIMENSION_CHAIN_INVALID: {
     summaryZh: "尺寸链的分段之和与总长对不上，转写没有写入。",
     nextStepZh: "核对各分段数值与总长后重新填写。",

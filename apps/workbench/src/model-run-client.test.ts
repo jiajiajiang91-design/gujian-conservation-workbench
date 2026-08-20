@@ -104,3 +104,42 @@ describe("ModelRunClient", () => {
     });
   });
 });
+
+
+// 图纸尺寸转写（技术架构 7.2、用户旅程第二步）。模型读出的尺寸进待确认区，
+// 人工确认后才写入项目。这里锁住输入侧的两条边界：请求发出去之前就该拦住。
+describe("图纸尺寸转写的输入边界", () => {
+  const stubClient = (calls: string[], current: ProjectHead) => {
+    const evidence = current.snapshot.evidences[0]!;
+    const asset = {
+      id: evidence.assetId, projectId: current.projectId,
+      fileName: "记录.txt", mimeType: "text/plain", byteLength: 18, sha256: "a".repeat(64),
+      contentStatus: "available" as const, createdAt: new Date().toISOString(),
+    };
+    return new ModelRunClient({
+      repository: { getProjectAssets: async () => [{ record: asset, content: new Blob(["x"]) }] } as unknown as IndexedDbProjectRepository,
+      commands: {} as unknown as ProjectCommandService,
+      fetchImpl: (async (input: RequestInfo | URL) => {
+        calls.push(String(input));
+        throw new Error("不该走到这里");
+      }) as unknown as typeof fetch,
+    });
+  };
+
+  it("没有选中资料时不发请求", async () => {
+    const calls: string[] = [];
+    const current = head();
+    await expect(stubClient(calls, current).runMeasurementTranscription(current, crypto.randomUUID(), [], () => {}))
+      .rejects.toThrow("NO_DRAWING_EVIDENCE_SELECTED");
+    expect(calls).toEqual([]);
+  });
+
+  it("选中的资料不是图像时不发请求", async () => {
+    const calls: string[] = [];
+    const current = head();
+    const textEvidenceId = current.snapshot.evidences[0]!.id;
+    await expect(stubClient(calls, current).runMeasurementTranscription(current, crypto.randomUUID(), [textEvidenceId], () => {}))
+      .rejects.toThrow("NO_READABLE_DRAWING_FOR_MODEL");
+    expect(calls).toEqual([]);
+  });
+});

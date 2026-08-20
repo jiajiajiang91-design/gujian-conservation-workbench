@@ -70,6 +70,18 @@ const OUTPUT_KIND: Record<string, "evidenceSummary" | "measurementTranscription"
   "measurement-transcription": "measurementTranscription",
 };
 
+const IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  // 分块拼接：一次性展开成参数会在大图上超出调用栈
+  for (let offset = 0; offset < bytes.length; offset += 8_192) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 8_192));
+  }
+  return btoa(binary);
+}
+
 function parseStructured(content: string, taskType: string): ModelCandidate["structured"] {
   const kind = OUTPUT_KIND[taskType];
   if (!kind) return null;
@@ -108,6 +120,39 @@ export class ModelRunClient {
 
   get activeRunId(): string | null { return this.#active?.runId ?? null; }
 
+  // 图纸尺寸转写（技术架构 7.2 首期任务类型，用户旅程第二步）。
+  // 只挑用户点选的图纸类资料，字节从本机取；结果进待确认区，
+  // 人工确认后才写入尺寸事实，模型不直接落成数据。
+  async runMeasurementTranscription(
+    head: ProjectHead,
+    actorId: string,
+    evidenceIds: readonly string[],
+    onProgress: (progress: ModelRunProgress) => void,
+  ): Promise<ModelRunOutcome> {
+    if (this.#active) throw new Error("MODEL_RUN_ALREADY_ACTIVE");
+    if (!evidenceIds.length) throw new Error("NO_DRAWING_EVIDENCE_SELECTED");
+    const projectAssets = await this.#repository.getProjectAssets(head.projectId);
+    const assetById = new Map(projectAssets.map((asset) => [asset.record.id, asset]));
+    const evidences: {
+      evidenceId: string; assetSha256: string; mediaType: string; base64: string; titleZh: string;
+    }[] = [];
+    for (const evidenceId of evidenceIds) {
+      const evidence = head.snapshot.evidences.find((item) => item.id === evidenceId);
+      const asset = evidence ? assetById.get(evidence.assetId) : undefined;
+      if (!evidence || !asset || asset.record.contentStatus !== "available" || !asset.content) continue;
+      if (!IMAGE_MEDIA_TYPES.includes(asset.record.mimeType)) continue;
+      evidences.push({
+        evidenceId: evidence.id,
+        assetSha256: asset.record.sha256,
+        mediaType: asset.record.mimeType,
+        base64: await blobToBase64(asset.content),
+        titleZh: evidence.title,
+      });
+    }
+    if (!evidences.length) throw new Error("NO_READABLE_DRAWING_FOR_MODEL");
+    return this.#run(head, actorId, "measurement-transcription", evidences, onProgress);
+  }
+
   async runEvidenceSummary(
     head: ProjectHead,
     actorId: string,
@@ -128,7 +173,17 @@ export class ModelRunClient {
       }];
     });
     if (!evidences.length) throw new Error("NO_PARSED_EVIDENCE_FOR_MODEL");
+    return this.#run(head, actorId, "evidence-summary", evidences, onProgress);
+  }
 
+  // 两个任务共用同一条流式与留痕通路，只有输入项与任务类型不同
+  async #run(
+    head: ProjectHead,
+    actorId: string,
+    taskType: "evidence-summary" | "measurement-transcription",
+    evidences: readonly { readonly evidenceId: string }[],
+    onProgress: (progress: ModelRunProgress) => void,
+  ): Promise<ModelRunOutcome> {
     const sessionResponse = await this.#fetch("/api/session", { credentials: "same-origin" });
     if (!sessionResponse.ok) throw new Error(await errorCode(sessionResponse));
     const session = await sessionResponse.json() as SessionResponse;
@@ -147,7 +202,7 @@ export class ModelRunClient {
         clientRequestId: crypto.randomUUID(),
         projectId: head.projectId,
         projectRevisionId: head.revisionId,
-        taskType: "evidence-summary",
+        taskType,
         evidences,
       }),
     });
@@ -217,7 +272,7 @@ export class ModelRunClient {
       inputHash,
       provider,
       model,
-      taskType: "evidence-summary",
+      taskType,
       status: terminal,
       evidenceRefs: evidences.map((item) => item.evidenceId),
       events,
@@ -232,9 +287,9 @@ export class ModelRunClient {
           projectId: head.projectId,
           runId,
           inputRevisionId: head.revisionId,
-          taskType: "evidence-summary",
+          taskType,
           contentText: streamedText,
-          structured: parseStructured(streamedText, "evidence-summary"),
+          structured: parseStructured(streamedText, taskType),
           producer: { producerType: "model", runId },
           evidenceRefs: evidences.map((item) => item.evidenceId),
           reviewStatus: "unreviewed",
