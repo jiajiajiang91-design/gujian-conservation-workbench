@@ -47,6 +47,15 @@ const ImageEvidenceSchema = z.object({
   titleZh: z.string().min(1).max(200),
 }).strict();
 
+// 测量转写的文字项。与资料整理的文本项区别在于要带标题，
+// 模型据此在输出里指明尺寸取自哪份资料。
+const TranscriptionTextEvidenceSchema = z.object({
+  evidenceId: z.uuid(),
+  assetSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  text: z.string().min(1).max(200_000),
+  titleZh: z.string().min(1).max(200),
+}).strict();
+
 const RunRequestSchema = z.discriminatedUnion("taskType", [
   RunHeaderSchema.extend({
     taskType: z.literal("evidence-summary"),
@@ -54,7 +63,8 @@ const RunRequestSchema = z.discriminatedUnion("taskType", [
   }).strict(),
   RunHeaderSchema.extend({
     taskType: z.literal("measurement-transcription"),
-    evidences: z.array(ImageEvidenceSchema).min(1),
+    // 文字与图像可混传：一次运行里既有实测图纸也有文字记录是常态
+    evidences: z.array(z.union([ImageEvidenceSchema, TranscriptionTextEvidenceSchema])).min(1),
   }).strict(),
 ]).superRefine((value, context) => {
   // 条目数与输入字节按任务注册表限（技术架构 7.1 的输入字节预算）。
@@ -67,9 +77,10 @@ const RunRequestSchema = z.discriminatedUnion("taskType", [
   if (value.evidences.length > task.maxItems) {
     context.addIssue({ code: "custom", message: "evidence count exceeds the task limit", path: ["evidences"] });
   }
-  const bytes = value.taskType === "evidence-summary"
-    ? value.evidences.reduce((sum, item) => sum + Buffer.byteLength(item.text, "utf8"), 0)
-    : value.evidences.reduce((sum, item) => sum + item.base64.length, 0);
+  const bytes = value.evidences.reduce(
+    (sum, item) => sum + ("base64" in item ? item.base64.length : Buffer.byteLength(item.text, "utf8")),
+    0,
+  );
   if (bytes > task.maxInputBytes) {
     context.addIssue({ code: "custom", message: "input bytes exceed the task budget", path: ["evidences"] });
   }
@@ -137,6 +148,7 @@ export interface ModelGateway {
     userContent: string;
     // 系统提示与输入种类由任务注册表决定（技术架构 7.2），不由调用方现编
     systemPrompt?: string;
+    maxOutputTokens?: number;
     images?: readonly { readonly mediaType: string; readonly base64: string }[];
     signal: AbortSignal;
     onStatus: (type: "running" | "retrying", attempt: number, detail: string | null) => void;
@@ -504,8 +516,13 @@ export function createWorkbenchServer(options: {
           const result = await gateway.execute({
             userContent: taskContent(parsed.data),
             systemPrompt: findModelTask(parsed.data.taskType)!.systemPrompt,
+            maxOutputTokens: findModelTask(parsed.data.taskType)!.maxOutputTokens,
             ...(parsed.data.taskType === "measurement-transcription"
-              ? { images: parsed.data.evidences.map((item) => ({ mediaType: item.mediaType, base64: item.base64 })) }
+              ? {
+                images: parsed.data.evidences
+                  .filter((item): item is Extract<typeof item, { base64: string }> => "base64" in item)
+                  .map((item) => ({ mediaType: item.mediaType, base64: item.base64 })),
+              }
               : {}),
             signal: active.controller.signal,
             onStatus(type, attempt, detail) {

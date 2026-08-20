@@ -17,6 +17,9 @@ export interface ModelTaskDefinition {
   // 单次运行的输入条目上限与字节上限（技术架构 7.1 的输入字节预算）
   readonly maxItems: number;
   readonly maxInputBytes: number;
+  // 输出上限按任务定。逐条尺寸的结构化输出比一段摘要长得多，
+  // 用同一个全局值会把 JSON 截断在半途，解析直接失败。
+  readonly maxOutputTokens: number;
 }
 
 const FACT_BOUNDARY = "只根据输入资料生成候选，不补写缺失的测量、年代、材料或病害结论。";
@@ -28,6 +31,7 @@ export const MODEL_TASKS: readonly ModelTaskDefinition[] = [
     inputKinds: ["text"],
     systemPrompt: `你是古建保护项目资料整理助手。${FACT_BOUNDARY}输出 JSON 对象，字段为 summary、findings、missingInformation，后两项为字符串数组。`,
     maxItems: 50,
+    maxOutputTokens: 1_024,
     // 原来的口径是全部证据文本合计十二万字符。改按字节计更贴近实际上传量，
     // 中文按每字三字节折算，取三十六万字节，不比原来更严。
     maxInputBytes: 360_000,
@@ -48,6 +52,9 @@ export const MODEL_TASKS: readonly ModelTaskDefinition[] = [
       "missingInformation（字符串数组，说明还缺哪些关键尺寸）。",
     ].join(""),
     maxItems: 5,
+    // 实测：三张图纸读出十余条尺寸就用掉一千 token，逐条带原文、部位、
+    // 位置与备注。留四千，够读满一套图。
+    maxOutputTokens: 4_096,
     // 图像按 base64 计。三张 HABS 实测图各约 1 MiB，转码后约 4 MiB，留一倍余量。
     maxInputBytes: 12 * 1024 * 1024,
   },

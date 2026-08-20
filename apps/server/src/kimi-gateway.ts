@@ -45,6 +45,8 @@ export class KimiGateway {
     // 系统提示来自任务注册表（technical 架构 7.2）。留空时用资料整理任务的提示，
     // 保持既有调用方行为不变。
     systemPrompt?: string;
+    // 输出上限按任务定，缺省时用网关的全局值
+    maxOutputTokens?: number;
     // 图像输入。本机文件按 data URI 传，浏览器不提交模型标识、提示或密钥。
     images?: readonly { readonly mediaType: string; readonly base64: string }[];
     signal: AbortSignal;
@@ -88,7 +90,7 @@ export class KimiGateway {
             stream: true,
             stream_options: { include_usage: true },
             // 架构 v1.4 §7.3 口径：max_completion_tokens，不显式设置 temperature
-            max_completion_tokens: this.#maxOutputTokens,
+            max_completion_tokens: input.maxOutputTokens ?? this.#maxOutputTokens,
           }),
           signal,
         });
