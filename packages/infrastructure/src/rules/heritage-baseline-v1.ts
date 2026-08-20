@@ -4,7 +4,7 @@ import type { RuleDataFile, RuleSpec } from "@gujian/domain";
 // 加载入口 rule-engine.ts 的 loadRuleData 在运行时做 Zod 校验并计算内容哈希。
 // 公式中的标识符先取基准参数，再取同规则集内其他规则的 ruleId 结果。
 //
-// 出处口径：本文件所有数值均为转引，来源见 文档/01_产品/02_开源技术借鉴.md
+// 出处口径：本文件所有数值均为转引，来源见 文档/06_研究底稿/02_开源技术借鉴.md
 // 第 4.1 与 4.2 节对 ssffd/jiangshu 与 yxk925/ACA-Builder 的整理。该节同时
 // 记明 jiangshu 只覆盖清式无斗栱小式、数值不可照搬，因此本规则集只用于生成
 // 规范选择停靠的并列方案，未验证对本项目任一样本的适用性。
