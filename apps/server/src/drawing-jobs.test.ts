@@ -45,7 +45,7 @@ function matrix(projectId: string, projectRevisionId: string, geometryRevisionId
       detailRules: resolveDetailRules(50),
       annotationRules: resolveAnnotationRules("floorPlan", 50),
       annotationPlan: {
-        axes: [], levels: [], labels: [], sectionMarks: [], levelConflicts: [],
+        axes: [], levels: [], labels: [], sectionMarks: [], detailIndexes: [], levelConflicts: [],
         northAngleDeg: null, droppedByKind: {},
       },
     }],

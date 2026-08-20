@@ -103,7 +103,7 @@ async function commitFollowOnProxyChain(seeded: Awaited<ReturnType<typeof seeded
     titleZh: "回导后新图纸", buildingDisplayNameZh: "正殿", issueState: "proxy-unissued" as const, issueDate: null, revisionLabel: "P02",
     views: [{ id: viewId, key: `${tag}-plan`, displayLabelZh: "回导后平面图", drawingRef: "平-02", kind: "floorPlan" as const, scaleDenominator: 50,
       sheetId, viewportRectMm: [20, 40, 240, 160] as [number, number, number, number], direction: [0, 0, 1] as [number, number, number],
-      right: [1, 0, 0] as [number, number, number], up: [0, 1, 0] as [number, number, number], sourceTypes: [], sourceEntityIds: [objectId], sourceEvidenceRefs: [], detailRules: [], annotationRules: [], annotationPlan: { axes: [], levels: [], labels: [], sectionMarks: [], levelConflicts: [], northAngleDeg: null, droppedByKind: {} } }],
+      right: [1, 0, 0] as [number, number, number], up: [0, 1, 0] as [number, number, number], sourceTypes: [], sourceEntityIds: [objectId], sourceEvidenceRefs: [], detailRules: [], annotationRules: [], annotationPlan: { axes: [], levels: [], labels: [], sectionMarks: [], detailIndexes: [], levelConflicts: [], northAngleDeg: null, droppedByKind: {} } }],
     sheets: [{ id: sheetId, drawingNumber: "P-02", displayLabelZh: "回导后平面图", pageMm: [420, 297] as [number, number], viewIds: [viewId] }],
     observationCandidates: [], createdAt: now,
   };
@@ -352,7 +352,7 @@ describe("ProjectPackageService", () => {
         id: viewId, key: "plan", displayLabelZh: "平面图", drawingRef: "平-01", kind: "floorPlan" as const,
         scaleDenominator: 50, sheetId, viewportRectMm: [20, 40, 240, 160] as [number, number, number, number],
         direction: [0, 0, 1] as [number, number, number], right: [1, 0, 0] as [number, number, number],
-        up: [0, 1, 0] as [number, number, number], sourceTypes: [], sourceEntityIds: [objectId], sourceEvidenceRefs: [], detailRules: [], annotationRules: [], annotationPlan: { axes: [], levels: [], labels: [], sectionMarks: [], levelConflicts: [], northAngleDeg: null, droppedByKind: {} },
+        up: [0, 1, 0] as [number, number, number], sourceTypes: [], sourceEntityIds: [objectId], sourceEvidenceRefs: [], detailRules: [], annotationRules: [], annotationPlan: { axes: [], levels: [], labels: [], sectionMarks: [], detailIndexes: [], levelConflicts: [], northAngleDeg: null, droppedByKind: {} },
       }], sheets: [{ id: sheetId, drawingNumber: "P-01", displayLabelZh: "平面图", pageMm: [420, 297] as [number, number], viewIds: [viewId] }],
       observationCandidates: [], createdAt: now,
     };

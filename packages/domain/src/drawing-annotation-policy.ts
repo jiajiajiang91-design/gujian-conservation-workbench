@@ -154,6 +154,9 @@ const BY_VIEW_KIND: Readonly<Record<string, readonly { kind: DrawingAnnotationKi
     { kind: "viewTitle", requirement: "required" },
     { kind: "overallDimension", requirement: "required" },
     { kind: "qualification", requirement: "required" },
+    // 详图必须回引它取自哪张总图。只有总图指向详图而详图不回指，
+    // 拿到单张详图的人无法知道它画的是哪个部位（质量基准 4.4）。
+    { kind: "detailIndex", requirement: "required" },
     { kind: "componentLabel", requirement: "required" },
   ],
   axonometric: [

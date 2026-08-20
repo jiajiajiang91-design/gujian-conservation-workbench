@@ -67,6 +67,12 @@ export const ArtifactViewRequirementSchema = z.object({
       toMm: z.tuple([z.number(), z.number()]),
       targetViewKey: z.string().min(1).max(80),
     }).strict()).default([]),
+    detailIndexes: z.array(z.object({
+      label: z.string().min(1).max(20),
+      atMm: z.tuple([z.number(), z.number()]),
+      targetViewKey: z.string().min(1).max(80),
+      direction: z.enum(["parent", "back"]),
+    }).strict()).default([]),
     // 模型标高与项目已记录尺寸对不上的条目。两个数并列，不由制图侧选一个。
     levelConflicts: z.array(z.object({
       labelZh: z.string().min(1).max(20),
@@ -78,7 +84,7 @@ export const ArtifactViewRequirementSchema = z.object({
     // 按上限丢弃的条数，逐种记。丢弃要看得见，不静默截断。
     droppedByKind: z.record(z.string(), z.number().int().nonnegative()).default({}),
   }).strict().default({
-    axes: [], levels: [], labels: [], sectionMarks: [], levelConflicts: [],
+    axes: [], levels: [], labels: [], sectionMarks: [], detailIndexes: [], levelConflicts: [],
     northAngleDeg: null, droppedByKind: {},
   }),
 }).strict();

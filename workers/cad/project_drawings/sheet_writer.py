@@ -95,6 +95,9 @@ AXIS_BUBBLE_RADIUS_PAPER_MM = 3.5
 TITLE_OFFSET_PAPER_MM = 36.0
 ANNOTATION_BAND_PAPER_MM = 42.0
 DIMENSION_TICK_PAPER_MM = 2.0
+# 剖切位置线两端各画一段，末端的投射方向线朝观察方向
+SECTION_MARK_RUN_PAPER_MM = 8.0
+SECTION_MARK_TICK_PAPER_MM = 4.0
 # 标高符号排在图形右沿之外
 LEVEL_OFFSET_PAPER_MM = 4.0
 LEVEL_BAND_PAPER_MM = 30.0
@@ -199,6 +202,46 @@ def annotation_primitives(
             PaperPrimitive("line", ((base, point[1]), (base + arrow, point[1] + arrow)), None, 0.0, "start", "dim"),
             PaperPrimitive("line", ((base, point[1]), (base + arrow, point[1] - arrow)), None, 0.0, "start", "dim"),
             PaperPrimitive("text", ((base + arrow + 1.0, point[1] + 0.5),), annotation["text"], height, "start", "dim"),
+        ]
+
+    if kind == "sectionMark":
+        transform = _view_transform(view, requirement)
+        first, second = (transform(point) for point in annotation["anchorMm"])
+        # 剖切位置线只画两端各一段，中间不画：整条贯通会与构件线混在一起。
+        # 两段向图内画，不向外：向外会伸进图形下沿的标注带，压住尺寸链文字。
+        run = SECTION_MARK_RUN_PAPER_MM
+        tick = SECTION_MARK_TICK_PAPER_MM
+        out: list[PaperPrimitive] = []
+        for point, sign in ((first, 1.0), (second, -1.0)):
+            start = (point[0], point[1] + sign * run)
+            out.append(PaperPrimitive("line", ((point[0], point[1]), start), None, 0.0, "start", "ink"))
+            out.append(PaperPrimitive("line", (start, (start[0] + tick, start[1])), None, 0.0, "start", "ink"))
+            out.append(PaperPrimitive(
+                "text", ((start[0] - 1.5, start[1] - height * 0.4),),
+                annotation["text"], height, "end", "ink",
+            ))
+        return out
+
+    if kind == "detailIndex":
+        transform = _view_transform(view, requirement)
+        point = transform(annotation["anchorMm"][0])
+        radius = AXIS_BUBBLE_RADIUS_PAPER_MM
+        return [
+            PaperPrimitive("circle", ((point[0], point[1]),), None, radius, "middle", "ink"),
+            PaperPrimitive("text", ((point[0], point[1] - height / 3),), annotation["text"], height, "middle", "ink"),
+        ]
+
+    if kind == "componentLabel":
+        transform = _view_transform(view, requirement)
+        anchor, text_point = (transform(point) for point in annotation["anchorMm"])
+        align = annotation.get("textAlign", "start")
+        offset = 0.8 if align == "start" else -0.8
+        return [
+            PaperPrimitive("line", (anchor, text_point), None, 0.0, "start", "dim"),
+            PaperPrimitive(
+                "text", ((text_point[0] + offset, text_point[1] - height / 3),),
+                annotation["text"], height, align, "ink",
+            ),
         ]
 
     if kind == "conditionCandidate":
@@ -306,7 +349,10 @@ class SheetArtifactWriter:
                 parts.append(f'<circle cx="{cx:.4f}" cy="{height-cy:.4f}" r="{item.height_mm:g}" fill="none" stroke="#7a6a52" stroke-width=".25"/>')
                 continue
             (tx, ty) = item.points[0]
-            anchor = ' text-anchor="middle"' if item.align == "middle" else ""
+            anchor = (
+                ' text-anchor="middle"' if item.align == "middle"
+                else ' text-anchor="end"' if item.align == "end" else ""
+            )
             fill = ' fill="#a43c32"' if item.tone == "condition" else ""
             parts.append(
                 f'<text class="text" x="{tx:.4f}" y="{height-ty:.4f}"{anchor} font-size="{item.height_mm:g}"{fill}>'
@@ -383,6 +429,8 @@ class SheetArtifactWriter:
                 pdf.setFont("GujianSansSC", item.height_mm * MM_TO_POINT)
                 if item.align == "middle":
                     pdf.drawCentredString(tx * MM_TO_POINT, ty * MM_TO_POINT, item.text or "")
+                elif item.align == "end":
+                    pdf.drawRightString(tx * MM_TO_POINT, ty * MM_TO_POINT, item.text or "")
                 else:
                     pdf.drawString(tx * MM_TO_POINT, ty * MM_TO_POINT, item.text or "")
             pdf.setFillColorRGB(0.05, 0.05, 0.05)
@@ -441,7 +489,8 @@ class SheetArtifactWriter:
             text = item.text or ""
             colour = "#a43c32" if item.tone == "condition" else "#7a6a52" if item.tone == "axis" else "#111111"
             box = draw.textbbox((0, 0), text, font=item_font)
-            left = tx * scale - ((box[2] - box[0]) / 2 if item.align == "middle" else 0)
+            span = box[2] - box[0]
+            left = tx * scale - (span / 2 if item.align == "middle" else span if item.align == "end" else 0)
             draw.text((left, (height_mm - ty) * scale - (box[3] - box[1]) - 1.5 * scale), text, fill=colour, font=item_font)
         title_x = width_mm - 226
         title_top = height_mm - 35

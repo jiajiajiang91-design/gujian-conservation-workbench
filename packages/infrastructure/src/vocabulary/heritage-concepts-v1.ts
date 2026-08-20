@@ -1,7 +1,7 @@
 import type { ConceptEntriesFile } from "@gujian/domain";
 
 // 种子词表：单一对象字面量，专业人员逐条审阅，不含任何逻辑。
-// 覆盖 v3 团队 demo 的 27 个构件类型（conceptId 与 componentType 字符串一致，
+// 覆盖 v3 团队 demo 的 27 个构件类型与木构架生成器的 11 个构件类型（conceptId 与 componentType 字符串一致，
 // 双写迁移零成本映射）加族层级与规则层引用的概念。
 // 同物异名实证转引自 jiangshu aliases.json（见 文档/01_产品/04_开源代码借鉴与现状评估.md 第 3.5 节）；
 // demo 构件沿用 v3 合同的中性术语，未经专业确认不补类型学名称。
@@ -62,5 +62,19 @@ export const HERITAGE_CONCEPTS_V1 = {
     { conceptId: "doorLeafPanel", prefLabelZh: "门扇板", altLabels: [], broader: "fitment-family", sourceText: "v3 团队 demo 中性术语", roleZh: null, descZh: null, confirmedBy: null },
     { conceptId: "latticeFrameMember", prefLabelZh: "格栅框构件", altLabels: [], broader: "fitment-family", sourceText: "v3 团队 demo 中性术语", roleZh: null, descZh: null, confirmedBy: null },
     { conceptId: "latticeBar", prefLabelZh: "格栅条", altLabels: [], broader: "fitment-family", sourceText: "v3 团队 demo 中性术语", roleZh: null, descZh: null, confirmedBy: null },
+
+    // 木构架生成器的构件类型。这一组不是中国官式形制术语，只是对构件
+    // 是什么的中性描述，供图面标注取短名用。未经专业确认。
+    { conceptId: "foundationPier", prefLabelZh: "木桩", altLabels: [], broader: "base-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "foundationGirder", prefLabelZh: "承台梁", altLabels: [], broader: "base-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "floorStructure", prefLabelZh: "楼板结构", altLabels: [], broader: "roof-frame", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "exteriorWall", prefLabelZh: "外墙", altLabels: [], broader: "fitment-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "partition", prefLabelZh: "隔墙", altLabels: [], broader: "fitment-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "gableWall", prefLabelZh: "山墙", altLabels: [], broader: "fitment-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "roofPlane", prefLabelZh: "屋面", altLabels: [], broader: "tile-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "monitorWall", prefLabelZh: "采光气窗侧壁", altLabels: [], broader: "fitment-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "monitorRoof", prefLabelZh: "采光气窗顶", altLabels: [], broader: "tile-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "canopy", prefLabelZh: "顶棚", altLabels: [], broader: "roof-frame", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
+    { conceptId: "canopyPost", prefLabelZh: "顶棚柱", altLabels: [], broader: "column-family", sourceText: "木构架生成器的中性术语，未经专业确认", roleZh: null, descZh: null, confirmedBy: null },
   ],
 } as const satisfies ConceptEntriesFile;

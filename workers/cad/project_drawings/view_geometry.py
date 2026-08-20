@@ -682,6 +682,82 @@ def _overall_dimension_label(requirement: dict[str, Any]) -> str:
 #
 # 轴线沿 u 的竖着画、沿 v 的横着画。轴号圈与尺寸链都排在图形下沿或左沿
 # 之外的标注带里，纸面偏移由写出器按比例换算，这里只给锚点。
+# 构件引线标注的落位。文字放在锚点周围八个方向里第一个不与已放标注相碰的
+# 位置；八个方向都放不下就丢弃并计数，不缩字也不压别的标注。
+#
+# 落位在这里一次决定，DXF 与纸面成果用同一结果。放在各写出器里各算一遍，
+# 同一张图的两种成果会把同一个标注放在不同位置。
+_LABEL_DIRECTIONS = ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))
+_LABEL_LEADER_PAPER_MM = 6.0
+_LABEL_TEXT_HEIGHT_PAPER_MM = 3.0
+_SECTION_MARK_RUN_PAPER_MM = 8.0
+
+
+def _text_width_mm(text: str, height_mm: float) -> float:
+    # 中日韩字符按一个字宽，其余按 0.55 估。用于避让，不用于排版精度。
+    units = sum(1.0 if ord(character) > 0x2E80 else 0.55 for character in text)
+    return units * height_mm
+
+
+def _boxes_overlap(first, second) -> bool:
+    return not (
+        first[2] <= second[0] or second[2] <= first[0]
+        or first[3] <= second[1] or second[3] <= first[1]
+    )
+
+
+def _place_labels(view: dict[str, Any], plan: dict[str, Any], bounds: list[list[float]]) -> tuple[list[dict[str, Any]], int]:
+    scale = float(view["scaleDenominator"])
+    height = _LABEL_TEXT_HEIGHT_PAPER_MM * scale
+    leader = _LABEL_LEADER_PAPER_MM * scale
+    (u0, v0), (u1, v1) = bounds
+    # 剖切符号先占位：它画在图内两端，构件标注不能压上去
+    run = _SECTION_MARK_RUN_PAPER_MM * scale
+    placed: list[tuple[float, float, float, float]] = []
+    for mark in plan.get("sectionMarks", []):
+        column = mark["fromMm"][0]
+        for edge, sign in ((v0, 1.0), (v1, -1.0)):
+            # 图号写在剖切段左侧，右对齐，按字数估宽；估窄了构件标注会压上来
+            placed.append((
+                column - height * 10, min(edge, edge + sign * run) - height,
+                column + height, max(edge, edge + sign * run) + height,
+            ))
+    out: list[dict[str, Any]] = []
+    dropped = 0
+    for index, label in enumerate(plan.get("labels", [])):
+        anchor = label["anchorMm"]
+        width = _text_width_mm(label["text"], height)
+        chosen = None
+        for dx, dy in _LABEL_DIRECTIONS:
+            x = anchor[0] + dx * leader
+            y = anchor[1] + dy * leader
+            box = (
+                x if dx >= 0 else x - width,
+                y - height / 2,
+                (x + width) if dx >= 0 else x,
+                y + height / 2,
+            )
+            if box[0] < u0 - leader or box[2] > u1 + leader or box[1] < v0 or box[3] > v1:
+                continue
+            if any(_boxes_overlap(box, other) for other in placed):
+                continue
+            chosen = (x, y, box, "start" if dx >= 0 else "end")
+            break
+        if chosen is None:
+            dropped += 1
+            continue
+        placed.append(chosen[2])
+        out.append({
+            "requirementId": f"label:{view['id']}:{index}",
+            "kind": "componentLabel", "viewId": view["id"],
+            "space": "view", "layerKey": "text", "paperTextHeightMm": _LABEL_TEXT_HEIGHT_PAPER_MM,
+            "text": label["text"], "textAlign": chosen[3],
+            "anchorMm": [[anchor[0], anchor[1]], [chosen[0], chosen[1]]],
+            "sourceRefs": list(label["sourceEntityIds"]),
+        })
+    return out, dropped
+
+
 def _plan_annotations(view: dict[str, Any], bounds: list[list[float]]) -> list[dict[str, Any]]:
     plan = view.get("annotationPlan") or {}
     view_id = view["id"]
@@ -728,6 +804,28 @@ def _plan_annotations(view: dict[str, Any], bounds: list[list[float]]) -> list[d
                 "sourceRefs": list(first["sourceEntityIds"]) + list(second["sourceEntityIds"]),
             })
 
+    for mark in plan.get("sectionMarks", []):
+        out.append({
+            "requirementId": f"section:{view_id}:{mark['label']}",
+            "kind": "sectionMark", "viewId": view_id,
+            "space": "view", "layerKey": "dimension", "paperTextHeightMm": 3.5,
+            "text": mark["label"], "targetViewKey": mark["targetViewKey"],
+            "anchorMm": [list(mark["fromMm"]), list(mark["toMm"])],
+            "sourceRefs": [view_id],
+        })
+
+    for index, item in enumerate(plan.get("detailIndexes", [])):
+        # 详图上的回引没有具体位置，放在图形左上角
+        at = list(item["atMm"]) if item["direction"] == "parent" else [u0, v1]
+        out.append({
+            "requirementId": f"detail:{view_id}:{index}",
+            "kind": "detailIndex", "viewId": view_id,
+            "space": "view", "layerKey": "dimension", "paperTextHeightMm": 3.0,
+            "text": item["label"], "direction": item["direction"],
+            "anchorMm": [at],
+            "sourceRefs": [view_id],
+        })
+
     for level in plan.get("levels", []):
         # 标高符号画在图形右沿之外，指向该标高所在的高度
         out.append({
@@ -739,6 +837,13 @@ def _plan_annotations(view: dict[str, Any], bounds: list[list[float]]) -> list[d
             "anchorMm": [[u1, level["elevationMm"]]],
             "sourceRefs": list(level["sourceEntityIds"]),
         })
+
+    labels, dropped = _place_labels(view, plan, bounds)
+    out.extend(labels)
+    if dropped:
+        # 避让不开的丢弃数并入视图的丢弃统计，不静默吞掉
+        plan.setdefault("droppedByKind", {})
+        plan["droppedByKind"]["componentLabelPlacement"] = dropped
 
     return out
 

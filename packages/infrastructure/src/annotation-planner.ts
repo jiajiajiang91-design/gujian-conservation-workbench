@@ -5,6 +5,8 @@ import {
   type ProjectDrivenGeometrySpec,
 } from "@gujian/domain";
 import { AXIS_MINIMUM_ON_PAPER_SPACING_MM, AXIS_SOURCE_PRIORITY, LEVEL_SOURCES } from "@gujian/domain";
+import { HERITAGE_CONCEPTS_V1 } from "./vocabulary/heritage-concepts-v1.js";
+import { conceptLabel, resolveVocabulary } from "./vocabulary-resolver.js";
 
 // 图面标注的规划：把项目事实与几何派生成一份标注请求，随成果矩阵下发。
 //
@@ -60,11 +62,23 @@ export interface LevelConflict {
   readonly documentedNameZh: string;
 }
 
+// 详图索引：总图上标出某个局部另有详图，详图上回引它取自哪张总图。
+// 没有索引的详图与总图之间没有对应关系，追不回去（质量基准 4.2）。
+export interface PlannedDetailIndex {
+  readonly label: string;
+  // 索引圈在本视图二维坐标里的位置
+  readonly atMm: readonly [number, number];
+  readonly targetViewKey: string;
+  // parent 表示这是总图上指向详图的索引，back 表示详图上的回引
+  readonly direction: "parent" | "back";
+}
+
 export interface ViewAnnotationPlan {
   readonly axes: readonly PlannedAxis[];
   readonly levels: readonly PlannedLevel[];
   readonly labels: readonly PlannedLabel[];
   readonly sectionMarks: readonly PlannedSectionMark[];
+  readonly detailIndexes: readonly PlannedDetailIndex[];
   readonly levelConflicts: readonly LevelConflict[];
   // 北向角度：平面上北在图面里的方向，缺省表示项目没有声明朝向
   readonly northAngleDeg: number | null;
@@ -331,7 +345,11 @@ function planLevels(
 }
 
 // 构件标注按视图声明的目标构件出，没有声明时按构件类型各取一个代表。
-// 名称取构件自己的中文名，不另起名。
+//
+// 名称取词表首选名，不取构件实例名。实例名要在清单里区分同类构件，
+// 常带房间名与编号（二层南端楼板 BEDROOM 与 STAIR HALL），二十多字
+// 引出来在 1:100 的图上横跨半张平面。图面标的是这是什么构件，
+// 是哪一个由引线指着的位置说明。词表里没有的类型退回实例名。
 function planLabels(
   spec: ProjectDrivenGeometrySpec,
   targetEntityIds: readonly string[],
@@ -344,10 +362,11 @@ function planLabels(
   const chosen: GeometryObject[] = targetEntityIds.length
     ? targetEntityIds.map((id) => byId.get(id)).filter((item): item is GeometryObject => item !== undefined)
     : [...new Map(spec.objects.map((item) => [item.componentType, item])).values()];
+  const vocabulary = resolveVocabulary();
   const labels = chosen.map((item) => {
     const point = centre(item);
     return {
-      text: item.displayNameZh,
+      text: conceptLabel(vocabulary, item.conceptRef ?? item.componentType) ?? item.displayNameZh,
       anchorMm: [
         Math.round(project(point, right) * 10) / 10,
         Math.round(project(point, up) * 10) / 10,
@@ -372,7 +391,10 @@ export interface AnnotationPlanInput {
   readonly allViews: readonly {
     readonly key: string;
     readonly kind: string;
+    readonly displayLabelZh: string;
+    readonly drawingRef: string;
     readonly sectionPlane?: { readonly normal: readonly number[]; readonly offsetMm: number };
+    readonly cropBoundsMm?: readonly number[];
   }[];
 }
 
@@ -421,11 +443,52 @@ export function planViewAnnotations(input: AnnotationPlanInput): ViewAnnotationP
       if (Math.abs(along) < 0.9) continue;
       const position = plane.offsetMm * along;
       sectionMarks.push({
-        label: candidate.key,
+        label: candidate.drawingRef,
         fromMm: [position, low],
         toMm: [position, high],
         targetViewKey: candidate.key,
       });
+    }
+  }
+
+  // 详图索引：本视图是详图时出回引，是详图的母图时出正向索引。
+  // 详图与母图靠剖切面法向认亲，不要求偏移相等：详图常取在母图的对称位置，
+  // 按偏移严格相等匹配会一条也认不上。同法向有多个候选时取偏移最近的。
+  const detailIndexes: PlannedDetailIndex[] = [];
+  const self = input.allViews.find((item) => item.key === view.key);
+  const sameNormal = (
+    left: { readonly normal: readonly number[] } | undefined,
+    right: { readonly normal: readonly number[] } | undefined,
+  ): boolean => {
+    if (!left || !right) return false;
+    const dot = left.normal.reduce((sum, value, index) => sum + value * (right.normal[index] ?? 0), 0);
+    return Math.abs(Math.abs(dot) - 1) < 1e-6;
+  };
+  if (cap("detailIndex") > 0 && self) {
+    if (view.kind === "detail") {
+      const parents = input.allViews
+        .filter((item) => item.key !== view.key && item.kind !== "detail" && sameNormal(item.sectionPlane, self.sectionPlane))
+        .sort((left, right) => Math.abs((left.sectionPlane?.offsetMm ?? 0) - (self.sectionPlane?.offsetMm ?? 0))
+          - Math.abs((right.sectionPlane?.offsetMm ?? 0) - (self.sectionPlane?.offsetMm ?? 0)));
+      const parent = parents[0];
+      if (parent) {
+        detailIndexes.push({
+          label: parent.drawingRef, atMm: [0, 0], targetViewKey: parent.key, direction: "back",
+        });
+      }
+    } else {
+      for (const candidate of input.allViews) {
+        if (detailIndexes.length >= cap("detailIndex")) break;
+        if (candidate.kind !== "detail" || !candidate.cropBoundsMm) continue;
+        if (!sameNormal(candidate.sectionPlane, self.sectionPlane)) continue;
+        const [uMin, vMin, uMax, vMax] = candidate.cropBoundsMm;
+        detailIndexes.push({
+          label: candidate.drawingRef,
+          atMm: [(uMin! + uMax!) / 2, (vMin! + vMax!) / 2],
+          targetViewKey: candidate.key,
+          direction: "parent",
+        });
+      }
     }
   }
 
@@ -434,6 +497,7 @@ export function planViewAnnotations(input: AnnotationPlanInput): ViewAnnotationP
     levels: levelResult.levels,
     labels: labelResult.labels,
     sectionMarks,
+    detailIndexes,
     levelConflicts: levelResult.conflicts,
     // 项目没有声明朝向就不出北向符号，不按平面上北默认补一个。
     // 三个演示项目的资料都没有给出正北方向。

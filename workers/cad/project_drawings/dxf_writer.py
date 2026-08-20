@@ -106,6 +106,8 @@ class NativeDxfWriter:
     AXIS_BUBBLE_RADIUS_PAPER_MM = 3.5
     TITLE_OFFSET_PAPER_MM = 36.0
     LEVEL_OFFSET_PAPER_MM = 4.0
+    SECTION_MARK_RUN_PAPER_MM = 8.0
+    SECTION_MARK_TICK_PAPER_MM = 4.0
     QUALIFICATION_OFFSET_PAPER_MM = 6.0
 
     def _add_model_space(self, doc) -> None:
@@ -226,6 +228,51 @@ class NativeDxfWriter:
             label = msp.add_text(annotation["text"], dxfattribs={
                 "layer": layer, "height": height, "style": "GJ-TEXT",
                 "insert": (base[0] + arrow + height / 2, base[1] + height / 4),
+            })
+            self._register(label, _cad_id(self.ir["drawingIrSha256"], annotation["requirementId"] + ":text"), "annotation", annotation)
+            return
+
+        if kind == "sectionMark":
+            first, second = placed[0], placed[1]
+            run = self.SECTION_MARK_RUN_PAPER_MM * scale
+            tick = self.SECTION_MARK_TICK_PAPER_MM * scale
+            # 向图内画，与纸面成果一致
+            for point, sign in ((first, 1.0), (second, -1.0)):
+                start = (point[0], point[1] + sign * run)
+                self._register(
+                    msp.add_line(point, start, dxfattribs={"layer": layer}),
+                    _cad_id(self.ir["drawingIrSha256"], f"{annotation['requirementId']}:{sign}"),
+                    "annotation", annotation,
+                )
+                msp.add_line(start, (start[0] + tick, start[1]), dxfattribs={"layer": layer})
+                msp.add_text(annotation["text"], dxfattribs={
+                    "layer": layer, "height": height, "style": "GJ-TEXT",
+                    "insert": (start[0] - height * 2.5, start[1] - height * 0.4),
+                })
+            return
+
+        if kind == "detailIndex":
+            point = placed[0]
+            radius = self.AXIS_BUBBLE_RADIUS_PAPER_MM * scale
+            circle = msp.add_circle(point, radius, dxfattribs={"layer": layer})
+            self._register(circle, cad_id, "annotation", annotation)
+            msp.add_text(annotation["text"], dxfattribs={
+                "layer": layer, "height": height, "style": "GJ-TEXT",
+                "insert": (point[0] - height, point[1] - height / 2),
+            })
+            return
+
+        if kind == "componentLabel":
+            anchor, text_point = placed[0], placed[1]
+            leader = msp.add_line(anchor, text_point, dxfattribs={"layer": layer})
+            self._register(leader, cad_id, "annotation", annotation)
+            align = annotation.get("textAlign", "start")
+            insert = (
+                text_point[0] + height * 0.3 if align == "start" else text_point[0] - height * 0.3,
+                text_point[1] - height / 2,
+            )
+            label = msp.add_text(annotation["text"], dxfattribs={
+                "layer": layer, "height": height, "style": "GJ-TEXT", "insert": insert,
             })
             self._register(label, _cad_id(self.ir["drawingIrSha256"], annotation["requirementId"] + ":text"), "annotation", annotation)
             return

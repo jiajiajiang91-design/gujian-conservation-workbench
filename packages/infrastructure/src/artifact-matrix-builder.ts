@@ -75,7 +75,9 @@ export function buildArtifactMatrix(head: ProjectHead, geometry: GeometryRevisio
       },
       allViews: requirements.views.map((item) => ({
         key: item.key, kind: item.kind,
+        displayLabelZh: item.displayLabelZh, drawingRef: item.drawingRef,
         ...(item.sectionPlane ? { sectionPlane: item.sectionPlane } : {}),
+        ...(item.cropBoundsMm ? { cropBoundsMm: item.cropBoundsMm } : {}),
       })),
     }),
   }));
