@@ -6,6 +6,8 @@ import {
   AssetRecordSchema,
   FactEnvelopeSchema,
   ObservationSchema,
+  HeritageEntitySchema,
+  ExclusionRecordSchema,
   EvidenceSchema,
   IsoDateTimeSchema,
   ProjectSnapshotSchema,
@@ -62,6 +64,25 @@ export const CommitObservationsCommandSchema = CommandHeaderSchema.extend({
   expectedRevisionId: UuidSchema,
   payload: z.object({
     observations: z.array(ObservationSchema).min(1).max(500),
+  }).strict(),
+}).strict();
+
+// 构件记录写入。此前 snapshot.entities 自建库起恒为空数组，应用层没有写入口，
+// 界面的构件清单读的是几何规格的产物。框选新增构件要有一张可写的表才有落点。
+export const CommitEntitiesCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitEntities"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    entities: z.array(HeritageEntitySchema).min(1).max(500),
+  }).strict(),
+}).strict();
+
+// 排除记录写入。用户判定不存在或不适用的对象进这里，重新识别按它过滤。
+export const CommitExclusionRecordsCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitExclusionRecords"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    records: z.array(ExclusionRecordSchema).min(1).max(200),
   }).strict(),
 }).strict();
 
@@ -247,6 +268,8 @@ export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
   CreateProjectCommandSchema,
   CommitFactsCommandSchema,
   CommitObservationsCommandSchema,
+  CommitEntitiesCommandSchema,
+  CommitExclusionRecordsCommandSchema,
   ReplaceTaskDefinitionCommandSchema,
   ImportProjectSnapshotCommandSchema,
   ImportEvidenceCommandSchema,

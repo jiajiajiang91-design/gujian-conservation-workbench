@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { DrawingViewKindSchema } from "./drawings.js";
 import { FactEnvelopeSchema, ProducerRefSchema } from "./provenance.js";
+import { ExclusionRecordSchema } from "./assistant-records.js";
 import { GeometryRevisionSchema, ProjectDrivenGeometrySpecSchema } from "./geometry.js";
 import { ModelCandidateSchema } from "./records.js";
 import {
@@ -143,6 +144,16 @@ export const ParseRecordSchema = z.object({
   createdAt: IsoDateTimeSchema,
 }).strict();
 
+// 构件在某张资料图片上的位置。坐标按图片宽高归一化，与图片实际像素无关：
+// 同一份资料的高低分辨率两个版本像素坐标完全不同，按像素记会在换件后指到别处。
+export const ImageRegionSchema = z.object({
+  evidenceRef: UuidSchema,
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  width: z.number().gt(0).max(1),
+  height: z.number().gt(0).max(1),
+}).strict();
+
 export const HeritageEntitySchema = z.object({
   id: UuidSchema,
   projectId: UuidSchema,
@@ -151,6 +162,12 @@ export const HeritageEntitySchema = z.object({
   entityType: z.string().min(1).max(120),
   name: z.string().min(1).max(200),
   locationText: z.string().max(500).nullable(),
+  // 构件在资料图片上的位置。缺省表示这个构件没有图上位置：
+  // 由形制参数或几何管线产出的构件本来就不对应照片上的某一块。
+  // 有这一项才能按框选反查构件，没有就只能问用户是哪一个。
+  imageRegion: ImageRegionSchema.optional(),
+  // 这条构件记录是怎么来的。人工框选新增与识别产出要分得开。
+  origin: z.enum(["marquee", "recognition", "import"]).optional(),
 }).strict();
 
 export const RelationSchema = z.object({
@@ -251,6 +268,9 @@ export const ProjectSnapshotSchema = z.object({
   evidences: z.array(EvidenceSchema),
   parseRecords: z.array(ParseRecordSchema),
   entities: z.array(HeritageEntitySchema),
+  // 排除记录：用户判定不存在或不适用的对象，重新识别时按它过滤。
+  // 契约在 assistant-records，这里只挂进快照。
+  exclusionRecords: z.array(ExclusionRecordSchema).default([]),
   relations: z.array(RelationSchema),
   observations: z.array(ObservationSchema),
   measurements: z.array(MeasurementRecordSchema),
@@ -271,6 +291,8 @@ export type ProjectSnapshot = z.infer<typeof ProjectSnapshotSchema>;
 export type TaskArtifactRequirements = z.infer<typeof TaskArtifactRequirementsSchema>;
 export type MeasurementRecord = z.infer<typeof MeasurementRecordSchema>;
 export type Observation = z.infer<typeof ObservationSchema>;
+export type HeritageEntity = z.infer<typeof HeritageEntitySchema>;
+export type ImageRegion = z.infer<typeof ImageRegionSchema>;
 export type Relation = z.infer<typeof RelationSchema>;
 export type AssetRecord = z.infer<typeof AssetRecordSchema>;
 export type ParseRecord = z.infer<typeof ParseRecordSchema>;

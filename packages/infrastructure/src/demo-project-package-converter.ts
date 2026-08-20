@@ -569,7 +569,7 @@ export function buildDemoProjectPackage(input: DemoConversionInput): DemoConvers
     schemaVersion: "3.0",
     project: { id: projectId, name: input.projectName, status: "active", locationText: null, createdAt: input.createdAt },
     buildings: [{ id: buildingId, projectId, name: input.buildingName, periodText: null, addressText: null, status: "uncertain" }],
-    taskDefinitions: [taskDefinition], evidences, parseRecords, entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [],
+    taskDefinitions: [taskDefinition], evidences, parseRecords, entities: [], exclusionRecords: [], relations: [], observations: [], measurements: [], facts: [], candidates: [],
     issues: [{
       id: deterministicUuid(`issue:${sourceSeed}`), projectId, issueType: "professionalUncertainty", subjectRefs: [geometrySpec.id],
       description: "三维数据已按构件拆分。部分构件为近似形状，构件之间的连接、年代和类型尚未确认，需要专业人员逐项核对。",

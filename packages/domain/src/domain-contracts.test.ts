@@ -50,7 +50,7 @@ function minimalSnapshot(): Record<string, unknown> {
     taskDefinitions: [],
     evidences: [],
     parseRecords: [],
-    entities: [],
+    entities: [], exclusionRecords: [],
     relations: [],
     observations: [],
     measurements: [],

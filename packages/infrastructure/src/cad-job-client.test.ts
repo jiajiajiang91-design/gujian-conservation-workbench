@@ -24,7 +24,7 @@ describe("existing GeometrySpec input", () => {
         schemaVersion: "3.0" as const,
         project: { id: projectId, name: "portable", status: "active" as const, locationText: null, createdAt: "2026-08-14T00:00:00.000Z" },
         buildings: [{ id: buildingId, projectId, name: "building", periodText: null, addressText: null, status: "uncertain" as const }],
-        taskDefinitions: [], evidences: [], parseRecords: [], entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [], issues: [], dependencyEdges: [], geometrySpecs: [source], geometryRevisions: [], adoptedRecordRefs: [],
+        taskDefinitions: [], evidences: [], parseRecords: [], entities: [], exclusionRecords: [], relations: [], observations: [], measurements: [], facts: [], candidates: [], issues: [], dependencyEdges: [], geometrySpecs: [source], geometryRevisions: [], adoptedRecordRefs: [],
       },
     };
     const rebound = rebindExistingGeometrySpec(head, source);

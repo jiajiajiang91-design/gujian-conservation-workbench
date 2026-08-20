@@ -31,7 +31,7 @@ function head(): ProjectHead {
         { id: wallEvidenceId, projectId, assetId: crypto.randomUUID(), evidenceType: "drawing", title: "图纸第 3 张", rightsDeclaration: null, intendedUse: null, recordedAt: null, relatedEntityRefs: [], dataStatus: "available" },
         { id: supportEvidenceId, projectId, assetId: crypto.randomUUID(), evidenceType: "drawing", title: "图纸第 10 张", rightsDeclaration: null, intendedUse: null, recordedAt: null, relatedEntityRefs: [], dataStatus: "available" },
       ],
-      parseRecords: [], entities: [], relations: [], observations: [], measurements: [], candidates: [], issues: [], dependencyEdges: [], geometrySpecs: [], geometryRevisions: [], adoptedRecordRefs: [],
+      parseRecords: [], entities: [], exclusionRecords: [], relations: [], observations: [], measurements: [], candidates: [], issues: [], dependencyEdges: [], geometrySpecs: [], geometryRevisions: [], adoptedRecordRefs: [],
       facts: [
         {
           id: wallFactId, subjectRef: buildingId, field: "geometry.component.wall:east", reviewStatus: "confirmed", dataStatus: "available",

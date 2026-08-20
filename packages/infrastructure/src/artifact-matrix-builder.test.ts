@@ -23,7 +23,7 @@ function input(requirements: TaskArtifactRequirements): { head: ProjectHead; geo
           responsibilities: [{ role: "projectLead", actorId: crypto.randomUUID() }], automationPolicyRef: null,
           artifactRequirements: requirements, confirmedAt: "2026-08-14T00:00:00Z",
         }],
-        evidences: [], parseRecords: [], entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [], issues: [], dependencyEdges: [],
+        evidences: [], parseRecords: [], entities: [], exclusionRecords: [], relations: [], observations: [], measurements: [], facts: [], candidates: [], issues: [], dependencyEdges: [],
         geometrySpecs: [], geometryRevisions: [], adoptedRecordRefs: [],
       },
     },

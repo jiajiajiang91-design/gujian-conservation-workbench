@@ -1,4 +1,4 @@
-import { ProjectSnapshotSchema, type ArtifactRecord, type ArtifactRequirementMatrix, type CheckRun, type FactEnvelope, type Observation, type ProjectSnapshot } from "@gujian/domain";
+import { ProjectSnapshotSchema, type ArtifactRecord, type ArtifactRequirementMatrix, type CheckRun, type ExclusionRecord, type FactEnvelope, type HeritageEntity, type Observation, type ProjectSnapshot } from "@gujian/domain";
 
 import { ProjectCommandSchema, type ProjectCommand } from "./commands.js";
 import { assertDeliveryChainClosure } from "./delivery-chain-closure.js";
@@ -177,7 +177,7 @@ function createInitialSnapshot(command: Extract<ProjectCommand, { commandType: "
     taskDefinitions: [],
     evidences: [],
     parseRecords: [],
-    entities: [],
+    entities: [], exclusionRecords: [],
     relations: [],
     observations: [],
     measurements: [],
@@ -200,6 +200,30 @@ function appendFacts(head: ProjectHead, facts: readonly FactEnvelope[]): Project
   return ProjectSnapshotSchema.parse({
     ...head.snapshot,
     facts: [...head.snapshot.facts, ...facts],
+  });
+}
+
+function appendEntities(head: ProjectHead, entities: readonly HeritageEntity[]): ProjectSnapshot {
+  const existingIds = new Set(head.snapshot.entities.map((item) => item.id));
+  const duplicate = entities.find((item) => existingIds.has(item.id));
+  if (duplicate) {
+    throw new CommandError("COMMAND_INVALID", "entity id already exists", { entityId: duplicate.id });
+  }
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
+    entities: [...head.snapshot.entities, ...entities],
+  });
+}
+
+function appendExclusionRecords(head: ProjectHead, records: readonly ExclusionRecord[]): ProjectSnapshot {
+  const existingIds = new Set(head.snapshot.exclusionRecords.map((item) => item.id));
+  const duplicate = records.find((item) => existingIds.has(item.id));
+  if (duplicate) {
+    throw new CommandError("COMMAND_INVALID", "exclusion record id already exists", { recordId: duplicate.id });
+  }
+  return ProjectSnapshotSchema.parse({
+    ...head.snapshot,
+    exclusionRecords: [...head.snapshot.exclusionRecords, ...records],
   });
 }
 
@@ -627,6 +651,10 @@ export class ProjectCommandService {
         ? appendFacts(head, command.payload.facts)
         : command.commandType === "CommitObservations"
         ? appendObservations(head, command.payload.observations)
+        : command.commandType === "CommitEntities"
+        ? appendEntities(head, command.payload.entities)
+        : command.commandType === "CommitExclusionRecords"
+        ? appendExclusionRecords(head, command.payload.records)
         : command.commandType === "ImportEvidence"
           ? appendEvidence(head, command)
           : command.commandType === "CommitModelRunResult"
@@ -667,6 +695,10 @@ export class ProjectCommandService {
           ? command.payload.facts.map((fact) => fact.id)
           : command.commandType === "CommitObservations"
             ? command.payload.observations.map((item) => item.id)
+          : command.commandType === "CommitEntities"
+            ? command.payload.entities.map((item) => item.id)
+          : command.commandType === "CommitExclusionRecords"
+            ? command.payload.records.map((item) => item.id)
           : command.commandType === "ImportEvidence"
             ? [command.payload.asset.id, command.payload.evidence.id, command.payload.parseRecord.id]
             : command.commandType === "CommitModelRunResult"

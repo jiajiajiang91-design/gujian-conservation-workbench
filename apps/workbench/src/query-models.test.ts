@@ -11,7 +11,7 @@ describe("workbench query models", () => {
       schemaVersion: "3.0" as const,
       project: { id: projectId, name: "test", status: "active" as const, locationText: null, createdAt: "2026-08-14T00:00:00.000Z" },
       buildings: [{ id: id(), projectId, name: "building", periodText: null, addressText: null, status: "uncertain" as const }],
-      taskDefinitions: [], evidences: [], parseRecords: [], entities: [], relations: [], observations: [], measurements: [], facts: [], candidates: [], issues: [], dependencyEdges: [], geometrySpecs: [], geometryRevisions: [], adoptedRecordRefs: [],
+      taskDefinitions: [], evidences: [], parseRecords: [], entities: [], exclusionRecords: [], relations: [], observations: [], measurements: [], facts: [], candidates: [], issues: [], dependencyEdges: [], geometrySpecs: [], geometryRevisions: [], adoptedRecordRefs: [],
     };
     const summary = buildProjectDashboardSummary({
       head: { projectId, revisionId: id(), auditEventId: id(), snapshot },
@@ -52,7 +52,7 @@ describe("来源面板的阻断计数", () => {
       schemaVersion: "3.0" as const,
       project: { id: projectId, name: "test", status: "active" as const, locationText: null, createdAt: "2026-08-18T00:00:00.000Z" },
       buildings: [{ id: buildingId, projectId, name: "building", periodText: null, addressText: null, status: "existing" as const }],
-      taskDefinitions: [], evidences: [], parseRecords: [], entities: [], relations: [], observations: [],
+      taskDefinitions: [], evidences: [], parseRecords: [], entities: [], exclusionRecords: [], relations: [], observations: [],
       measurements: [], facts: [], candidates: [], issues: [issue(true), issue(true), issue(false)],
       dependencyEdges: [], geometrySpecs: [], geometryRevisions: [], adoptedRecordRefs: [],
     };

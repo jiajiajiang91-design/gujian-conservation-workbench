@@ -21,7 +21,7 @@ describe("演示七步核对", () => {
         facts: [{ id: "f" }],
         measurements: [],
         geometrySpecs: [{ objects: [{ id: "o1" }, { id: "o2" }] }],
-        entities: [],
+        entities: [], exclusionRecords: [],
         geometryRevisions: [{ id: "g" }],
       },
       artifacts: [{ id: "a" }],
