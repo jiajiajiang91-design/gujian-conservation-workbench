@@ -969,6 +969,35 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     }
   };
 
+  // 识别出的构件确认后写成构件记录。只写模型标为确定的那些：标了不确定的
+  // 由人逐条核实，不由模型替人决定哪条能进项目。这与尺寸转写同一条口径。
+  const confirmRecognizedComponents = async (candidate: ProjectHead["snapshot"]["candidates"][number]) => {
+    if (!selected || candidate.structured?.kind !== "componentRecognition") return;
+    const rows = candidate.structured.components.filter((item) => item.certainty === "certain");
+    if (!rows.length) {
+      setError(inputError("这条结果里没有标为确定的构件。标了不确定的需要先人工核实原图。"));
+      return;
+    }
+    setError(null);
+    try {
+      const outcome = await assistantExecutors.commitRecognizedComponents(selected, rows.map((row) => ({
+        nameZh: row.nameZh,
+        categoryZh: row.categoryZh,
+        evidenceRef: row.evidenceRef,
+        region: row.region,
+      })));
+      if (outcome.kind === "rejected") {
+        setError(inputError(outcome.reasonZh ?? "构件写入未执行"));
+        return;
+      }
+      await loadProject(selected.projectId);
+      await refresh();
+      setNotice(outcome.messageZh ?? `已写入 ${rows.length} 个构件记录`);
+    } catch (reason) {
+      setError(describeFailure(reason, "构件写入失败"));
+    }
+  };
+
   const confirmTaskSetup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) return;
@@ -1646,7 +1675,31 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
                           </div>
                         );
                       })}
+                      {/* 构件识别：确定的与不确定的分开列。不确定的连疑点一起显示，
+                          由人核实原图，不进这一批写入。 */}
+                      {candidate.structured?.kind === "componentRecognition" && (["certain", "uncertain"] as const).map((certainty) => {
+                        const rows = candidate.structured?.kind === "componentRecognition"
+                          ? candidate.structured.components.filter((item) => item.certainty === certainty)
+                          : [];
+                        if (!rows.length) return null;
+                        return (
+                          <div key={certainty}>
+                            <strong>{certainty === "certain" ? `认出的构件 ${rows.length} 个` : `需要你核实的 ${rows.length} 个`}</strong>
+                            <ul>{rows.map((row, index) => (
+                              <li key={`${row.evidenceRef}:${row.nameZh}:${index}`}>
+                                {row.nameZh}{row.categoryZh ? ` · ${row.categoryZh}` : " · 类别待确认"}
+                                <small>{evidenceTitle(row.evidenceRef)} 上 {(row.region.x * 100).toFixed(1)}%、{(row.region.y * 100).toFixed(1)}% 起，宽 {(row.region.width * 100).toFixed(1)}%、高 {(row.region.height * 100).toFixed(1)}%{row.noteZh ? ` · ${row.noteZh}` : ""}</small>
+                              </li>
+                            ))}</ul>
+                          </div>
+                        );
+                      })}
                       {!!candidate.structured?.missingInformation.length && <div><strong>缺失信息</strong><ul>{candidate.structured.missingInformation.map((item) => <li key={item}>{item}</li>)}</ul></div>}
+                      {candidate.structured?.kind === "componentRecognition" && candidate.reviewStatus === "unreviewed" && (
+                        <button className="gj-btn" type="button" onClick={() => void confirmRecognizedComponents(candidate)}>
+                          确认认出的构件并写入项目
+                        </button>
+                      )}
                       {candidate.structured?.kind === "measurementTranscription" && candidate.reviewStatus === "unreviewed" && (
                         <button className="gj-btn" type="button" onClick={() => void confirmTranscribedDimensions(candidate)}>
                           确认读准的尺寸并写入项目

@@ -280,6 +280,79 @@ describe("动作执行体", () => {
     expect(revised.locationText).toBe("现场照片：馆内现状 上 30.0%、65.0% 起，宽 16.0%、高 23.0%");
   });
 
+  // 识别产出确认后写成构件记录。此前 commitRecognizedComponents 写好了却没有
+  // 任何调用方，识别结果只能看不能用，框选修正也就作用不到它上面。
+  describe("识别构件入库", () => {
+    const evidenceId = "6d3e2b4c-ae95-4a7f-b2c8-3d4e5f6a7b8c";
+    const buildingId = "8f14e45f-ceea-4d4e-9f4a-9b1c8d2e3f40";
+
+    function setup() {
+      const executed: { commandType: string; payload: Record<string, unknown> }[] = [];
+      const executors = new AssistantExecutors({
+        commands: { execute: async (c: unknown) => { executed.push(c as typeof executed[number]); return { revisionId: "rev-1" }; } },
+        workflow: { evaluate: async () => ({}) },
+        actorId: () => "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      } as unknown as ConstructorParameters<typeof AssistantExecutors>[0]);
+      const head = {
+        projectId: "3b241101-e2bb-4255-8caf-4136c566a962",
+        revisionId: "rev-0",
+        snapshot: {
+          buildings: [{ id: buildingId }],
+          evidences: [{ id: evidenceId, title: "现场照片：馆内现状" }],
+          entities: [],
+        },
+      } as unknown as ProjectHead;
+      return { executors, executed, head };
+    }
+
+    const component = (overrides: Record<string, unknown> = {}) => ({
+      nameZh: "吊扇", categoryZh: "陈设",
+      evidenceRef: evidenceId,
+      region: { x: 0.4, y: 0.1, width: 0.2, height: 0.15 },
+      ...overrides,
+    });
+
+    it("写成构件记录，来源标 recognition，位置说明与框选新增同一个写法", async () => {
+      const { executors, executed, head } = setup();
+      const outcome = await executors.commitRecognizedComponents(head, [component()]);
+      expect(outcome.kind).toBe("committed");
+      expect(executed).toHaveLength(1);
+      expect(executed[0]!.commandType).toBe("CommitEntities");
+      const entity = (executed[0]!.payload.entities as {
+        name: string; entityType: string; origin: string; locationText: string;
+        imageRegion: { evidenceRef: string };
+      }[])[0]!;
+      expect(entity.name).toBe("吊扇");
+      expect(entity.entityType).toBe("陈设");
+      expect(entity.origin).toBe("recognition");
+      expect(entity.imageRegion.evidenceRef).toBe(evidenceId);
+      expect(entity.locationText).toBe("现场照片：馆内现状 上 40.0%、10.0% 起，宽 20.0%、高 15.0%");
+    });
+
+    it("类别为空时写待确认，不按名称猜类型", async () => {
+      const { executors, executed, head } = setup();
+      await executors.commitRecognizedComponents(head, [component({ categoryZh: null })]);
+      expect((executed[0]!.payload.entities as { entityType: string }[])[0]!.entityType).toBe("待确认");
+    });
+
+    it("指向本项目之外的资料时整批退回，不写一条位置无处可查的记录", async () => {
+      const { executors, executed, head } = setup();
+      const outcome = await executors.commitRecognizedComponents(head, [
+        component(),
+        component({ nameZh: "吊灯", evidenceRef: "11111111-2222-4333-8444-555555555555" }),
+      ]);
+      expect(outcome.kind).toBe("rejected");
+      expect(outcome.kind === "rejected" && outcome.reasonZh).toContain("吊灯");
+      expect(executed).toHaveLength(0);
+    });
+
+    it("空批次退回，不发一条空命令", async () => {
+      const { executors, executed, head } = setup();
+      expect((await executors.commitRecognizedComponents(head, [])).kind).toBe("rejected");
+      expect(executed).toHaveLength(0);
+    });
+  });
+
   it("运行数据检查走 workflow.evaluate", async () => {
     const executed: unknown[] = [];
     const executors = new AssistantExecutors(deps(executed));

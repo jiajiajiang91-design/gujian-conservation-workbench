@@ -121,26 +121,59 @@ function salvageComponents(raw: Record<string, unknown>): ModelCandidate["struct
 }
 
 
+// 两个归一化矩形是否相交
+function regionsOverlap(
+  first: { x: number; y: number; width: number; height: number },
+  second: { x: number; y: number; width: number; height: number },
+): boolean {
+  return !(
+    first.x + first.width <= second.x || second.x + second.width <= first.x
+    || first.y + first.height <= second.y || second.y + second.height <= first.y
+  );
+}
+
 // 已排除的对象不再进候选（框选修正规格第四节口径三）。
 // 只作用于构件识别：另两个任务的产出是文字要点与尺寸，没有构件可对应，
 // 硬套一层过滤只会让人以为过滤生效了。
+//
+// 按名称与按位置两条都判。只按名称不够：实测三轮里模型返回的构件数是
+// 29、38、20，同一个门廊出现 2 次、1 次、0 次，命名与数量每轮都变。
+// 名称对不上，排除后重新识别不再出现这个承诺就落空，而落空与否靠运气。
+// 位置稳定得多：用户排除的是图上那一块，模型下一轮在同一块上认出什么，
+// 不管叫什么名字都该被挡住。
 export function dropExcluded(
   structured: ModelCandidate["structured"],
-  exclusions: readonly { subjectDescriptionZh: string }[],
+  exclusions: readonly { subjectDescriptionZh: string; originRef?: string | null }[],
+  entities: readonly { id: string; imageRegion?: { evidenceRef: string; x: number; y: number; width: number; height: number } | undefined }[] = [],
 ): ModelCandidate["structured"] {
   if (!structured || structured.kind !== "componentRecognition" || !exclusions.length) return structured;
-  const excluded = new Set(exclusions.map((item) => item.subjectDescriptionZh.trim()));
-  const kept = structured.components.filter((item) => !excluded.has(item.nameZh.trim()));
+  const excludedNames = new Set(exclusions.map((item) => item.subjectDescriptionZh.trim()));
+  const entityById = new Map(entities.map((item) => [item.id, item]));
+  const excludedRegions = exclusions
+    .map((item) => (item.originRef ? entityById.get(item.originRef)?.imageRegion : undefined))
+    .filter((region): region is NonNullable<typeof region> => region !== undefined);
+
+  const byName: string[] = [];
+  const byRegion: string[] = [];
+  const kept = structured.components.filter((item) => {
+    if (excludedNames.has(item.nameZh.trim())) { byName.push(item.nameZh); return false; }
+    const hit = excludedRegions.some((region) => region.evidenceRef === item.evidenceRef && regionsOverlap(region, item.region));
+    if (hit) { byRegion.push(item.nameZh); return false; }
+    return true;
+  });
   if (kept.length === structured.components.length) return structured;
-  const dropped = structured.components.length - kept.length;
+
+  // 过滤掉几条要看得见，并且要说清按什么判的：按名称与按位置的可信度不同，
+  // 按位置挡下一个换了名字的构件，人需要知道那是同一块地方。
+  const notes = [
+    byName.length ? `按排除记录的名称过滤掉 ${byName.length} 条：${byName.join("、")}。` : null,
+    byRegion.length ? `按排除记录的图上位置过滤掉 ${byRegion.length} 条：${byRegion.join("、")}。这些名称与已排除项不同，但落在同一块被排除的位置上。` : null,
+  ].filter((item): item is string => item !== null);
+
   return {
     ...structured,
     components: kept,
-    // 过滤掉几条要看得见，不静默减少
-    missingInformation: [
-      ...structured.missingInformation,
-      `按排除记录过滤掉 ${dropped} 条已判定不存在或不适用的构件。`,
-    ],
+    missingInformation: [...structured.missingInformation, ...notes],
   };
 }
 
@@ -385,7 +418,7 @@ export class ModelRunClient {
           inputRevisionId: head.revisionId,
           taskType,
           contentText: streamedText,
-          structured: dropExcluded(parseStructured(streamedText, taskType), head.snapshot.exclusionRecords),
+          structured: dropExcluded(parseStructured(streamedText, taskType), head.snapshot.exclusionRecords, head.snapshot.entities),
           producer: { producerType: "model", runId },
           evidenceRefs: evidences.map((item) => item.evidenceId),
           reviewStatus: "unreviewed",

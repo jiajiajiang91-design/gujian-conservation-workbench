@@ -206,6 +206,10 @@ export class AssistantExecutors {
     const building = head.snapshot.buildings[0];
     if (!building) return { kind: "rejected", reasonZh: "项目里还没有建筑，无法写入构件" };
     if (!components.length) return { kind: "rejected", reasonZh: "没有可写入的构件" };
+    // 模型给的 evidenceRef 要落在本项目的资料里才认。指向别处说明它把资料认错了，
+    // 照写会得到一条位置无处可查的构件记录。
+    const foreign = components.find((item) => !head.snapshot.evidences.some((evidence) => evidence.id === item.evidenceRef));
+    if (foreign) return { kind: "rejected", reasonZh: `构件 ${foreign.nameZh} 指向的资料不在本项目里，本批未写入` };
     await this.#deps.commands.execute({
       commandType: "CommitEntities",
       commandId: crypto.randomUUID(),
@@ -221,7 +225,11 @@ export class AssistantExecutors {
           parentId: null,
           entityType: item.categoryZh ?? "待确认",
           name: item.nameZh,
-          locationText: null,
+          // 位置说明与框选新增用同一个写法，两种来源的构件在表里读起来一致
+          locationText: describeImageRegion(
+            head.snapshot.evidences.find((evidence) => evidence.id === item.evidenceRef)?.title ?? "资料原件",
+            item.region,
+          ),
           imageRegion: { evidenceRef: item.evidenceRef, ...item.region },
           origin: "recognition",
         })),
