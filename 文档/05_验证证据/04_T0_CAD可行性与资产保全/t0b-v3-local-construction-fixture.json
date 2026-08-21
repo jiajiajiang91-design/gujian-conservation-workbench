@@ -1,0 +1,506 @@
+{
+  "schemaVersion": "t0b-v3-geometry-fixture-2",
+  "projectId": "c5237fb2-8197-5d76-9885-f77b75baf522",
+  "fixtureId": "e3e47b24-4ed1-4f5a-882b-470a680db18a",
+  "geometryRevisionId": "4579a720-0bff-5df7-b293-191483384059",
+  "producerType": "demo",
+  "formalEligibility": "ineligible",
+  "unit": "mm",
+  "coordinateSystem": {"x": "east", "y": "north", "z": "up"},
+  "sourceRefs": ["demo:t0b-v3-team-owned-construction-contract"],
+  "referenceIsolation": {
+    "fixtureOnly": true,
+    "allowedSourceSchemes": ["demo"],
+    "externalAssetsAllowed": false
+  },
+  "scope": "team-owned-local-construction-sample",
+  "materials": {
+    "timber-demo": {"materialCode": "timber-demo", "displayNameZh": "木材演示材质", "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    "stone-demo": {"materialCode": "stone-demo", "displayNameZh": "石材演示材质", "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    "earth-demo": {"materialCode": "earth-demo", "displayNameZh": "地基层演示材质", "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    "ceramic-demo": {"materialCode": "ceramic-demo", "displayNameZh": "陶瓦演示材质", "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"}
+  },
+  "assembly": {
+    "axisX": [-1800, 1800],
+    "axisY": [-3000, 3000],
+    "bayWidth": 3600,
+    "depth": 6000,
+    "roofWidth": 4800,
+    "levels": {
+      "foundationBottom": -800,
+      "exteriorGround": 0,
+      "terraceTop": 600,
+      "columnBaseTop": 840,
+      "columnTop": 3720,
+      "eaveBeamTop": 4200,
+      "eave": 5200,
+      "ridge": 8200
+    },
+    "roofCurve": {
+      "family": "pairedCubicC0",
+      "halfSpan": 3600,
+      "ridgeHeight": 8200,
+      "ridgeOneSidedSlope": 0.5,
+      "ridgeSlopeJump": 1.0,
+      "dropCoefficients": [1800, 4400, -3200],
+      "sampleStepMm": 40,
+      "edgeTangentLimit": 0.3
+    }
+  },
+  "parameterTypeRegistry": {
+    "length": {
+      "unit": "mm",
+      "parameters": [
+        "barWidth", "baseHeight", "baseWidth", "bearingPadPlanMargin", "bearingPadThickness",
+        "bottomDiameter", "capHeight", "columnPitch", "columnSeatDepth", "courseHeight", "courseInset",
+        "courseReduction", "depth", "diameter", "doorOpeningHeight", "doorOpeningWidth", "edgeTongue",
+        "edgeTongueThickness", "endRise", "finishThickness", "foundationOpening", "halfLapDepth",
+        "halfLapLength", "headHeight", "height", "housingDepth", "jointDepth", "jointLength",
+        "lapClearance", "length", "lowerDiameter", "memberDepth", "memberWidth", "minimumBodyHeight",
+        "neck", "openingClosureDepth", "openingHeight", "openingWidth", "overlap", "panelGrooveDepth",
+        "panelGrooveWidth", "panelHeight", "panelWidth", "purlinSeatCenterDepth", "purlinSeatClearance", "purlinSeatWidth",
+        "railHousingDepth", "ridgeSupportPadWidth", "rise", "riser", "rollRadius", "roofFinishClearance", "rowPitch", "seatDepth",
+        "seatInsertionDepth", "segmentLength", "socketDepth", "socketWidth", "spacing", "stileWidth",
+        "tenonHeight", "tenonLength", "thickness", "thresholdHeight", "tileClearance", "topDiameter",
+        "tread", "upperDiameter", "width", "windowHeight", "windowSill", "windowWidth"
+      ]
+    },
+    "angle": {"unit": "deg", "parameters": []},
+    "count": {
+      "unit": "1",
+      "parameters": ["columns", "count", "countPerLeaf", "courses", "facets", "longitudinalSegments", "panelsPerLeaf", "rows"]
+    },
+    "ratio": {"unit": "1", "parameters": []},
+    "text": {"unit": null, "parameters": []}
+  },
+  "unknownRegistry": {
+    "actual-soil-composition": {
+      "reasonCode": "MISSING_SOIL_COMPOSITION", "displayNameZh": "现场土层组成未知",
+      "requiredEvidence": ["现场勘察记录", "材料检测或专业判断"], "affectedClaims": ["material", "bearing"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-bearing-capacity": {
+      "reasonCode": "MISSING_BEARING_CAPACITY", "displayNameZh": "现场承载能力未知",
+      "requiredEvidence": ["地基检测", "专业复核"], "affectedClaims": ["bearing", "formal-delivery"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-foundation-material": {
+      "reasonCode": "MISSING_FOUNDATION_MATERIAL", "displayNameZh": "基础实际材料未知",
+      "requiredEvidence": ["基础勘察或检测", "现场记录"], "affectedClaims": ["material", "construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "hidden-fixing-method": {
+      "reasonCode": "MISSING_HIDDEN_FIXING", "displayNameZh": "隐蔽固定方式未知",
+      "requiredEvidence": ["隐蔽部位调查", "专业复核"], "affectedClaims": ["joint", "construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-masonry-method": {
+      "reasonCode": "MISSING_MASONRY_METHOD", "displayNameZh": "实际砌筑做法未知",
+      "requiredEvidence": ["现场调查", "构造记录"], "affectedClaims": ["construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-stone-type": {
+      "reasonCode": "MISSING_STONE_TYPE", "displayNameZh": "实际石材类型未知",
+      "requiredEvidence": ["材料检测", "现场记录"], "affectedClaims": ["material"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-timber-species": {
+      "reasonCode": "MISSING_TIMBER_SPECIES", "displayNameZh": "实际木材树种未知",
+      "requiredEvidence": ["木材检测", "现场记录"], "affectedClaims": ["material"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-member-name": {
+      "reasonCode": "MISSING_MEMBER_IDENTIFICATION", "displayNameZh": "构件专业名称未判定",
+      "requiredEvidence": ["形制依据", "专业复核"], "affectedClaims": ["typology", "terminology"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "historical-typology": {
+      "reasonCode": "MISSING_HISTORICAL_TYPOLOGY", "displayNameZh": "历史形制未判定",
+      "requiredEvidence": ["时代与地域依据", "专业复核"], "affectedClaims": ["typology"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-joint-type": {
+      "reasonCode": "MISSING_JOINT_TYPE", "displayNameZh": "实际接合类型未知",
+      "requiredEvidence": ["节点调查", "专业复核"], "affectedClaims": ["joint", "construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-drainage-detail": {
+      "reasonCode": "MISSING_DRAINAGE_DETAIL", "displayNameZh": "实际排水节点未知",
+      "requiredEvidence": ["檐口近景", "节点调查"], "affectedClaims": ["drainage", "construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-board-joint": {
+      "reasonCode": "MISSING_BOARD_JOINT", "displayNameZh": "屋面板接缝做法未知",
+      "requiredEvidence": ["屋面构造调查", "节点记录"], "affectedClaims": ["joint", "construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-tile-type": {
+      "reasonCode": "MISSING_TILE_TYPE", "displayNameZh": "实际瓦件类型未知",
+      "requiredEvidence": ["瓦件近景与尺寸", "专业复核"], "affectedClaims": ["typology", "material"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-ridge-type": {
+      "reasonCode": "MISSING_RIDGE_TYPE", "displayNameZh": "实际屋脊类型未知",
+      "requiredEvidence": ["屋脊近景与尺寸", "专业复核"], "affectedClaims": ["typology", "construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-wall-build-up": {
+      "reasonCode": "MISSING_WALL_BUILD_UP", "displayNameZh": "墙体实际构造层次未知",
+      "requiredEvidence": ["墙体调查", "材料记录"], "affectedClaims": ["material", "construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-panel-build-up": {
+      "reasonCode": "MISSING_PANEL_BUILD_UP", "displayNameZh": "门板实际构造未知",
+      "requiredEvidence": ["门扇近景与节点调查"], "affectedClaims": ["joint", "construction"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    },
+    "actual-lattice-pattern": {
+      "reasonCode": "MISSING_LATTICE_PATTERN", "displayNameZh": "格栅实际纹样未知",
+      "requiredEvidence": ["格栅正射近景与尺寸"], "affectedClaims": ["pattern", "typology"],
+      "blocksProxyResult": false, "blocksFormalEligibility": true, "blocksL1": true
+    }
+  },
+  "dimensionFacts": {
+    "DIM-ARM-HALF-LAP": {"value": 150, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-BEAM-SEAT": {"value": 40, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-BEARING-BLOCK": {"value": 360, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-BEARING-GROOVE": {"value": 45, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-BOARD-THICKNESS": {"value": 40, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-COLUMN-DIAMETER": {"value": 380, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-EAVE-CLOSURE": {"value": 100, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-EXTERIOR-GROUND": {"value": 0, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-FOUNDATION-COURSE": {"value": 266.666667, "unit": "mm", "factBasis": "derivedGeometry"},
+    "DIM-FOUNDATION-TOP": {"value": 0, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-FOUNDATION-WIDTH": {"value": 900, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-GROUND-BEARING-THICKNESS": {"value": 300, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-FRAME-TENON": {"value": 55, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-LATTICE-FRAME": {"value": 90, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-LATTICE-HALF-LAP": {"value": 35, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-LEAF-CLEARANCE": {"value": 8, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-LEAF-HOUSING": {"value": 35, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-PANEL-TONGUE": {"value": 15, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-PAN-TILE": {"value": 260, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-POST-BASE": {"value": 240, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-POST-SADDLE": {"value": 50, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-PURLIN-DIAMETER": {"value": 260, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-RAFTER-JOINT": {"value": 240, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-RAFTER-SECTION": {"value": 80, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-RIDGE-CLOSURE": {"value": 46, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-SEAT-SOCKET": {"value": 55, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-SEAT-WIDTH": {"value": 520, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-STEP-RISER": {"value": 200, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-STEP-TERRACE": {"value": 1800, "unit": "mm", "factBasis": "derivedGeometry"},
+    "DIM-TERRACE-COURSE": {"value": 200, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-TERRACE-TOP": {"value": 600, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-TILE-CROSS-LAP": {"value": 45, "unit": "mm", "factBasis": "derivedGeometry"},
+    "DIM-TILE-LAP": {"value": 100, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-TILE-LAP-CLEARANCE": {"value": 0.5, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-WALL-BASE": {"value": 600, "unit": "mm", "factBasis": "demoParameter"},
+    "DIM-WINDOW-CLOSURE": {"value": 40, "unit": "mm", "factBasis": "demoParameter"}
+  },
+  "geometryValidation": {
+    "contactToleranceMm": 0.5,
+    "clearanceToleranceMm": 0.5,
+    "maximumUnexpectedOverlapMm3": 0.1,
+    "curveToleranceMm": 0.5,
+    "maxChordErrorMm": 0.5,
+    "meshHashPrecisionMm": 0.001,
+    "tileLap": {"interfaceToleranceMm": 1.5, "minimumVisibleStepMm": 17.5, "samplesPerOverlap": 5},
+    "roofCoverage": {"sampleSpacingX": 300, "sampleSpacingY": 300, "edgeMarginX": 150, "edgeMarginY": 150, "rayClearanceMm": 500, "rayDepthMm": 1200, "maximumUncoveredSamples": 0},
+    "forbiddenExternalTokens": [".dwg", "寺庙古建筑设计方案图", "一套完整的古建施工图", "Downloads", "xref", "underlay", "acdbproxyentity", "proxyobject"]
+  },
+  "componentTemplates": {
+    "groundLayer": {
+      "domainTerm": {"stableKey": "groundLayer", "displayNameZh": "室外地基层（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "column-base-assembly", "memberRole": "surrounding-ground", "materialCode": "earth-demo",
+      "requiredFeatureProfile": ["foundation-openings", "exterior-level", "foundation-bearing-pad"], "unknowns": ["actual-soil-composition", "actual-bearing-capacity"],
+      "parameters": {"width": 7200, "depth": 9600, "thickness": 300, "foundationOpening": 900, "bearingPadThickness": 300, "bearingPadPlanMargin": 300},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "foundationLayer": {
+      "domainTerm": {"stableKey": "foundationLayer", "displayNameZh": "基础层体（团队演示，做法未判定）", "typologyStatus": "unknown", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "column-base-assembly", "memberRole": "foundation-course", "materialCode": "earth-demo",
+      "requiredFeatureProfile": ["three-courses", "bearing-faces"], "unknowns": ["actual-foundation-material", "hidden-fixing-method"],
+      "parameters": {"width": 900, "depth": 900, "height": 800, "courses": 3, "courseReduction": 90},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "terrace": {
+      "domainTerm": {"stableKey": "terrace", "displayNameZh": "台基层（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "column-base-assembly", "memberRole": "terrace-course", "materialCode": "stone-demo",
+      "requiredFeatureProfile": ["three-courses", "stepped-projection"], "unknowns": ["actual-masonry-method"],
+      "parameters": {"width": 5400, "depth": 7800, "height": 600, "courseHeight": 200, "courseInset": 40},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "step": {
+      "domainTerm": {"stableKey": "step", "displayNameZh": "踏步（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "site-approach", "memberRole": "south-step", "materialCode": "stone-demo",
+      "requiredFeatureProfile": ["three-risers"], "unknowns": [],
+      "parameters": {"width": 1800, "tread": 320, "riser": 200, "count": 3},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "columnBase": {
+      "domainTerm": {"stableKey": "columnBase", "displayNameZh": "柱下承托石构件（团队演示，类型未判定）", "typologyStatus": "unknown", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "column-base-assembly", "memberRole": "column-bearing-stone", "materialCode": "stone-demo",
+      "requiredFeatureProfile": ["stepped-revolved-profile", "top-bearing-face", "bottom-bearing-face"], "unknowns": ["hidden-fixing-method", "actual-stone-type"],
+      "parameters": {"lowerDiameter": 560, "upperDiameter": 400, "height": 240},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "column": {
+      "domainTerm": {"stableKey": "column", "displayNameZh": "柱（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "primary-timber-frame", "memberRole": "vertical-support", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["tapered-round-section", "top-bearing-face", "bottom-bearing-face"], "unknowns": ["actual-timber-species", "hidden-fixing-method"],
+      "parameters": {"bottomDiameter": 380, "topDiameter": 340, "height": 2880, "facets": 48, "seatInsertionDepth": 40},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "eaveBeam": {
+      "domainTerm": {"stableKey": "eaveBeam", "displayNameZh": "檐部横向木构件（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "eave-support-assembly", "memberRole": "transverse-bearing-member", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["column-bearing-recess", "seat-bearing-face"], "unknowns": ["actual-member-name"],
+      "parameters": {"width": 300, "height": 480, "length": 4500, "columnSeatDepth": 40},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "tieBeam": {
+      "domainTerm": {"stableKey": "tieBeam", "displayNameZh": "纵向联系木构件（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "primary-timber-frame", "memberRole": "longitudinal-tie", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["column-bearing-recess"], "unknowns": ["actual-member-name"],
+      "parameters": {"width": 280, "height": 420, "length": 6400, "columnSeatDepth": 40},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "interiorPost": {
+      "domainTerm": {"stableKey": "interiorPost", "displayNameZh": "屋架内柱（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "roof-frame", "memberRole": "purlin-support", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["purlin-saddle"], "unknowns": ["actual-member-name"],
+      "parameters": {"width": 240, "depth": 300, "socketDepth": 50},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "bracketSeat": {
+      "domainTerm": {"stableKey": "bracketSeat", "displayNameZh": "承托座（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "eave-support-assembly", "memberRole": "support-seat", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["beam-bearing-face", "arm-seat-recesses"], "unknowns": ["historical-typology"],
+      "parameters": {"width": 520, "depth": 420, "height": 180, "socketWidth": 200, "socketDepth": 55},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "bracketArm": {
+      "domainTerm": {"stableKey": "bracketArm", "displayNameZh": "承托臂（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "eave-support-assembly", "memberRole": "orthogonal-support-arm", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["profiled-ends", "central-half-lap"], "unknowns": ["historical-typology"],
+      "parameters": {"length": 1100, "width": 180, "height": 300, "neck": 260, "endRise": 80, "halfLapDepth": 150, "halfLapLength": 180},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "bearingBlock": {
+      "domainTerm": {"stableKey": "bearingBlock", "displayNameZh": "檩下承块（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "eave-support-assembly", "memberRole": "purlin-bearing-block", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["purlin-saddle-groove", "arm-bearing-face"], "unknowns": ["historical-typology"],
+      "parameters": {"width": 360, "depth": 320, "minimumBodyHeight": 160, "socketDepth": 45},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "purlin": {
+      "domainTerm": {"stableKey": "purlin", "displayNameZh": "檩（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "roof-frame", "memberRole": "longitudinal-roof-support", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["round-section", "bearing-contact"], "unknowns": ["actual-timber-species"],
+      "parameters": {"diameter": 260, "facets": 96},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "rafter": {
+      "domainTerm": {"stableKey": "rafter", "displayNameZh": "主椽（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "roof-frame", "memberRole": "slope-rafter", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["curved-path", "purlin-bearing-notches", "fly-rafter-joint"], "unknowns": ["actual-timber-species"],
+      "parameters": {"width": 80, "height": 120, "spacing": 300, "jointLength": 240, "jointDepth": 50, "purlinSeatCenterDepth": 41, "purlinSeatWidth": 260, "purlinSeatClearance": 0.25},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "flyRafter": {
+      "domainTerm": {"stableKey": "flyRafter", "displayNameZh": "檐部续接椽（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "eave-detail-assembly", "memberRole": "eave-rafter-extension", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["rafter-joint", "eave-termination"], "unknowns": ["actual-member-name"],
+      "parameters": {"width": 80, "height": 100, "length": 900, "jointLength": 240, "jointDepth": 50},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "eaveClosure": {
+      "domainTerm": {"stableKey": "eaveClosure", "displayNameZh": "檐端收口构件（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "eave-detail-assembly", "memberRole": "eave-edge-closure", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["continuous-edge", "tile-drainage-clearance"], "unknowns": ["actual-member-name", "actual-drainage-detail"],
+      "parameters": {"width": 100, "height": 140, "length": 4800, "tileClearance": 30},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "roofBoard": {
+      "domainTerm": {"stableKey": "roofBoard", "displayNameZh": "屋面板（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "roof-finish-base", "memberRole": "roof-board-panel", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["curved-surface-panel", "rafter-contact"], "unknowns": ["actual-board-joint"],
+      "parameters": {"thickness": 40, "panelWidth": 300},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "panTile": {
+      "domainTerm": {"stableKey": "panTile", "displayNameZh": "凹面瓦件（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "roof-finish", "memberRole": "concave-drainage-tile", "materialCode": "ceramic-demo",
+      "requiredFeatureProfile": ["concave-section", "longitudinal-lap", "cover-tile-seat"], "unknowns": ["actual-tile-type"],
+      "parameters": {"width": 260, "rise": 55, "thickness": 18, "length": 520, "overlap": 100, "lapClearance": 0.5, "rowPitch": 420, "columnPitch": 300, "longitudinalSegments": 8},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "coverTile": {
+      "domainTerm": {"stableKey": "coverTile", "displayNameZh": "覆瓦件（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "roof-finish", "memberRole": "convex-cover-tile", "materialCode": "ceramic-demo",
+      "requiredFeatureProfile": ["convex-section", "longitudinal-lap", "cross-pan-bearing"], "unknowns": ["actual-tile-type"],
+      "parameters": {"width": 170, "rise": 75, "thickness": 18, "length": 520, "overlap": 100, "lapClearance": 0.5, "rowPitch": 420, "columnPitch": 300, "longitudinalSegments": 8},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "ridgeTile": {
+      "domainTerm": {"stableKey": "ridgeTile", "displayNameZh": "正脊组合（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "roof-finish", "memberRole": "ridge-closure", "materialCode": "ceramic-demo",
+      "requiredFeatureProfile": ["non-rectangular-section", "three-layer-composition", "roof-finish-saddle", "roof-finish-support-pads"], "unknowns": ["actual-ridge-type"],
+      "parameters": {"baseWidth": 440, "baseHeight": 75, "seatDepth": 46, "roofFinishClearance": 0.25, "ridgeSupportPadWidth": 8, "rollRadius": 90, "capHeight": 45, "segmentLength": 500},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "wall": {
+      "domainTerm": {"stableKey": "wall", "displayNameZh": "墙体及洞口（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "south-enclosure", "memberRole": "opening-surround", "materialCode": "earth-demo",
+      "requiredFeatureProfile": ["door-opening", "window-openings", "opening-reveals", "frame-closures"], "unknowns": ["actual-wall-build-up"],
+      "parameters": {"thickness": 240, "baseHeight": 900, "panelHeight": 2300, "finishThickness": 25, "doorOpeningWidth": 1800, "doorOpeningHeight": 2700, "windowWidth": 720, "windowHeight": 1500, "windowSill": 900},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "doorFrameMember": {
+      "domainTerm": {"stableKey": "doorFrameMember", "displayNameZh": "门框构件（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "door-assembly", "memberRole": "frame-member", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["stile", "head", "threshold", "corner-mortise-tenon", "wall-closure"], "unknowns": ["actual-joint-type"],
+      "parameters": {"openingWidth": 1800, "openingHeight": 2700, "stileWidth": 120, "memberDepth": 120, "headHeight": 140, "thresholdHeight": 120, "tenonLength": 55, "tenonHeight": 70},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "doorLeafStile": {
+      "domainTerm": {"stableKey": "doorLeafStile", "displayNameZh": "门扇边梃（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "door-leaf-assembly", "memberRole": "leaf-stile", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["rail-through-housings", "panel-through-housing"], "unknowns": ["actual-joint-type"],
+      "parameters": {"width": 100, "depth": 55, "height": 2640, "railHousingDepth": 35, "panelGrooveDepth": 15, "panelGrooveWidth": 34},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "doorLeafRail": {
+      "domainTerm": {"stableKey": "doorLeafRail", "displayNameZh": "门扇横档（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "door-leaf-assembly", "memberRole": "leaf-rail", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["end-housed-projections", "panel-through-grooves"], "unknowns": ["actual-joint-type"],
+      "parameters": {"height": 100, "depth": 55, "housingDepth": 35, "panelGrooveDepth": 15, "panelGrooveWidth": 34, "countPerLeaf": 5},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "doorLeafPanel": {
+      "domainTerm": {"stableKey": "doorLeafPanel", "displayNameZh": "门扇板心（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "door-leaf-assembly", "memberRole": "leaf-panel", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["four-edge-tongue", "recessed-panel"], "unknowns": ["actual-panel-build-up"],
+      "parameters": {"depth": 32, "edgeTongue": 15, "edgeTongueThickness": 32, "panelsPerLeaf": 4},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "latticeFrameMember": {
+      "domainTerm": {"stableKey": "latticeFrameMember", "displayNameZh": "格栅窗外框构件（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "lattice-window-assembly", "memberRole": "window-frame", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["four-frame-members", "wall-opening-closure"], "unknowns": ["actual-joint-type"],
+      "parameters": {"width": 720, "height": 1500, "memberWidth": 90, "depth": 80, "openingClosureDepth": 40},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    },
+    "latticeBar": {
+      "domainTerm": {"stableKey": "latticeBar", "displayNameZh": "格栅条（团队演示）", "typologyStatus": "neutralRole", "typologyClaim": null, "typologyEvidenceRefs": []},
+      "resolution": {"geometric": "resolved", "construction": "demoDefined", "l1DemoEligibility": "blocked"},
+      "assemblyRole": "lattice-window-assembly", "memberRole": "cross-lapped-lattice-bar", "materialCode": "timber-demo",
+      "requiredFeatureProfile": ["orthogonal-bars", "central-half-laps"], "unknowns": ["actual-lattice-pattern"],
+      "parameters": {"barWidth": 42, "depth": 70, "columns": 3, "rows": 4, "halfLapDepth": 35},
+      "producerType": "demo", "factBasis": "demoParameter", "formalEligibility": "ineligible"
+    }
+  },
+  "requiredComponentTypes": ["groundLayer", "foundationLayer", "terrace", "step", "columnBase", "column", "eaveBeam", "tieBeam", "interiorPost", "bracketSeat", "bracketArm", "bearingBlock", "purlin", "rafter", "flyRafter", "eaveClosure", "roofBoard", "panTile", "coverTile", "ridgeTile", "wall", "doorFrameMember", "doorLeafStile", "doorLeafRail", "doorLeafPanel", "latticeFrameMember", "latticeBar"],
+  "interfaceTemplates": [
+    {"interfaceId": "IF-FOUNDATION-GROUND-SW", "role": "foundation-ground", "fromEntityKey": "foundation:0:0:course:2", "toEntityKey": "ground:ring:foundation-course:2", "fromSurfaceRef": "foundation-course-2-outer-faces", "toSurfaceRef": "ground-course-2-opening-faces", "interfaceKind": "containment", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, 1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-FOUNDATION-WIDTH"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-FOUNDATION-BEARING-GROUND-SW", "role": "foundation-bearing-ground", "fromEntityKey": "foundation:0:0:course:0", "toEntityKey": "ground:bearing:0:0", "fromSurfaceRef": "foundation-bottom-bearing-face", "toSurfaceRef": "ground-bearing-top-face", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-GROUND-BEARING-THICKNESS"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-TERRACE-FOUNDATION-SW", "role": "terrace-foundation", "fromEntityKey": "terrace:course:0", "toEntityKey": "foundation:0:0:course:2", "fromSurfaceRef": "terrace-bottom", "toSurfaceRef": "foundation-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-FOUNDATION-TOP"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-COLUMN-BASE-SW", "role": "column-base", "fromEntityKey": "column:0:0", "toEntityKey": "column-base:0:0", "fromSurfaceRef": "column-bottom", "toSurfaceRef": "column-base-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-COLUMN-DIAMETER"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-BASE-TERRACE-SW", "role": "base-terrace", "fromEntityKey": "column-base:0:0", "toEntityKey": "terrace:course:2", "fromSurfaceRef": "column-base-bottom", "toSurfaceRef": "terrace-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-TERRACE-TOP"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-COLUMN-BEAM-SW", "role": "column-eave-beam", "fromEntityKey": "eave-beam:0", "toEntityKey": "column:0:0", "fromSurfaceRef": "beam-column-seat", "toSurfaceRef": "column-top", "interfaceKind": "grooveSeat", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-BEAM-SEAT"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-BEAM-SEAT-SW", "role": "eave-beam-seat", "fromEntityKey": "bracket-seat:0:0", "toEntityKey": "eave-beam:0", "fromSurfaceRef": "seat-bottom", "toSurfaceRef": "beam-seat-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-SEAT-WIDTH"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-SEAT-ARM-X-SW", "role": "seat-arm-x", "fromEntityKey": "bracket-arm-x:0:0", "toEntityKey": "bracket-seat:0:0", "fromSurfaceRef": "arm-x-bottom", "toSurfaceRef": "seat-x-recess", "interfaceKind": "grooveSeat", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-SEAT-SOCKET"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-SEAT-ARM-Y-SW", "role": "seat-arm-y", "fromEntityKey": "bracket-arm-y:0:0", "toEntityKey": "bracket-seat:0:0", "fromSurfaceRef": "arm-y-bottom", "toSurfaceRef": "seat-y-recess", "interfaceKind": "grooveSeat", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-SEAT-SOCKET"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-ARM-CROSS-SW", "role": "arm-cross-half-lap", "fromEntityKey": "bracket-arm-y:0:0", "toEntityKey": "bracket-arm-x:0:0", "fromSurfaceRef": "arm-y-half-lap-bottom", "toSurfaceRef": "arm-x-half-lap-top", "interfaceKind": "halfLap", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-ARM-HALF-LAP"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-ARM-BLOCK-SW", "role": "arm-bearing-block", "fromEntityKey": "bearing-block:0:0", "toEntityKey": "bracket-arm-y:0:0", "fromSurfaceRef": "bearing-block-bottom", "toSurfaceRef": "arm-y-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-BEARING-BLOCK"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-BLOCK-PURLIN-SW", "role": "bearing-block-purlin", "fromEntityKey": "purlin:0", "toEntityKey": "bearing-block:0:0", "fromSurfaceRef": "purlin-lower-cylinder", "toSurfaceRef": "bearing-saddle", "interfaceKind": "grooveSeat", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-PURLIN-DIAMETER", "DIM-BEARING-GROOVE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-RAFTER-PURLIN-S0", "role": "rafter-purlin", "fromEntityKey": "rafter:south:0", "toEntityKey": "purlin:0", "fromSurfaceRef": "rafter-seat-0", "toSurfaceRef": "purlin-upper-cylinder", "interfaceKind": "grooveSeat", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-RAFTER-SECTION"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-FLY-RAFTER-S0", "role": "fly-rafter-rafter", "fromEntityKey": "fly-rafter:south:0", "toEntityKey": "rafter:south:0", "fromSurfaceRef": "fly-rafter-half-lap", "toSurfaceRef": "rafter-half-lap", "interfaceKind": "halfLap", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 1, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-RAFTER-JOINT"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-BOARD-RAFTER-S0", "role": "roof-board-rafter", "fromEntityKey": "roof-board:south:0", "toEntityKey": "rafter:south:0", "fromSurfaceRef": "board-bottom", "toSurfaceRef": "rafter-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-BOARD-THICKNESS"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-PAN-BOARD-S00", "role": "pan-tile-roof-board", "fromEntityKey": "pan-tile:south:0:0", "toEntityKey": "roof-board:south:0", "fromSurfaceRef": "pan-lower-bearing-lines", "toSurfaceRef": "board-upper-surface", "interfaceKind": "bearing", "contactMode": "line", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-PAN-TILE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-COVER-PAN-S00", "role": "cover-tile-pan-tile", "fromEntityKey": "cover-tile:south:0:0", "toEntityKey": "pan-tile:south:0:0", "fromSurfaceRef": "cover-side-bearing", "toSurfaceRef": "pan-side-seat", "interfaceKind": "bearing", "contactMode": "line", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 1.0, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-TILE-CROSS-LAP"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-PAN-LAP-S00-S01", "role": "tile-longitudinal-lap", "fromEntityKey": "pan-tile:south:0:1", "toEntityKey": "pan-tile:south:0:0", "fromSurfaceRef": "upper-tile-lap-underside", "toSurfaceRef": "lower-tile-lap-tail", "interfaceKind": "lap", "contactMode": "overlapZone", "interfaceStatus": "demoDefined", "direction": [0, 1, 0], "expectedGapMm": 0.5, "maximumGapMm": 1.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-TILE-LAP", "DIM-TILE-LAP-CLEARANCE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-EAVE-CLOSURE-S0", "role": "eave-closure", "fromEntityKey": "eave-closure:south", "toEntityKey": "roof-board:south:0", "fromSurfaceRef": "closure-roof-seat", "toSurfaceRef": "board-eave-edge", "interfaceKind": "closure", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 1, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-EAVE-CLOSURE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-FRAME-CORNER-LH", "role": "frame-corner-joint", "fromEntityKey": "door-frame:head", "toEntityKey": "door-frame:left-stile", "fromSurfaceRef": "head-left-tenon", "toSurfaceRef": "left-stile-head-mortise", "interfaceKind": "mortiseTenon", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [-1, 0, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-FRAME-TENON"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-LEAF-RAIL-STILE-0", "role": "door-leaf-rail-stile", "fromEntityKey": "door-leaf:0:rail:0", "toEntityKey": "door-leaf:0:stile:left", "fromSurfaceRef": "rail-end-housed-projection", "toSurfaceRef": "stile-rail-through-housing", "interfaceKind": "throughHousing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [-1, 0, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-LEAF-HOUSING"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-PANEL-GROOVE-0", "role": "door-panel-groove", "fromEntityKey": "door-leaf:0:panel:0", "toEntityKey": "door-leaf:0:stile:left", "fromSurfaceRef": "panel-left-tongue", "toSurfaceRef": "stile-panel-groove", "interfaceKind": "containment", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [-1, 0, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-PANEL-TONGUE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-LEAF-CLEARANCE-CENTER", "role": "door-leaf-clearance", "fromEntityKey": "door-leaf:0:stile:right", "toEntityKey": "door-leaf:1:stile:left", "fromSurfaceRef": "leaf-0-meeting-edge", "toSurfaceRef": "leaf-1-meeting-edge", "interfaceKind": "clearance", "contactMode": "clearance", "interfaceStatus": "demoDefined", "direction": [1, 0, 0], "expectedGapMm": 8, "maximumGapMm": 8.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-LEAF-CLEARANCE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-LATTICE-CROSS-L0", "role": "lattice-cross-joint", "fromEntityKey": "lattice:left:hbar:1", "toEntityKey": "lattice:left:vbar:1", "fromSurfaceRef": "horizontal-half-lap", "toSurfaceRef": "vertical-half-lap", "interfaceKind": "halfLap", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 1, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-LATTICE-HALF-LAP"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-OPENING-CLOSURE-LEFT", "role": "opening-closure", "fromEntityKey": "lattice:left:frame:left", "toEntityKey": "wall:south:left", "fromSurfaceRef": "window-frame-outer-left", "toSurfaceRef": "wall-left-opening-reveal", "interfaceKind": "closure", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [-1, 0, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-WINDOW-CLOSURE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-GROUND-STEP", "role": "ground-step", "fromEntityKey": "step:south:0", "toEntityKey": "ground:ring:foundation-course:2", "fromSurfaceRef": "lowest-step-bottom", "toSurfaceRef": "exterior-ground-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-EXTERIOR-GROUND"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-FOUNDATION-COURSE-STACK", "role": "foundation-course-stack", "fromEntityKey": "foundation:0:0:course:1", "toEntityKey": "foundation:0:0:course:0", "fromSurfaceRef": "course-bottom", "toSurfaceRef": "course-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-FOUNDATION-COURSE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-TERRACE-COURSE-STACK", "role": "terrace-course-stack", "fromEntityKey": "terrace:course:1", "toEntityKey": "terrace:course:0", "fromSurfaceRef": "course-bottom", "toSurfaceRef": "course-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-TERRACE-COURSE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-STEP-COURSE-STACK", "role": "step-course-stack", "fromEntityKey": "step:south:1", "toEntityKey": "step:south:0", "fromSurfaceRef": "step-bottom", "toSurfaceRef": "step-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-STEP-RISER"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-STEP-TERRACE", "role": "step-terrace", "fromEntityKey": "step:south:2", "toEntityKey": "terrace:course:2", "fromSurfaceRef": "step-north-face", "toSurfaceRef": "terrace-south-face", "interfaceKind": "closure", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 1, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-STEP-TERRACE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-COLUMN-TIE-BEAM", "role": "column-tie-beam", "fromEntityKey": "tie-beam:0", "toEntityKey": "column:0:0", "fromSurfaceRef": "beam-column-seat", "toSurfaceRef": "column-top", "interfaceKind": "grooveSeat", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-BEAM-SEAT"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-TIE-BEAM-POST", "role": "tie-beam-interior-post", "fromEntityKey": "interior-post:0:0", "toEntityKey": "tie-beam:0", "fromSurfaceRef": "post-bottom", "toSurfaceRef": "tie-beam-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-POST-BASE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-POST-PURLIN", "role": "interior-post-purlin", "fromEntityKey": "purlin:1", "toEntityKey": "interior-post:0:0", "fromSurfaceRef": "purlin-lower-cylinder", "toSurfaceRef": "post-saddle", "interfaceKind": "grooveSeat", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-POST-SADDLE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-RIDGE-ROOF-FINISH", "role": "ridge-roof-finish", "fromEntityKey": "ridge-tile:0", "toEntityKey": "pan-tile:south:0:9", "fromSurfaceRef": "ridge-base", "toSurfaceRef": "roof-finish-ridge-edge", "interfaceKind": "closure", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 1.0, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-RIDGE-CLOSURE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-WALL-TERRACE", "role": "wall-terrace", "fromEntityKey": "wall:south:left", "toEntityKey": "terrace:course:2", "fromSurfaceRef": "wall-bottom", "toSurfaceRef": "terrace-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-WALL-BASE"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-DOOR-FRAME-TERRACE", "role": "door-frame-terrace", "fromEntityKey": "door-frame:threshold", "toEntityKey": "terrace:course:2", "fromSurfaceRef": "threshold-bottom", "toSurfaceRef": "terrace-top", "interfaceKind": "bearing", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, -1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-TERRACE-TOP"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-LATTICE-FRAME-CORNER", "role": "lattice-frame-corner", "fromEntityKey": "lattice:left:frame:top", "toEntityKey": "lattice:left:frame:left", "fromSurfaceRef": "frame-top-left-end", "toSurfaceRef": "frame-left-top-end", "interfaceKind": "closure", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [-1, 0, 0], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-LATTICE-FRAME"], "factBasis": "demoParameter", "formalEligibility": "ineligible"},
+    {"interfaceId": "IF-LATTICE-BAR-FRAME", "role": "lattice-bar-frame", "fromEntityKey": "lattice:left:vbar:1", "toEntityKey": "lattice:left:frame:top", "fromSurfaceRef": "bar-top", "toSurfaceRef": "frame-inner-top", "interfaceKind": "closure", "contactMode": "surface", "interfaceStatus": "demoDefined", "direction": [0, 0, 1], "expectedGapMm": 0, "maximumGapMm": 0.5, "maximumUnexpectedOverlapMm3": 0.1, "dimensionRefs": ["DIM-LATTICE-FRAME"], "factBasis": "demoParameter", "formalEligibility": "ineligible"}
+  ],
+  "requiredInterfaceRoles": ["ground-step", "foundation-ground", "foundation-bearing-ground", "foundation-course-stack", "terrace-foundation", "terrace-course-stack", "step-course-stack", "step-terrace", "column-base", "base-terrace", "column-eave-beam", "column-tie-beam", "tie-beam-interior-post", "interior-post-purlin", "eave-beam-seat", "seat-arm-x", "seat-arm-y", "arm-cross-half-lap", "arm-bearing-block", "bearing-block-purlin", "rafter-purlin", "fly-rafter-rafter", "roof-board-rafter", "pan-tile-roof-board", "cover-tile-pan-tile", "tile-longitudinal-lap", "ridge-roof-finish", "eave-closure", "wall-terrace", "door-frame-terrace", "frame-corner-joint", "door-leaf-rail-stile", "door-panel-groove", "door-leaf-clearance", "lattice-cross-joint", "lattice-frame-corner", "lattice-bar-frame", "opening-closure"],
+  "observationCandidates": [
+    {
+      "observationCandidateId": "23ec7376-dd60-47b5-b336-a7df27cb0430",
+      "targetEntityKey": "column-base:0:0",
+      "targetSurfaceRef": "column-base-south-lower-surface",
+      "locationGeometry": {"type": "polyline3d", "pointsMm": [[-1800, -3280, 660], [-1795, -3280, 720], [-1805, -3280, 780]]},
+      "observationTextZh": "演示观察候选：柱脚表面线状异常；未完成现场复核",
+      "diagnosis": null,
+      "cause": null,
+      "severity": null,
+      "candidateStatus": "unreviewed",
+      "producerType": "demo",
+      "factBasis": "demoParameter",
+      "formalEligibility": "ineligible",
+      "evidenceRefs": []
+    }
+  ],
+  "protectionRecommendationCandidates": [
+    {
+      "protectionRecommendationCandidateId": "95f107d5-ff8e-423f-94d9-46af9d1c6883",
+      "observationCandidateRef": "23ec7376-dd60-47b5-b336-a7df27cb0430",
+      "recommendationTextZh": "补充近景、尺度和现场复核后，由专业人员决定是否形成保护措施",
+      "candidateStatus": "unreviewed",
+      "producerType": "demo",
+      "factBasis": "demoParameter",
+      "formalEligibility": "ineligible",
+      "responsibleReviewerRef": null
+    }
+  ],
+  "knownAnswers": {
+    "geometrySignature": "5011763af7e2427f11f69647b94ba3921d4516f3a633fad75c0ee358a419c8f7",
+    "sourceMeshBundleSha256": "25a7a0a10b982ae5a7121f740103c12b954a875c84e77c1582d9d627001dbfdf"
+  },
+  "acceptance": {"status": "generated-not-qualified", "L1": false, "formalEligibility": "ineligible"}
+}

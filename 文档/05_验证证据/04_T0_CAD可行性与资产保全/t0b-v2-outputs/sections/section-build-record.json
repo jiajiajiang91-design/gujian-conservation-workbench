@@ -1,0 +1,185 @@
+{
+  "schemaVersion": "t0b-v2-section-build-1",
+  "status": "generated-not-qualified",
+  "qualification": "not-drawing-output",
+  "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+  "viewContractRevisionId": "04d00093-0bec-5f2a-bc68-def2a292c932",
+  "inputs": {
+    "fixture": {
+      "path": "t0b-v2-resolved-local-assembly.json",
+      "sha256": "926e88609f7ec2053af27e94fd8545a3c53ac28e8eef2a5af71209e17351c0c6"
+    },
+    "manifest": {
+      "path": "geometry-manifest.json",
+      "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+    },
+    "sourceMeshes": {
+      "path": "source-meshes.ndjson.gz",
+      "sha256": "06a92a7fe76c632fe4c7fddd0f27e53ed3fad46a57a047bfdcd7de08432d4c3c"
+    }
+  },
+  "outputs": [
+    {
+      "viewId": "floorPlan",
+      "path": "floorPlan.view-geometry.json.gz",
+      "sha256": "73cd3487c6b56b21dc6c9c069db6a4be6499ac88e6e171b91521ad308ce9979a",
+      "viewGeometrySha256": "e494c156e7ed2b2837940319c00a951b9f028cc8f29bdb27aa3f68edfdfee4e9",
+      "statistics": {
+        "selectedSourceCount": 36,
+        "cutSourceCount": 11,
+        "cutEntitySetSha256": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+        "cutSourceTypes": [
+          "column",
+          "doorFrame",
+          "doorLeaf",
+          "latticeWindow",
+          "wall"
+        ],
+        "cutRegionCount": 26,
+        "cutRegionCountByType": {
+          "column": 4,
+          "doorFrame": 2,
+          "doorLeaf": 6,
+          "latticeWindow": 8,
+          "wall": 6
+        },
+        "cutLineCount": 26,
+        "projectionTriangleCountDiagnostic": 3228,
+        "visibleProjectionLineCount": 399,
+        "depthProjectionSourceTypes": [
+          "columnBase",
+          "groundLayer",
+          "step",
+          "terrace"
+        ],
+        "openOrDangleCount": 0
+      }
+    },
+    {
+      "viewId": "transverseSection",
+      "path": "transverseSection.view-geometry.json.gz",
+      "sha256": "0ff097293ad90940f2ba009d2b777a3d5fe38158800f04fc18914d92bcc1556a",
+      "viewGeometrySha256": "abccd14cd82fae3cb2cb094e396ab95136ca00d2b4aa04e87919335bad20d713",
+      "statistics": {
+        "selectedSourceCount": 1040,
+        "cutSourceCount": 74,
+        "cutEntitySetSha256": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+        "cutSourceTypes": [
+          "bearingBlock",
+          "bracketArm",
+          "bracketSeat",
+          "column",
+          "columnBase",
+          "eaveBeam",
+          "flyRafter",
+          "foundation",
+          "groundLayer",
+          "interiorPost",
+          "panTile",
+          "purlin",
+          "rafter",
+          "ridgeTile",
+          "roofBoard",
+          "terrace",
+          "tieBeam",
+          "wall"
+        ],
+        "cutRegionCount": 94,
+        "cutRegionCountByType": {
+          "bearingBlock": 2,
+          "bracketArm": 4,
+          "bracketSeat": 2,
+          "column": 2,
+          "columnBase": 8,
+          "eaveBeam": 2,
+          "flyRafter": 6,
+          "foundation": 6,
+          "groundLayer": 2,
+          "interiorPost": 5,
+          "panTile": 28,
+          "purlin": 7,
+          "rafter": 6,
+          "ridgeTile": 5,
+          "roofBoard": 2,
+          "terrace": 3,
+          "tieBeam": 1,
+          "wall": 3
+        },
+        "cutLineCount": 94,
+        "projectionTriangleCountDiagnostic": 495724,
+        "visibleProjectionLineCount": 683,
+        "depthProjectionSourceTypes": [
+          "bearingBlock",
+          "bracketArm",
+          "bracketSeat",
+          "column",
+          "columnBase",
+          "doorFrame",
+          "foundation",
+          "groundLayer",
+          "interiorPost",
+          "latticeWindow",
+          "purlin",
+          "step",
+          "terrace",
+          "tieBeam",
+          "wall"
+        ],
+        "openOrDangleCount": 0
+      }
+    },
+    {
+      "viewId": "longitudinalSection",
+      "path": "longitudinalSection.view-geometry.json.gz",
+      "sha256": "1452f5945b90078ccefdd6ab07e2c8fe37de3b3e287fac0cd61d191079818952",
+      "viewGeometrySha256": "4b8c40776306b2ebc46bc92a1ff7b8363c32b9e6eec4848d9ccb762bba9a180e",
+      "statistics": {
+        "selectedSourceCount": 634,
+        "cutSourceCount": 91,
+        "cutEntitySetSha256": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+        "cutSourceTypes": [
+          "groundLayer",
+          "interiorPost",
+          "purlin",
+          "rafter",
+          "ridgeTile",
+          "roofBoard",
+          "terrace",
+          "tieBeam"
+        ],
+        "cutRegionCount": 159,
+        "cutRegionCountByType": {
+          "groundLayer": 2,
+          "interiorPost": 2,
+          "purlin": 1,
+          "rafter": 32,
+          "ridgeTile": 85,
+          "roofBoard": 32,
+          "terrace": 3,
+          "tieBeam": 2
+        },
+        "cutLineCount": 159,
+        "projectionTriangleCountDiagnostic": 284886,
+        "visibleProjectionLineCount": 493,
+        "depthProjectionSourceTypes": [
+          "bearingBlock",
+          "bracketArm",
+          "bracketSeat",
+          "column",
+          "columnBase",
+          "doorFrame",
+          "doorLeaf",
+          "eaveBeam",
+          "foundation",
+          "groundLayer",
+          "interiorPost",
+          "purlin",
+          "step",
+          "terrace",
+          "wall"
+        ],
+        "openOrDangleCount": 0
+      }
+    }
+  ]
+}

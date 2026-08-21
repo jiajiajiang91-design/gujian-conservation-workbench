@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "demo-library-1",
+  "generatedFrom": "tools/build-demo-packages.mjs",
+  "projects": [
+    {
+      "demoId": "t0b-construction-sample",
+      "fileName": "t0b-construction-sample.gujian.zip",
+      "projectName": "团队构造样板演示",
+      "buildingName": "古建局部构造样板",
+      "limitationZh": "参数化构造样板，不是任何一座真实建筑的实测结果，尺寸不得用于修缮设计。",
+      "projectId": "6fb40a60-0d60-56ca-89ea-d155880af509",
+      "packageSha256": "46403f60ebcfa4cc5667d65c248afba38c966184e8e4dc1f69fde51c3079c67d",
+      "packageBytes": 30429967,
+      "evidenceCount": 2,
+      "missingEvidenceCount": 0,
+      "factCount": 45,
+      "issueCount": 2,
+      "geometryRevisionCount": 1,
+      "geometryObjectCount": 1258,
+      "artifactCount": 24,
+      "checkRunCount": 1,
+      "deliveryCount": 1,
+      "stagesCompleted": [
+        "任务书、资料与尺寸事实",
+        "三维模型",
+        "成组图纸与检查记录",
+        "代理交付草案"
+      ]
+    },
+    {
+      "demoId": "dai-loy-habs-ca-2071-w",
+      "fileName": "dai-loy-habs-ca-2071-w.gujian.zip",
+      "projectName": "Dai Loy 赌馆博物馆测绘归档",
+      "buildingName": "Dai Loy 主楼",
+      "limitationZh": "美国华人木构，不代表中国官式古建形制。它验证工程流程与制图质量，不证明中国古建构件识别能力。",
+      "projectId": "a1548db4-cfa6-5dff-9f71-e020d4487e59",
+      "packageSha256": "0131bf7b3c7a6229379a380b38b60aea4bc0f36f0d146ab7d3b761892fed18af",
+      "packageBytes": 2160957,
+      "evidenceCount": 7,
+      "missingEvidenceCount": 1,
+      "factCount": 12,
+      "issueCount": 7,
+      "geometryRevisionCount": 1,
+      "geometryObjectCount": 75,
+      "artifactCount": 22,
+      "checkRunCount": 1,
+      "deliveryCount": 1,
+      "stagesCompleted": [
+        "任务书、资料与尺寸事实",
+        "三维模型",
+        "成组图纸与检查记录",
+        "代理交付草案"
+      ]
+    },
+    {
+      "demoId": "gaodu-yuhuang-temple-main-hall",
+      "fileName": "gaodu-yuhuang-temple-main-hall.gujian.zip",
+      "projectName": "高都玉皇庙主殿现状记录",
+      "buildingName": "玉皇庙院内主殿",
+      "limitationZh": "全部尺寸由照片比例推算，无实测基准。成果只能作为草图参考，不能作为测绘成果使用。",
+      "projectId": "4d89aca9-358b-569a-8fe9-6291fa4c239a",
+      "packageSha256": "614c24a22420a98728960cdd74dd5120d47b24c754f11db4f18b0f55030a5833",
+      "packageBytes": 3559881,
+      "evidenceCount": 3,
+      "missingEvidenceCount": 2,
+      "factCount": 10,
+      "issueCount": 4,
+      "geometryRevisionCount": 1,
+      "geometryObjectCount": 1131,
+      "artifactCount": 20,
+      "checkRunCount": 1,
+      "deliveryCount": 1,
+      "stagesCompleted": [
+        "任务书、资料与尺寸事实",
+        "三维模型",
+        "成组图纸与检查记录",
+        "代理交付草案"
+      ]
+    }
+  ]
+}

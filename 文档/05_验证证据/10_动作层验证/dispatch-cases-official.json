@@ -1,0 +1,195 @@
+[
+  {
+    "text": "看看构件清单",
+    "expected": "switch_view"
+  },
+  {
+    "text": "切到实测基准",
+    "expected": "switch_view"
+  },
+  {
+    "text": "打开图纸那一页",
+    "expected": "switch_view"
+  },
+  {
+    "text": "给我看 P48 的照片",
+    "expected": "locate_evidence"
+  },
+  {
+    "text": "这个构件的依据在哪",
+    "expected": "locate_evidence"
+  },
+  {
+    "text": "点开檐柱的原始照片",
+    "expected": "locate_evidence"
+  },
+  {
+    "text": "现在进度怎么样了",
+    "expected": "query_job_progress"
+  },
+  {
+    "text": "图纸还要多久",
+    "expected": "query_job_progress"
+  },
+  {
+    "text": "现在在跑什么作业",
+    "expected": "query_job_progress"
+  },
+  {
+    "text": "泥道栱是什么",
+    "expected": "answer_question"
+  },
+  {
+    "text": "这个项目用的什么规范",
+    "expected": "answer_question"
+  },
+  {
+    "text": "为什么这里标了存疑",
+    "expected": "answer_question"
+  },
+  {
+    "text": "把 P48 的长度改成 620",
+    "expected": "propose_modification"
+  },
+  {
+    "text": "檐柱直径改成 300",
+    "expected": "propose_modification"
+  },
+  {
+    "text": "把台基高改成 860",
+    "expected": "propose_modification"
+  },
+  {
+    "text": "重新识别一遍",
+    "expected": "rerun_recognition"
+  },
+  {
+    "text": "这批构件识别得不对",
+    "expected": "rerun_recognition"
+  },
+  {
+    "text": "对檐柱的识别结果有疑问",
+    "expected": "rerun_recognition"
+  },
+  {
+    "text": "继续",
+    "expected": "advance_workflow"
+  },
+  {
+    "text": "往下走",
+    "expected": "advance_workflow"
+  },
+  {
+    "text": "可以进入下一步了",
+    "expected": "advance_workflow"
+  },
+  {
+    "text": "检查一下数据",
+    "expected": "run_data_check"
+  },
+  {
+    "text": "看看有没有问题",
+    "expected": "run_data_check"
+  },
+  {
+    "text": "跑一遍检查",
+    "expected": "run_data_check"
+  },
+  {
+    "text": "生成三维模型",
+    "expected": "generate_geometry"
+  },
+  {
+    "text": "更新一下三维",
+    "expected": "generate_geometry"
+  },
+  {
+    "text": "建一下模型",
+    "expected": "generate_geometry"
+  },
+  {
+    "text": "出图",
+    "expected": "generate_drawings"
+  },
+  {
+    "text": "生成图纸",
+    "expected": "generate_drawings"
+  },
+  {
+    "text": "开始画图",
+    "expected": "generate_drawings"
+  },
+  {
+    "text": "导出 PDF",
+    "expected": "export_deliverable"
+  },
+  {
+    "text": "导出 DXF",
+    "expected": "export_deliverable"
+  },
+  {
+    "text": "组一下交付包",
+    "expected": "export_deliverable"
+  },
+  {
+    "text": "写一份交付说明",
+    "expected": "draft_delivery_note"
+  },
+  {
+    "text": "起草交付说明",
+    "expected": "draft_delivery_note"
+  },
+  {
+    "text": "交付说明帮我生成一版",
+    "expected": "draft_delivery_note"
+  },
+  {
+    "text": "解析任务书",
+    "expected": "parse_task_brief"
+  },
+  {
+    "text": "盘点一下资料",
+    "expected": "parse_task_brief"
+  },
+  {
+    "text": "整理一下这些资料",
+    "expected": "parse_task_brief"
+  },
+  {
+    "text": "这个规范原文第几条说的",
+    "expected": "answer_question",
+    "note": "边界：只读回答"
+  },
+  {
+    "text": "你建议用什么比例",
+    "expected": "answer_question",
+    "note": "边界：只读回答"
+  },
+  {
+    "text": "什么是实测基准",
+    "expected": "answer_question",
+    "note": "边界：只读回答"
+  },
+  {
+    "text": "帮我分析一下这座殿的历史沿革",
+    "expected": "answer_question",
+    "note": "边界：只读回答"
+  },
+  {
+    "text": "把项目删了吧",
+    "expected": "answer_question",
+    "note": "边界：只读回答并拒绝，不触发动作"
+  },
+  {
+    "text": "这里漏了一个雀替，和右边那个对称的",
+    "expected": "marquee_correction"
+  },
+  {
+    "text": "框住的这块砖有裂缝，标一下",
+    "expected": "marquee_correction"
+  },
+  {
+    "text": "我圈的位置多识别了一根椽，去掉",
+    "expected": "marquee_correction"
+  }
+]

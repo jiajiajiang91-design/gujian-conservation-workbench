@@ -1,0 +1,1221 @@
+{
+  "schemaVersion": "t0b-v2-section-verification-1",
+  "status": "passed-section-geometry-only",
+  "qualification": "not-drawing-output",
+  "verifier": {
+    "version": "2.0.0",
+    "source": "verify_sections.py",
+    "sha256": "d38e7a7452055f955d47ecaf4eb57e4bd6a3ef83ffa03c46248eeb2405d5f06a"
+  },
+  "inputs": {
+    "fixture": {
+      "path": "t0b-v2-resolved-local-assembly.json",
+      "sha256": "926e88609f7ec2053af27e94fd8545a3c53ac28e8eef2a5af71209e17351c0c6"
+    },
+    "manifest": {
+      "path": "geometry-manifest.json",
+      "sha256": "6562bd2f29d59b7530fa5ce3f75b5d01ad14a62b735e5ed0ecac2279056ee7be"
+    },
+    "sourceMeshes": {
+      "path": "source-meshes.ndjson.gz",
+      "sha256": "06a92a7fe76c632fe4c7fddd0f27e53ed3fad46a57a047bfdcd7de08432d4c3c"
+    },
+    "sectionOutputs": [
+      {
+        "viewId": "floorPlan",
+        "path": "floorPlan.view-geometry.json.gz",
+        "sha256": "73cd3487c6b56b21dc6c9c069db6a4be6499ac88e6e171b91521ad308ce9979a"
+      },
+      {
+        "viewId": "transverseSection",
+        "path": "transverseSection.view-geometry.json.gz",
+        "sha256": "0ff097293ad90940f2ba009d2b777a3d5fe38158800f04fc18914d92bcc1556a"
+      },
+      {
+        "viewId": "longitudinalSection",
+        "path": "longitudinalSection.view-geometry.json.gz",
+        "sha256": "1452f5945b90078ccefdd6ab07e2c8fe37de3b3e287fac0cd61d191079818952"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "source schema",
+      "passed": true,
+      "actual": "t0b-v2-source-meshes-1",
+      "expected": "t0b-v2-source-meshes-1"
+    },
+    {
+      "name": "source mesh closure",
+      "passed": true,
+      "actual": 1166,
+      "expected": 1166
+    },
+    {
+      "name": "floorPlan geometry revision",
+      "passed": true,
+      "actual": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "expected": "3788f4e4-339c-568d-aa58-f74b36b23c5a"
+    },
+    {
+      "name": "floorPlan view contract revision",
+      "passed": true,
+      "actual": "04d00093-0bec-5f2a-bc68-def2a292c932",
+      "expected": "04d00093-0bec-5f2a-bc68-def2a292c932"
+    },
+    {
+      "name": "floorPlan qualification",
+      "passed": true,
+      "actual": "not-drawing-output",
+      "expected": "not-drawing-output"
+    },
+    {
+      "name": "floorPlan top level contract",
+      "passed": true,
+      "actual": {
+        "schemaVersion": "t0b-v2-view-geometry-1",
+        "status": "generated-not-qualified",
+        "qualification": "not-drawing-output",
+        "viewId": "floorPlan",
+        "unit": "mm",
+        "viewFrame": {
+          "clipDepthMm": [
+            0,
+            2600
+          ],
+          "clipRectMm": [
+            -3800,
+            -5400,
+            3800,
+            5000
+          ],
+          "depth": [
+            0,
+            0,
+            -1
+          ],
+          "modelToView": [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -1,
+              1800
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "origin": [
+            0,
+            0,
+            1800
+          ],
+          "right": [
+            1,
+            0,
+            0
+          ],
+          "up": [
+            0,
+            1,
+            0
+          ]
+        },
+        "section": {
+          "cutToleranceMm": 0.5,
+          "depthProjectionTypes": [
+            "columnBase",
+            "foundation",
+            "groundLayer",
+            "step",
+            "terrace"
+          ],
+          "mode": "cut-and-depth-projection",
+          "planeNormal": [
+            0,
+            0,
+            1
+          ],
+          "planeOrigin": [
+            0,
+            0,
+            1800
+          ],
+          "retainedDirection": [
+            0,
+            0,
+            -1
+          ],
+          "stabilityProbeMm": 0.5
+        }
+      },
+      "expected": {
+        "schemaVersion": "t0b-v2-view-geometry-1",
+        "status": "generated-not-qualified",
+        "qualification": "not-drawing-output",
+        "viewId": "floorPlan",
+        "unit": "mm",
+        "viewFrame": {
+          "origin": [
+            0,
+            0,
+            1800
+          ],
+          "right": [
+            1,
+            0,
+            0
+          ],
+          "up": [
+            0,
+            1,
+            0
+          ],
+          "depth": [
+            0,
+            0,
+            -1
+          ],
+          "modelToView": [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -1,
+              1800
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "clipRectMm": [
+            -3800,
+            -5400,
+            3800,
+            5000
+          ],
+          "clipDepthMm": [
+            0,
+            2600
+          ]
+        },
+        "section": {
+          "mode": "cut-and-depth-projection",
+          "planeOrigin": [
+            0,
+            0,
+            1800
+          ],
+          "planeNormal": [
+            0,
+            0,
+            1
+          ],
+          "retainedDirection": [
+            0,
+            0,
+            -1
+          ],
+          "cutToleranceMm": 0.5,
+          "stabilityProbeMm": 0.5,
+          "depthProjectionTypes": [
+            "columnBase",
+            "foundation",
+            "groundLayer",
+            "step",
+            "terrace"
+          ]
+        }
+      }
+    },
+    {
+      "name": "floorPlan view geometry hash",
+      "passed": true,
+      "actual": "e494c156e7ed2b2837940319c00a951b9f028cc8f29bdb27aa3f68edfdfee4e9",
+      "expected": "e494c156e7ed2b2837940319c00a951b9f028cc8f29bdb27aa3f68edfdfee4e9"
+    },
+    {
+      "name": "floorPlan unique structural line ids",
+      "passed": true,
+      "actual": 425,
+      "expected": 425
+    },
+    {
+      "name": "floorPlan structural line records",
+      "passed": true,
+      "actual": 425,
+      "expected": 425
+    },
+    {
+      "name": "floorPlan projection 2d 3d binding",
+      "passed": true,
+      "actual": 399,
+      "expected": 399
+    },
+    {
+      "name": "floorPlan cut region boundary closure",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "floorPlan cut line statistic",
+      "passed": true,
+      "actual": 26,
+      "expected": 26
+    },
+    {
+      "name": "floorPlan cut region statistic",
+      "passed": true,
+      "actual": 26,
+      "expected": 26
+    },
+    {
+      "name": "floorPlan cut line semantics",
+      "passed": true,
+      "actual": 26,
+      "expected": 26
+    },
+    {
+      "name": "floorPlan cut region material semantics",
+      "passed": true,
+      "actual": 26,
+      "expected": 26
+    },
+    {
+      "name": "floorPlan independent cut boundary hash",
+      "passed": true,
+      "actual": "f0457452b009a306b67743f1ffc3cf105f2cac92394f5cf6da73a93f67920237",
+      "expected": "f0457452b009a306b67743f1ffc3cf105f2cac92394f5cf6da73a93f67920237"
+    },
+    {
+      "name": "floorPlan cut topology count",
+      "passed": true,
+      "actual": 26,
+      "expected": 26
+    },
+    {
+      "name": "floorPlan independent cut entity set",
+      "passed": true,
+      "actual": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+      "expected": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e"
+    },
+    {
+      "name": "floorPlan independent cut regions by type",
+      "passed": true,
+      "actual": {
+        "column": 4,
+        "doorFrame": 2,
+        "doorLeaf": 6,
+        "latticeWindow": 8,
+        "wall": 6
+      },
+      "expected": {
+        "column": 4,
+        "doorFrame": 2,
+        "doorLeaf": 6,
+        "latticeWindow": 8,
+        "wall": 6
+      }
+    },
+    {
+      "name": "floorPlan frozen cut entity set",
+      "passed": true,
+      "actual": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+      "expected": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e"
+    },
+    {
+      "name": "floorPlan frozen cut regions by type",
+      "passed": true,
+      "actual": {
+        "column": 4,
+        "doorFrame": 2,
+        "doorLeaf": 6,
+        "latticeWindow": 8,
+        "wall": 6
+      },
+      "expected": {
+        "column": 4,
+        "doorFrame": 2,
+        "doorLeaf": 6,
+        "latticeWindow": 8,
+        "wall": 6
+      }
+    },
+    {
+      "name": "floorPlan projection type boundary",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "floorPlan required relationship types",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "floorPlan projection source coverage",
+      "passed": true,
+      "actual": 399,
+      "expected": 399
+    },
+    {
+      "name": "floorPlan source edge coverage",
+      "passed": true,
+      "actual": 399,
+      "expected": 399
+    },
+    {
+      "name": "floorPlan independent exact occlusion",
+      "passed": true,
+      "actual": 399,
+      "expected": 399
+    },
+    {
+      "name": "transverseSection geometry revision",
+      "passed": true,
+      "actual": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "expected": "3788f4e4-339c-568d-aa58-f74b36b23c5a"
+    },
+    {
+      "name": "transverseSection view contract revision",
+      "passed": true,
+      "actual": "04d00093-0bec-5f2a-bc68-def2a292c932",
+      "expected": "04d00093-0bec-5f2a-bc68-def2a292c932"
+    },
+    {
+      "name": "transverseSection qualification",
+      "passed": true,
+      "actual": "not-drawing-output",
+      "expected": "not-drawing-output"
+    },
+    {
+      "name": "transverseSection top level contract",
+      "passed": true,
+      "actual": {
+        "schemaVersion": "t0b-v2-view-geometry-1",
+        "status": "generated-not-qualified",
+        "qualification": "not-drawing-output",
+        "viewId": "transverseSection",
+        "unit": "mm",
+        "viewFrame": {
+          "clipDepthMm": [
+            0,
+            5360
+          ],
+          "clipRectMm": [
+            -5000,
+            -1000,
+            5400,
+            8700
+          ],
+          "depth": [
+            1,
+            0,
+            0
+          ],
+          "modelToView": [
+            [
+              0,
+              -1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              0,
+              0,
+              1750
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "origin": [
+            -1750,
+            0,
+            0
+          ],
+          "right": [
+            0,
+            -1,
+            0
+          ],
+          "up": [
+            0,
+            0,
+            1
+          ]
+        },
+        "section": {
+          "anchorEntityId": "094027ab-3397-5117-bad8-81c07d961879",
+          "cutToleranceMm": 0.5,
+          "depthProjectionTypes": [
+            "bearingBlock",
+            "bracketArm",
+            "bracketSeat",
+            "column",
+            "columnBase",
+            "doorFrame",
+            "doorLeaf",
+            "eaveBeam",
+            "foundation",
+            "groundLayer",
+            "interiorPost",
+            "latticeWindow",
+            "purlin",
+            "step",
+            "terrace",
+            "tieBeam",
+            "wall"
+          ],
+          "mode": "cut-and-depth-projection",
+          "planeNormal": [
+            1,
+            0,
+            0
+          ],
+          "planeOrigin": [
+            -1750,
+            0,
+            0
+          ],
+          "retainedDirection": [
+            1,
+            0,
+            0
+          ],
+          "stabilityProbeMm": 0.5
+        }
+      },
+      "expected": {
+        "schemaVersion": "t0b-v2-view-geometry-1",
+        "status": "generated-not-qualified",
+        "qualification": "not-drawing-output",
+        "viewId": "transverseSection",
+        "unit": "mm",
+        "viewFrame": {
+          "origin": [
+            -1750,
+            0,
+            0
+          ],
+          "right": [
+            0,
+            -1,
+            0
+          ],
+          "up": [
+            0,
+            0,
+            1
+          ],
+          "depth": [
+            1,
+            0,
+            0
+          ],
+          "modelToView": [
+            [
+              0,
+              -1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              0,
+              0,
+              1750
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "clipRectMm": [
+            -5000,
+            -1000,
+            5400,
+            8700
+          ],
+          "clipDepthMm": [
+            0,
+            5360
+          ]
+        },
+        "section": {
+          "mode": "cut-and-depth-projection",
+          "planeOrigin": [
+            -1750,
+            0,
+            0
+          ],
+          "planeNormal": [
+            1,
+            0,
+            0
+          ],
+          "retainedDirection": [
+            1,
+            0,
+            0
+          ],
+          "cutToleranceMm": 0.5,
+          "stabilityProbeMm": 0.5,
+          "anchorEntityId": "094027ab-3397-5117-bad8-81c07d961879",
+          "depthProjectionTypes": [
+            "bearingBlock",
+            "bracketArm",
+            "bracketSeat",
+            "column",
+            "columnBase",
+            "doorFrame",
+            "doorLeaf",
+            "eaveBeam",
+            "foundation",
+            "groundLayer",
+            "interiorPost",
+            "latticeWindow",
+            "purlin",
+            "step",
+            "terrace",
+            "tieBeam",
+            "wall"
+          ]
+        }
+      }
+    },
+    {
+      "name": "transverseSection view geometry hash",
+      "passed": true,
+      "actual": "abccd14cd82fae3cb2cb094e396ab95136ca00d2b4aa04e87919335bad20d713",
+      "expected": "abccd14cd82fae3cb2cb094e396ab95136ca00d2b4aa04e87919335bad20d713"
+    },
+    {
+      "name": "transverseSection unique structural line ids",
+      "passed": true,
+      "actual": 777,
+      "expected": 777
+    },
+    {
+      "name": "transverseSection structural line records",
+      "passed": true,
+      "actual": 777,
+      "expected": 777
+    },
+    {
+      "name": "transverseSection projection 2d 3d binding",
+      "passed": true,
+      "actual": 683,
+      "expected": 683
+    },
+    {
+      "name": "transverseSection cut region boundary closure",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "transverseSection cut line statistic",
+      "passed": true,
+      "actual": 94,
+      "expected": 94
+    },
+    {
+      "name": "transverseSection cut region statistic",
+      "passed": true,
+      "actual": 94,
+      "expected": 94
+    },
+    {
+      "name": "transverseSection cut line semantics",
+      "passed": true,
+      "actual": 94,
+      "expected": 94
+    },
+    {
+      "name": "transverseSection cut region material semantics",
+      "passed": true,
+      "actual": 94,
+      "expected": 94
+    },
+    {
+      "name": "transverseSection independent cut boundary hash",
+      "passed": true,
+      "actual": "4d1d51bb05878425ec036cb04956ded472d2da6ae91972dc7d8a498ebc5a1c76",
+      "expected": "4d1d51bb05878425ec036cb04956ded472d2da6ae91972dc7d8a498ebc5a1c76"
+    },
+    {
+      "name": "transverseSection cut topology count",
+      "passed": true,
+      "actual": 94,
+      "expected": 94
+    },
+    {
+      "name": "transverseSection independent cut entity set",
+      "passed": true,
+      "actual": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+      "expected": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab"
+    },
+    {
+      "name": "transverseSection independent cut regions by type",
+      "passed": true,
+      "actual": {
+        "bearingBlock": 2,
+        "bracketArm": 4,
+        "bracketSeat": 2,
+        "column": 2,
+        "columnBase": 8,
+        "eaveBeam": 2,
+        "flyRafter": 6,
+        "foundation": 6,
+        "groundLayer": 2,
+        "interiorPost": 5,
+        "panTile": 28,
+        "purlin": 7,
+        "rafter": 6,
+        "ridgeTile": 5,
+        "roofBoard": 2,
+        "terrace": 3,
+        "tieBeam": 1,
+        "wall": 3
+      },
+      "expected": {
+        "bearingBlock": 2,
+        "bracketArm": 4,
+        "bracketSeat": 2,
+        "column": 2,
+        "columnBase": 8,
+        "eaveBeam": 2,
+        "flyRafter": 6,
+        "foundation": 6,
+        "groundLayer": 2,
+        "interiorPost": 5,
+        "panTile": 28,
+        "purlin": 7,
+        "rafter": 6,
+        "ridgeTile": 5,
+        "roofBoard": 2,
+        "terrace": 3,
+        "tieBeam": 1,
+        "wall": 3
+      }
+    },
+    {
+      "name": "transverseSection frozen cut entity set",
+      "passed": true,
+      "actual": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+      "expected": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab"
+    },
+    {
+      "name": "transverseSection frozen cut regions by type",
+      "passed": true,
+      "actual": {
+        "bearingBlock": 2,
+        "bracketArm": 4,
+        "bracketSeat": 2,
+        "column": 2,
+        "columnBase": 8,
+        "eaveBeam": 2,
+        "flyRafter": 6,
+        "foundation": 6,
+        "groundLayer": 2,
+        "interiorPost": 5,
+        "panTile": 28,
+        "purlin": 7,
+        "rafter": 6,
+        "ridgeTile": 5,
+        "roofBoard": 2,
+        "terrace": 3,
+        "tieBeam": 1,
+        "wall": 3
+      },
+      "expected": {
+        "bearingBlock": 2,
+        "bracketArm": 4,
+        "bracketSeat": 2,
+        "column": 2,
+        "columnBase": 8,
+        "eaveBeam": 2,
+        "flyRafter": 6,
+        "foundation": 6,
+        "groundLayer": 2,
+        "interiorPost": 5,
+        "panTile": 28,
+        "purlin": 7,
+        "rafter": 6,
+        "ridgeTile": 5,
+        "roofBoard": 2,
+        "terrace": 3,
+        "tieBeam": 1,
+        "wall": 3
+      }
+    },
+    {
+      "name": "transverseSection projection type boundary",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "transverseSection required relationship types",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "transverseSection projection source coverage",
+      "passed": true,
+      "actual": 683,
+      "expected": 683
+    },
+    {
+      "name": "transverseSection source edge coverage",
+      "passed": true,
+      "actual": 683,
+      "expected": 683
+    },
+    {
+      "name": "transverseSection independent exact occlusion",
+      "passed": true,
+      "actual": 683,
+      "expected": 683
+    },
+    {
+      "name": "longitudinalSection geometry revision",
+      "passed": true,
+      "actual": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "expected": "3788f4e4-339c-568d-aa58-f74b36b23c5a"
+    },
+    {
+      "name": "longitudinalSection view contract revision",
+      "passed": true,
+      "actual": "04d00093-0bec-5f2a-bc68-def2a292c932",
+      "expected": "04d00093-0bec-5f2a-bc68-def2a292c932"
+    },
+    {
+      "name": "longitudinalSection qualification",
+      "passed": true,
+      "actual": "not-drawing-output",
+      "expected": "not-drawing-output"
+    },
+    {
+      "name": "longitudinalSection top level contract",
+      "passed": true,
+      "actual": {
+        "schemaVersion": "t0b-v2-view-geometry-1",
+        "status": "generated-not-qualified",
+        "qualification": "not-drawing-output",
+        "viewId": "longitudinalSection",
+        "unit": "mm",
+        "viewFrame": {
+          "clipDepthMm": [
+            0,
+            5180
+          ],
+          "clipRectMm": [
+            -3800,
+            -1000,
+            3800,
+            8700
+          ],
+          "depth": [
+            0,
+            -1,
+            0
+          ],
+          "modelToView": [
+            [
+              -1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              -1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ],
+          "right": [
+            -1,
+            0,
+            0
+          ],
+          "up": [
+            0,
+            0,
+            1
+          ]
+        },
+        "section": {
+          "cutToleranceMm": 0.5,
+          "depthProjectionTypes": [
+            "bearingBlock",
+            "bracketArm",
+            "bracketSeat",
+            "column",
+            "columnBase",
+            "doorFrame",
+            "doorLeaf",
+            "eaveBeam",
+            "foundation",
+            "groundLayer",
+            "interiorPost",
+            "latticeWindow",
+            "purlin",
+            "step",
+            "terrace",
+            "tieBeam",
+            "wall"
+          ],
+          "foundationLevelMode": "projected-reference-not-cut",
+          "mode": "cut-and-depth-projection",
+          "planeNormal": [
+            0,
+            1,
+            0
+          ],
+          "planeOrigin": [
+            0,
+            0,
+            0
+          ],
+          "retainedDirection": [
+            0,
+            -1,
+            0
+          ],
+          "stabilityProbeMm": 0.5
+        }
+      },
+      "expected": {
+        "schemaVersion": "t0b-v2-view-geometry-1",
+        "status": "generated-not-qualified",
+        "qualification": "not-drawing-output",
+        "viewId": "longitudinalSection",
+        "unit": "mm",
+        "viewFrame": {
+          "origin": [
+            0,
+            0,
+            0
+          ],
+          "right": [
+            -1,
+            0,
+            0
+          ],
+          "up": [
+            0,
+            0,
+            1
+          ],
+          "depth": [
+            0,
+            -1,
+            0
+          ],
+          "modelToView": [
+            [
+              -1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              -1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "clipRectMm": [
+            -3800,
+            -1000,
+            3800,
+            8700
+          ],
+          "clipDepthMm": [
+            0,
+            5180
+          ]
+        },
+        "section": {
+          "mode": "cut-and-depth-projection",
+          "planeOrigin": [
+            0,
+            0,
+            0
+          ],
+          "planeNormal": [
+            0,
+            1,
+            0
+          ],
+          "retainedDirection": [
+            0,
+            -1,
+            0
+          ],
+          "cutToleranceMm": 0.5,
+          "stabilityProbeMm": 0.5,
+          "foundationLevelMode": "projected-reference-not-cut",
+          "depthProjectionTypes": [
+            "bearingBlock",
+            "bracketArm",
+            "bracketSeat",
+            "column",
+            "columnBase",
+            "doorFrame",
+            "doorLeaf",
+            "eaveBeam",
+            "foundation",
+            "groundLayer",
+            "interiorPost",
+            "latticeWindow",
+            "purlin",
+            "step",
+            "terrace",
+            "tieBeam",
+            "wall"
+          ]
+        }
+      }
+    },
+    {
+      "name": "longitudinalSection view geometry hash",
+      "passed": true,
+      "actual": "4b8c40776306b2ebc46bc92a1ff7b8363c32b9e6eec4848d9ccb762bba9a180e",
+      "expected": "4b8c40776306b2ebc46bc92a1ff7b8363c32b9e6eec4848d9ccb762bba9a180e"
+    },
+    {
+      "name": "longitudinalSection unique structural line ids",
+      "passed": true,
+      "actual": 652,
+      "expected": 652
+    },
+    {
+      "name": "longitudinalSection structural line records",
+      "passed": true,
+      "actual": 652,
+      "expected": 652
+    },
+    {
+      "name": "longitudinalSection projection 2d 3d binding",
+      "passed": true,
+      "actual": 493,
+      "expected": 493
+    },
+    {
+      "name": "longitudinalSection cut region boundary closure",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "longitudinalSection cut line statistic",
+      "passed": true,
+      "actual": 159,
+      "expected": 159
+    },
+    {
+      "name": "longitudinalSection cut region statistic",
+      "passed": true,
+      "actual": 159,
+      "expected": 159
+    },
+    {
+      "name": "longitudinalSection cut line semantics",
+      "passed": true,
+      "actual": 159,
+      "expected": 159
+    },
+    {
+      "name": "longitudinalSection cut region material semantics",
+      "passed": true,
+      "actual": 159,
+      "expected": 159
+    },
+    {
+      "name": "longitudinalSection independent cut boundary hash",
+      "passed": true,
+      "actual": "c389f81b67150177f274e4894a328876f3ba5cf78b91f0e62ec947e8ec5c1ebc",
+      "expected": "c389f81b67150177f274e4894a328876f3ba5cf78b91f0e62ec947e8ec5c1ebc"
+    },
+    {
+      "name": "longitudinalSection cut topology count",
+      "passed": true,
+      "actual": 159,
+      "expected": 159
+    },
+    {
+      "name": "longitudinalSection independent cut entity set",
+      "passed": true,
+      "actual": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+      "expected": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e"
+    },
+    {
+      "name": "longitudinalSection independent cut regions by type",
+      "passed": true,
+      "actual": {
+        "groundLayer": 2,
+        "interiorPost": 2,
+        "purlin": 1,
+        "rafter": 32,
+        "ridgeTile": 85,
+        "roofBoard": 32,
+        "terrace": 3,
+        "tieBeam": 2
+      },
+      "expected": {
+        "groundLayer": 2,
+        "interiorPost": 2,
+        "purlin": 1,
+        "rafter": 32,
+        "ridgeTile": 85,
+        "roofBoard": 32,
+        "terrace": 3,
+        "tieBeam": 2
+      }
+    },
+    {
+      "name": "longitudinalSection frozen cut entity set",
+      "passed": true,
+      "actual": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+      "expected": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e"
+    },
+    {
+      "name": "longitudinalSection frozen cut regions by type",
+      "passed": true,
+      "actual": {
+        "groundLayer": 2,
+        "interiorPost": 2,
+        "purlin": 1,
+        "rafter": 32,
+        "ridgeTile": 85,
+        "roofBoard": 32,
+        "terrace": 3,
+        "tieBeam": 2
+      },
+      "expected": {
+        "groundLayer": 2,
+        "interiorPost": 2,
+        "purlin": 1,
+        "rafter": 32,
+        "ridgeTile": 85,
+        "roofBoard": 32,
+        "terrace": 3,
+        "tieBeam": 2
+      }
+    },
+    {
+      "name": "longitudinalSection projection type boundary",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "longitudinalSection required relationship types",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "longitudinalSection projection source coverage",
+      "passed": true,
+      "actual": 493,
+      "expected": 493
+    },
+    {
+      "name": "longitudinalSection source edge coverage",
+      "passed": true,
+      "actual": 493,
+      "expected": 493
+    },
+    {
+      "name": "longitudinalSection independent exact occlusion",
+      "passed": true,
+      "actual": 493,
+      "expected": 493
+    }
+  ]
+}

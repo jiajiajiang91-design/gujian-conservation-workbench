@@ -1,0 +1,69 @@
+/* 设计令牌（07 界面视觉规范第 2、3、4 节）
+   组件与页面只引用变量，不写字面色值与字面尺寸。 */
+
+:root {
+  /* 表 1 基础色 */
+  --bg-page: #F5F6F8;
+  --bg-panel: #FFFFFF;
+  --bg-subtle: #F9FAFB;
+  --text-primary: #101828;
+  --text-secondary: #667085;
+  --text-muted: #98A2B3;
+  --border: #E4E7EC;
+  --border-strong: #D0D5DD;
+
+  /* 表 2 语义色，每项含浅底 */
+  --accent: #2563EB;
+  --accent-soft: #EFF4FF;
+  /* 主按钮悬停加深 8%、按下加深 12%（第 5.1 节） */
+  --accent-hover: #1D4FD8;
+  --accent-active: #1A45C0;
+  --on-accent: #FFFFFF;
+  --success: #067647;
+  --success-soft: #ECFDF3;
+  --warning: #B54708;
+  --warning-soft: #FFFAEB;
+  --danger: #B42318;
+  --danger-soft: #FEF3F2;
+
+  /* 表 3 来源标记色 */
+  --src-measured: #067647;
+  --src-model: #7A5AF8;
+  --src-rule: #0E7090;
+  --src-human: #101828;
+  --src-demo: #98A2B3;
+
+  /* 第 3 节字阶 */
+  --font-sans: "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: Consolas, "SFMono-Regular", monospace;
+  --text-title: 600 18px/26px var(--font-sans);
+  --text-section: 600 15px/22px var(--font-sans);
+  --text-body: 400 14px/22px var(--font-sans);
+  --text-note: 400 13px/20px var(--font-sans);
+  --text-label: 500 12px/16px var(--font-sans);
+  --text-numeric: 400 13px/20px var(--font-mono);
+
+  /* 第 4 节间距，只取 4 的倍数六档 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* 第 4 节形态规格 */
+  --radius-panel: 10px;
+  --radius-control: 7px;
+  --radius-pill: 999px;
+  --overlay-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+
+  /* 第 6 节布局尺寸 */
+  --topbar-height: 56px;
+  --left-column: 240px;
+  --left-item-height: 36px;
+  --center-min: 640px;
+  --right-column: 380px;
+  --control-height: 36px;
+  --row-height: 44px;
+  --header-row-height: 40px;
+}

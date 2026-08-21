@@ -1,0 +1,1570 @@
+{
+  "schemaVersion": "t0-geometry-output-1",
+  "projectId": "1c5e4df0-c52b-5c09-b896-5dd79d6897fe",
+  "specHash": "328cb07efa23ec186172074c38bf11018b904adf07d125115f3471685556e21c",
+  "producerType": "demo",
+  "fixtureId": "t0-minimal-hall-v1",
+  "objects": [
+    {
+      "key": "slab:ground",
+      "entity_id": "22808c68-f9a5-5403-81b5-763d6153800b",
+      "ifc_guid": "0YW8ne_QLK0u6rTZrXKu0B",
+      "ifc_class": "IfcSlab",
+      "name": "台基",
+      "center_mm": [
+        5700.0,
+        3600.0,
+        150.0
+      ],
+      "size_mm": [
+        12200.0,
+        8000.0,
+        300.0
+      ],
+      "colour": [
+        176,
+        170,
+        158
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:south:0",
+      "entity_id": "cefb7234-6ea7-55f8-901e-8ea649b1e3dc",
+      "ifc_guid": "3E_t8qRgTL_90UZgP9iUFS",
+      "ifc_class": "IfcColumn",
+      "name": "south column 1",
+      "center_mm": [
+        0.0,
+        0.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:south:1",
+      "entity_id": "0335f500-7699-597a-9f4c-87fe9bfd9625",
+      "ifc_guid": "03DVK0TfbPUfzCX$wR$POb",
+      "ifc_class": "IfcColumn",
+      "name": "south column 2",
+      "center_mm": [
+        2100.0,
+        0.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:south:2",
+      "entity_id": "5438a422-86c4-5e0c-83f5-477b07df9ba0",
+      "ifc_guid": "1KEAGYXiHU38FrHti7tvkW",
+      "ifc_class": "IfcColumn",
+      "name": "south column 3",
+      "center_mm": [
+        4500.0,
+        0.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:south:3",
+      "entity_id": "5c7341c3-8e6b-5ae4-b9f2-97d19413d4be",
+      "ifc_guid": "1SSq73ZcjQvBdobz6K4zI_",
+      "ifc_class": "IfcColumn",
+      "name": "south column 4",
+      "center_mm": [
+        7200.0,
+        0.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:south:4",
+      "entity_id": "5b1eb1e3-5e55-55f3-9622-8e85bf75f314",
+      "ifc_guid": "1R7h7ZNbLLyvOYZeM$TVCK",
+      "ifc_class": "IfcColumn",
+      "name": "south column 5",
+      "center_mm": [
+        9600.0,
+        0.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:south:5",
+      "entity_id": "d05b4086-7257-5c2b-881e-dcdd8e7e7fdd",
+      "ifc_guid": "3GMq26SbTSAuWUtDsEVd$T",
+      "ifc_class": "IfcColumn",
+      "name": "south column 6",
+      "center_mm": [
+        11400.0,
+        0.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:north:0",
+      "entity_id": "18562773-207f-5e1f-8f55-e01d6696855e",
+      "ifc_guid": "0OLYTp87zU7uzLu1rcbeLU",
+      "ifc_class": "IfcColumn",
+      "name": "north column 1",
+      "center_mm": [
+        0.0,
+        7200.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:north:1",
+      "entity_id": "0f3f4255-9b63-5cf9-91e1-c8c61974e583",
+      "ifc_guid": "0FFq9LcsDS_P7XoCOPTEM3",
+      "ifc_class": "IfcColumn",
+      "name": "north column 2",
+      "center_mm": [
+        2100.0,
+        7200.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:north:2",
+      "entity_id": "83faece0-43b7-559b-b9df-a58848f5d487",
+      "ifc_guid": "23_kpWGxTLcxdVfOX8zTI7",
+      "ifc_class": "IfcColumn",
+      "name": "north column 3",
+      "center_mm": [
+        4500.0,
+        7200.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:north:3",
+      "entity_id": "3ee26b2f-7891-5bf8-aa5d-fff405e55325",
+      "ifc_guid": "0_ucilU95R_AfT$$G5vLCb",
+      "ifc_class": "IfcColumn",
+      "name": "north column 4",
+      "center_mm": [
+        7200.0,
+        7200.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:north:4",
+      "entity_id": "51600ed9-f0ff-5fc6-8ba5-32b3fcc620de",
+      "ifc_guid": "1HO0xPyFzVnekbChFynY3U",
+      "ifc_class": "IfcColumn",
+      "name": "north column 5",
+      "center_mm": [
+        9600.0,
+        7200.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "column:north:5",
+      "entity_id": "6ead74ea-eae9-5a42-ad6a-a17a79b0c19a",
+      "ifc_guid": "1khNJgwkbQGgrgeNfviC6Q",
+      "ifc_class": "IfcColumn",
+      "name": "north column 6",
+      "center_mm": [
+        11400.0,
+        7200.0,
+        2250.0
+      ],
+      "size_mm": [
+        360.0,
+        360.0,
+        3900.0
+      ],
+      "colour": [
+        126,
+        76,
+        48
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:south:0",
+      "entity_id": "cb118595-0a66-558c-9d43-b08f1a3afaa6",
+      "ifc_guid": "3B4OML2cPLZ9r3i8yQElgc",
+      "ifc_class": "IfcBeam",
+      "name": "south beam 1",
+      "center_mm": [
+        1050.0,
+        0.0,
+        4040.0
+      ],
+      "size_mm": [
+        2100.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:south:1",
+      "entity_id": "5a87ed12-c51c-5ad1-825a-4a9172d7a5d4",
+      "ifc_guid": "1QX_qInHnQqO9QIf5orwNK",
+      "ifc_class": "IfcBeam",
+      "name": "south beam 2",
+      "center_mm": [
+        3300.0,
+        0.0,
+        4040.0
+      ],
+      "size_mm": [
+        2400.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:south:2",
+      "entity_id": "4bf1f513-cae8-5767-9acb-9d7bcace9bfa",
+      "ifc_guid": "1ByVKJokXNPvhBdNlApflw",
+      "ifc_class": "IfcBeam",
+      "name": "south beam 3",
+      "center_mm": [
+        5850.0,
+        0.0,
+        4040.0
+      ],
+      "size_mm": [
+        2700.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:south:3",
+      "entity_id": "a0c292b8-d3e1-5bbd-9d42-b255d6325215",
+      "ifc_guid": "2WmfAuq_5RlPr2ibNMCb8L",
+      "ifc_class": "IfcBeam",
+      "name": "south beam 4",
+      "center_mm": [
+        8400.0,
+        0.0,
+        4040.0
+      ],
+      "size_mm": [
+        2400.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:south:4",
+      "entity_id": "988e0b1b-c390-5532-a4fe-5c723a5c6cb1",
+      "ifc_guid": "2OZWiRmv1LCgJ_N78wN6on",
+      "ifc_class": "IfcBeam",
+      "name": "south beam 5",
+      "center_mm": [
+        10500.0,
+        0.0,
+        4040.0
+      ],
+      "size_mm": [
+        1800.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:north:0",
+      "entity_id": "09a18580-369b-5922-b620-8dc03ed91b97",
+      "ifc_guid": "09eOM0DfjP8hOWZS0_sHkN",
+      "ifc_class": "IfcBeam",
+      "name": "north beam 1",
+      "center_mm": [
+        1050.0,
+        7200.0,
+        4040.0
+      ],
+      "size_mm": [
+        2100.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:north:1",
+      "entity_id": "a439eedc-a258-561d-9a71-cb19945be0db",
+      "ifc_guid": "2aEUxSebXM7PfnoncKM_3R",
+      "ifc_class": "IfcBeam",
+      "name": "north beam 2",
+      "center_mm": [
+        3300.0,
+        7200.0,
+        4040.0
+      ],
+      "size_mm": [
+        2400.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:north:2",
+      "entity_id": "ca44273e-fe70-5984-b6a3-aaad0492e68c",
+      "ifc_guid": "3AH2S_$d1PXBQZggq4akQC",
+      "ifc_class": "IfcBeam",
+      "name": "north beam 3",
+      "center_mm": [
+        5850.0,
+        7200.0,
+        4040.0
+      ],
+      "size_mm": [
+        2700.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:north:3",
+      "entity_id": "8d598ec1-0499-533f-9642-1435732ed39b",
+      "ifc_guid": "2DMOx119bJFvP253LpBjER",
+      "ifc_class": "IfcBeam",
+      "name": "north beam 4",
+      "center_mm": [
+        8400.0,
+        7200.0,
+        4040.0
+      ],
+      "size_mm": [
+        2400.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:north:4",
+      "entity_id": "414fcee6-fea9-5aa7-81f7-56689d233260",
+      "ifc_guid": "11Jyxc$gbQfu7tLcYT8p9W",
+      "ifc_class": "IfcBeam",
+      "name": "north beam 5",
+      "center_mm": [
+        10500.0,
+        7200.0,
+        4040.0
+      ],
+      "size_mm": [
+        1800.0,
+        260.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:west",
+      "entity_id": "e04dfb06-8cb2-50c9-abef-cf4392d55100",
+      "ifc_guid": "3WJVi6ZB9GoQllpqEIrL40",
+      "ifc_class": "IfcBeam",
+      "name": "west tie beam",
+      "center_mm": [
+        0.0,
+        3600.0,
+        4040.0
+      ],
+      "size_mm": [
+        260.0,
+        7200.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "beam:east",
+      "entity_id": "8a9fc849-75e8-52dd-8ca8-6fc4c1eab8d7",
+      "ifc_guid": "2AdyX9TUXItOoeRyJ1whZN",
+      "ifc_class": "IfcBeam",
+      "name": "east tie beam",
+      "center_mm": [
+        11400.0,
+        3600.0,
+        4040.0
+      ],
+      "size_mm": [
+        260.0,
+        7200.0,
+        320.0
+      ],
+      "colour": [
+        112,
+        66,
+        42
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "opening:window:0",
+      "entity_id": "8b72b5a9-1ed4-5a4f-9178-f8567219224f",
+      "ifc_guid": "2BShMf7jHQJv5u_5Po6I9F",
+      "ifc_class": "IfcWindow",
+      "name": "front window 1",
+      "center_mm": [
+        3300.0,
+        90.0,
+        2150.0
+      ],
+      "size_mm": [
+        1400.0,
+        120.0,
+        1500.0
+      ],
+      "colour": [
+        72,
+        94,
+        108
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "opening:door:1",
+      "entity_id": "d53685d0-2269-58df-97f8-5bcbbfae66a6",
+      "ifc_guid": "3LDeNG8cbOtvVuMyk$hcQc",
+      "ifc_class": "IfcDoor",
+      "name": "front door 2",
+      "center_mm": [
+        5850.0,
+        90.0,
+        1700.0
+      ],
+      "size_mm": [
+        1800.0,
+        120.0,
+        2800.0
+      ],
+      "colour": [
+        92,
+        56,
+        36
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "opening:window:2",
+      "entity_id": "2a626a4f-156f-5602-8273-154c31bc7731",
+      "ifc_guid": "0gOcfF5MzM0e9p5Kmnl7Sn",
+      "ifc_class": "IfcWindow",
+      "name": "front window 3",
+      "center_mm": [
+        8400.0,
+        90.0,
+        2150.0
+      ],
+      "size_mm": [
+        1400.0,
+        120.0,
+        1500.0
+      ],
+      "colour": [
+        72,
+        94,
+        108
+      ],
+      "producer_type": "demo",
+      "type": "BoxObject"
+    },
+    {
+      "key": "roof:south",
+      "entity_id": "dca88a6b-3fa1-5032-a8f7-d0e48a7130f9",
+      "ifc_guid": "3Sg8fhFw5GCgZtqEIASJ3v",
+      "ifc_class": "IfcSlab",
+      "name": "南坡屋面",
+      "vertices_mm": [
+        [
+          -600.0,
+          -600.0,
+          4200.0
+        ],
+        [
+          12000.0,
+          -600.0,
+          4200.0
+        ],
+        [
+          12000.0,
+          3600.0,
+          6600.0
+        ],
+        [
+          -600.0,
+          3600.0,
+          6600.0
+        ],
+        [
+          -600.0,
+          -600.0,
+          4380.0
+        ],
+        [
+          12000.0,
+          -600.0,
+          4380.0
+        ],
+        [
+          12000.0,
+          3600.0,
+          6780.0
+        ],
+        [
+          -600.0,
+          3600.0,
+          6780.0
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          2,
+          1
+        ],
+        [
+          0,
+          3,
+          2
+        ],
+        [
+          4,
+          5,
+          6
+        ],
+        [
+          4,
+          6,
+          7
+        ],
+        [
+          0,
+          1,
+          5
+        ],
+        [
+          0,
+          5,
+          4
+        ],
+        [
+          1,
+          2,
+          6
+        ],
+        [
+          1,
+          6,
+          5
+        ],
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          2,
+          7,
+          6
+        ],
+        [
+          3,
+          0,
+          4
+        ],
+        [
+          3,
+          4,
+          7
+        ]
+      ],
+      "colour": [
+        92,
+        102,
+        112
+      ],
+      "producer_type": "demo",
+      "type": "MeshObject"
+    },
+    {
+      "key": "roof:north",
+      "entity_id": "7a08726d-4c58-507e-b062-44bd3444e713",
+      "ifc_guid": "1w279jJ5XGVh1YHBqqHESJ",
+      "ifc_class": "IfcSlab",
+      "name": "北坡屋面",
+      "vertices_mm": [
+        [
+          -600.0,
+          3600.0,
+          6600.0
+        ],
+        [
+          12000.0,
+          3600.0,
+          6600.0
+        ],
+        [
+          12000.0,
+          7800.0,
+          4200.0
+        ],
+        [
+          -600.0,
+          7800.0,
+          4200.0
+        ],
+        [
+          -600.0,
+          3600.0,
+          6780.0
+        ],
+        [
+          12000.0,
+          3600.0,
+          6780.0
+        ],
+        [
+          12000.0,
+          7800.0,
+          4380.0
+        ],
+        [
+          -600.0,
+          7800.0,
+          4380.0
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          2,
+          1
+        ],
+        [
+          0,
+          3,
+          2
+        ],
+        [
+          4,
+          5,
+          6
+        ],
+        [
+          4,
+          6,
+          7
+        ],
+        [
+          0,
+          1,
+          5
+        ],
+        [
+          0,
+          5,
+          4
+        ],
+        [
+          1,
+          2,
+          6
+        ],
+        [
+          1,
+          6,
+          5
+        ],
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          2,
+          7,
+          6
+        ],
+        [
+          3,
+          0,
+          4
+        ],
+        [
+          3,
+          4,
+          7
+        ]
+      ],
+      "colour": [
+        92,
+        102,
+        112
+      ],
+      "producer_type": "demo",
+      "type": "MeshObject"
+    }
+  ],
+  "views": {
+    "plan": [
+      {
+        "kind": "rect",
+        "x": 0,
+        "y": 0,
+        "width": 11400.0,
+        "height": 7200.0,
+        "layer": "A-WALL",
+        "entityId": "22808c68-f9a5-5403-81b5-763d6153800b"
+      },
+      {
+        "kind": "rect",
+        "x": -600.0,
+        "y": -600.0,
+        "width": 12600.0,
+        "height": 8400.0,
+        "layer": "A-ROOF",
+        "entityId": "dca88a6b-3fa1-5032-a8f7-d0e48a7130f9"
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            -600.0,
+            3600.0
+          ],
+          [
+            12000.0,
+            3600.0
+          ]
+        ],
+        "layer": "A-ROOF",
+        "entityId": "7a08726d-4c58-507e-b062-44bd3444e713",
+        "closed": false
+      },
+      {
+        "kind": "rect",
+        "x": 0.0,
+        "y": -130.0,
+        "width": 2100.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "cb118595-0a66-558c-9d43-b08f1a3afaa6"
+      },
+      {
+        "kind": "rect",
+        "x": 2100.0,
+        "y": -130.0,
+        "width": 2400.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "5a87ed12-c51c-5ad1-825a-4a9172d7a5d4"
+      },
+      {
+        "kind": "rect",
+        "x": 4500.0,
+        "y": -130.0,
+        "width": 2700.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "4bf1f513-cae8-5767-9acb-9d7bcace9bfa"
+      },
+      {
+        "kind": "rect",
+        "x": 7200.0,
+        "y": -130.0,
+        "width": 2400.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "a0c292b8-d3e1-5bbd-9d42-b255d6325215"
+      },
+      {
+        "kind": "rect",
+        "x": 9600.0,
+        "y": -130.0,
+        "width": 1800.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "988e0b1b-c390-5532-a4fe-5c723a5c6cb1"
+      },
+      {
+        "kind": "rect",
+        "x": 0.0,
+        "y": 7070.0,
+        "width": 2100.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "09a18580-369b-5922-b620-8dc03ed91b97"
+      },
+      {
+        "kind": "rect",
+        "x": 2100.0,
+        "y": 7070.0,
+        "width": 2400.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "a439eedc-a258-561d-9a71-cb19945be0db"
+      },
+      {
+        "kind": "rect",
+        "x": 4500.0,
+        "y": 7070.0,
+        "width": 2700.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "ca44273e-fe70-5984-b6a3-aaad0492e68c"
+      },
+      {
+        "kind": "rect",
+        "x": 7200.0,
+        "y": 7070.0,
+        "width": 2400.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "8d598ec1-0499-533f-9642-1435732ed39b"
+      },
+      {
+        "kind": "rect",
+        "x": 9600.0,
+        "y": 7070.0,
+        "width": 1800.0,
+        "height": 260.0,
+        "layer": "A-BEAM",
+        "entityId": "414fcee6-fea9-5aa7-81f7-56689d233260"
+      },
+      {
+        "kind": "rect",
+        "x": -130.0,
+        "y": 0,
+        "width": 260.0,
+        "height": 7200.0,
+        "layer": "A-BEAM",
+        "entityId": "e04dfb06-8cb2-50c9-abef-cf4392d55100"
+      },
+      {
+        "kind": "rect",
+        "x": 11270.0,
+        "y": 0,
+        "width": 260.0,
+        "height": 7200.0,
+        "layer": "A-BEAM",
+        "entityId": "8a9fc849-75e8-52dd-8ca8-6fc4c1eab8d7"
+      },
+      {
+        "kind": "rect",
+        "x": -180.0,
+        "y": -180.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "cefb7234-6ea7-55f8-901e-8ea649b1e3dc"
+      },
+      {
+        "kind": "rect",
+        "x": 1920.0,
+        "y": -180.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "0335f500-7699-597a-9f4c-87fe9bfd9625"
+      },
+      {
+        "kind": "rect",
+        "x": 4320.0,
+        "y": -180.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "5438a422-86c4-5e0c-83f5-477b07df9ba0"
+      },
+      {
+        "kind": "rect",
+        "x": 7020.0,
+        "y": -180.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "5c7341c3-8e6b-5ae4-b9f2-97d19413d4be"
+      },
+      {
+        "kind": "rect",
+        "x": 9420.0,
+        "y": -180.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "5b1eb1e3-5e55-55f3-9622-8e85bf75f314"
+      },
+      {
+        "kind": "rect",
+        "x": 11220.0,
+        "y": -180.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "d05b4086-7257-5c2b-881e-dcdd8e7e7fdd"
+      },
+      {
+        "kind": "rect",
+        "x": -180.0,
+        "y": 7020.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "18562773-207f-5e1f-8f55-e01d6696855e"
+      },
+      {
+        "kind": "rect",
+        "x": 1920.0,
+        "y": 7020.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "0f3f4255-9b63-5cf9-91e1-c8c61974e583"
+      },
+      {
+        "kind": "rect",
+        "x": 4320.0,
+        "y": 7020.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "83faece0-43b7-559b-b9df-a58848f5d487"
+      },
+      {
+        "kind": "rect",
+        "x": 7020.0,
+        "y": 7020.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "3ee26b2f-7891-5bf8-aa5d-fff405e55325"
+      },
+      {
+        "kind": "rect",
+        "x": 9420.0,
+        "y": 7020.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "51600ed9-f0ff-5fc6-8ba5-32b3fcc620de"
+      },
+      {
+        "kind": "rect",
+        "x": 11220.0,
+        "y": 7020.0,
+        "width": 360.0,
+        "height": 360.0,
+        "layer": "A-COLS",
+        "entityId": "6ead74ea-eae9-5a42-ad6a-a17a79b0c19a"
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            0.0,
+            -1200.0
+          ],
+          [
+            0.0,
+            8400.0
+          ]
+        ],
+        "layer": "A-GRID",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            2100.0,
+            -1200.0
+          ],
+          [
+            2100.0,
+            8400.0
+          ]
+        ],
+        "layer": "A-GRID",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            4500.0,
+            -1200.0
+          ],
+          [
+            4500.0,
+            8400.0
+          ]
+        ],
+        "layer": "A-GRID",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            7200.0,
+            -1200.0
+          ],
+          [
+            7200.0,
+            8400.0
+          ]
+        ],
+        "layer": "A-GRID",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            9600.0,
+            -1200.0
+          ],
+          [
+            9600.0,
+            8400.0
+          ]
+        ],
+        "layer": "A-GRID",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            11400.0,
+            -1200.0
+          ],
+          [
+            11400.0,
+            8400.0
+          ]
+        ],
+        "layer": "A-GRID",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            -1200.0,
+            0.0
+          ],
+          [
+            12600.0,
+            0.0
+          ]
+        ],
+        "layer": "A-GRID",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            -1200.0,
+            7200.0
+          ],
+          [
+            12600.0,
+            7200.0
+          ]
+        ],
+        "layer": "A-GRID",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            2600.0,
+            0.0
+          ],
+          [
+            4000.0,
+            0.0
+          ]
+        ],
+        "layer": "A-OPEN",
+        "entityId": "8b72b5a9-1ed4-5a4f-9178-f8567219224f",
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            4950.0,
+            0.0
+          ],
+          [
+            6750.0,
+            0.0
+          ]
+        ],
+        "layer": "A-OPEN",
+        "entityId": "d53685d0-2269-58df-97f8-5bcbbfae66a6",
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            7700.0,
+            0.0
+          ],
+          [
+            9100.0,
+            0.0
+          ]
+        ],
+        "layer": "A-OPEN",
+        "entityId": "2a626a4f-156f-5602-8273-154c31bc7731",
+        "closed": false
+      }
+    ],
+    "elevation": [
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            -400.0,
+            0.0
+          ],
+          [
+            11800.0,
+            0.0
+          ]
+        ],
+        "layer": "A-GROUND",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "rect",
+        "x": -400,
+        "y": 0,
+        "width": 12200.0,
+        "height": 300.0,
+        "layer": "A-WALL",
+        "entityId": "22808c68-f9a5-5403-81b5-763d6153800b"
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            -600.0,
+            4200.0
+          ],
+          [
+            5700.0,
+            6600.0
+          ],
+          [
+            12000.0,
+            4200.0
+          ]
+        ],
+        "layer": "A-ROOF",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "rect",
+        "x": -180.0,
+        "y": 300.0,
+        "width": 360.0,
+        "height": 3900.0,
+        "layer": "A-COLS",
+        "entityId": "cefb7234-6ea7-55f8-901e-8ea649b1e3dc"
+      },
+      {
+        "kind": "rect",
+        "x": 1920.0,
+        "y": 300.0,
+        "width": 360.0,
+        "height": 3900.0,
+        "layer": "A-COLS",
+        "entityId": "0335f500-7699-597a-9f4c-87fe9bfd9625"
+      },
+      {
+        "kind": "rect",
+        "x": 4320.0,
+        "y": 300.0,
+        "width": 360.0,
+        "height": 3900.0,
+        "layer": "A-COLS",
+        "entityId": "5438a422-86c4-5e0c-83f5-477b07df9ba0"
+      },
+      {
+        "kind": "rect",
+        "x": 7020.0,
+        "y": 300.0,
+        "width": 360.0,
+        "height": 3900.0,
+        "layer": "A-COLS",
+        "entityId": "5c7341c3-8e6b-5ae4-b9f2-97d19413d4be"
+      },
+      {
+        "kind": "rect",
+        "x": 9420.0,
+        "y": 300.0,
+        "width": 360.0,
+        "height": 3900.0,
+        "layer": "A-COLS",
+        "entityId": "5b1eb1e3-5e55-55f3-9622-8e85bf75f314"
+      },
+      {
+        "kind": "rect",
+        "x": 11220.0,
+        "y": 300.0,
+        "width": 360.0,
+        "height": 3900.0,
+        "layer": "A-COLS",
+        "entityId": "d05b4086-7257-5c2b-881e-dcdd8e7e7fdd"
+      },
+      {
+        "kind": "rect",
+        "x": 0,
+        "y": 3880.0,
+        "width": 11400.0,
+        "height": 320.0,
+        "layer": "A-BEAM",
+        "entityId": null
+      },
+      {
+        "kind": "rect",
+        "x": 2600.0,
+        "y": 1400.0,
+        "width": 1400.0,
+        "height": 1500.0,
+        "layer": "A-OPEN",
+        "entityId": "8b72b5a9-1ed4-5a4f-9178-f8567219224f"
+      },
+      {
+        "kind": "rect",
+        "x": 4950.0,
+        "y": 300.0,
+        "width": 1800.0,
+        "height": 2800.0,
+        "layer": "A-OPEN",
+        "entityId": "d53685d0-2269-58df-97f8-5bcbbfae66a6"
+      },
+      {
+        "kind": "rect",
+        "x": 7700.0,
+        "y": 1400.0,
+        "width": 1400.0,
+        "height": 1500.0,
+        "layer": "A-OPEN",
+        "entityId": "2a626a4f-156f-5602-8273-154c31bc7731"
+      }
+    ],
+    "section": [
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            -400.0,
+            0.0
+          ],
+          [
+            7600.0,
+            0.0
+          ]
+        ],
+        "layer": "A-GROUND",
+        "entityId": null,
+        "closed": false
+      },
+      {
+        "kind": "rect",
+        "x": -400,
+        "y": 0,
+        "width": 8000.0,
+        "height": 300.0,
+        "layer": "A-WALL",
+        "entityId": "22808c68-f9a5-5403-81b5-763d6153800b"
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            -600.0,
+            4200.0
+          ],
+          [
+            3600.0,
+            6600.0
+          ]
+        ],
+        "layer": "A-ROOF",
+        "entityId": "dca88a6b-3fa1-5032-a8f7-d0e48a7130f9",
+        "closed": false
+      },
+      {
+        "kind": "polyline",
+        "points": [
+          [
+            3600.0,
+            6600.0
+          ],
+          [
+            7800.0,
+            4200.0
+          ]
+        ],
+        "layer": "A-ROOF",
+        "entityId": "7a08726d-4c58-507e-b062-44bd3444e713",
+        "closed": false
+      },
+      {
+        "kind": "rect",
+        "x": -180.0,
+        "y": 300.0,
+        "width": 360.0,
+        "height": 3900.0,
+        "layer": "A-COLS",
+        "entityId": null
+      },
+      {
+        "kind": "rect",
+        "x": 7020.0,
+        "y": 300.0,
+        "width": 360.0,
+        "height": 3900.0,
+        "layer": "A-COLS",
+        "entityId": null
+      },
+      {
+        "kind": "rect",
+        "x": 0,
+        "y": 3880.0,
+        "width": 7200.0,
+        "height": 320.0,
+        "layer": "A-BEAM",
+        "entityId": null
+      }
+    ]
+  }
+}

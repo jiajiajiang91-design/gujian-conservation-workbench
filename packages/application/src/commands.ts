@@ -1,0 +1,321 @@
+import { z } from "zod";
+
+import {
+  BuildingSchema,
+  AuditEventSchema,
+  AssetRecordSchema,
+  FactEnvelopeSchema,
+  ObservationSchema,
+  HeritageEntitySchema,
+  ExclusionRecordSchema,
+  EvidenceSchema,
+  IsoDateTimeSchema,
+  ProjectSnapshotSchema,
+  ParseRecordSchema,
+  ModelCandidateSchema,
+  ModelRunSchema,
+  RuleRunSchema,
+  DecisionSchema,
+  IssueSchema,
+  ProjectSchema,
+  TaskDefinitionSchema,
+  Sha256Schema,
+  UuidSchema,
+  CadJobSchema,
+  GeometryRevisionSchema,
+  ProjectDrivenGeometrySpecSchema,
+  ArtifactRecordSchema,
+  ArtifactRequirementMatrixSchema,
+  CheckRunSchema,
+  DeliveryEvaluationSchema,
+  DeliveryDraftSchema,
+  ConceptEntrySchema,
+  ArchetypeSpecSchema,
+} from "@gujian/domain";
+
+const CommandHeaderSchema = z.object({
+  commandId: UuidSchema,
+  projectId: UuidSchema,
+  actorId: UuidSchema,
+  expectedRevisionId: UuidSchema.nullable(),
+  issuedAt: IsoDateTimeSchema,
+});
+
+export const CreateProjectCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CreateProject"),
+  expectedRevisionId: z.null(),
+  payload: z.object({
+    project: ProjectSchema,
+    building: BuildingSchema,
+  }).strict(),
+}).strict();
+
+export const CommitFactsCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitFacts"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    facts: z.array(FactEnvelopeSchema).min(1).max(1_000),
+  }).strict(),
+}).strict();
+
+// 现状记录（05 界面与交互形态 表 2）：可见残损、材料与状态判断，每条必须带证据引用
+export const CommitObservationsCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitObservations"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    observations: z.array(ObservationSchema).min(1).max(500),
+  }).strict(),
+}).strict();
+
+// 构件记录写入。此前 snapshot.entities 自建库起恒为空数组，应用层没有写入口，
+// 界面的构件清单读的是几何规格的产物。框选新增构件要有一张可写的表才有落点。
+export const CommitEntitiesCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitEntities"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    entities: z.array(HeritageEntitySchema).min(1).max(500),
+  }).strict(),
+}).strict();
+
+// 构件记录的修订。类别修改、位置调整、遮挡标记改的是已有那条记录本身，
+// 不是新写一条。此前这三类只写一条事实，构件记录原样不动：采纳了把类别
+// 改成撑栱之后，构件表仍显示待确认；位置调整之后，下一次框选命中仍按旧框判，
+// 等于位置没有调整过。事实那条仍然写，它承载来源与理由，两者不互相替代。
+export const ReviseEntitiesCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ReviseEntities"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    entities: z.array(HeritageEntitySchema).min(1).max(500),
+  }).strict(),
+}).strict();
+
+// 排除记录写入。用户判定不存在或不适用的对象进这里，重新识别按它过滤。
+export const CommitExclusionRecordsCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitExclusionRecords"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    records: z.array(ExclusionRecordSchema).min(1).max(200),
+  }).strict(),
+}).strict();
+
+export const ReplaceTaskDefinitionCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ReplaceTaskDefinition"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    taskDefinition: TaskDefinitionSchema,
+    supersedesTaskDefinitionId: UuidSchema,
+  }).strict(),
+}).strict();
+
+export const ImportProjectSnapshotCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ImportProjectSnapshot"),
+  expectedRevisionId: z.null(),
+  payload: z.object({
+    snapshot: ProjectSnapshotSchema,
+    sourceRevisionId: UuidSchema,
+    sourceAuditHeadHash: Sha256Schema,
+    sourceAuditEvents: z.array(AuditEventSchema).max(100_000),
+    assets: z.array(AssetRecordSchema).max(1_000),
+    modelRuns: z.array(ModelRunSchema).max(100_000),
+    ruleRuns: z.array(RuleRunSchema).max(100_000),
+    decisions: z.array(DecisionSchema).max(100_000),
+    cadJobs: z.array(CadJobSchema).max(100_000).default([]),
+    artifactRequirementMatrices: z.array(ArtifactRequirementMatrixSchema).max(100_000).default([]),
+    artifacts: z.array(ArtifactRecordSchema).max(100_000).default([]),
+    checkRuns: z.array(CheckRunSchema).max(100_000).default([]),
+    deliveryEvaluations: z.array(DeliveryEvaluationSchema).max(100_000).default([]),
+    deliveries: z.array(DeliveryDraftSchema).max(100_000).default([]),
+    conceptEntries: z.array(ConceptEntrySchema).max(2_000).default([]),
+    assetSessionId: UuidSchema.nullable(),
+    packageHash: Sha256Schema,
+  }).strict(),
+}).strict();
+
+export const ImportEvidenceCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ImportEvidence"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    evidence: EvidenceSchema,
+    asset: AssetRecordSchema,
+    parseRecord: ParseRecordSchema,
+    stagingSessionId: UuidSchema,
+  }).strict(),
+}).strict();
+
+export const CommitModelRunResultCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitModelRunResult"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    run: ModelRunSchema,
+    candidate: ModelCandidateSchema.nullable(),
+  }).strict(),
+}).strict();
+
+export const ConfirmTaskSetupCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("ConfirmTaskSetup"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ taskDefinition: TaskDefinitionSchema }).strict(),
+}).strict();
+
+export const CommitRuleEvaluationCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitRuleEvaluation"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    ruleRun: RuleRunSchema,
+    issues: z.array(IssueSchema).max(5_000),
+  }).strict(),
+}).strict();
+
+export const DecideCandidateCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("DecideCandidate"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    candidateId: UuidSchema,
+    decision: DecisionSchema,
+  }).strict().superRefine((value, context) => {
+    if (!(["accepted", "rejected"] as const).includes(value.decision.outcome as "accepted" | "rejected")) {
+      context.addIssue({ code: "custom", message: "candidate decision must accept or reject", path: ["decision", "outcome"] });
+    }
+  }),
+}).strict();
+
+// 形制参数登记（架构 v1.4 §5.7）：应然值模板，独立于 GeometrySpec
+export const CommitArchetypeSpecCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitArchetypeSpec"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    archetypeSpec: ArchetypeSpecSchema,
+  }).strict(),
+}).strict();
+
+// 词表条目提交（架构 v1.4 §5.6）：部署级词表 upsert，不改项目快照；
+// broader 可引用本批之外的既有条目，闭包完整性由词表校验与显示层兜底
+export const CommitConceptEntriesCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitConceptEntries"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    entries: z.array(ConceptEntrySchema).min(1).max(500),
+  }).strict().superRefine((value, context) => {
+    if (new Set(value.entries.map((entry) => entry.conceptId)).size !== value.entries.length) {
+      context.addIssue({ code: "custom", message: "concept ids must be unique", path: ["entries"] });
+    }
+  }),
+}).strict();
+
+// 规范选择类问题的方案决定（架构 v1.4 §10）：接受时必须带所选方案
+export const DecideIssueOptionCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("DecideIssueOption"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    decision: DecisionSchema,
+  }).strict().superRefine((value, context) => {
+    if (value.decision.outcome === "accepted" && value.decision.selectedOptionId === undefined) {
+      context.addIssue({ code: "custom", message: "accepted option decision requires selectedOptionId", path: ["decision", "selectedOptionId"] });
+    }
+    if (!(["accepted", "rejected"] as const).includes(value.decision.outcome as "accepted" | "rejected")) {
+      context.addIssue({ code: "custom", message: "option decision must accept or reject", path: ["decision", "outcome"] });
+    }
+  }),
+}).strict();
+
+export const StartCadJobCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("StartCadJob"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ job: CadJobSchema }).strict(),
+}).strict();
+
+export const SyncCadJobEventsCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("SyncCadJobEvents"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ job: CadJobSchema }).strict(),
+}).strict();
+
+export const CommitGeometryRevisionCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitGeometryRevision"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    cadJobId: UuidSchema,
+    geometrySpec: ProjectDrivenGeometrySpecSchema,
+    geometryRevision: GeometryRevisionSchema,
+    assets: z.array(AssetRecordSchema).min(6).max(20),
+    stagingSessionId: UuidSchema,
+  }).strict(),
+}).strict();
+
+export const CommitArtifactSetCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitArtifactSet"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    artifactRequirementMatrices: z.array(ArtifactRequirementMatrixSchema).max(10_000).default([]),
+    artifacts: z.array(ArtifactRecordSchema).min(1).max(10_000),
+    assets: z.array(AssetRecordSchema).max(10_000),
+    stagingSessionId: UuidSchema.nullable(),
+  }).strict(),
+}).strict();
+
+export const CommitCheckRunCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CommitCheckRun"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ checkRun: CheckRunSchema }).strict(),
+}).strict();
+
+export const EvaluateDeliveryCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("EvaluateDelivery"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({ evaluation: DeliveryEvaluationSchema }).strict(),
+}).strict();
+
+export const CreateDeliveryDraftCommandSchema = CommandHeaderSchema.extend({
+  commandType: z.literal("CreateDeliveryDraft"),
+  expectedRevisionId: UuidSchema,
+  payload: z.object({
+    draft: DeliveryDraftSchema,
+    manifestAsset: AssetRecordSchema,
+    manifestArtifact: ArtifactRecordSchema,
+    stagingSessionId: UuidSchema,
+  }).strict(),
+}).strict();
+
+export const ProjectCommandSchema = z.discriminatedUnion("commandType", [
+  CreateProjectCommandSchema,
+  CommitFactsCommandSchema,
+  CommitObservationsCommandSchema,
+  CommitEntitiesCommandSchema,
+  ReviseEntitiesCommandSchema,
+  CommitExclusionRecordsCommandSchema,
+  ReplaceTaskDefinitionCommandSchema,
+  ImportProjectSnapshotCommandSchema,
+  ImportEvidenceCommandSchema,
+  CommitModelRunResultCommandSchema,
+  ConfirmTaskSetupCommandSchema,
+  CommitRuleEvaluationCommandSchema,
+  DecideCandidateCommandSchema,
+  DecideIssueOptionCommandSchema,
+  CommitConceptEntriesCommandSchema,
+  CommitArchetypeSpecCommandSchema,
+  StartCadJobCommandSchema,
+  SyncCadJobEventsCommandSchema,
+  CommitGeometryRevisionCommandSchema,
+  CommitArtifactSetCommandSchema,
+  CommitCheckRunCommandSchema,
+  EvaluateDeliveryCommandSchema,
+  CreateDeliveryDraftCommandSchema,
+]);
+
+export type CreateProjectCommand = z.infer<typeof CreateProjectCommandSchema>;
+export type CommitFactsCommand = z.infer<typeof CommitFactsCommandSchema>;
+export type ImportProjectSnapshotCommand = z.infer<typeof ImportProjectSnapshotCommandSchema>;
+export type ImportEvidenceCommand = z.infer<typeof ImportEvidenceCommandSchema>;
+export type CommitModelRunResultCommand = z.infer<typeof CommitModelRunResultCommandSchema>;
+export type ConfirmTaskSetupCommand = z.infer<typeof ConfirmTaskSetupCommandSchema>;
+export type CommitRuleEvaluationCommand = z.infer<typeof CommitRuleEvaluationCommandSchema>;
+export type DecideCandidateCommand = z.infer<typeof DecideCandidateCommandSchema>;
+export type StartCadJobCommand = z.infer<typeof StartCadJobCommandSchema>;
+export type SyncCadJobEventsCommand = z.infer<typeof SyncCadJobEventsCommandSchema>;
+export type CommitGeometryRevisionCommand = z.infer<typeof CommitGeometryRevisionCommandSchema>;
+export type CommitArtifactSetCommand = z.infer<typeof CommitArtifactSetCommandSchema>;
+export type CommitCheckRunCommand = z.infer<typeof CommitCheckRunCommandSchema>;
+export type EvaluateDeliveryCommand = z.infer<typeof EvaluateDeliveryCommandSchema>;
+export type CreateDeliveryDraftCommand = z.infer<typeof CreateDeliveryDraftCommandSchema>;
+export type ProjectCommand = z.infer<typeof ProjectCommandSchema>;
+export type ProjectCommandType = ProjectCommand["commandType"];

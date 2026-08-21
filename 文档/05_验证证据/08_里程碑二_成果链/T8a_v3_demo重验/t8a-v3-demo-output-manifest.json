@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "stage": "T8a",
+  "storageRoot": "apps/server/.data/acceptance/milestone-two/t8a-demo",
+  "gitPolicy": "large outputs remain local; this manifest and verification evidence are committed",
+  "status": "passed-independent-demo-geometry-technical-only",
+  "qualification": {
+    "generatedNotQualified": true,
+    "proxyResult": true,
+    "unsigned": true,
+    "L1": false,
+    "formalEligibility": "ineligible"
+  },
+  "geometryRevisionId": "4579a720-0bff-5df7-b293-191483384059",
+  "geometrySignature": "5011763af7e2427f11f69647b94ba3921d4516f3a633fad75c0ee358a419c8f7",
+  "files": [
+    {"path": "build-record.json", "sizeBytes": 1359, "sha256": "c0a20fd595f2bddf11a599ef4ef5d1c6e20d6c02aa395a7817e2aed94ffec5f7"},
+    {"path": "geometry-manifest.json", "sizeBytes": 17823166, "sha256": "22aba28b21aaa576b780fa56253c9997f28feda733a83a99d3aa66dbe2323427"},
+    {"path": "geometry-verification.json", "sizeBytes": 3073, "sha256": "97f317a2b11422af34b3fca779277206fd408ce3c23524c6d94f3742de71891e"},
+    {"path": "local-construction-sample.glb", "sizeBytes": 3586344, "sha256": "f6d032ebc5feaa1c28100d2fa2ea4603d7af3fb1f22be0b78d333193e2343f6f"},
+    {"path": "source-meshes.ndjson.gz", "sizeBytes": 3764215, "sha256": "25a7a0a10b982ae5a7121f740103c12b954a875c84e77c1582d9d627001dbfdf"}
+  ],
+  "externalDwgDependencyCount": 0,
+  "blockers": [
+    "GENERIC_GEOMETRY_KERNEL_REQUIRED",
+    "VIEW_AND_DRAWING_REGENERATION_REQUIRED",
+    "PROFESSIONAL_REVIEW_REQUIRED"
+  ]
+}

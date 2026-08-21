@@ -1,0 +1,75 @@
+# 公开前处理：本文件由工具自动写出，原文含本机绝对路径。
+# 已把 Windows 用户名段替换为 USER，仓库根路径替换为 <仓库根>，
+# 其余内容原样保留，未改动任何审计结论、时间戳或校验值。
+Redirect stdout (file: C:\Users\USER\AppData\Local\Temp\accc213962).
+AcCoreConsole: StdOutConsoleMode: processed-output: disabled,auto
+AutoCAD Core Engine Console - Copyright 2023 Autodesk, Inc.  All rights reserved. (U.61.0.0)
+
+Execution Path:
+D:\AutoCAD 2024\accoreconsole.exe
+Current Directory: <仓库根>
+Isolating to regkey=gujian-t0, userDataFolder=C:\Users\USER\AppData\Local\Temp\gujian-t0-autocad\profile.
+
+Version Number: U.61.0.0 (UNICODE)
+LogFilePath has been set to the working folder.
+CoreHeartBeat
+正在重生成模型。
+
+**** 系统变量更改 ****
+已从首选值更改 2 个监视系统变量。使用 SYSVARMONITOR 命令以查看更改。
+
+
+AutoCAD 菜单实用工具 已加载。
+命令:
+命令:
+
+命令:
+命令: _.FILEDIA
+
+输入 FILEDIA 的新值 <0>: 0
+
+命令: _.AUDIT
+
+是否更正检测到的任何错误？[是(Y)/否(N)] <N>: _Y
+
+
+
+核查表头
+
+
+核查表
+
+
+第 1 阶段图元核查
+
+阶段 1 已核查 900     个对象
+第 2 阶段图元核查
+
+阶段 2 已核查 900     个对象
+核查块
+
+ 已核查 16      个块
+
+
+
+正在核查 AcDsRecords
+
+
+共发现 0 个错误，已修复 0 个
+
+已删除 0 个对象
+
+
+命令: _.ZOOM
+
+指定窗口的角点，输入比例因子 (nX 或 nXP)，或者
+[全部(A)/中心(C)/动态(D)/范围(E)/上一个(P)/比例(S)/窗口(W)/对象(O)] <实时>: _E
+正在重生成模型。
+
+命令: _.FILEDIA
+
+输入 FILEDIA 的新值 <0>: 1
+
+**** 系统变量更改 ****
+已从首选值更改 1 个监视系统变量。使用 SYSVARMONITOR 命令以查看更改。
+

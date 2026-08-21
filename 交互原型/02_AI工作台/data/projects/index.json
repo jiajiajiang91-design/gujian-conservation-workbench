@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "defaultProjectId": "gaodu",
+  "projects": [
+    {
+      "id": "gaodu",
+      "name": "高都玉皇庙主殿",
+      "url": "data/projects/gaodu.json",
+      "builtin": true,
+      "地点": "山西晋城泽州县",
+      "成果": "正立面现状测绘图",
+      "比例": "1:50",
+      "状态": "代理验证",
+      "当前步骤": "task",
+      "待办": 6
+    },
+    {
+      "id": "dongcheng",
+      "name": "东呈古佛堂正殿",
+      "url": "data/projects/dongcheng.json",
+      "builtin": true,
+      "地点": "山西长治潞城区",
+      "成果": "正立面现状测绘草图",
+      "比例": "1:50",
+      "状态": "资料待补",
+      "当前步骤": "datum",
+      "待办": 4
+    }
+  ]
+}

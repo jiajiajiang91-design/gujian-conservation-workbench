@@ -1,0 +1,403 @@
+{
+  "schemaVersion": "research-benchmark/1.0",
+  "benchmarkId": "nanchansi-main-hall-2022-study",
+  "titleZh": "南禅寺大殿公开研究测量数据",
+  "benchmarkStatus": "research-only",
+  "project": {
+    "buildingNameZh": "南禅寺大殿",
+    "locationZh": "山西省忻州市五台县",
+    "buildingTypeZh": "唐代木构佛殿",
+    "historicalRebuildYear": 782,
+    "planDescriptionZh": "面阔三间、进深三间，单檐歇山顶"
+  },
+  "intendedUse": [
+    "验证中国古代木构的对象、柱网、屋架和铺作数据表达",
+    "验证照片与公开测量数据到局部三维骨架及试验平面、立面、剖面和 CAD 的工程流程",
+    "比较系统生成结果与论文公开的复原尺寸"
+  ],
+  "formalEligibility": {
+    "eligible": false,
+    "blockerCodes": [
+      "SECONDARY_PUBLISHED_SOURCE",
+      "RAW_POINT_CLOUD_UNAVAILABLE",
+      "ORIGINAL_FIELD_RECORDS_UNAVAILABLE",
+      "RESPONSIBLE_SURVEY_IDENTITY_UNAVAILABLE"
+    ],
+    "noteZh": "本数据由公开论文人工转录，用于研究验证。它不是本项目团队完成的现场测量，不能作为正式测绘成果签发。"
+  },
+  "sources": {
+    "article": {
+      "citationZh": "张荣，王一臻，王麒，李玉敏．南禅寺大殿重建背景、材分营造制度分析及建筑像设空间布局研究[J]．建筑史学刊，2022，3（2）：5-23．",
+      "doi": "10.12329/20969368.2022.02001",
+      "issueUrl": "https://www.jgcm.ac.cn/jah/article/2022/2",
+      "pdfUrl": "https://www.jgcm.ac.cn/jah/cn/article/pdf/preview/10.12329/20969368.2022.02001.pdf",
+      "pdfSha256": "6a68d392dae66927e415f42a1a2791fb69f96f19fb772acccfbb15e49854af43",
+      "copyrightZh": "论文受版权保护。仓库不复制 PDF 或论文图版，只保存带页码和表号的事实转录。",
+      "checkedPdfPages": [4, 5, 6, 7, 8, 9, 10, 12, 13],
+      "checkedPrintedPages": [8, 9, 10, 11, 12, 13, 14, 16, 17]
+    },
+    "photos": [
+      {
+        "assetRef": "../../02_PoC工作流验证/素材/正面.jpg",
+        "labelZh": "南禅寺大殿正面",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E5%8D%97%E7%A6%85%E5%AF%BA%E5%A4%A7%E6%AE%BF%E6%AD%A3%E9%9D%A2.jpg",
+        "author": "Patrick20242023",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attributionText": "南禅寺大殿正面，Patrick20242023，CC BY-SA 4.0",
+        "modified": false,
+        "byteSize": 892447,
+        "sha256": "c595638223ba493c5ceafc13adcb9973ae0b864dc000c97dd76c4de5aad9d546"
+      },
+      {
+        "assetRef": "../../02_PoC工作流验证/素材/正面二.jpg",
+        "labelZh": "南禅寺大殿正面二",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E5%8D%97%E7%A6%85%E5%AF%BA%E5%A4%A7%E6%AE%BF%E6%AD%A3%E9%9D%A2%E4%BA%8C.jpg",
+        "author": "Patrick20242023",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attributionText": "南禅寺大殿正面二，Patrick20242023，CC BY-SA 4.0",
+        "modified": false,
+        "byteSize": 978079,
+        "sha256": "1b74c17ef90fb6689110ab027cc9b61fcc62d6514b05ad6d236d7013e3f06cc3"
+      },
+      {
+        "assetRef": "../../02_PoC工作流验证/素材/柱头铺作.jpg",
+        "labelZh": "南禅寺大殿柱头铺作",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E5%8D%97%E7%A6%85%E5%AF%BA%E5%A4%A7%E6%AE%BF%E6%9F%B1%E5%A4%B4%E9%93%BA%E4%BD%9C.jpg",
+        "author": "Patrick20242023",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "attributionText": "南禅寺大殿柱头铺作，Patrick20242023，CC BY-SA 4.0",
+        "modified": false,
+        "byteSize": 1094769,
+        "sha256": "afbb32a95d15aedab72225e66e6e801c0771a5d3c1abbb10a899f6d8db1ee444"
+      }
+    ]
+  },
+  "surveyMethod": {
+    "producerType": "human",
+    "sourceSubtype": "publishedResearch",
+    "methods": [
+      {
+        "method": "three-dimensional point cloud",
+        "pointDensityMm": 2,
+        "singlePointAccuracyMm": 0.3,
+        "overallErrorMaxMm": 3,
+        "source": "article section 3.1"
+      },
+      {
+        "method": "manual vernier caliper",
+        "accuracyMm": 0.1,
+        "scopeZh": "铺作材厚、材高等重要构件",
+        "source": "article section 3.1"
+      }
+    ],
+    "limitationsZh": [
+      "建筑经历多次修缮，部分原始尺度推算存在不确定性。",
+      "西山面三根方柱与其余圆柱可能不属于同一时期。",
+      "仓库没有原始点云、扫描站记录或现场测量表。"
+    ]
+  },
+  "dataClassDefinitions": {
+    "scanMeasured": "论文根据点云或手工测量公布的对象级数值",
+    "statisticalDerived": "论文根据测量样本计算的均值或分值",
+    "authorReconstruction": "论文作者根据测量与营造制度推断的理想设计尺寸",
+    "photoObserved": "可由许可照片直接观察的形制，不包含尺寸推断"
+  },
+  "units": {
+    "length": "mm",
+    "constructionFoot": "mm/chi",
+    "module": "mm/fen"
+  },
+  "scanMeasured": {
+    "fullTimberHeights": {
+      "source": { "pdfPage": 7, "printedPage": 11, "table": 3 },
+      "columnsZh": ["外一跳高", "外二跳高", "内一跳高", "内二跳高"],
+      "records": [
+        { "position": "2-B", "values": [347.8, 345.0, null, null] },
+        { "position": "3-B", "values": [346.9, 354.1, 344.1, null] },
+        { "position": "4-B", "values": [342.9, 344.8, 354.7, null] },
+        { "position": "5-B", "values": [348.8, 343.1, null, null] },
+        { "position": "B-5", "values": [336.7, 352.9, null, null] },
+        { "position": "C-5", "values": [367.7, 344.2, 340.5, 358.0] },
+        { "position": "D-5", "values": [360.9, 331.1, 361.8, 335.2] },
+        { "position": "E-5", "values": [338.5, 346.2, null, null] },
+        { "position": "5-E", "values": [335.8, 347.3, null, null] },
+        { "position": "4-E", "values": [352.5, 340.1, 329.4, null] },
+        { "position": "3-E", "values": [351.2, 335.5, 353.6, null] },
+        { "position": "2-E", "values": [332.2, 348.5, null, null] },
+        { "position": "E-2", "values": [339.5, 347.5, null, null] },
+        { "position": "D-2", "values": [348.7, 345.9, 343.3, 357.5] },
+        { "position": "C-2", "values": [348.5, 332.3, 357.9, 331.5] },
+        { "position": "B-2", "values": [330.8, 340.4, null, null] }
+      ]
+    },
+    "gridDepths": {
+      "source": { "pdfPage": 7, "printedPage": 11, "table": 4 },
+      "records": [
+        { "span": "B-C", "westOuterLine": 3265.1, "eastOuterLine": 3283.0 },
+        { "span": "C-D", "westOuterLine": 3315.7, "eastOuterLine": 3314.8 },
+        { "span": "D-E", "westOuterLine": 3294.4, "eastOuterLine": 3289.5 }
+      ],
+      "totalByColumnLine": [
+        { "lineLabelZh": "西次间西缝", "value": 9875.3 },
+        { "lineLabelZh": "明间西缝", "value": 9927.4 },
+        { "lineLabelZh": "明间东缝", "value": 9941.6 },
+        { "lineLabelZh": "东次间东缝", "value": 9887.4 }
+      ]
+    },
+    "gridWidths": {
+      "source": { "pdfPage": 7, "printedPage": 11, "table": 5 },
+      "records": [
+        { "row": "B", "westBay": 3304.7, "centralBay": 4964.8, "eastBay": 3322.7, "total": 11591.1 },
+        { "row": "C", "westBay": null, "centralBay": null, "eastBay": null, "total": 11575.7 },
+        { "row": "D", "westBay": null, "centralBay": null, "eastBay": null, "total": 11576.8 },
+        { "row": "E", "westBay": 3311.2, "centralBay": 4983.1, "eastBay": 3313.5, "total": 11607.9 }
+      ]
+    },
+    "columnHeights": {
+      "source": { "pdfPage": 7, "printedPage": 11, "table": 6 },
+      "datumZh": "明间前檐东侧檐柱 4-B 柱础顶面为标高正负 0",
+      "records": [
+        { "position": "2-B", "value": 3927.0 },
+        { "position": "3-B", "value": 3897.7 },
+        { "position": "4-B", "value": 3885.0 },
+        { "position": "5-B", "value": 3927.3 },
+        { "position": "2-C", "value": 3911.2 },
+        { "position": "5-C", "value": 3918.7 },
+        { "position": "2-D", "value": 3911.1 },
+        { "position": "5-D", "value": 3967.2 },
+        { "position": "2-E", "value": 3937.9 },
+        { "position": "3-E", "value": 3911.4 },
+        { "position": "4-E", "value": 3946.0 },
+        { "position": "5-E", "value": 4009.5 }
+      ]
+    },
+    "bracketArmProjections": {
+      "source": { "pdfPage": 9, "printedPage": 13, "table": 9 },
+      "columnsZh": ["外一跳华栱", "外二跳", "外两跳总长", "前后檐内一跳华栱", "山面内一跳华栱", "山面内二跳", "山面内两跳总长"],
+      "records": [
+        { "position": "2-B", "values": [558.1, 343.7, 901.8, null, null, null, null] },
+        { "position": "3-B", "values": [557.1, 306.8, 863.9, 630.4, null, null, null] },
+        { "position": "4-B", "values": [539.4, 318.4, 857.8, 655.5, null, null, null] },
+        { "position": "5-B", "values": [587.7, 327.8, 915.5, null, null, null, null] },
+        { "position": "B-5", "values": [552.0, 336.8, 888.8, null, null, null, null] },
+        { "position": "C-5", "values": [553.9, 322.1, 876.0, null, 709.4, 398.9, 1108.3] },
+        { "position": "D-5", "values": [572.9, 333.6, 906.5, null, 702.0, 365.8, 1067.8] },
+        { "position": "E-5", "values": [556.1, 325.6, 881.7, null, null, null, null] },
+        { "position": "5-E", "values": [558.1, 313.7, 871.8, null, null, null, null] },
+        { "position": "4-E", "values": [552.4, 315.1, 867.5, 645.8, null, null, null] },
+        { "position": "3-E", "values": [554.6, 331.6, 886.2, 642.8, null, null, null] },
+        { "position": "2-E", "values": [589.9, 307.1, 897.0, null, null, null, null] },
+        { "position": "E-2", "values": [557.2, 343.4, 900.6, null, null, null, null] },
+        { "position": "D-2", "values": [559.2, 338.4, 897.6, null, 703.2, 359.5, 1062.7] },
+        { "position": "C-2", "values": [578.2, 356.8, 935.0, null, 683.8, 301.9, 985.7] },
+        { "position": "B-2", "values": [564.3, 305.4, 869.7, null, null, null, null] }
+      ]
+    },
+    "ludouDimensions": {
+      "source": { "pdfPage": 10, "printedPage": 14, "table": 10 },
+      "columnsZh": ["宽", "深", "高", "耳高", "平欹高"],
+      "records": [
+        { "position": "2-B", "values": [null, 432.1, 303.0, 110.0, 193.0] },
+        { "position": "3-B", "values": [483.0, 429.5, 287.0, 115.0, 172.0] },
+        { "position": "4-B", "values": [482.0, 440.1, 282.0, 119.0, 163.0] },
+        { "position": "5-B", "values": [null, 417.0, 292.0, 120.0, 172.0] },
+        { "position": "B-5", "values": [458.0, 449.4, 278.0, 110.0, 168.0] },
+        { "position": "C-5", "values": [481.0, 425.5, 318.0, 117.0, 201.0] },
+        { "position": "D-5", "values": [450.0, 410.2, 293.0, 113.0, 180.0] },
+        { "position": "E-5", "values": [486.0, 507.9, 308.0, 114.0, 194.0] },
+        { "position": "5-E", "values": [null, 426.8, 324.0, 120.0, 204.0] },
+        { "position": "4-E", "values": [480.0, 425.2, 300.0, 121.0, 179.0] },
+        { "position": "3-E", "values": [472.0, 433.1, 291.0, 123.0, 168.0] },
+        { "position": "2-E", "values": [null, 420.1, 288.0, 113.0, 175.0] },
+        { "position": "E-2", "values": [448.0, 459.3, 303.0, 110.0, 193.0] },
+        { "position": "D-2", "values": [476.0, 417.2, 290.0, 109.0, 181.0] },
+        { "position": "C-2", "values": [480.0, 433.5, 302.0, 116.0, 186.0] },
+        { "position": "B-2", "values": [486.0, 483.2, 288.0, 113.0, 175.0] }
+      ]
+    },
+    "columnSections": {
+      "source": { "pdfPage": 12, "printedPage": 16, "table": 12 },
+      "records": [
+        { "position": "2-B", "shape": "round", "diameter": 379.0 },
+        { "position": "3-B", "shape": "round", "diameter": 373.9 },
+        { "position": "4-B", "shape": "round", "diameter": 383.4 },
+        { "position": "5-B", "shape": "round", "diameter": 400.8 },
+        { "position": "2-C", "shape": "rectangular", "width": 266.5, "depth": 394.8 },
+        { "position": "5-C", "shape": "round", "diameter": 314.1 },
+        { "position": "2-D", "shape": "rectangular", "width": 251.2, "depth": 330.5 },
+        { "position": "5-D", "shape": "round", "diameter": 361.6 },
+        { "position": "2-E", "shape": "rectangular", "width": 324.2, "depth": 282.3 },
+        { "position": "3-E", "shape": "round", "diameter": 464.1 },
+        { "position": "4-E", "shape": "round", "diameter": 410.7 },
+        { "position": "5-E", "shape": "round", "diameter": 369.8 }
+      ]
+    },
+    "roofFrames": {
+      "source": { "pdfPage": 12, "printedPage": 16, "table": 13 },
+      "columnsZh": ["橑檐槫至牛脊枋水平距离", "牛脊枋至平槫水平距离", "平槫至脊槫水平距离", "橑檐槫上皮至脊槫上皮高度", "平槫上皮与脊槫橑檐槫连线高差"],
+      "records": [
+        { "frame": "明间西缝前檐", "values": [789.4, 2505.5, 2506.9, 2164.9, 135.1] },
+        { "frame": "明间西缝后檐", "values": [804.6, 2444.9, 2470.1, 2141.1, 197.9] },
+        { "frame": "明间东缝前檐", "values": [808.3, 2467.6, 2482.3, 2151.4, 162.2] },
+        { "frame": "明间东缝后檐", "values": [732.3, 2499.1, 2493.9, 2095.0, 155.5] }
+      ]
+    }
+  },
+  "statisticalDerived": {
+    "moduleCandidates": [
+      {
+        "basisKey": "timberThickness10Fen",
+        "basisZh": "材厚 10 分",
+        "publishedMeanMm": 163.41,
+        "standardDeviationMm": 6.607,
+        "sampleCount": 28,
+        "derivedModuleMmPerFen": 16.3,
+        "source": { "articleSection": "3.2", "table": 1 },
+        "computedFromAvailable": false
+      },
+      {
+        "basisKey": "loadBearingBracketThickness11Fen",
+        "basisZh": "承重栱材厚 11 分",
+        "publishedMeanMm": 181.72,
+        "standardDeviationMm": 6.236,
+        "sampleCount": 27,
+        "derivedModuleMmPerFen": 16.5,
+        "source": { "articleSection": "3.2", "table": 1 },
+        "computedFromAvailable": false
+      },
+      {
+        "basisKey": "fullTimberHeight21Fen",
+        "basisZh": "足材高 21 分",
+        "publishedAfterOutlierRemovalMeanMm": 345.35,
+        "listedValuesMeanMm": 345.3591,
+        "standardDeviationMm": 10.547,
+        "sampleCount": 44,
+        "derivedModuleMmPerFen": 16.4,
+        "source": { "pdfPage": 7, "printedPage": 11, "table": 3 },
+        "computedFrom": "scanMeasured.fullTimberHeights.records"
+      }
+    ],
+    "frontColumnCornerRiseMean": {
+      "source": { "pdfPage": 12, "printedPage": 16, "section": "3.5" },
+      "computedFrom": "scanMeasured.columnHeights.records",
+      "publishedValueMm": 35.8,
+      "interpretationZh": "论文认为可能对应 2 分 33 毫米或一寸二分 36 毫米。"
+    },
+    "roundColumnDiameterMean": {
+      "source": { "pdfPage": 12, "printedPage": 16, "table": 12 },
+      "computedFrom": "scanMeasured.columnSections.records[shape=round]",
+      "publishedValueMm": 384.16,
+      "locallyComputedValueMm": 384.155556,
+      "status": "match-after-rounding"
+    },
+    "bracketArmProjectionMeans": {
+      "source": { "pdfPage": 9, "printedPage": 13, "table": 9 },
+      "computedFrom": "scanMeasured.bracketArmProjections.records",
+      "valuesMm": {
+        "outerFirstArmProjection": { "publishedValue": 561.94, "locallyComputedValue": 561.94375, "status": "match-after-rounding" },
+        "outerSecondArmProjection": { "publishedValue": 326.64, "locallyComputedValue": 326.64375, "status": "match-after-rounding" },
+        "outerTwoArmTotalProjection": { "publishedValue": 888.59, "locallyComputedValue": 888.5875, "status": "match-after-rounding" },
+        "frontRearInnerFirstArmProjection": { "publishedValue": 643.63, "locallyComputedValue": 643.625, "status": "match-after-rounding" },
+        "gableInnerFirstArmProjection": { "publishedValue": 699.6, "locallyComputedValue": 699.6, "status": "match" },
+        "gableInnerSecondArmProjection": { "publishedValue": 356.53, "locallyComputedValue": 356.525, "status": "match-after-rounding" },
+        "gableInnerTwoArmTotalProjection": { "publishedValue": 1056.13, "locallyComputedValue": 1056.125, "status": "match-after-rounding" }
+      }
+    },
+    "ludouDimensionMeans": {
+      "source": { "pdfPage": 10, "printedPage": 14, "table": 10 },
+      "computedFrom": "scanMeasured.ludouDimensions.records",
+      "valuesMm": {
+        "width": { "publishedValue": 473.5, "locallyComputedValue": 473.5, "status": "match" },
+        "depth": { "publishedValue": 432.65, "locallyComputedValue": 438.13125, "status": "conflict" },
+        "height": { "publishedValue": 296.6875, "locallyComputedValue": 296.6875, "status": "match" },
+        "earHeight": { "publishedValue": 115.1875, "locallyComputedValue": 115.1875, "status": "match" },
+        "pingqiHeight": { "publishedValue": 181.5, "locallyComputedValue": 181.5, "status": "match" }
+      }
+    },
+    "roofFrameMeans": {
+      "source": { "pdfPage": 12, "printedPage": 16, "table": 13 },
+      "computedFrom": "scanMeasured.roofFrames.records",
+      "valuesMm": {
+        "eavePurlinToNiujifangHorizontal": { "publishedValue": 783.65, "locallyComputedValue": 783.65, "status": "match" },
+        "niujifangToFlatPurlinHorizontal": { "publishedValue": 2479.28, "locallyComputedValue": 2479.275, "status": "match-after-rounding" },
+        "flatPurlinToRidgePurlinHorizontal": { "publishedValue": 2488.3, "locallyComputedValue": 2488.3, "status": "match" },
+        "eavePurlinTopToRidgePurlinTopVertical": { "publishedValue": 2138.1, "locallyComputedValue": 2138.1, "status": "match" },
+        "flatPurlinTopOffsetFromRoofLine": { "publishedValue": 162.68, "locallyComputedValue": 162.675, "status": "match-after-rounding" }
+      }
+    }
+  },
+  "authorReconstruction": {
+    "source": { "pdfPage": 13, "printedPage": 17, "section": "3.7", "figures": [19, 20, 21] },
+    "classification": "idealized design inferred by article authors",
+    "moduleDecision": {
+      "candidateRefs": [
+        "statisticalDerived.moduleCandidates[timberThickness10Fen]",
+        "statisticalDerived.moduleCandidates[loadBearingBracketThickness11Fen]",
+        "statisticalDerived.moduleCandidates[fullTimberHeight21Fen]"
+      ],
+      "selectedValueMmPerFen": 16.5,
+      "basisZh": "论文作者综合候选值后选择，不属于直接测量值。"
+    },
+    "constructionFootDecision": {
+      "candidateValuesMmPerChi": [275.0, 300.0],
+      "selectedValueMmPerChi": 300.0,
+      "basisZh": "论文作者比较两种营造尺后选择，不属于纯统计结果。"
+    },
+    "grid": {
+      "widthBaySpans": [3300.0, 4950.0, 3300.0],
+      "depthBaySpans": [3300.0, 3300.0, 3300.0],
+      "nominalColumnHeight": 3900.0,
+      "cornerRise": 33.0,
+      "nominalRoundColumnDiameter": 396.0
+    },
+    "timberModule": {
+      "singleTimberThickness": 165.0,
+      "timberHeight": 247.5,
+      "fullTimberHeight": 346.5,
+      "loadBearingBracketThickness": 181.5,
+      "ludouPingqiHeight": 181.5
+    },
+    "roof": {
+      "purlinSpacing": 2475.0,
+      "eaveToFirstFrameHorizontal": 775.5,
+      "ridgeRise": 2145.0,
+      "flatPurlinOffset": 165.0,
+      "frontRearEavePurlinCenterDistanceMm": 11451.0
+    }
+  },
+  "qualityChecks": [
+    {
+      "checkId": "ludou-depth-mean",
+      "status": "conflict",
+      "source": { "pdfPage": 10, "printedPage": 14, "table": 10 },
+      "computedFromListedValues": 438.13125,
+      "publishedMean": 432.65,
+      "difference": 5.48125,
+      "unit": "mm",
+      "handlingZh": "保留原始值和论文公布均值。来源没有说明排除项，不自动选择真值，进入问题方案处理。"
+    },
+    {
+      "checkId": "old-poc-estimates",
+      "status": "blocked",
+      "handlingZh": "旧 PoC 中带“估”的台基、门窗、脊线和檐口尺寸不属于本研究数据，不得作为测量输入。"
+    },
+    {
+      "checkId": "grid-width-row-b-sum",
+      "status": "within-survey-tolerance",
+      "source": { "pdfPage": 7, "printedPage": 11, "table": 5 },
+      "locallyComputedFromBaysMm": 11592.2,
+      "publishedTotalMm": 11591.1,
+      "differenceMm": 1.1,
+      "surveyOverallErrorMaxMm": 3.0,
+      "handlingZh": "保留列值与公布通面阔。差异在论文报告的整体误差范围内，不静默覆盖。"
+    }
+  ],
+  "photoObserved": [
+    { "factZh": "正面三开间，明间可见开口，两次间直棂窗", "evidenceRefs": ["../../02_PoC工作流验证/素材/正面.jpg", "../../02_PoC工作流验证/素材/正面二.jpg"] },
+    { "factZh": "单檐歇山顶，前檐四柱，柱头铺作可见", "evidenceRefs": ["../../02_PoC工作流验证/素材/正面.jpg"] },
+    { "factZh": "柱头铺作构件形态可用于局部识别测试", "evidenceRefs": ["../../02_PoC工作流验证/素材/柱头铺作.jpg"] }
+  ]
+}

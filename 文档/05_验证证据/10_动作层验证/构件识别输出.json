@@ -1,0 +1,208 @@
+{
+ "summary": "查看1张现场照片（主街立面现状），认出约14个可见建筑构件及室内设施。",
+ "components": [
+  {
+   "nameZh": "木地板",
+   "categoryZh": "楼地面",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.352,
+    "y": 0.583,
+    "width": 0.648,
+    "height": 0.417
+   },
+   "certainty": "certain",
+   "noteZh": null
+  },
+  {
+   "nameZh": "木板墙",
+   "categoryZh": "墙",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.0,
+    "y": 0.0,
+    "width": 0.307,
+    "height": 0.75
+   },
+   "certainty": "certain",
+   "noteZh": null
+  },
+  {
+   "nameZh": "木板墙",
+   "categoryZh": "墙",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.285,
+    "y": 0.217,
+    "width": 0.502,
+    "height": 0.667
+   },
+   "certainty": "certain",
+   "noteZh": null
+  },
+  {
+   "nameZh": "吊顶",
+   "categoryZh": "顶棚",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.237,
+    "y": 0.0,
+    "width": 0.763,
+    "height": 0.227
+   },
+   "certainty": "certain",
+   "noteZh": "木板条吊顶，局部有破损露出上部结构"
+  },
+  {
+   "nameZh": "窗户",
+   "categoryZh": "门窗",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.154,
+    "y": 0.305,
+    "width": 0.092,
+    "height": 0.577
+   },
+   "certainty": "uncertain",
+   "noteZh": "被展板遮挡，仅见窗框轮廓，是否为原窗或后改不确定"
+  },
+  {
+   "nameZh": "窗户",
+   "categoryZh": "门窗",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.234,
+    "y": 0.129,
+    "width": 0.066,
+    "height": 0.594
+   },
+   "certainty": "uncertain",
+   "noteZh": "上部被遮挡，仅见部分窗框及玻璃反光"
+  },
+  {
+   "nameZh": "柜台窗洞",
+   "categoryZh": "门窗",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.337,
+    "y": 0.433,
+    "width": 0.121,
+    "height": 0.154
+   },
+   "certainty": "uncertain",
+   "noteZh": "内嵌金属网，可能是原柜台窗口或后改展示用，形制不明"
+  },
+  {
+   "nameZh": "门洞",
+   "categoryZh": "门窗",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.568,
+    "y": 0.442,
+    "width": 0.082,
+    "height": 0.558
+   },
+   "certainty": "uncertain",
+   "noteZh": "悬挂布帘遮挡，内部结构不可见，是否为原门洞推测"
+  },
+  {
+   "nameZh": "吊灯",
+   "categoryZh": "null",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.331,
+    "y": 0.008,
+    "width": 0.053,
+    "height": 0.308
+   },
+   "certainty": "certain",
+   "noteZh": "煤油灯样式悬挂灯具"
+  },
+  {
+   "nameZh": "吊灯",
+   "categoryZh": "null",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.462,
+    "y": 0.109,
+    "width": 0.032,
+    "height": 0.288
+   },
+   "certainty": "certain",
+   "noteZh": "煤油灯样式悬挂灯具"
+  },
+  {
+   "nameZh": "吊扇",
+   "categoryZh": "null",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.584,
+    "y": 0.075,
+    "width": 0.147,
+    "height": 0.192
+   },
+   "certainty": "certain",
+   "noteZh": "工业吊扇，叶片及电机可见"
+  },
+  {
+   "nameZh": "展板/展柜",
+   "categoryZh": "null",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.002,
+    "y": 0.648,
+    "width": 0.387,
+    "height": 0.352
+   },
+   "certainty": "certain",
+   "noteZh": "现代展陈设施，非原建筑构件但可见"
+  },
+  {
+   "nameZh": "展板/展柜",
+   "categoryZh": "null",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.472,
+    "y": 0.558,
+    "width": 0.121,
+    "height": 0.163
+   },
+   "certainty": "certain",
+   "noteZh": "中央展示台，现代展陈设施"
+  },
+  {
+   "nameZh": "展板/展柜",
+   "categoryZh": "null",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.818,
+    "y": 0.577,
+    "width": 0.182,
+    "height": 0.267
+   },
+   "certainty": "certain",
+   "noteZh": "右侧展示台，现代展陈设施"
+  },
+  {
+   "nameZh": "通风口/百叶窗",
+   "categoryZh": "null",
+   "evidenceRef": "56da640d-a15e-4b9a-9827-d3870a0c72cf",
+   "region": {
+    "x": 0.112,
+    "y": 0.075,
+    "width": 0.087,
+    "height": 0.175
+   },
+   "certainty": "uncertain",
+   "noteZh": "墙面矩形开口带格栅，功能不明，可能是通风口或原窗改造"
+  }
+ ],
+ "missingInformation": [
+  "右侧墙面是否为原木板墙或后期加建隔断",
+  "后部右侧黑暗区域的具体构件不可辨识",
+  "吊顶破损处露出的上部结构是否为原屋架",
+  "墙面多幅挂镜线及展板后的原墙面状况",
+  "地面与墙身交接处的踢脚线做法",
+  "门窗的详细槅扇做法及开启方式"
+ ]
+}

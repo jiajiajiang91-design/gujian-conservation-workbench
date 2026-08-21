@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "t0-cad-toolchain-lock-1",
+  "frozenAt": "2026-08-11T00:00:00Z",
+  "platform": {
+    "os": "Windows x86-64",
+    "python": "3.12.13"
+  },
+  "runtime": {
+    "requirements": "requirements.lock",
+    "hashAlgorithm": "sha256",
+    "binaryPolicy": "only-binary"
+  },
+  "font": {
+    "name": "SimHei",
+    "systemPath": "C:\\Windows\\Fonts\\simhei.ttf",
+    "sha256": "9b1959db3b3abeb7efdaec26edf7dfe871a6039de8d614af7248575207be629e",
+    "redistributed": false
+  },
+  "externalValidationTools": [
+    {
+      "name": "AutoCAD Core Console",
+      "version": "24.3.61.0.0",
+      "role": "canonical DXF open and audit",
+      "productionDependency": false,
+      "result": "passed"
+    },
+    {
+      "name": "Blender",
+      "version": "5.0",
+      "role": "GLB import and independent render",
+      "productionDependency": false,
+      "result": "passed"
+    },
+    {
+      "name": "QCAD Professional Trial",
+      "version": "3.32.9",
+      "packageUrl": "https://www.qcad.org/archives/qcad/qcad-3.32.9-trial-win64-qt6.zip",
+      "packageSha256": "de58f5b3691c789db3c382772cfe62d6ec706b537f3ef460bb76ea83b6541527",
+      "role": "second CAD import, edit, save and print validation",
+      "productionDependency": false,
+      "result": "passed-with-documented-roundtrip-limitations"
+    },
+    {
+      "name": "LibreCAD",
+      "version": "2.2.1.5",
+      "packageUrl": "https://github.com/LibreCAD/LibreCAD/releases/download/v2.2.1.5/LibreCAD-v2.2.1.5-win64-msvc.exe",
+      "packageSha256": "738912fea40aca934689444af9c5cd281572417983cc081c204fe6c779f6941d",
+      "role": "additional CAD print compatibility probe",
+      "productionDependency": false,
+      "result": "failed-cjk-output"
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "runId": "heritage-v1a-2026-08-02",
+  "fileKey": "zJrAGYhWNynaRfNYc3SEHY",
+  "fileUrl": "https://www.figma.com/design/zJrAGYhWNynaRfNYc3SEHY",
+  "phase": "complete",
+  "step": "P5.audit_passed",
+  "entities": {
+    "collections": {
+      "Primitives": "VariableCollectionId:3:2",
+      "Color": "VariableCollectionId:3:3",
+      "Spacing": "VariableCollectionId:3:4",
+      "Geometry": "VariableCollectionId:3:5"
+    },
+    "variables": {
+      "total": 37,
+      "semanticAliases": 13
+    },
+    "styles": {
+      "textCount": 8,
+      "effectCount": 4,
+      "Display/Brand": "S:0b56f4dcd67b90fc0d416bdc2887e84f44f1d76c,",
+      "Heading/Large": "S:ab3b9eab17046970244e3eea204c10de1dcb9d0a,",
+      "Body/Default": "S:9c4ca9c9e4d5e4e83fb4105fba82ccf6e1e1a0a1,",
+      "Shadow/Hard/Medium": "S:91cf8aed8c3ae803da11807a0fe3845e1babb499,"
+    },
+    "pages": {
+      "Cover": "0:1",
+      "Getting Started": "7:2",
+      "Foundations": "7:3",
+      "Design System Divider": "7:4",
+      "Components": "7:5",
+      "Product Divider": "7:6",
+      "User Flow": "7:7",
+      "V1A Prototype": "7:8",
+      "Coverage Audit": "7:9"
+    },
+    "components": {
+      "Button": {"id": "12:29", "variants": 12},
+      "Input Field": {"id": "13:30", "variants": 5},
+      "Status Chip": {"id": "14:26", "variants": 7},
+      "Checkbox": {"id": "15:19", "variants": 4},
+      "Module Step": {"id": "16:29", "variants": 4},
+      "Panel Card": {"id": "17:35", "variants": 6}
+    },
+    "screens": {
+      "00": "19:2",
+      "01": "19:79",
+      "02": "19:158",
+      "03": "19:247",
+      "04": "19:337",
+      "05": "19:422",
+      "06": "19:502",
+      "07": "19:590",
+      "08": "19:668",
+      "09": "19:753",
+      "10": "19:838",
+      "11": "19:926",
+      "12": "21:122",
+      "13": "21:207",
+      "14": "21:292",
+      "15": "21:383",
+      "16": "21:470",
+      "17": "21:555",
+      "18": "21:640",
+      "19": "21:721",
+      "20": "21:806",
+      "21": "21:894",
+      "22": "21:982"
+    },
+    "flow": {"root": "18:2", "start": "19:2", "reachableScreens": 23, "reactions": 224},
+    "audit": {"root": "23:2", "v1aMapped": 39, "futurePlaced": 12, "unmapped": 0, "independentAgent": "passed", "residualIssues": 0}
+  },
+  "pendingValidations": [],
+  "completedSteps": ["phase0", "P1.a", "P1.b", "P1.c", "P1.d", "P1.e", "P1.f", "P1.g", "P1.h", "phase2", "P3.a", "P3.b", "P3.c", "P3.d", "P3.e", "P3.f", "P4.a", "P4.b", "P4.c", "P4.d", "P4.e", "P4.f", "P5.qa", "P5.independent_audit", "P5.fix", "P5.recheck"]
+}

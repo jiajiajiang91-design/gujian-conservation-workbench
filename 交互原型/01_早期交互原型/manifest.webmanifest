@@ -1,0 +1,9 @@
+{
+  "name": "古建测绘成果工作台",
+  "short_name": "古建测绘",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fffdf5",
+  "theme_color": "#ffd23f",
+  "lang": "zh-CN"
+}

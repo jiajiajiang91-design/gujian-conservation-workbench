@@ -1,0 +1,752 @@
+{
+  "schemaVersion": "t0b-v2-fixture-1",
+  "projectId": "c5237fb2-8197-5d76-9885-f77b75baf522",
+  "fixtureId": "5d637929-6d30-5796-a5a1-3fc38f3c1574",
+  "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+  "viewContractRevisionId": "04d00093-0bec-5f2a-bc68-def2a292c932",
+  "viewContractSignature": "afab451f1accaefed40f79103bcd0d5938dff0389ce087b66c4c9319856cadb2",
+  "producerType": "demo",
+  "unit": "mm",
+  "sourceRefs": [
+    "demo:5d637929-6d30-5796-a5a1-3fc38f3c1574"
+  ],
+  "referenceIsolation": {
+    "fixtureOnly": true,
+    "allowedSourceSchemes": ["demo"],
+    "externalAssetsAllowed": false
+  },
+  "scope": "resolved-local-assembly",
+  "coordinateSystem": {
+    "x": "east",
+    "y": "north",
+    "z": "up"
+  },
+  "materials": {
+    "stone-demo": {"name": "演示石材", "producerType": "demo"},
+    "earth-demo": {"name": "演示夯土", "producerType": "demo"},
+    "timber-demo": {"name": "演示木材", "producerType": "demo"},
+    "ceramic-demo": {"name": "演示瓦作", "producerType": "demo"}
+  },
+  "geometryValidation": {
+    "curveToleranceMm": 0.5,
+    "maxChordErrorMm": 1.0,
+    "boundsToleranceMm": 0.01,
+    "dimensionToleranceMm": 0.01,
+    "roofCoverage": {
+      "sampleSpacingX": 130,
+      "sampleSpacingY": 130,
+      "edgeMarginX": 150,
+      "edgeMarginY": 40,
+      "rayClearanceMm": 400,
+      "rayDepthMm": 800,
+      "maximumUncoveredSamples": 0
+    },
+    "tileLap": {
+      "interfaceToleranceMm": 1.0,
+      "minimumVisibleStepMm": 17.0,
+      "samplesPerOverlap": 3
+    },
+    "requiredFeatureAssertions": [
+      "oppositeTileCurvature",
+      "nonRectangularRidgeSection",
+      "profiledBracketSupport",
+      "countableDoorWindowDivision",
+      "pairedRoofCurveWithRidgeBreak",
+      "watertightResolvedInstances"
+    ]
+  },
+  "supportValidation": {
+    "surfaceGapToleranceMm": 2.0,
+    "directionToleranceMm": 0.01,
+    "maximumLateralOffsetMm": 1.0,
+    "minimumGrooveContactVertices": 8,
+    "minimumBearingAreaMm2": 25000,
+    "jointAllowancesMm": {
+      "purlin:bearingBlock": 45,
+      "purlin:interiorPost": 35,
+      "bracketArm:bracketSeat": 55,
+      "eaveBeam:column": 480,
+      "tieBeam:column": 420
+    }
+  },
+  "assembly": {
+    "name": "一开间全进深悬山木构完整局部构造链",
+    "bayWidth": 3600,
+    "depth": 6000,
+    "roofWidth": 4800,
+    "axisX": [-1800, 1800],
+    "axisY": [-3000, 3000],
+    "levels": {
+      "foundationBottom": -800,
+      "exteriorGround": 0,
+      "terraceTop": 600,
+      "columnTop": 4200,
+      "eave": 5200,
+      "ridge": 8200
+    },
+    "roofCurve": {
+      "family": "pairedCubicC0",
+      "halfSpan": 3600,
+      "ridgeHeight": 8200,
+      "dropCoefficients": [1800, 4400, -3200],
+      "ridgeOneSidedSlope": 0.5,
+      "ridgeSlopeJump": 1.0,
+      "sampleStepMm": 40,
+      "edgeTangentLimit": 0.3
+    }
+  },
+  "componentTemplates": {
+    "foundation": {
+      "geometryStatus": "resolved",
+      "representation": "steppedStoneFooting",
+      "materialCode": "earth-demo",
+      "parameters": {"width": 900, "depth": 900, "height": 800, "courses": 3}
+    },
+    "groundLayer": {
+      "geometryStatus": "resolved",
+      "representation": "layeredGroundSection",
+      "materialCode": "earth-demo",
+      "parameters": {"width": 7200, "depth": 9600, "thickness": 300, "layers": 2}
+    },
+    "terrace": {
+      "geometryStatus": "resolved",
+      "representation": "coursedStonePlatform",
+      "materialCode": "stone-demo",
+      "parameters": {"width": 5400, "depth": 7800, "height": 600, "courseHeight": 200}
+    },
+    "step": {
+      "geometryStatus": "resolved",
+      "representation": "coursedStoneSteps",
+      "materialCode": "stone-demo",
+      "parameters": {"width": 1800, "tread": 320, "riser": 150, "count": 4}
+    },
+    "columnBase": {
+      "geometryStatus": "resolved",
+      "representation": "turnedStoneProfile",
+      "materialCode": "stone-demo",
+      "parameters": {"lowerDiameter": 560, "upperDiameter": 400, "height": 240, "profileSegments": 5}
+    },
+    "column": {
+      "geometryStatus": "resolved",
+      "representation": "taperedRoundTimber",
+      "materialCode": "timber-demo",
+      "parameters": {"bottomDiameter": 380, "topDiameter": 350, "height": 3360, "facets": 32}
+    },
+    "eaveBeam": {
+      "geometryStatus": "resolved",
+      "representation": "notchedTimberPrism",
+      "materialCode": "timber-demo",
+      "parameters": {"width": 300, "height": 480, "endNotchDepth": 90}
+    },
+    "tieBeam": {
+      "geometryStatus": "resolved",
+      "representation": "notchedTimberPrism",
+      "materialCode": "timber-demo",
+      "parameters": {"width": 280, "height": 420, "endNotchDepth": 80}
+    },
+    "interiorPost": {
+      "geometryStatus": "resolved",
+      "representation": "saddleNotchedTimberPost",
+      "materialCode": "timber-demo",
+      "parameters": {"width": 240, "depth": 300, "socketDepth": 35}
+    },
+    "bracketSeat": {
+      "geometryStatus": "resolved",
+      "representation": "dovetailedBearingBlock",
+      "materialCode": "timber-demo",
+      "parameters": {"width": 520, "depth": 420, "height": 180, "socketDepth": 55, "socketWidth": 260}
+    },
+    "bracketArm": {
+      "geometryStatus": "resolved",
+      "representation": "profiledBracketArm",
+      "materialCode": "timber-demo",
+      "parameters": {"length": 1100, "width": 180, "height": 360, "endRise": 150, "neck": 220}
+    },
+    "bearingBlock": {
+      "geometryStatus": "resolved",
+      "representation": "saddleBearingBlock",
+      "materialCode": "timber-demo",
+      "parameters": {"width": 360, "depth": 320, "minimumBodyHeight": 260, "socketDepth": 45}
+    },
+    "purlin": {
+      "geometryStatus": "resolved",
+      "representation": "taperedRoundTimber",
+      "materialCode": "timber-demo",
+      "parameters": {"diameter": 260, "facets": 48}
+    },
+    "rafter": {
+      "geometryStatus": "resolved",
+      "representation": "curvedProfileSweptTimberWithRoundedEaveEnd",
+      "materialCode": "timber-demo",
+      "parameters": {"width": 80, "height": 120, "spacing": 300, "endProfile": "rounded"}
+    },
+    "flyRafter": {
+      "geometryStatus": "resolved",
+      "representation": "curvedProfileSweptTimberWithRoundedEaveEnd",
+      "materialCode": "timber-demo",
+      "parameters": {"width": 80, "height": 100, "length": 900, "endProfile": "rounded"}
+    },
+    "roofBoard": {
+      "geometryStatus": "resolved",
+      "representation": "profiledSurfacePanels",
+      "materialCode": "timber-demo",
+      "parameters": {"thickness": 40, "panelWidth": 300}
+    },
+    "panTile": {
+      "geometryStatus": "resolved",
+      "representation": "concaveTileFamily",
+      "materialCode": "ceramic-demo",
+      "parameters": {"width": 260, "rise": 55, "thickness": 18, "length": 360, "overlap": 100, "lapTailDepth": 18, "lapTransitionLength": 20, "longitudinalSegments": 6}
+    },
+    "coverTile": {
+      "geometryStatus": "resolved",
+      "representation": "convexTileFamily",
+      "materialCode": "ceramic-demo",
+      "parameters": {"width": 170, "rise": 75, "thickness": 18, "length": 360, "overlap": 100, "lapTailDepth": 18, "lapTransitionLength": 20, "longitudinalSegments": 6}
+    },
+    "ridgeTile": {
+      "geometryStatus": "resolved",
+      "representation": "stackedRidgeTileFamily",
+      "materialCode": "ceramic-demo",
+      "parameters": {"baseWidth": 280, "baseHeight": 55, "rollRadius": 70, "crestWidth": 120, "crestHeight": 70, "unitLength": 360, "overlap": 80, "seatDrop": 2.111456}
+    },
+    "wall": {
+      "geometryStatus": "resolved",
+      "representation": "layeredInfillWall",
+      "materialCode": "earth-demo",
+      "parameters": {"thickness": 240, "baseHeight": 900, "panelHeight": 1800, "finishThickness": 20}
+    },
+    "doorFrame": {
+      "geometryStatus": "resolved",
+      "representation": "mortiseTenonFrame",
+      "materialCode": "timber-demo",
+      "parameters": {"openingWidth": 1800, "openingHeight": 2700, "stile": 140, "head": 160, "threshold": 120, "tenonLength": 60}
+    },
+    "doorLeaf": {
+      "geometryStatus": "resolved",
+      "representation": "panelledTimberLeaf",
+      "materialCode": "timber-demo",
+      "parameters": {"count": 2, "thickness": 55, "rail": 100, "stile": 100, "panels": 4}
+    },
+    "latticeWindow": {
+      "geometryStatus": "resolved",
+      "representation": "framedLatticeAssembly",
+      "materialCode": "timber-demo",
+      "parameters": {"width": 720, "height": 1500, "frame": 90, "rows": 4, "columns": 3, "bar": 36}
+    }
+  },
+  "requiredResolvedTypes": [
+    "foundation", "groundLayer", "terrace", "step", "columnBase", "column", "eaveBeam", "tieBeam", "interiorPost",
+    "bracketSeat", "bracketArm", "bearingBlock", "purlin", "rafter", "flyRafter", "roofBoard",
+    "panTile", "coverTile", "ridgeTile", "wall", "doorFrame", "doorLeaf", "latticeWindow"
+  ],
+  "connections": [
+    {"fromType": "ridgeTile", "relation": "supportedBy", "toType": "roofBoard"},
+    {"fromType": "coverTile", "relation": "supportedBy", "toType": "roofBoard"},
+    {"fromType": "panTile", "relation": "supportedBy", "toType": "roofBoard"},
+    {"fromType": "roofBoard", "relation": "supportedBy", "toType": "rafter"},
+    {"fromType": "flyRafter", "relation": "connectedTo", "toType": "rafter"},
+    {"fromType": "rafter", "relation": "supportedBy", "toType": "purlin"},
+    {"fromType": "purlin", "relation": "supportedBy", "toType": "bearingBlock"},
+    {"fromType": "purlin", "relation": "supportedBy", "toType": "interiorPost"},
+    {"fromType": "interiorPost", "relation": "supportedBy", "toType": "tieBeam"},
+    {"fromType": "bearingBlock", "relation": "supportedBy", "toType": "bracketArm"},
+    {"fromType": "bracketArm", "relation": "supportedBy", "toType": "bracketSeat"},
+    {"fromType": "bracketSeat", "relation": "supportedBy", "toType": "eaveBeam"},
+    {"fromType": "eaveBeam", "relation": "supportedBy", "toType": "column"},
+    {"fromType": "tieBeam", "relation": "supportedBy", "toType": "column"},
+    {"fromType": "column", "relation": "supportedBy", "toType": "columnBase"},
+    {"fromType": "columnBase", "relation": "supportedBy", "toType": "terrace"},
+    {"fromType": "terrace", "relation": "supportedBy", "toType": "foundation"},
+    {"fromType": "groundLayer", "relation": "connectedTo", "toType": "foundation"},
+    {"fromType": "step", "relation": "connectedTo", "toType": "terrace"},
+    {"fromType": "wall", "relation": "supportedBy", "toType": "terrace"},
+    {"fromType": "doorLeaf", "relation": "containedBy", "toType": "doorFrame"},
+    {"fromType": "doorFrame", "relation": "connectedTo", "toType": "column"},
+    {"fromType": "latticeWindow", "relation": "connectedTo", "toType": "column"}
+  ],
+  "views": [
+    {
+      "id": "floorPlan",
+      "derivation": "planeIntersection",
+      "scale": "1:50",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [0, 0, 1800], "right": [1, 0, 0], "up": [0, 1, 0], "depth": [0, 0, -1],
+        "modelToView": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, -1, 1800], [0, 0, 0, 1]],
+        "clipRectMm": [-3800, -5400, 3800, 5000], "clipDepthMm": [0, 2600]
+      },
+      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [0, 0, 1800], "planeNormal": [0, 0, 1], "retainedDirection": [0, 0, -1], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "depthProjectionTypes": ["columnBase", "foundation", "groundLayer", "step", "terrace"]},
+      "hiddenLineMode": "remove",
+      "paperPlacement": {"sheet": "T0B-01", "viewportRectMm": [15, 335, 222, 245], "annotationSafeRectMm": [18, 338, 216, 239], "minimumAnnotationMarginMm": 12, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 126], [0, 0.02, 461.5], [0, 0, 1]]}
+    },
+    {
+      "id": "roofPlan",
+      "derivation": "visibleLineProjection",
+      "scale": "1:50",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [0, 0, 0], "right": [1, 0, 0], "up": [0, 1, 0], "depth": [0, 0, -1],
+        "modelToView": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]],
+        "clipRectMm": [-3800, -5400, 3800, 5000], "clipDepthMm": [-8700, 1000]
+      },
+      "direction": [0, 0, -1], "directionSemantics": "camera-to-model", "hiddenLineMode": "remove",
+      "projection": {"displayTypes": ["coverTile", "panTile", "ridgeTile"]},
+      "paperPlacement": {"sheet": "T0B-01", "viewportRectMm": [252, 335, 222, 245], "annotationSafeRectMm": [255, 338, 216, 239], "minimumAnnotationMarginMm": 12, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 363], [0, 0.02, 461.5], [0, 0, 1]]}
+    },
+    {
+      "id": "southElevation",
+      "derivation": "visibleLineProjection",
+      "scale": "1:50",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [0, 0, 0], "right": [1, 0, 0], "up": [0, 0, 1], "depth": [0, 1, 0],
+        "modelToView": [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]],
+        "clipRectMm": [-3800, -1000, 3800, 8700], "clipDepthMm": [-5400, 5000]
+      },
+      "direction": [0, 1, 0], "directionSemantics": "camera-to-model", "hiddenLineMode": "remove",
+      "projection": {"displayTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "coverTile", "doorFrame", "doorLeaf", "eaveBeam", "flyRafter", "latticeWindow", "panTile", "purlin", "ridgeTile", "roofBoard", "step", "terrace", "wall"]},
+      "paperPlacement": {"sheet": "T0B-01", "viewportRectMm": [15, 65, 222, 245], "annotationSafeRectMm": [18, 68, 216, 239], "minimumAnnotationMarginMm": 12, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 126], [0, 0.02, 110.5], [0, 0, 1]]}
+    },
+    {
+      "id": "transverseSection",
+      "derivation": "planeIntersection",
+      "scale": "1:50",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [-1750, 0, 0], "right": [0, -1, 0], "up": [0, 0, 1], "depth": [1, 0, 0],
+        "modelToView": [[0, -1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1750], [0, 0, 0, 1]],
+        "clipRectMm": [-5000, -1000, 5400, 8700], "clipDepthMm": [0, 5360]
+      },
+      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [-1750, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "anchorEntityId": "094027ab-3397-5117-bad8-81c07d961879", "depthProjectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "doorFrame", "doorLeaf", "eaveBeam", "foundation", "groundLayer", "interiorPost", "latticeWindow", "purlin", "step", "terrace", "tieBeam", "wall"]},
+      "hiddenLineMode": "remove",
+      "paperPlacement": {"sheet": "T0B-01", "viewportRectMm": [252, 65, 238, 245], "annotationSafeRectMm": [255, 68, 232, 239], "minimumAnnotationMarginMm": 12, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 367], [0, 0.02, 110.5], [0, 0, 1]]}
+    },
+    {
+      "id": "longitudinalSection",
+      "derivation": "planeIntersection",
+      "scale": "1:50",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [0, 0, 0], "right": [-1, 0, 0], "up": [0, 0, 1], "depth": [0, -1, 0],
+        "modelToView": [[-1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]],
+        "clipRectMm": [-3800, -1000, 3800, 8700], "clipDepthMm": [0, 5180]
+      },
+      "section": {"mode": "cut-and-depth-projection", "planeOrigin": [0, 0, 0], "planeNormal": [0, 1, 0], "retainedDirection": [0, -1, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "foundationLevelMode": "projected-reference-not-cut", "depthProjectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "doorFrame", "doorLeaf", "eaveBeam", "foundation", "groundLayer", "interiorPost", "latticeWindow", "purlin", "step", "terrace", "tieBeam", "wall"]},
+      "hiddenLineMode": "remove",
+      "paperPlacement": {"sheet": "T0B-02", "viewportRectMm": [15, 65, 185, 225], "annotationSafeRectMm": [18, 68, 179, 219], "minimumAnnotationMarginMm": 12, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 107.5], [0, 0.02, 100.5], [0, 0, 1]]}
+    },
+    {
+      "id": "axonometric",
+      "derivation": "visibleLineProjection",
+      "scale": "1:50",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [0, 0, 0], "right": [0.707106781, -0.707106781, 0], "up": [0.40824829, 0.40824829, 0.816496581], "depth": [0.577350269, 0.577350269, -0.577350269],
+        "modelToView": [[0.707106781, -0.707106781, 0, 0], [0.40824829, 0.40824829, 0.816496581, 0], [0.577350269, 0.577350269, -0.577350269, 0], [0, 0, 0, 1]],
+        "clipRectMm": [-6200, -4400, 6400, 10500], "clipDepthMm": [-10200, 5500]
+      },
+      "direction": [0.577350269, 0.577350269, -0.577350269], "directionSemantics": "camera-to-model", "hiddenLineMode": "remove",
+      "projection": {"displayTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "coverTile", "doorFrame", "doorLeaf", "eaveBeam", "flyRafter", "latticeWindow", "panTile", "purlin", "ridgeTile", "roofBoard", "step", "terrace", "wall"]},
+      "paperPlacement": {"sheet": "T0B-01", "viewportRectMm": [500, 65, 330, 515], "annotationSafeRectMm": [503, 68, 324, 509], "minimumAnnotationMarginMm": 5, "paperScale": 0.02, "rotationDeg": 0, "viewToPaper": [[0.02, 0, 663], [0, 0.02, 261.5], [0, 0, 1]]}
+    },
+    {
+      "id": "eaveDetail",
+      "derivation": "controlledDetailProjection",
+      "scale": "1:15",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [-1750, 0, 0], "right": [0, -1, 0], "up": [0, 0, 1], "depth": [1, 0, 0],
+        "modelToView": [[0, -1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1750], [0, 0, 0, 1]],
+        "clipRectMm": [1800, 3500, 4000, 6200], "clipDepthMm": [0, 760]
+      },
+      "detail": {
+        "mode": "section-projection", "anchorEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "anchorComponentType": "bearingBlock", "anchorPoint": [-1750, -2847.387511, 4933.710316], "anchorCentroid": [-1800, -2847.387511, 4933.710316],
+        "cropBoundsModelMm": [[-2160, -4000, 3500], [-1000, -1800, 6200]],
+        "cutTargetTypes": ["coverTile", "panTile", "roofBoard", "flyRafter", "rafter", "purlin", "bearingBlock", "bracketArm", "bracketSeat", "eaveBeam", "column"],
+        "depthProjectionTypes": ["coverTile", "panTile", "roofBoard", "flyRafter", "rafter", "purlin", "bearingBlock", "bracketArm", "bracketSeat", "eaveBeam", "column"],
+        "materialOverlapPriority": {"field": "materialCode", "order": ["ceramic-demo", "timber-demo"]},
+        "section": {"planeOrigin": [-1750, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "cutSourceDepthMm": [-0.5, 0.5], "retainedProjectionDepthMm": [0.5, 760], "allowedPaddingMm": 0.5}
+      },
+      "hiddenLineMode": "remove",
+      "paperPlacement": {"sheet": "T0B-02", "viewportRectMm": [15, 370, 180, 210], "annotationSafeRectMm": [18, 373, 174, 204], "minimumAnnotationMarginMm": 12, "paperScale": 0.066666667, "rotationDeg": 0, "viewToPaper": [[0.066666667, 0, -88.333333333], [0, 0.066666667, 151.666666667], [0, 0, 1]]}
+    },
+    {
+      "id": "bracketDetail",
+      "derivation": "controlledDetailProjection",
+      "scale": "1:10",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [0, 0, 0], "right": [1, 0, 0], "up": [0, 0, 1], "depth": [0, 1, 0],
+        "modelToView": [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]],
+        "clipRectMm": [-2500, 3600, -1100, 5400], "clipDepthMm": [-3600, -2400]
+      },
+      "detail": {
+        "mode": "occlusion-projection", "anchorEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "anchorComponentType": "bearingBlock", "anchorPoint": [-1800, -2847.387511, 4933.710316], "anchorCentroid": [-1800, -2847.387511, 4933.710316],
+        "cropBoundsModelMm": [[-2500, -3600, 3600], [-1100, -2400, 5400]],
+        "visibleProjectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "eaveBeam", "column"],
+        "scopeBoundary": "ends-at-bearingBlock; purlin-to-bearingBlock continuity is verified in eaveDetail"
+      },
+      "direction": [0, 1, 0], "directionSemantics": "camera-to-model", "hiddenLineMode": "remove",
+      "paperPlacement": {"sheet": "T0B-02", "viewportRectMm": [215, 370, 170, 210], "annotationSafeRectMm": [218, 373, 164, 204], "minimumAnnotationMarginMm": 12, "paperScale": 0.1, "rotationDeg": 0, "viewToPaper": [[0.1, 0, 480], [0, 0.1, 25], [0, 0, 1]]}
+    },
+    {
+      "id": "columnBaseDetail",
+      "derivation": "controlledDetailProjection",
+      "scale": "1:10",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [-1800, 0, 0], "right": [0, -1, 0], "up": [0, 0, 1], "depth": [1, 0, 0],
+        "modelToView": [[0, -1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1800], [0, 0, 0, 1]],
+        "clipRectMm": [2400, -900, 3600, 1500], "clipDepthMm": [0, 800]
+      },
+      "detail": {
+        "mode": "section-projection", "anchorEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5", "anchorComponentType": "columnBase", "anchorPoint": [-1800, -3000, 698.83076], "anchorCentroid": [-1800, -3000, 698.83076],
+        "cropBoundsModelMm": [[-2200, -3600, -900], [-1000, -2400, 1500]],
+        "cutTargetTypes": ["column", "columnBase", "terrace", "foundation", "groundLayer"],
+        "depthProjectionTypes": ["column", "columnBase", "terrace"],
+        "materialOverlapPriority": {"field": "componentType", "order": ["foundation", "groundLayer"]},
+        "section": {"planeOrigin": [-1800, 0, 0], "planeNormal": [1, 0, 0], "retainedDirection": [1, 0, 0], "cutToleranceMm": 0.5, "stabilityProbeMm": 0.5, "cutSourceDepthMm": [-0.5, 0.5], "retainedProjectionDepthMm": [0.5, 800], "allowedPaddingMm": 0.5}
+      },
+      "hiddenLineMode": "remove",
+      "paperPlacement": {"sheet": "T0B-02", "viewportRectMm": [215, 65, 150, 270], "annotationSafeRectMm": [218, 68, 144, 264], "minimumAnnotationMarginMm": 12, "paperScale": 0.1, "rotationDeg": 0, "viewToPaper": [[0.1, 0, -10], [0, 0.1, 170], [0, 0, 1]]}
+    },
+    {
+      "id": "doorWindowDetail",
+      "derivation": "controlledDetailProjection",
+      "scale": "1:15",
+      "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+      "viewFrame": {
+        "origin": [0, 0, 0], "right": [1, 0, 0], "up": [0, 0, 1], "depth": [0, 1, 0],
+        "modelToView": [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]],
+        "clipRectMm": [-2400, 400, 2400, 3700], "clipDepthMm": [-3400, -2700]
+      },
+      "detail": {
+        "mode": "occlusion-projection", "anchorEntityId": "e70cb175-0002-536f-81d6-07cc45c05031", "anchorComponentType": "doorFrame", "anchorPoint": [0, -3035, 2027.920526], "anchorCentroid": [0, -3035, 2027.920526],
+        "cropBoundsModelMm": [[-2400, -3400, 400], [2400, -2700, 3700]],
+        "visibleProjectionTypes": ["wall", "doorFrame", "doorLeaf", "latticeWindow"]
+      },
+      "direction": [0, 1, 0], "directionSemantics": "camera-to-model", "hiddenLineMode": "remove",
+      "paperPlacement": {"sheet": "T0B-02", "viewportRectMm": [480, 65, 350, 250], "annotationSafeRectMm": [483, 68, 344, 244], "minimumAnnotationMarginMm": 12, "paperScale": 0.066666667, "rotationDeg": 0, "viewToPaper": [[0.066666667, 0, 655], [0, 0.066666667, 53.333333333], [0, 0, 1]]}
+    }
+  ],
+  "drawingSheets": [
+    {"drawingNumber": "T0B-01", "title": "综合图", "size": "A1", "orientation": "landscape", "pageMm": [841, 594], "render300DpiPx": [9933, 7016], "printableRectMm": [10, 60, 831, 584], "titleBlockRectMm": [510, 10, 831, 55], "viewIds": ["floorPlan", "roofPlan", "southElevation", "transverseSection", "axonometric"]},
+    {"drawingNumber": "T0B-02", "title": "构造详图", "size": "A1", "orientation": "landscape", "pageMm": [841, 594], "render300DpiPx": [9933, 7016], "printableRectMm": [10, 60, 831, 584], "titleBlockRectMm": [510, 10, 831, 55], "viewIds": ["longitudinalSection", "eaveDetail", "bracketDetail", "columnBaseDetail", "doorWindowDetail"]}
+  ],
+  "drawingRequirements": {
+    "dimensionCategories": ["overall", "axis", "bayOrDepth", "componentLocation", "componentSize"],
+    "levelCategories": ["exteriorGround", "terraceTop", "columnTop", "eave", "ridge", "foundationBottom"],
+    "titleBlockFields": ["project", "drawingTitle", "drawingNumber", "scale", "unit", "status", "revision", "date", "responsibilityBoundary"],
+    "lineClasses": ["cut", "outline", "projection", "hidden", "axis", "dimension", "annotation", "hatch"],
+    "materialHatches": ["stone", "timber", "earth"],
+    "annotationGroups": ["componentName", "componentSpecification", "material", "condition", "protectionNote", "sourceState"],
+    "projectionPolicy": {
+      "hiddenLineRemoval": true,
+      "silhouetteEdges": true,
+      "featureEdges": true,
+      "componentBoundaries": true,
+      "triangleInteriorEdges": "forbidden",
+      "featureAngleDeg": 25,
+      "visibilityProbeToleranceMm": 0.5,
+      "occlusionSplitToleranceMm": 5,
+      "outlineProbeMm": 5,
+      "continuationDepthToleranceMm": 50,
+      "canonicalOwnerPolicy": "nearest-depth-then-silhouette-componentBoundary-feature-then-entityId",
+      "structuralLineClasses": ["cut", "silhouette", "feature", "componentBoundary"],
+      "visibilityClasses": ["visible", "hidden"]
+    },
+    "baseClassLayerMap": {
+      "cut": "GJ-CUT",
+      "silhouette": "GJ-OUTLINE",
+      "feature": "GJ-PROJECTION",
+      "componentBoundary": "GJ-PROJECTION",
+      "axis": "GJ-AXIS",
+      "dimension": "GJ-DIMENSION",
+      "annotation": "GJ-TEXT",
+      "hatch": "GJ-HATCH"
+    },
+    "visibilityLayerOverride": {"visible": null, "hidden": "GJ-HIDDEN"},
+    "scalePolicy": {"primary": ["1:50"], "detail": ["1:10", "1:15"], "detail15Use": "team demo layout only; drawing review must confirm printed readability"},
+    "detailTracePolicy": {"sourceEntityCoverage": 1.0, "geometryRevisionRequired": true, "derivationTransformRequired": true},
+    "detailMaterialPolicy": {
+      "deriveClosedRegionsBeforeCrop": true,
+      "cropBoundaryClass": "cropLimit",
+      "cropBoundaryIsStructural": false,
+      "maximumMaterialOverlapAreaMm2": 0,
+      "overlapPriorityMustBeExplicit": true
+    },
+    "nativeCadEntities": ["DIMENSION", "TEXT", "MTEXT", "HATCH", "INSERT", "LAYOUT", "VIEWPORT"],
+    "outputMatrix": {
+      "dxf": {"files": 1, "layouts": ["T0B-01", "T0B-02"], "modelSpaceUnit": "mm", "modelSpaceScale": "1:1"},
+      "svg": {"files": ["T0B-01.svg", "T0B-02.svg"], "vectorRequired": true},
+      "pdf": {"files": 1, "pages": 2, "vectorRequired": true, "searchableText": true, "embeddedFonts": true},
+      "reviewPng": {"files": ["T0B-01-300dpi.png", "T0B-02-300dpi.png"], "dpi": 300, "pixelSize": [9933, 7016]}
+    },
+    "requiredLayers": [
+      "GJ-AXIS", "GJ-CUT", "GJ-OUTLINE", "GJ-PROJECTION", "GJ-HIDDEN", "GJ-DIMENSION", "GJ-TEXT", "GJ-HATCH", "GJ-FRAME",
+      "GJ-ROOF", "GJ-RIDGE", "GJ-TIMBER", "GJ-BRACKET", "GJ-WALL", "GJ-DOOR-WINDOW", "GJ-TERRACE", "GJ-FOUNDATION", "GJ-CONDITION"
+    ],
+    "pageQuality": {"missingGlyphs": 0, "fontSubstitutions": 0, "questionMarkPlaceholders": 0, "clippedElements": 0, "overlaps": 0},
+    "dimensionCoverage": {
+      "floorPlan": ["overall", "axis", "bayOrDepth", "componentLocation", "componentSize"],
+      "roofPlan": ["overall", "componentLocation", "componentSize"],
+      "southElevation": ["overall", "axis", "bayOrDepth", "componentLocation", "componentSize"],
+      "transverseSection": ["overall", "axis", "bayOrDepth", "componentLocation", "componentSize"],
+      "longitudinalSection": ["overall", "axis", "bayOrDepth", "componentLocation", "componentSize"],
+      "axonometric": [],
+      "eaveDetail": ["componentLocation", "componentSize"],
+      "bracketDetail": ["componentLocation", "componentSize"],
+      "columnBaseDetail": ["componentLocation", "componentSize"],
+      "doorWindowDetail": ["overall", "componentLocation", "componentSize"]
+    },
+    "levelCoverage": {
+      "floorPlan": ["terraceTop"],
+      "roofPlan": ["eave", "ridge"],
+      "southElevation": ["exteriorGround", "terraceTop", "columnTop", "eave", "ridge"],
+      "transverseSection": ["foundationBottom", "exteriorGround", "terraceTop", "columnTop", "eave", "ridge"],
+      "longitudinalSection": ["foundationBottom", "exteriorGround", "terraceTop", "columnTop", "eave", "ridge"],
+      "axonometric": [],
+      "eaveDetail": ["columnTop", "eave"],
+      "bracketDetail": ["columnTop", "eave"],
+      "columnBaseDetail": ["foundationBottom", "exteriorGround", "terraceTop"],
+      "doorWindowDetail": ["terraceTop"]
+    }
+  },
+  "conditionRecord": {
+    "id": "COND-DEMO-001",
+    "producerType": "demo",
+    "targetType": "column",
+    "description": "南侧左柱柱脚表面开裂演示记录，用于验证病害与构件来源关系",
+    "dataStatus": "available",
+    "reviewStatus": "unreviewed"
+  },
+  "knownAnswers": {
+  "geometryRevisionId": "3788f4e4-339c-568d-aa58-f74b36b23c5a",
+    "bayWidth": 3600,
+    "depth": 6000,
+    "roofWidth": 4800,
+    "terraceWidth": 5400,
+    "terraceDepth": 7800,
+    "foundationBottom": -800,
+    "terraceTop": 600,
+    "columnTop": 4200,
+    "eave": 5200,
+    "ridge": 8200,
+    "geometrySignature": "55954253257e1ac8834ea6a27ec01352605b36120a3c698f5cac38de9f008de3",
+    "sourceMeshBundleSha256": "06a92a7fe76c632fe4c7fddd0f27e53ed3fad46a57a047bfdcd7de08432d4c3c",
+    "geometryOracle": {
+      "overallBounds": [[-3600, -5180, -800], [3600, 4800, 8451.388544]],
+      "stepBounds": [[-900, -5180, 0], [900, -2940, 600]],
+      "doorLeafBounds": [[-900, -3132.5, 550], [900, -3077.5, 3350]],
+      "ridgeBounds": [[-2400, -140, 8217.888544], [2440, 140, 8451.388544]]
+    },
+    "requiredViewIds": ["floorPlan", "roofPlan", "southElevation", "transverseSection", "longitudinalSection", "axonometric", "eaveDetail", "bracketDetail", "columnBaseDetail", "doorWindowDetail"],
+    "viewOracle": {
+      "oracleAlgorithmVersion": "t0b-v2-detail-oracle-1",
+      "viewOracleSignature": "c45ecd806c8b49fed6686f3ecf94a0600c157f3c07ad16c2231a584fb344d4fd",
+      "hashConvention": "sha256 of LF-delimited sorted entity UUIDs; section segment hashes use sorted 0.001 mm canonical endpoint records",
+      "metricUse": "counts are diagnostics for identity and topology only; they are not quality or qualification thresholds",
+      "views": {
+        "floorPlan": {
+          "selectionCountDiagnostic": 36,
+          "selectionEntitySetSha256": "b170da610db0c65004a911948378b853a2d011f76cfc0fa228ad5d0f82a5b04b",
+          "selectionTypes": ["column", "columnBase", "doorFrame", "doorLeaf", "foundation", "groundLayer", "latticeWindow", "step", "terrace", "wall"],
+          "cutEntitySetSha256": "65a57eded931f347ab266102c2ab50c39b6e4d6ed9949f2836e2aa95892dc37e",
+          "cutSegmentSha256": "dda7e0077b378dc95ea5a789804ec372136d769bb4e685372d605efdc9b35d59",
+          "cutClosedRegionCount": 26,
+          "cutClosedRegionsByType": {"column": 4, "doorFrame": 2, "doorLeaf": 6, "latticeWindow": 8, "wall": 6},
+          "cutOpenOrDangleCount": 0,
+          "cutBounds2dMm": [-1985.714, -3185.714, 1985.714, 3185.714],
+          "anchorModelPointsMm": {"axisOrigin": [0, 0, 1800], "southDoorCenter": [0, -3035, 2027.920526]},
+          "dimensionsMm": {"bayWidth": 3600, "depth": 6000, "terraceWidth": 5400, "terraceDepth": 7800, "doorOpeningWidth": 1800},
+          "levelsMm": {"terraceTop": 600},
+          "mustNotAppearTypes": ["panTile", "coverTile", "ridgeTile", "roofBoard", "rafter", "purlin"]
+        },
+        "roofPlan": {
+          "selectionCountDiagnostic": 1166,
+          "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+          "selectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "coverTile", "doorFrame", "doorLeaf", "eaveBeam", "flyRafter", "foundation", "groundLayer", "interiorPost", "latticeWindow", "panTile", "purlin", "rafter", "ridgeTile", "roofBoard", "step", "terrace", "tieBeam", "wall"],
+          "anchorModelPointsMm": {"ridgeCenter": [0, 0, 8200], "southEaveCenter": [0, -3600, 5200]},
+          "dimensionsMm": {"roofWidth": 4800, "roofHalfSpan": 3600, "ridgeUnitLength": 360},
+          "levelsMm": {"eave": 5200, "ridge": 8200},
+          "requiredVisibleEntityIds": ["92f515d9-5877-5e52-bc4d-334806d666c2", "508224fa-b7ec-5814-9486-81c2051309e1", "07775bf1-23db-55a2-a2a1-8dbeb91e9f1c", "23a1b631-f11f-5784-9cfc-4b755fb94ae1", "8b32387e-92ea-56f0-887e-bac5ecc0cdd2", "112ca251-4ef7-561f-9acf-1a265aab9ce9", "1083b4ed-27d1-56ab-a216-6b09d5086690", "3a0ce393-57af-52b6-9c49-a3bcb8da092a", "e9e4aedb-e8f4-590d-b53a-db9855c57563", "5233b8e1-7cc2-56a4-bf44-3eec06f65d9b"],
+          "requiredVisibleChains": {"ridge": ["92f515d9-5877-5e52-bc4d-334806d666c2", "508224fa-b7ec-5814-9486-81c2051309e1", "07775bf1-23db-55a2-a2a1-8dbeb91e9f1c"], "southPanLap": ["23a1b631-f11f-5784-9cfc-4b755fb94ae1", "8b32387e-92ea-56f0-887e-bac5ecc0cdd2", "112ca251-4ef7-561f-9acf-1a265aab9ce9"], "southCoverLap": ["1083b4ed-27d1-56ab-a216-6b09d5086690", "3a0ce393-57af-52b6-9c49-a3bcb8da092a", "e277d7b6-feda-5a8b-bc2b-e76e17fbcdd1"]},
+          "mustNotAppearEntityIds": [],
+          "mustNotAppearTypes": ["foundation", "groundLayer", "roofBoard", "rafter", "purlin", "interiorPost", "tieBeam"],
+          "occlusionRules": [{"region": "roof-footprint", "occluderTypes": ["panTile", "coverTile", "ridgeTile"], "mustHideTypes": ["roofBoard", "rafter", "purlin", "interiorPost", "tieBeam"]}]
+        },
+        "southElevation": {
+          "selectionCountDiagnostic": 1166,
+          "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+          "selectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "coverTile", "doorFrame", "doorLeaf", "eaveBeam", "flyRafter", "foundation", "groundLayer", "interiorPost", "latticeWindow", "panTile", "purlin", "rafter", "ridgeTile", "roofBoard", "step", "terrace", "tieBeam", "wall"],
+          "anchorModelPointsMm": {"southDoorCenter": [0, -3035, 2027.920526], "ridgeCenter": [0, 0, 8200]},
+          "requiredVisibleEntityIds": ["0047e6a9-aa4a-5306-89fc-9ce42d378e2d", "8bd4ad31-83a5-557b-9b3a-dc301eb6a971", "e70cb175-0002-536f-81d6-07cc45c05031", "4580694e-6dce-54a3-9634-ca4a96dbe5bc", "41c9ff7d-67a9-5add-92f6-48886e9ed5d4"],
+          "mustNotAppearEntityIds": ["0c806790-9cc2-514a-b9b1-cb8f3fcc1bac", "7a23dbe5-8a27-5e87-bd74-3b6a99ab07ee"],
+          "mustNotAppearTypes": ["foundation", "groundLayer", "interiorPost", "rafter", "tieBeam"],
+          "dimensionsMm": {"overallWidth": 7200, "bayWidth": 3600, "doorOpeningWidth": 1800, "columnBottomDiameter": 380},
+          "levelsMm": {"exteriorGround": 0, "terraceTop": 600, "columnTop": 4200, "eave": 5200, "ridge": 8200}
+        },
+        "transverseSection": {
+          "selectionCountDiagnostic": 1040,
+          "selectionEntitySetSha256": "5107f565b2a2552f1677935ed9646c4b231ece42c1fbe4507ea955fa6f99d3ec",
+          "selectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "coverTile", "doorFrame", "doorLeaf", "eaveBeam", "flyRafter", "foundation", "groundLayer", "interiorPost", "latticeWindow", "panTile", "purlin", "rafter", "ridgeTile", "roofBoard", "step", "terrace", "tieBeam", "wall"],
+          "cutEntitySetSha256": "c63e5b4e4e89bef1b95eeb2151f18fc84c5fe155fada449329e8d07a73df96ab",
+          "cutSegmentSha256": "18ffcf4e57db86962995f9f579fc899b011a242fc5d82ce985e455c0e316ce5e",
+          "cutClosedRegionCount": 94,
+          "cutClosedRegionsByType": {"bearingBlock": 2, "bracketArm": 4, "bracketSeat": 2, "column": 2, "columnBase": 8, "eaveBeam": 2, "flyRafter": 6, "foundation": 6, "groundLayer": 2, "interiorPost": 5, "panTile": 28, "purlin": 7, "rafter": 6, "ridgeTile": 5, "roofBoard": 2, "terrace": 3, "tieBeam": 1, "wall": 3},
+          "cutOpenOrDangleCount": 0,
+          "cutBounds2dMm": [-4800, -800, 4800, 8451.389],
+          "anchorModelPointsMm": {"southColumnCut": [-1750, -3000, 0], "ridgeOnFrame": [-1750, 0, 8200]},
+          "dimensionsMm": {"overallDepth": 9600, "structuralDepth": 6000, "columnDiameter": 380, "purlinDiameter": 260},
+          "levelsMm": {"foundationBottom": -800, "exteriorGround": 0, "terraceTop": 600, "columnTop": 4200, "eave": 5200, "ridge": 8200}
+        },
+        "longitudinalSection": {
+          "selectionCountDiagnostic": 634,
+          "selectionEntitySetSha256": "10b36dca8a8815d7f68141aa352980f7498845c9cbc9192c5310ae188a88939a",
+          "selectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "coverTile", "doorFrame", "doorLeaf", "eaveBeam", "flyRafter", "foundation", "groundLayer", "interiorPost", "latticeWindow", "panTile", "purlin", "rafter", "ridgeTile", "roofBoard", "step", "terrace", "tieBeam", "wall"],
+          "cutEntitySetSha256": "473fb5ade7e7d8a8774dfe7b353eb77244f8d46e5d7f3c2aa36f7ace66d4710e",
+          "cutSegmentSha256": "7883cb405d6e0ad774bbe92df6b1138311de6d6a615e9e2a90f676524d4cbfc8",
+          "cutClosedRegionCount": 159,
+          "cutClosedRegionsByType": {"groundLayer": 2, "interiorPost": 2, "purlin": 1, "rafter": 32, "ridgeTile": 85, "roofBoard": 32, "terrace": 3, "tieBeam": 2},
+          "cutOpenOrDangleCount": 0,
+          "cutBounds2dMm": [-3600, -300, 3600, 8451.389],
+          "anchorModelPointsMm": {"ridgeCenter": [0, 0, 8200], "southFoundationReference": [-1800, -3000, -800]},
+          "dimensionsMm": {"overallWidth": 7200, "bayWidth": 3600, "roofWidth": 4800},
+          "levelsMm": {"foundationBottom": -800, "exteriorGround": 0, "terraceTop": 600, "columnTop": 4200, "eave": 5200, "ridge": 8200},
+          "levelModes": {"foundationBottom": "projected-reference-not-cut"}
+        },
+        "axonometric": {
+          "selectionCountDiagnostic": 1166,
+          "selectionEntitySetSha256": "a251e096cf5c691cb6633712e6baefa8e03c64e87ba00112ecdd94b5c2220fa0",
+          "selectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "columnBase", "coverTile", "doorFrame", "doorLeaf", "eaveBeam", "flyRafter", "foundation", "groundLayer", "interiorPost", "latticeWindow", "panTile", "purlin", "rafter", "ridgeTile", "roofBoard", "step", "terrace", "tieBeam", "wall"],
+          "anchorModelPointsMm": {"ridgeCenter": [0, 0, 8200], "southStepFront": [0, -5180, 0]},
+          "requiredVisibleEntityIds": ["0333c086-45ad-5562-8cfa-6868efa95e40", "77aa48f8-37c0-5a17-9656-60b6a409be8c", "345453d2-df34-5b51-9de4-11554f05d1d7", "8d1e5734-70e0-5a21-b298-2b1eee999222", "5067a823-a3af-56ff-b693-9466e8ebd0f2", "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "c6942d13-d788-5e51-8178-0df6a65c0708", "094027ab-3397-5117-bad8-81c07d961879", "e70cb175-0002-536f-81d6-07cc45c05031", "0047e6a9-aa4a-5306-89fc-9ce42d378e2d", "8bd4ad31-83a5-557b-9b3a-dc301eb6a971", "4580694e-6dce-54a3-9634-ca4a96dbe5bc", "41c9ff7d-67a9-5add-92f6-48886e9ed5d4", "47d7add8-6e24-59d0-a14c-b34b9cafe577", "191b8fad-1c88-54ef-8b67-5471e8c56179"],
+          "mustNotAppearEntityIds": ["b96be140-c7a3-509b-bc3e-a0fcf67e7c43", "82cff0bd-5821-51cb-adbf-a5e04a43649e"],
+          "mustNotAppearTypes": ["foundation", "groundLayer", "interiorPost", "rafter", "tieBeam"],
+          "anchorOrder": "southStepFront-right-and-below-ridgeCenter",
+          "dimensionsMm": {}, "levelsMm": {}, "hiddenGeometryMode": "occlusion-remove"
+        },
+        "eaveDetail": {
+          "selectionCountDiagnostic": 59,
+          "selectionEntitySetSha256": "7392af5a396900a1f19ccebd241e4ff057c66ea5992fad43589602a603b44e22",
+          "selectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "coverTile", "eaveBeam", "flyRafter", "panTile", "purlin", "rafter", "roofBoard"],
+          "cutEntitySetSha256": "75cc760d9f3cec5059ba01e0d19d036a1fe8d8a0a22568257d64f5911c9f5671",
+          "cutSegmentSha256": "222c8d05f63affba122d8ef47199ece8b67f4dbd1b457194278ce11548b34ae9",
+          "cropLimitSegmentSha256": "1e6d83d4abdb466da9051f1759c3968bd548b01777e41a527f88d2ea791217b2",
+          "cropLimitSegmentCount": 4,
+          "cutClosedRegionCount": 21,
+          "cutClosedRegionsByType": {"bearingBlock": 1, "bracketArm": 2, "bracketSeat": 1, "column": 1, "eaveBeam": 1, "flyRafter": 3, "panTile": 6, "purlin": 2, "rafter": 3, "roofBoard": 1},
+          "cutOpenOrDangleCount": 0,
+          "materialRegionsByCode": {"ceramic-demo": 1, "timber-demo": 3},
+          "maximumMaterialOverlapAreaMm2": 0,
+          "visibleLineSetSha256": "002ea4f27e2865c44a9aecbd7daf8712fb22ca9a4f8e56c53c898a725fd31c9e",
+          "visibleLineCountDiagnostic": 1134,
+          "requiredVisibleEntityIds": ["060068a1-e546-5aed-89f4-c1a0b9703d66", "094027ab-3397-5117-bad8-81c07d961879", "0a387381-1480-549e-b7a2-0b039b478294", "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "1b3ecc93-72a1-5506-abe3-dfab0a3f61c9", "1e3b2317-9b3d-557e-a283-567bea427d5a", "1f078a08-7faf-51d8-988a-d29417fd82c8", "2756f220-3f0d-5395-adf9-2cddbf7d46bb", "2f615b6c-d3f6-5537-9179-4dca3040e20e", "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "440f30ad-2a2e-5b85-9d51-8f4b43fc599f", "445aa899-bec7-5e73-b26d-9c8b38057498", "50c2b1c7-b84b-58e9-a4a0-79ce902ed028", "51ef2127-edc0-5461-825c-9f44a719b59f", "696e8283-9e59-52bf-9f7c-99dc55df94de", "a6171b1b-a941-59a8-8191-3f770b505a78", "c6942d13-d788-5e51-8178-0df6a65c0708", "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "cd0f2076-7e40-5162-b53b-ea99138debb9", "cfbedf2a-2181-56f0-8d29-79a46125f6c7", "e37fe806-67f1-59ef-a7e9-79ef39dd23cf", "e4fea827-e966-53c9-8b39-ae669b1c79c1", "f87fc86e-d5f6-5f03-9f53-56c85fbdf115", "fc535626-eceb-5dcc-8737-e0dc4047920a"],
+          "mustNotAppearEntityIds": ["b96be140-c7a3-509b-bc3e-a0fcf67e7c43", "b15ad573-b6fe-506f-ad6f-0681872cc3f7", "de076af1-baa9-5dcb-aee4-3fed221fe4cd", "d918c9e2-140d-5ccb-9d5d-22ece88283fb", "60da1edf-6f3f-51ca-9fc8-725d15abfe3d", "907a6102-f03f-5d0b-874a-116beefa880d", "01bc5a17-18f4-504c-a6f4-e994653f8a13", "c25196c9-836b-57a9-9451-e494a23b0651", "f2a7fa1f-b48a-52b1-9c0d-a9be2660cbbc", "0c806790-9cc2-514a-b9b1-cb8f3fcc1bac", "1de295c6-24cd-5fe6-9bad-1aa01d3e4398"],
+          "mustNotAppearTypes": [],
+          "viewBounds2dMm": [1990.202, 3500, 3760.873, 6200],
+          "anchorEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7",
+          "requiredTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "coverTile", "eaveBeam", "flyRafter", "panTile", "purlin", "rafter", "roofBoard"],
+          "requiredEntityChains": {
+            "rafterToPurlin": [{"fromEntityId": "696e8283-9e59-52bf-9f7c-99dc55df94de", "relation": "supportedBy", "toEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "relationScope": "inView"}],
+            "purlinToColumnViaXArm": [{"fromEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "relation": "supportedBy", "toEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relationScope": "inView"}, {"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relationScope": "inView"}, {"fromEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relationScope": "inView"}, {"fromEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relation": "supportedBy", "toEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relationScope": "inView"}, {"fromEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relation": "supportedBy", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "inView"}],
+            "bearingToSeatViaYArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relationScope": "inView"}, {"fromEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relationScope": "inView"}]
+          },
+          "materialCodeByType": {"panTile": "ceramic-demo", "coverTile": "ceramic-demo", "roofBoard": "timber-demo", "flyRafter": "timber-demo", "rafter": "timber-demo", "purlin": "timber-demo", "bearingBlock": "timber-demo", "bracketArm": "timber-demo", "bracketSeat": "timber-demo", "eaveBeam": "timber-demo", "column": "timber-demo"},
+          "dimensionsMm": {"tileThickness": 18, "tileLap": 100, "purlinDiameter": 260},
+          "levelsMm": {"columnTop": 4200, "eave": 5200}
+        },
+        "bracketDetail": {
+          "selectionCountDiagnostic": 6,
+          "selectionEntitySetSha256": "dc6d0d84ca59b8adfd9df2812be897df61c5773ca61938f32654300ab3026912",
+          "selectionTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "eaveBeam"],
+          "visibleLineSetSha256": "ef87716dd0d37314f9781aa1f9de07db8c16a1eded62c46c3b6ac7ce35d0af38",
+          "visibleLineCountDiagnostic": 43,
+          "requiredVisibleEntityIds": ["094027ab-3397-5117-bad8-81c07d961879", "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "c6942d13-d788-5e51-8178-0df6a65c0708", "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "fc535626-eceb-5dcc-8737-e0dc4047920a"],
+          "mustNotAppearEntityIds": ["b96be140-c7a3-509b-bc3e-a0fcf67e7c43", "b15ad573-b6fe-506f-ad6f-0681872cc3f7", "de076af1-baa9-5dcb-aee4-3fed221fe4cd", "d918c9e2-140d-5ccb-9d5d-22ece88283fb", "60da1edf-6f3f-51ca-9fc8-725d15abfe3d", "907a6102-f03f-5d0b-874a-116beefa880d", "01bc5a17-18f4-504c-a6f4-e994653f8a13", "c25196c9-836b-57a9-9451-e494a23b0651", "f2a7fa1f-b48a-52b1-9c0d-a9be2660cbbc", "0c806790-9cc2-514a-b9b1-cb8f3fcc1bac", "1de295c6-24cd-5fe6-9bad-1aa01d3e4398"],
+          "mustNotAppearTypes": [],
+          "viewBounds2dMm": [-2350, 3600, -1100, 5188.565],
+          "anchorEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7",
+          "requiredTypes": ["bearingBlock", "bracketArm", "bracketSeat", "column", "eaveBeam"],
+          "requiredEntityChains": {
+            "bearingToColumnViaXArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relationScope": "inView"}, {"fromEntityId": "c6942d13-d788-5e51-8178-0df6a65c0708", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relationScope": "inView"}, {"fromEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relation": "supportedBy", "toEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relationScope": "inView"}, {"fromEntityId": "15419753-aeb1-5cb0-ad0a-75b49b8d0101", "relation": "supportedBy", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "inView"}],
+            "bearingToSeatViaYArm": [{"fromEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relation": "supportedBy", "toEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relationScope": "inView"}, {"fromEntityId": "fc535626-eceb-5dcc-8737-e0dc4047920a", "relation": "supportedBy", "toEntityId": "c8382de1-abd3-50fa-be75-d4a1f80c4b5b", "relationScope": "inView"}],
+            "crossViewPurlinBoundary": [{"fromEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "relation": "supportedBy", "toEntityId": "337c804a-8e29-5cc8-8deb-05c4fd064fb7", "relationScope": "crossViewContext", "externalEndpointEntityId": "51ef2127-edc0-5461-825c-9f44a719b59f", "continuationViewId": "eaveDetail"}]
+          },
+          "materialCodeByType": {"bearingBlock": "timber-demo", "bracketArm": "timber-demo", "bracketSeat": "timber-demo", "eaveBeam": "timber-demo", "column": "timber-demo"},
+          "dimensionsMm": {"bearingBlockWidth": 360, "bracketSeatWidth": 520, "bracketArmLength": 1100},
+          "levelsMm": {"columnTop": 4200, "eave": 5200}
+        },
+        "columnBaseDetail": {
+          "selectionCountDiagnostic": 10,
+          "selectionEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+          "selectionTypes": ["column", "columnBase", "foundation", "groundLayer", "terrace"],
+          "cutEntitySetSha256": "2daa1e88cc1ace98512fa4406e563a9280800cf3c0889f3c9ec7cdf5c3e909a0",
+          "cutSegmentSha256": "8d956ff371c865cd99fc78fde8018a4a22ad78a6dc753034500b4e73a40ec628",
+          "cropLimitSegmentSha256": "6c79325221798935341cb3533e1945c04b63708ed7c1555433b7146582810a3f",
+          "cropLimitSegmentCount": 11,
+          "cutClosedRegionCount": 15,
+          "cutClosedRegionsByType": {"column": 1, "columnBase": 4, "foundation": 3, "groundLayer": 4, "terrace": 3},
+          "cutOpenOrDangleCount": 0,
+          "materialRegionsByCode": {"earth-demo": 1, "stone-demo": 1, "timber-demo": 1},
+          "maximumMaterialOverlapAreaMm2": 0,
+          "visibleLineSetSha256": "ce79215584bf0997232434517fa442a5528329fa967a9bccf7fd4f28edf04fe3",
+          "visibleLineCountDiagnostic": 141,
+          "requiredVisibleEntityIds": ["094027ab-3397-5117-bad8-81c07d961879", "22444321-22eb-5586-adcf-784b2d2c03cf", "35d871fe-5966-5fd8-b12e-5ae0e4bb3151", "446cb2ed-10d6-58e1-b3f5-bb181eec79b6", "47d7add8-6e24-59d0-a14c-b34b9cafe577", "4a64570e-5031-56fc-9f9b-1f77f13686a8", "597a36cd-63a6-5fa9-957c-f25389adfec5", "5c1e51f8-0061-5a9a-aac3-8cc7f9ad2795", "653ff2f7-101d-593e-818d-ff64f9c34618", "ccdf48ce-2e1f-58e0-965b-bdfeb8865001"],
+          "mustNotAppearEntityIds": ["09c37734-ee7b-5b7a-90e1-b2d094729925", "7cb26533-8421-5390-ab2d-94fbd863f06b", "d9647e56-5879-524b-be74-d2a09d4ba622", "60da1edf-6f3f-51ca-9fc8-725d15abfe3d", "0c806790-9cc2-514a-b9b1-cb8f3fcc1bac", "7a23dbe5-8a27-5e87-bd74-3b6a99ab07ee"],
+          "mustNotAppearTypes": [],
+          "viewBounds2dMm": [2400, -800, 3600, 1500],
+          "anchorEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5",
+          "requiredTypes": ["column", "columnBase", "foundation", "groundLayer", "terrace"],
+          "requiredEntityChains": {
+            "columnToFoundation": [{"fromEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relation": "supportedBy", "toEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5", "relationScope": "inView"}, {"fromEntityId": "597a36cd-63a6-5fa9-957c-f25389adfec5", "relation": "supportedBy", "toEntityId": "47d7add8-6e24-59d0-a14c-b34b9cafe577", "relationScope": "inView"}, {"fromEntityId": "47d7add8-6e24-59d0-a14c-b34b9cafe577", "relation": "supportedBy", "toEntityId": "653ff2f7-101d-593e-818d-ff64f9c34618", "relationScope": "inView"}, {"fromEntityId": "653ff2f7-101d-593e-818d-ff64f9c34618", "relation": "supportedBy", "toEntityId": "446cb2ed-10d6-58e1-b3f5-bb181eec79b6", "relationScope": "inView"}, {"fromEntityId": "446cb2ed-10d6-58e1-b3f5-bb181eec79b6", "relation": "supportedBy", "toEntityId": "4a64570e-5031-56fc-9f9b-1f77f13686a8", "relationScope": "inView"}],
+            "groundToFoundation": [{"fromEntityId": "22444321-22eb-5586-adcf-784b2d2c03cf", "relation": "connectedTo", "toEntityId": "4a64570e-5031-56fc-9f9b-1f77f13686a8", "relationScope": "inView"}]
+          },
+          "materialCodeByType": {"column": "timber-demo", "columnBase": "stone-demo", "terrace": "stone-demo", "foundation": "earth-demo", "groundLayer": "earth-demo"},
+          "dimensionsMm": {"lowerDiameter": 560, "upperDiameter": 400, "columnBaseHeight": 240, "foundationDepth": 800},
+          "levelsMm": {"foundationBottom": -800, "exteriorGround": 0, "terraceTop": 600}
+        },
+        "doorWindowDetail": {
+          "selectionCountDiagnostic": 7,
+          "selectionEntitySetSha256": "24b4c9df20713cf8aa4f2b2b1fccfdb1d64f7551f49b124f8f55d01e06d388b3",
+          "selectionTypes": ["doorFrame", "doorLeaf", "latticeWindow", "wall"],
+          "visibleLineSetSha256": "85a6ded063f437310f5cab8de08105a885647db87049c2df8fab328a95a304c3",
+          "visibleLineCountDiagnostic": 184,
+          "requiredVisibleEntityIds": ["0047e6a9-aa4a-5306-89fc-9ce42d378e2d", "41c9ff7d-67a9-5add-92f6-48886e9ed5d4", "4580694e-6dce-54a3-9634-ca4a96dbe5bc", "68ff754d-c202-5782-98b3-f0b659a3ca1d", "8bd4ad31-83a5-557b-9b3a-dc301eb6a971", "93c7605b-7f06-5e62-9686-419773eda540", "e70cb175-0002-536f-81d6-07cc45c05031"],
+          "mustNotAppearEntityIds": ["0c806790-9cc2-514a-b9b1-cb8f3fcc1bac", "7a23dbe5-8a27-5e87-bd74-3b6a99ab07ee"],
+          "mustNotAppearTypes": ["column"],
+          "viewBounds2dMm": [-1800, 540, 1800, 3460],
+          "anchorEntityId": "e70cb175-0002-536f-81d6-07cc45c05031",
+          "requiredTypes": ["doorFrame", "doorLeaf", "latticeWindow", "wall"],
+          "requiredEntityChains": {
+            "leftLeafContainedByFrame": [{"fromEntityId": "0047e6a9-aa4a-5306-89fc-9ce42d378e2d", "relation": "containedBy", "toEntityId": "e70cb175-0002-536f-81d6-07cc45c05031", "relationScope": "inView"}],
+            "rightLeafContainedByFrame": [{"fromEntityId": "8bd4ad31-83a5-557b-9b3a-dc301eb6a971", "relation": "containedBy", "toEntityId": "e70cb175-0002-536f-81d6-07cc45c05031", "relationScope": "inView"}],
+            "frameConnectedToWestColumn": [{"fromEntityId": "e70cb175-0002-536f-81d6-07cc45c05031", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "crossViewContext", "externalEndpointEntityId": "094027ab-3397-5117-bad8-81c07d961879", "continuationViewId": "southElevation"}],
+            "leftWindowConnectedToWestColumn": [{"fromEntityId": "4580694e-6dce-54a3-9634-ca4a96dbe5bc", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "crossViewContext", "externalEndpointEntityId": "094027ab-3397-5117-bad8-81c07d961879", "continuationViewId": "southElevation"}],
+            "rightWindowConnectedToWestColumn": [{"fromEntityId": "41c9ff7d-67a9-5add-92f6-48886e9ed5d4", "relation": "connectedTo", "toEntityId": "094027ab-3397-5117-bad8-81c07d961879", "relationScope": "crossViewContext", "externalEndpointEntityId": "094027ab-3397-5117-bad8-81c07d961879", "continuationViewId": "southElevation"}]
+          },
+          "materialCodeByType": {"wall": "earth-demo", "doorFrame": "timber-demo", "doorLeaf": "timber-demo", "latticeWindow": "timber-demo"},
+          "topologyCounts": {"doorLeaves": 2, "doorPanels": 8, "latticeWindows": 2, "latticeCells": 24},
+          "dimensionsMm": {"doorOpeningWidth": 1800, "doorOpeningHeight": 2700, "windowWidth": 720, "windowHeight": 1500},
+          "levelsMm": {"terraceTop": 600}
+        }
+      }
+    }
+  },
+  "acceptance": {
+    "structuralSourceEntityCoverage": 1.0,
+    "structureLineClassificationCoverage": 1.0,
+    "detailSourceTraceCoverage": 1.0,
+    "independentSectionRecalculation": true,
+    "independentProjectionVerification": true,
+    "externalReferenceIsolation": true,
+    "nativeCadObjectValidation": true,
+    "glyphAndPageValidation": true,
+    "noTriangleInteriorEdges": true,
+    "zeroOcclusionErrors": true,
+    "qualificationMustBeIndependent": true,
+    "professionalReviewRequired": true,
+    "forbiddenPassMetrics": ["objectCount", "primitiveCount", "fileSize"]
+  }
+}

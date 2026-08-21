@@ -1,0 +1,75 @@
+# 密钥与本地配置：任何情况下都不进仓库
+.env
+.env.*
+!.env.example
+*.key
+*密钥*
+*secret*
+*apikey*
+*api_key*
+**/local.config.js
+**/*.local.json
+**/*.local.txt
+
+# 本地临时与构建产物
+.tmp/
+tmp/
+.codex_staging/
+.codex_staging*/
+**/.projections.staging-*/
+.autocad-reference-profile/
+/plot.log
+_deploy/
+node_modules/
+.pnpm-store/
+.venv/
+dist/
+**/dist-types/
+**/dist-config/
+*.tsbuildinfo
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.vite/
+**/.data/
+__pycache__/
+*.pyc
+
+# 历史归档不进入当前活动项目基线
+/归档/
+
+# CAD 运行残留
+acad.err
+
+# t0b 大型可重建产物不进 Git 主线，哈希见 t0b-v2-evidence-invalidation-note.md
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v2-outputs/drawing-package-artifacts/*.svg
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v2-outputs/drawing-package-artifacts/*.pdf
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v2-outputs/drawing-package-artifacts/*-300dpi.png
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v3-outputs/**/geometry-manifest.json
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v3-outputs/**/*.glb
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v3-outputs/**/*.ndjson.gz
+
+# 系统文件
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 文档目录：跟踪 md 与小型报告，排除可重建产物与私有资料
+# 依据技术架构 11.1 安全与隐私、12.4 大产物与 Git 对象
+# t0b-v2 剩余可重建产物（哈希见 t0b-v2-evidence-invalidation-note.md）
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v2-outputs/native-dxf/*.dxf
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v2-outputs/native-dxf/*.ndjson
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v2-outputs/**/*.gz
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v2-outputs/**/*.glb
+
+# 真实项目照片与外部版权材料不进公开仓库
+文档/05_验证证据/02_PoC工作流验证/盲测素材/
+文档/05_验证证据/02_PoC工作流验证/素材/*.pdf
+文档/05_验证证据/06_T9制图与HABS样本/T9a_HABS样本/*-contact.png
+
+# 辅导截图为私有内容
+文档/03_辅导笔记/截图/
+文档/05_验证证据/04_T0_CAD可行性与资产保全/*preview*.png
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v3-outputs/previews/*.png
+文档/05_验证证据/04_T0_CAD可行性与资产保全/t0b-v2-outputs/geometry-manifest.json

@@ -1,0 +1,91 @@
+import { describe, expect, it, vi } from "vitest";
+
+import { KimiGateway } from "./kimi-gateway.js";
+
+function sseResponse(): Response {
+  return new Response([
+    'data: {"choices":[{"delta":{"content":"{\\"summary\\":\\"完成\\","}}]}',
+    'data: {"choices":[{"delta":{"content":"\\"findings\\":[],\\"missingInformation\\":[]}"}}]}',
+    'data: {"choices":[],"usage":{"prompt_tokens":11,"completion_tokens":7,"total_tokens":18,"cached_tokens":2}}',
+    "data: [DONE]",
+    "",
+  ].join("\n"), { status: 200, headers: { "content-type": "text/event-stream" } });
+}
+
+describe("KimiGateway", () => {
+  it("默认使用与旧密钥一致的 Moonshot 国际区地址", async () => {
+    const previous = process.env.KIMI_BASE_URL;
+    delete process.env.KIMI_BASE_URL;
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(sseResponse());
+    try {
+      const gateway = new KimiGateway({ apiKey: "test-key", maxAttempts: 1, fetchImpl });
+      await gateway.execute({
+        userContent: "测试资料",
+        signal: new AbortController().signal,
+        onStatus: () => undefined,
+        onChunk: () => undefined,
+      });
+      expect(fetchImpl.mock.calls[0]?.[0]).toBe("https://api.moonshot.ai/v1/chat/completions");
+    } finally {
+      if (previous === undefined) delete process.env.KIMI_BASE_URL;
+      else process.env.KIMI_BASE_URL = previous;
+    }
+  });
+
+  it("消费官方 SSE 并在可重试错误后受控重试", async () => {
+    const fetchImpl = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response("busy", { status: 503 }))
+      .mockResolvedValueOnce(sseResponse());
+    const statuses: string[] = [];
+    const chunks: string[] = [];
+    const gateway = new KimiGateway({ apiKey: "test-key", maxAttempts: 2, fetchImpl });
+    const result = await gateway.execute({
+      userContent: "测试资料",
+      signal: new AbortController().signal,
+      onStatus: (type) => statuses.push(type),
+      onChunk: (content) => chunks.push(content),
+    });
+    expect(statuses).toEqual(["running", "retrying"]);
+    expect(chunks.join("")).toContain('"summary":"完成"');
+    expect(result.usage).toEqual({ promptTokens: 11, completionTokens: 7, totalTokens: 18, cachedTokens: 2 });
+    expect(result.attempt).toBe(2);
+    const requestBody = JSON.parse(String(fetchImpl.mock.calls[1]?.[1]?.body));
+    expect(requestBody).toMatchObject({
+      model: "kimi-k2.6",
+      stream: true,
+      thinking: { type: "disabled" },
+    });
+    // 不设输出上限：曾经的默认 1024 把逐条尺寸的结构化输出截断在半途，
+    // 而任何替代数字都是估的。默认不发这个字段，长度交给上游按模型能力决定。
+    expect(requestBody.max_completion_tokens).toBeUndefined();
+    expect(requestBody.temperature).toBeUndefined();
+  });
+
+  it("显式配置输出上限时才发 max_completion_tokens", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => sseResponse());
+    const gateway = new KimiGateway({ apiKey: "k", fetchImpl, maxOutputTokens: 2_048 });
+    await gateway.execute({
+      userContent: "任务",
+      signal: new AbortController().signal,
+      onStatus: () => {},
+      onChunk: () => {},
+    });
+    const body = JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body));
+    expect(body.max_completion_tokens).toBe(2_048);
+  });
+
+  it("超时后重试并给出稳定错误码", async () => {
+    const fetchImpl = vi.fn<typeof fetch>((_url, init) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
+    }));
+    const statuses: string[] = [];
+    const gateway = new KimiGateway({ apiKey: "test-key", timeoutMs: 5, maxAttempts: 2, fetchImpl });
+    await expect(gateway.execute({
+      userContent: "测试资料",
+      signal: new AbortController().signal,
+      onStatus: (type) => statuses.push(type),
+      onChunk: () => undefined,
+    })).rejects.toThrow("KIMI_TIMEOUT");
+    expect(statuses).toEqual(["running", "retrying"]);
+  });
+});

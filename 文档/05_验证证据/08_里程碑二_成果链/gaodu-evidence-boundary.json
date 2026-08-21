@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "project": "高都玉皇庙主殿资料不足验证",
+  "sourceScope": "gaodu-only",
+  "redactedLedger": "gaodu-redacted-ledger.json",
+  "redactedLedgerCoverage": ["asset", "evidence", "fact", "ruleRun", "deliveryEvaluation", "recordHash", "crossContaminationScan"],
+  "status": "blocked",
+  "formalEligibility": false,
+  "l1Eligible": false,
+  "historicalDemoDimensionCandidates": {
+    "overallWidthMm": 15800,
+    "centralBayMm": 4200,
+    "sideBayMm": 3600,
+    "calculatedBaySumMm": 11400,
+    "differenceMm": 4400,
+    "producerType": "demo",
+    "dataStatus": "unverified",
+    "evidenceRefs": [],
+    "qualificationBoundary": "原始登记记录不可用，四张照片不支持精确尺寸；4400 mm 仅为历史规则流程演示。"
+  },
+  "missingEvidence": [
+    "测量人员身份",
+    "测量日期",
+    "测量方法与精度",
+    "原始测量记录",
+    "建筑总进深",
+    "屋脊控制标高或屋面举高",
+    "基础与隐蔽部位记录"
+  ],
+  "blockedArtifacts": ["IFC", "GLB", "完整 DXF", "完整 SVG", "完整 PDF", "正式交付包"],
+  "allowedArtifacts": ["资料清单", "尺寸冲突报告", "待补测清单", "照片支持的局部参考成果"],
+  "excludedInputs": ["gaodu.proxy-input.json", "HABS", "东呈", "南禅寺", "团队 demo 几何"],
+  "notes": "四张照片只支持资产身份和可见现状，不支持精确尺寸。历史数值明确标记为 demo 未核验候选，4400 mm 只展示规则和阻断流程，不是现场事实结论。脱敏清单逐项保存内容哈希和记录哈希；交叉污染扫描结果必须为 passed=true。"
+}

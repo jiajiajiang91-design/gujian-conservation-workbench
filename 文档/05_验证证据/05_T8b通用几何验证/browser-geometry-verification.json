@@ -1,0 +1,14 @@
+{
+  "checks": 8,
+  "entityCount": 3,
+  "failedChecks": 0,
+  "failures": [],
+  "formalEligibility": false,
+  "geometryRevisionId": "0d14b417-b785-5408-8b27-06a052932619",
+  "inputHash": "56f60a021bcdb321afdca2d216a6beb0f8eb204951fc8550befba3d62bc208d2",
+  "interfaceCount": 2,
+  "l1Eligible": false,
+  "qualification": "generated-not-qualified",
+  "schemaVersion": "1.0",
+  "status": "passed-project-geometry-technical-only"
+}

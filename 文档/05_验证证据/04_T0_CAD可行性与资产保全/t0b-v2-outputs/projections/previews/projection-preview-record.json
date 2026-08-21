@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "t0b-v2-projection-preview-1",
+  "status": "review-evidence-only",
+  "qualification": "not-drawing-output",
+  "previews": [
+    {
+      "viewId": "roofPlan",
+      "mode": "clean",
+      "path": "t0b-v2-roofPlan-clean.png",
+      "sha256": "718321cd465305d7db275a695eab278c4900e817f2009fd97833db0a6b50fb30",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "roofPlan.view-geometry.json.gz",
+        "sha256": "a9668d2d825aca1eada7bfc67619546b7093777d74980f778cfe274c79e047db",
+        "viewGeometrySha256": "ce6bf233adae39a8d6e047b08f60d908d8d629c55ae703ae41eb25b3344bf9ae"
+      }
+    },
+    {
+      "viewId": "roofPlan",
+      "mode": "classes",
+      "path": "t0b-v2-roofPlan-classes.png",
+      "sha256": "cfd749670caecc3b7db5824b5509b7391587f32c91b34888a24f38c848ecd5d5",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "roofPlan.view-geometry.json.gz",
+        "sha256": "a9668d2d825aca1eada7bfc67619546b7093777d74980f778cfe274c79e047db",
+        "viewGeometrySha256": "ce6bf233adae39a8d6e047b08f60d908d8d629c55ae703ae41eb25b3344bf9ae"
+      }
+    },
+    {
+      "viewId": "southElevation",
+      "mode": "clean",
+      "path": "t0b-v2-southElevation-clean.png",
+      "sha256": "9576ca95a3483dde78b307e1b77bea8addd35541519b8ef89eac46b5f8ae4c4d",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "southElevation.view-geometry.json.gz",
+        "sha256": "554f08656cd909c68b780d01174a109d7a4db8af0d12286775074b859536565d",
+        "viewGeometrySha256": "e9c7d4dae2450d3acdc0f9058a4409d7cbcced15f499431e2f3f91189fb7ad24"
+      }
+    },
+    {
+      "viewId": "southElevation",
+      "mode": "classes",
+      "path": "t0b-v2-southElevation-classes.png",
+      "sha256": "2644cebc79a3ba6d27c2e6f5f970d1bcdc67280e1f97f6a064a541394f3ee202",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "southElevation.view-geometry.json.gz",
+        "sha256": "554f08656cd909c68b780d01174a109d7a4db8af0d12286775074b859536565d",
+        "viewGeometrySha256": "e9c7d4dae2450d3acdc0f9058a4409d7cbcced15f499431e2f3f91189fb7ad24"
+      }
+    },
+    {
+      "viewId": "axonometric",
+      "mode": "clean",
+      "path": "t0b-v2-axonometric-clean.png",
+      "sha256": "b499ae97307de559ea7e6aecfee7204058227d823e4bfde0b76b403120cb8106",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "axonometric.view-geometry.json.gz",
+        "sha256": "1bc017ceadd734b47ba5167574c380e7614c536b5ff938ad264e8eaf57fd5b57",
+        "viewGeometrySha256": "8553cbbeded3637e847c79a800ec16fe0afca49828062b5c3d13548fd333ab38"
+      }
+    },
+    {
+      "viewId": "axonometric",
+      "mode": "classes",
+      "path": "t0b-v2-axonometric-classes.png",
+      "sha256": "514f941f86fad901053860c958284a8b11a6034fdd82aa996525db96117e769f",
+      "dimensionsPx": [
+        2400,
+        1800
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "source": {
+        "path": "axonometric.view-geometry.json.gz",
+        "sha256": "1bc017ceadd734b47ba5167574c380e7614c536b5ff938ad264e8eaf57fd5b57",
+        "viewGeometrySha256": "8553cbbeded3637e847c79a800ec16fe0afca49828062b5c3d13548fd333ab38"
+      }
+    }
+  ]
+}

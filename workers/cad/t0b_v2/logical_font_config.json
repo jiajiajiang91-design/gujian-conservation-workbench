@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "t0b-v2-logical-font-config-2",
+  "family": "Gujian Sans SC",
+  "postScriptName": "GujianSansSC-Regular",
+  "styleName": "GJ-GUJIAN-SANS-SC",
+  "assetStatus": "bound-licensed-static-instance",
+  "fontFileName": "GujianSansSC-Regular.ttf",
+  "fontAssetRelativePath": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/GujianSansSC-Regular.ttf",
+  "fontSha256": "4de4210cdf50d50bd27549cd56a5287c918378015de0773ca18f53022b75cef7",
+  "fontManifestRelativePath": "workers/cad/t0b_v2/assets/fonts/noto-sans-sc/font-manifest.json",
+  "fontManifestSha256": "7bdbbb65a02ba0f8f76bf67d392f9926045f0a375b8e78192d8ad45caee29751",
+  "sourceFontSha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+  "sourceCommit": "038b637da7b3fd956a4ed93ffc607c3d5e4ce172",
+  "instanceWeight": 400,
+  "licenseSpdx": "OFL-1.1",
+  "fsType": 0,
+  "releaseAssetIncluded": true,
+  "pdfEmbeddingEligible": true,
+  "source": "google-fonts-pinned-derived-instance",
+  "qualificationBlocker": null
+}

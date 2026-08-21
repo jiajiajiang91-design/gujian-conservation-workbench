@@ -1,0 +1,266 @@
+/* 基础组件（07 界面视觉规范第 5 节）
+   页面只做组合，不为单个页面另写卡片、按钮或标签样式。
+   组件类统一 gj- 前缀，业务名不用于基础组件。 */
+
+/* 5.1 按钮：四种类型，五种状态 */
+.gj-btn {
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-primary);
+  font: var(--text-body);
+  white-space: nowrap;
+}
+.gj-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.gj-btn:disabled { cursor: not-allowed; color: var(--text-muted); background: var(--bg-subtle); border-color: var(--border); }
+
+.gj-btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.gj-btn--primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.gj-btn--primary:active:not(:disabled) { background: var(--accent-active); border-color: var(--accent-active); }
+
+.gj-btn--secondary { background: var(--bg-panel); border-color: var(--border-strong); color: var(--text-primary); }
+.gj-btn--secondary:hover:not(:disabled) { background: var(--bg-subtle); }
+.gj-btn--secondary:active:not(:disabled) { background: var(--border); }
+
+.gj-btn--text { background: transparent; border-color: transparent; color: var(--accent); padding: 0 var(--space-2); }
+.gj-btn--text:hover:not(:disabled) { background: var(--accent-soft); }
+
+.gj-btn--danger { background: var(--bg-panel); border-color: var(--danger); color: var(--danger); }
+.gj-btn--danger:hover:not(:disabled) { background: var(--danger-soft); }
+
+/* 图标按钮必须带可读标签（第 7 节） */
+.gj-btn--icon { width: var(--control-height); height: var(--control-height); padding: 0; }
+
+/* 5.1 加载态：文字前插 16 px 旋转指示器，保留原动作名，禁止重复点击。
+   指示器槽位常驻并预留宽度，进入加载态时宽度不跳动。 */
+.gj-btn--loadable::before {
+  content: "";
+  width: 16px; height: 16px;
+  flex: 0 0 auto;
+  visibility: hidden;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--radius-pill);
+}
+.gj-btn[aria-busy="true"] { pointer-events: none; }
+.gj-btn[aria-busy="true"]::before {
+  content: "";
+  width: 16px; height: 16px;
+  flex: 0 0 auto;
+  visibility: visible;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: gj-spin .8s linear infinite;
+}
+@keyframes gj-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .gj-btn[aria-busy="true"]::before { animation: none; } }
+
+/* 5.6 表 7 第二档：区域内指示器 24 px 加一行说明 */
+.gj-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: var(--text-secondary);
+  font: var(--text-body);
+}
+.gj-loading::before {
+  content: "";
+  width: 24px; height: 24px;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: gj-spin .8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .gj-loading::before { animation: none; } }
+
+/* 5.6 表 7 第三档：进度、预计耗时与取消。
+   总量未知时用不确定态往复动画，不伪造百分比。 */
+.gj-task {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+}
+.gj-task-label { grid-column: 1; font: var(--text-body); color: var(--text-primary); }
+.gj-task-eta { grid-column: 1; font: var(--text-label); color: var(--text-secondary); }
+.gj-task-bar {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-subtle);
+  overflow: hidden;
+}
+.gj-task-bar i {
+  position: absolute;
+  top: 0; bottom: 0;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.gj-task-bar--indeterminate i { left: 0; width: 35%; animation: gj-sweep 1.6s ease-in-out infinite; }
+.gj-task-bar--determinate i { left: 0; }
+@keyframes gj-sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(286%); } }
+@media (prefers-reduced-motion: reduce) { .gj-task-bar--indeterminate i { animation: none; width: 100%; opacity: .4; } }
+.gj-task > .gj-btn { grid-column: 2; grid-row: 1 / 3; }
+
+/* 5.2 表格：行高 44、表头 40 且次级底，数值列等宽右对齐 */
+.gj-table { width: 100%; border-collapse: collapse; font: var(--text-body); }
+.gj-table thead th {
+  height: var(--header-row-height);
+  padding: 0 var(--space-3);
+  text-align: left;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font: var(--text-label);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.gj-table tbody td { height: var(--row-height); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); vertical-align: middle; }
+.gj-table tbody tr:hover { background: var(--bg-subtle); }
+.gj-table tbody tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 2px 0 var(--accent); }
+.gj-table .gj-numeric { font: var(--text-numeric); text-align: right; }
+/* 存疑项置顶时行首标记 */
+.gj-table tbody tr[data-flagged="true"] td:first-child { box-shadow: inset 3px 0 var(--warning); }
+
+/* 5.3 卡片：白底、1px 常规边框、7px 圆角、12px 内边距，嵌套不超过两层 */
+.gj-card {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  display: grid;
+  gap: var(--space-1);
+  text-align: left;
+  color: var(--text-primary);
+}
+.gj-card > strong { font: var(--text-section); }
+.gj-card > small { color: var(--text-secondary); font: var(--text-note); }
+button.gj-card:hover { border-color: var(--border-strong); }
+button.gj-card[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
+button.gj-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* 5.4 标签：高 22、全圆角、语义浅底。状态与来源分开，一个标签一种含义 */
+.gj-tag {
+  height: 22px;
+  padding: 0 var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  font: var(--text-label);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.gj-tag--accent { background: var(--accent-soft); color: var(--accent); }
+.gj-tag--success { background: var(--success-soft); color: var(--success); }
+.gj-tag--warning { background: var(--warning-soft); color: var(--warning); }
+.gj-tag--danger { background: var(--danger-soft); color: var(--danger); }
+
+/* 来源标记：颜色之外必须有形状差异（第 2 节表 3、第 7 节） */
+.gj-source { display: inline-flex; align-items: center; gap: var(--space-1); font: var(--text-label); color: var(--text-secondary); white-space: nowrap; }
+.gj-source::before { content: ""; width: 8px; height: 8px; flex: 0 0 auto; }
+.gj-source--measured { color: var(--src-measured); }
+.gj-source--measured::before { background: var(--src-measured); border-radius: var(--radius-pill); }
+.gj-source--model { color: var(--src-model); }
+.gj-source--model::before { border: 1.5px solid var(--src-model); border-radius: var(--radius-pill); }
+.gj-source--rule { color: var(--src-rule); }
+.gj-source--rule::before { background: var(--src-rule); }
+.gj-source--human { color: var(--src-human); }
+.gj-source--human::before { background: var(--src-human); border-radius: var(--radius-pill); }
+.gj-source--demo { color: var(--src-demo); }
+.gj-source--demo::before {
+  background: repeating-linear-gradient(45deg, var(--src-demo) 0 2px, transparent 2px 4px);
+}
+
+/* 5.5 输入与表单 */
+.gj-field { display: grid; gap: var(--space-1); font: var(--text-note); color: var(--text-secondary); }
+.gj-field + .gj-field { margin-top: var(--space-3); }
+.gj-field[data-required="true"] > span::after { content: " *"; color: var(--accent); }
+.gj-input,
+.gj-field input,
+.gj-field select,
+.gj-field textarea {
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  font: var(--text-body);
+  width: 100%;
+}
+.gj-field textarea { padding: var(--space-2) var(--space-3); min-height: 72px; resize: vertical; line-height: 22px; }
+.gj-input:focus, .gj-field :is(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.gj-input:disabled, .gj-field :is(input, select, textarea):disabled { background: var(--bg-subtle); color: var(--text-muted); }
+.gj-field[data-invalid="true"] :is(input, select, textarea) { border-color: var(--danger); }
+.gj-field-error { color: var(--danger); font: var(--text-note); }
+
+/* 5.6 空状态、加载与失败：都要说明原因并给出下一步 */
+.gj-empty {
+  padding: var(--space-6);
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  align-content: center;
+  border-radius: var(--radius-control);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font: var(--text-body);
+}
+.gj-empty--danger { background: var(--danger-soft); color: var(--danger); }
+.gj-empty p { margin: 0; }
+
+/* 通用文本类 */
+.gj-numeric { font: var(--text-numeric); }
+.gj-note { color: var(--text-secondary); font: var(--text-note); margin: 0; }
+
+/* 证据图片上的框选。图片不可拖拽，避免拖动时浏览器接管成拖图。 */
+.evidence-marquee { position: relative; display: inline-block; max-width: 100%; cursor: crosshair; touch-action: none; }
+.evidence-marquee img { display: block; max-width: 100%; user-select: none; }
+.evidence-marquee__rect { position: absolute; border: 1px solid var(--accent); background: var(--accent-soft); opacity: .55; pointer-events: none; }
+
+/* 输入区的位置引用（界面文档原型 P6） */
+.assistant-selection-chip { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); }
+
+/* 构件行上的状态标记：排除与遮挡要一眼看得出来，不能只有助手回复里提过 */
+.entity-flag { color: var(--warning); font: var(--text-label); }
+
+/* 修改历史（界面文档表 3）：时间、动作、对象、理由、操作人一行读完 */
+.history-list { display: grid; gap: var(--space-2); }
+.history-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 2fr minmax(120px, auto);
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  align-items: start;
+}
+.history-when { display: grid; gap: var(--space-1); }
+.history-when strong { font: var(--text-section); }
+.history-when small,
+.history-what small,
+.history-who small { color: var(--text-secondary); font: var(--text-note); }
+.history-what { display: grid; gap: var(--space-1); }
+.history-who { display: grid; gap: var(--space-1); justify-items: end; text-align: right; }

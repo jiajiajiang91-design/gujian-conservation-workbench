@@ -1,0 +1,22 @@
+{
+  "name": "@gujian/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b && node --env-file-if-exists=.env dist/index.js",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@gujian/domain": "workspace:*",
+    "zod": "4.0.17"
+  },
+  "devDependencies": {
+    "@types/node": "24.2.1",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  }
+}

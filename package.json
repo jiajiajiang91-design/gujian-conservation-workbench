@@ -1,0 +1,26 @@
+{
+  "name": "gujian-protection-workbench",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.16.0",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter @gujian/domain --filter @gujian/application --filter @gujian/infrastructure --filter @gujian/server --filter @gujian/workbench build",
+    "check": "pnpm run typecheck && pnpm run test && pnpm run test:legacy",
+    "dev": "pnpm --parallel --filter @gujian/server --filter @gujian/workbench dev",
+    "start": "pnpm run build && pnpm --parallel --filter @gujian/server --filter @gujian/workbench start",
+    "stop": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/release-ports.ps1",
+    "test": "vitest run && pnpm --filter @gujian/server test && pnpm --filter @gujian/workbench test",
+    "test:legacy": "node tools/run-legacy-tests.mjs",
+    "typecheck": "tsc -b --pretty false",
+    "install:legacy": "npm ci --prefix \"交互原型/02_AI工作台\""
+  },
+  "devDependencies": {
+    "@types/node": "24.2.1",
+    "fake-indexeddb": "6.2.5",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  }
+}

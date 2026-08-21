@@ -1,0 +1,204 @@
+{
+  "schemaVersion": "t0b-v2-native-dxf-verification-1",
+  "status": "failed-native-dxf-verification",
+  "L1": false,
+  "qualification": "generated-not-qualified",
+  "verifier": {
+    "version": "1.2.0",
+    "path": "verify_dxf.py",
+    "sha256": "7d081692cba542af757dc355cb996ed985a308e4a0f599a1c674ab0ca6fc41d7",
+    "independent": true,
+    "forbiddenImports": [
+      "generate_dxf",
+      "drawing_ir",
+      "drawing_contract",
+      "view_geometry",
+      "detail_oracle"
+    ]
+  },
+  "source": {
+    "dxf": {
+      "path": "T0B.dxf",
+      "sha256": "60122094fc43183e235724cfa1a6b48e629e19126c21d0d1167ac515421e358f"
+    },
+    "sidecar": {
+      "path": "T0B-source-map.ndjson",
+      "sha256": "6389b786339d48e2617708980e753dbd4c68906631027096c21525b7eb9cea9c",
+      "rows": 51636
+    },
+    "record": {
+      "path": "T0B-dxf-build-record.json",
+      "sha256": "2fb75bf3a643154ea3ac7bf5d4485ca060eb0a33831262cc80aca0f147bca64d"
+    }
+  },
+  "summary": {
+    "checks": 9,
+    "failed": 2,
+    "structuralObjects": 51114,
+    "materialHatches": 315,
+    "annotationRequirements": 48,
+    "sidecarRows": 51636,
+    "layouts": 2,
+    "lockedUserViewports": 10
+  },
+  "checks": [
+    {
+      "id": "DXF-001",
+      "name": "Bound inputs, AC1032/mm header, 1:1 and qualification boundary",
+      "passed": true,
+      "evidence": {
+        "dxfVersion": "AC1032",
+        "insunits": 4,
+        "modelSpaceScale": "1:1",
+        "contractRevisionId": "965dd6d3-29c9-59fb-b922-9c0ae56e16f2",
+        "drawingPackageIrSha256": "5b3ede93f4d6071b0a126cacdf4e6cf868fd41e39939435df4898d9b2f6b39dc",
+        "ezdxfAuditErrors": 0
+      }
+    },
+    {
+      "id": "DXF-002",
+      "name": "51,114 native structural objects with inverse staging",
+      "passed": true,
+      "evidence": {
+        "structuralObjects": 51114,
+        "maxModelSpaceErrorMm": 0.0,
+        "maxInverseErrorMm": 7.275957614183426e-12
+      }
+    },
+    {
+      "id": "DXF-003",
+      "name": "315 native material HATCH objects and team-owned patterns",
+      "passed": true,
+      "evidence": {
+        "nativeHatches": 315,
+        "patternCounts": {
+          "GJ-CERAMIC-DEMO": 124,
+          "GJ_EARTH_V1": 26,
+          "GJ_STONE_V1": 21,
+          "GJ_TIMBER_V1": 144
+        }
+      }
+    },
+    {
+      "id": "DXF-004",
+      "name": "48 annotation requirements, native objects and four detail gates",
+      "passed": true,
+      "evidence": {
+        "annotationRequirements": 48,
+        "primaryNativeObjects": 115,
+        "attributeObjects": 69,
+        "systemCropBreaks": 11,
+        "detailViews": 4
+      }
+    },
+    {
+      "id": "DXF-005",
+      "name": "Two A1 layouts and ten locked source-bound viewports",
+      "passed": true,
+      "evidence": {
+        "userLayouts": 2,
+        "lockedUserViewports": 10,
+        "pageSize": "A1",
+        "paperSpaceFrames": 2,
+        "paperSpaceTitleBlocks": 2
+      }
+    },
+    {
+      "id": "DXF-006",
+      "name": "XDATA and 51,636-row provenance sidecar closure",
+      "passed": true,
+      "evidence": {
+        "sidecarRows": 51636,
+        "uniqueCadObjectIds": 51636,
+        "uniqueHandles": 51636,
+        "objectClasses": {
+          "annotation": 184,
+          "material-region": 315,
+          "structural": 51114,
+          "system-annotation": 11,
+          "system-paper-frame": 2,
+          "system-viewport": 10
+        },
+        "canonicalOrdering": true
+      }
+    },
+    {
+      "id": "DXF-007",
+      "name": "External dependency isolation, licensed font binding and L1 boundary",
+      "passed": true,
+      "evidence": {
+        "externalDependencies": 0,
+        "xrefBlocks": 0,
+        "forbiddenEntityTypes": 0,
+        "logicalFontStatus": "bound-licensed-static-instance",
+        "fontWeight": 400,
+        "L1": false,
+        "requiredBlockers": [
+          "AUTOCAD_REAUDIT_REQUIRED",
+          "BRACKET_DETAIL_SIMPLIFIED_GEOMETRY",
+          "CROSS_FORMAT_INDEPENDENT_VERIFICATION_PENDING",
+          "PROFESSIONAL_REVIEW_PENDING",
+          "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED"
+        ]
+      }
+    },
+    {
+      "id": "DXF-008",
+      "name": "Input/output hashes and deterministic serialization evidence",
+      "passed": false,
+      "error": "independent two-directory build is not byte-identical to the canonical outputs"
+    },
+    {
+      "id": "DXF-009",
+      "name": "AutoCAD Core Console opens and audits a byte-identical temporary copy without repair or deletion",
+      "passed": false,
+      "evidence": {
+        "status": "not-run",
+        "passed": false
+      },
+      "error": "AutoCAD AUDIT did not complete with zero errors, zero repairs and zero deleted objects"
+    }
+  ],
+  "independentDoubleBuild": {
+    "status": "not-run",
+    "allByteIdentical": false
+  },
+  "autocadCoreConsoleAudit": {
+    "status": "not-run",
+    "passed": false
+  },
+  "negativeTestSuite": {
+    "status": "not-recorded-in-this-run"
+  },
+  "findings": {
+    "P0": [
+      {
+        "id": "P0-DXF-008",
+        "message": "independent two-directory build is not byte-identical to the canonical outputs"
+      },
+      {
+        "id": "P0-AUTOCAD-AUDIT-MISSING",
+        "message": "Required AutoCAD Core Console audit evidence is missing."
+      }
+    ],
+    "P1": [],
+    "P2": []
+  },
+  "submissionDecision": "reject-until-independent-failures-close",
+  "crossFormatOutputs": {
+    "sourceIrRequired": true,
+    "status": "generated-by-separate-ir-consumer"
+  },
+  "qualificationBoundary": {
+    "status": "generated-not-qualified",
+    "L1": false,
+    "fontAssetStatus": "bound-licensed-static-instance",
+    "remainingBlockers": [
+      "BRACKET_DETAIL_SIMPLIFIED_GEOMETRY",
+      "QCAD_LOSSLESS_ROUNDTRIP_UNSUPPORTED",
+      "AUTOCAD_REAUDIT_REQUIRED",
+      "CROSS_FORMAT_INDEPENDENT_VERIFICATION_PENDING",
+      "PROFESSIONAL_REVIEW_PENDING"
+    ]
+  }
+}
