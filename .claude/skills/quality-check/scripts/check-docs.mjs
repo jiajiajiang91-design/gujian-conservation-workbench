@@ -42,6 +42,7 @@ const docs = [
   ...walk(join(ROOT, ".claude"), [".md"]),
   join(ROOT, "CLAUDE.md"),
   join(ROOT, "项目目录说明.md"),
+  join(ROOT, "README.md"),
 ].filter((p) => existsSync(p));
 
 // 源码里写死的文档路径，改名会直接让构建或测试失败
