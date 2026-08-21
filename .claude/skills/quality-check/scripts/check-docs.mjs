@@ -5,6 +5,7 @@
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { resolve, dirname, join, relative } from "node:path";
+import { execFileSync } from "node:child_process";
 
 const ROOT = resolve(import.meta.dirname, "..", "..", "..", "..");
 const ALL = process.argv.includes("--all");
@@ -23,7 +24,7 @@ const RUNTIME = [/\.env$/, /node_modules/, /^dist\//, /\/dist\//, /\.gujian\.zip
 const walk = (dir, exts, out = []) => {
   if (!existsSync(dir)) return out;
   for (const name of readdirSync(dir)) {
-    if (name === "node_modules" || name === ".git" || name === "dist") continue;
+    if (["node_modules", ".git", "dist", ".venv", "__pycache__", ".vite"].includes(name)) continue;
     const full = join(dir, name);
     if (statSync(full).isDirectory()) walk(full, exts, out);
     else if (exts.some((e) => name.endsWith(e))) out.push(full);
@@ -110,6 +111,50 @@ for (const file of sources) {
       }
     }
   });
+}
+
+// 6 本机绝对路径。公开仓库不该带任何一条，它暴露开发机的目录布局与用户名。
+//
+// 这一项连着三次靠人工想起来才发现，且每次都漏：第一次只匹配 C:\\Users\\用户名，
+// 漏了 D 盘的仓库路径；第二次漏了 JSON 里双写转义的反斜杠；第三次漏了嵌在
+// JSON 串里的 Blender 输出路径。按关键词扫描只能找到写法与检索式相同的那些，
+// 所以这里把同一类信息的几种写法一起列出来，而不是写一条正则了事。
+//
+// 三类豁免，都要求写法本身能自证：占位符、代码里的虚构示例、安全负例。
+const LOCAL_PATHS = [
+  // 单反斜杠：Windows 原生写法，日志与文档里最常见
+  /[A-Za-z]:\\(?:Users|Claude_jiajia|WORKS)\\[^\s"'`,)）]*/g,
+  // 双反斜杠：JSON 字符串里的转义写法
+  /[A-Za-z]:\\\\(?:Users|Claude_jiajia|WORKS)\\\\[^\s"'`,)）]*/g,
+  // 正斜杠：跨平台工具与部分脚本写成这样
+  /[A-Za-z]:\/(?:Users|Claude_jiajia|WORKS)\/[^\s"'`,)）]*/g,
+];
+// 已经处理过的写法：USER 占位、虚构示例、只提盘符不带具体路径的安全负例
+const PATH_EXEMPT = /\\USER\b|\/USER\b|\\example\b|<仓库根>|<REPO_ROOT>|<本机[^>]*>|<LOCAL_PARENT>/;
+
+// 只查 git 跟踪的文件：这一项的判据是公开仓库里有没有，未跟踪的发布不出去。
+// git ls-files 失败（不在仓库里跑）时退回全量，宁可多报不漏报。
+// core.quotepath=false 不能省：默认输出会把中文路径转义成八进制，
+// 中文文件名一条都匹配不上，整项检查会静默失效而不是报错。
+let trackedPaths = null;
+try {
+  trackedPaths = new Set(
+    execFileSync("git", ["-c", "core.quotepath=false", "ls-files"], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
+      .split(/\r?\n/).filter(Boolean),
+  );
+} catch { trackedPaths = null; }
+
+for (const file of [...docs, ...sources]) {
+  if (trackedPaths && !trackedPaths.has(rel(file))) continue;
+  const text = readFileSync(file, "utf8");
+  for (const pattern of LOCAL_PATHS) {
+    for (const m of text.matchAll(pattern)) {
+      if (PATH_EXEMPT.test(m[0])) continue;
+      // 只写到盘符加 Users 就结束的，是在举例说明外部路径，不是真路径
+      if (/^[A-Za-z]:[\\/]{1,2}Users[\\/]{0,2}$/.test(m[0])) continue;
+      add(issues, rel(file), lineOf(text, m.index), `本机绝对路径：${m[0].slice(0, 60)}`);
+    }
+  }
 }
 
 const show = (list, label, collapse) => {
