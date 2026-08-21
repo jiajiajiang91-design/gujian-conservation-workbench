@@ -25,7 +25,29 @@ for (const unit of active) {
   }
 }
 
-// 2 验收表的空结果条数。开工前写定条件、收工时填结果，空着说明还没判定
+// 2 必填节。模板见 .claude/skills/spec-write/templates/
+const REQUIRED = { "规格.md": ["不做"], "计划.md": ["完成定义"], "验收.md": ["复查清单"] };
+for (const unit of active) {
+  for (const [file, sections] of Object.entries(REQUIRED)) {
+    const text = read(join(UNITS, unit, file));
+    if (!text) continue;
+    for (const s of sections) {
+      if (!new RegExp(`^##.*${s}`, "m").test(text)) issues.push(`单元 ${unit} 的 ${file} 缺必填节：${s}`);
+    }
+  }
+}
+
+// 3 每个任务组必须自带验证，不攒到最后一起验
+for (const unit of active) {
+  const text = read(join(UNITS, unit, "计划.md"));
+  if (!text) continue;
+  for (const group of text.split(/^### /m).slice(1)) {
+    const title = group.split(/\r?\n/)[0].trim();
+    if (!/^验证：/m.test(group)) issues.push(`单元 ${unit} 的任务组 ${title} 没有本组验证`);
+  }
+}
+
+// 4 验收表的空结果条数。开工前写定条件、收工时填结果，空着说明还没判定
 for (const unit of active) {
   const text = read(join(UNITS, unit, "验收.md"));
   // 只数第一节的验收条件表，后面几节可能也有编号表格
@@ -35,13 +57,14 @@ for (const unit of active) {
     const cells = l.split("|").map((c) => c.trim());
     return !cells[cells.length - 2];
   });
+  const failed = rows.filter((l) => /未通过|未过|不通过/.test(l));
   if (rows.length) {
-    notes.push(`单元 ${unit} 验收 ${rows.length - blank.length}/${rows.length} 条已判定`);
-    if (!blank.length) notes.push(`单元 ${unit} 全部判定完毕，可提请确认后归档`);
+    notes.push(`单元 ${unit} 验收 ${rows.length - blank.length}/${rows.length} 条已判定，其中未通过 ${failed.length} 条`);
+    if (!blank.length && !failed.length) notes.push(`单元 ${unit} 全部通过，可提请确认后归档`);
   }
 }
 
-// 3 路线图的单元一览与目录事实一致
+// 5 路线图的单元一览与目录事实一致
 const roadmap = read(ROADMAP);
 if (!roadmap) {
   issues.push("找不到 文档/04_实施单元/00_路线图.md");
@@ -58,7 +81,7 @@ if (!roadmap) {
   }
 }
 
-// 4 索引列出的产品与技术文档与实际目录一致
+// 6 索引列出的产品与技术文档与实际目录一致
 const index = read(join(ROOT, "文档/00_索引.md"));
 for (const dir of ["01_产品", "02_技术", "06_研究底稿"]) {
   const real = existsSync(join(ROOT, "文档", dir))
@@ -69,7 +92,7 @@ for (const dir of ["01_产品", "02_技术", "06_研究底稿"]) {
   }
 }
 
-// 5 pm-context 的权威指针必须可达
+// 7 pm-context 的权威指针必须可达
 const ctx = read(join(ROOT, ".claude/context/pm-context.md"));
 for (const m of ctx.matchAll(/`(文档\/[^`\n]+)`/g)) {
   const p = m[1].replace(/\/$/, "");

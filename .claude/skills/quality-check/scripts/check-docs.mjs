@@ -88,7 +88,8 @@ for (const file of docs) {
   const lines = text.split(/\r?\n/);
   for (const m of text.matchAll(/`([^`\n]+)`/g)) {
     const p = m[1].trim().replace(/:\d+$/, "").replace(/\/$/, "");
-    if (!REPO_DIR.test(p) || runtime(p) || p.includes("*") || p.includes(" ")) continue;
+    // 通配与占位符不是真实路径
+    if (!REPO_DIR.test(p) || runtime(p) || /[*{}]/.test(p) || p.includes(" ")) continue;
     if (existsSync(join(ROOT, p))) continue;
     // 变更对照表的一行里旧路径与新路径并列，旧的失效是有意的
     const line = lines[lineOf(text, m.index) - 1] ?? "";
