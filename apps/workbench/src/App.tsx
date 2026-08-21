@@ -1,7 +1,7 @@
 import {
   Activity, Archive, Bot, Boxes, Building2, ChevronRight, CircleStop, ClipboardList,
   Download, FileJson, FolderKanban, Images, Link2, PackageOpen, PanelRightClose,
-  PanelRightOpen, Play, Plus, Ruler, Search, ShieldCheck, Trash2, Upload, X, FileCheck2,
+  PanelRightOpen, Play, Plus, Ruler, Search, ShieldCheck, Trash2, Upload, X, FileCheck2, History,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
@@ -44,6 +44,7 @@ import {
 import { ArchetypeSpecSchema, type ArchetypeSpec } from "@gujian/domain";
 
 import { AssistantExecutors, type ModificationProposal } from "./assistant/action-executors";
+import { buildChangeHistory, type ChangeHistoryEntry } from "./change-history";
 import { AssistantClient } from "./assistant/assistant-client";
 import { ChatPanel } from "./assistant/ChatPanel";
 import { runClientOp } from "./assistant/client-op-adapter";
@@ -62,6 +63,7 @@ const stages = [
   { id: "checks", label: "检查与资格", icon: ShieldCheck },
   { id: "package", label: "代理交付" },
   { id: "candidates", label: "模型运行与费用", icon: Activity },
+  { id: "history", label: "修改历史", icon: History },
 ] as const;
 export const LENGTH_INPUT_STEP = "any";
 const OBSERVATION_LABELS = {
@@ -198,6 +200,7 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     () => new AssistantExecutors({ commands: projectCommands, workflow, actorId: localActorId }),
     [],
   );
+  const [changeHistory, setChangeHistory] = useState<readonly ChangeHistoryEntry[]>([]);
   const [drawingPreviewUrls, setDrawingPreviewUrls] = useState<readonly { id: string; kind: "svg" | "pdf"; label: string; url: string }[]>([]);
   // 证据半区（05 界面与交互形态 §三）：中栏右半区显示选中资料原件，数据与证据并置
   const [activeEvidenceId, setActiveEvidenceId] = useState<string | null>(null);
@@ -233,6 +236,13 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     setProjectDeliveryEvaluations(deliveryEvaluations);
     setProjectDeliveries(deliveryRecords);
     setProjectArchetypes(await projectRepository.getProjectArchetypeSpecs(projectId));
+    // 修改历史每次读项目时一并算好。审计事件与回执是只增的，量随操作数增长，
+    // 不随快照大小增长，因此不做分页。
+    const [auditEvents, receipts] = await Promise.all([
+      projectRepository.getProjectAuditEvents(projectId),
+      projectRepository.getProjectCommandReceipts(projectId),
+    ]);
+    setChangeHistory(buildChangeHistory({ auditEvents, receipts, snapshot: head?.snapshot ?? null }));
   };
 
   // 首次打开装载演示项目（08 演示项目定义 3.3：不生成空白项目）。
@@ -1250,6 +1260,7 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
     checks: latestCheckRun ? { label: "已检查", tone: "done" } : { label: "未检查", tone: "idle" },
     package: latestDelivery ? { label: "已建草案", tone: "done" } : { label: "未建立", tone: "idle" },
     candidates: projectModelRuns.length ? { label: `${projectModelRuns.length} 次运行`, tone: "done" } : { label: "未运行", tone: "idle" },
+    history: changeHistory.length ? { label: `${changeHistory.length} 次写入`, tone: "done" } : { label: "无记录", tone: "idle" },
   };
 
   // 分隔条拖动：按中栏宽度换算比例，限制在 30% 至 70%
@@ -1630,6 +1641,40 @@ export function App({ bootstrapDemo = bootstrapDemoProjects }: AppProps = {}) {
                     </form>
 
                 </>, "选择资料查看对应部位照片。")}
+              </section>
+            )}
+
+            {activeStage === "history" && (
+              <section className="evidence-board">
+                <header className="board-heading">
+                  <div><h3>修改历史</h3></div>
+                  <span className="board-count">{changeHistory.length} 次写入</span>
+                </header>
+                {renderSplit(<>
+                <div className="history-list">
+                  {changeHistory.map((entry) => (
+                    <article className="history-row" key={entry.id}>
+                      <div className="history-when">
+                        <strong>{entry.actionZh}</strong>
+                        <small>{entry.occurredAt.replace("T", " ").slice(0, 19)}</small>
+                      </div>
+                      <div className="history-what">
+                        {/* 认得出名字就列名字，认不出只说动了几条，不用 id 冒充名字 */}
+                        {entry.subjectsZh.length
+                          ? <span>{entry.subjectsZh.join("、")}</span>
+                          : <span className="gj-note">改动 {entry.writeCount} 条记录</span>}
+                        {entry.reasonZh && <small>理由：{entry.reasonZh}</small>}
+                        {!entry.reasonZh && <small className="gj-note">未记录理由</small>}
+                      </div>
+                      <div className="history-who">
+                        <small>操作人 {entry.actorId.slice(0, 8)}</small>
+                        {entry.outcome !== "committed" && <small className="inline-warning">{entry.outcome}</small>}
+                      </div>
+                    </article>
+                  ))}
+                  {!changeHistory.length && <div className="panel-empty">这个项目还没有写入记录。每一次写入都会留在这里，含时间、操作人、改了什么和为什么。</div>}
+                </div>
+                </>, "选择左侧记录查看对应资料。")}
               </section>
             )}
 

@@ -26,6 +26,10 @@ export interface CommandReceipt {
   readonly revisionId: string;
   readonly auditEventId: string;
   readonly committedAt: string;
+  // 这条命令改了哪些领域对象。审计事件的写集指向的是存储记录（项目与修订），
+  // 领域对象的 id 只在修订的 changedRefs 里，而修订带着整份快照，为了读几个 id
+  // 把它们全load出来不可行。回执小，放这里最省。旧回执没有这一项，故可选。
+  readonly changedRefs?: readonly string[];
 }
 
 export interface CommitProjectMutation {

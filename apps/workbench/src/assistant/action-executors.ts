@@ -116,6 +116,9 @@ export function buildCommitFactsCommand(input: {
           evidenceRefs: [],
           reviewStatus: "confirmed",
           acceptanceRef: { type: "command", id: commandId },
+          // 建议里的理由要跟着落库。此前只写改成了什么，修改历史里就只能
+          // 显示发生过一次写入，说不出为什么改。
+          reasonZh: input.proposal.rationaleZh,
           dataStatus: "available",
         },
       ],

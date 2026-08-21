@@ -328,6 +328,16 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return this.#getProjectRecords<ArtifactRequirementMatrix>("artifactRequirementMatrices", projectId);
   }
 
+  // 修改历史读这两个表。审计事件是写入的骨架（谁、什么时候、改了哪些对象），
+  // 命令回执补上这是哪一类动作，理由在各自的领域记录里。
+  async getProjectAuditEvents(projectId: string): Promise<readonly AuditEvent[]> {
+    return orderAuditChain([...await this.#getProjectRecords<AuditEvent>("auditEvents", projectId)]);
+  }
+
+  async getProjectCommandReceipts(projectId: string): Promise<readonly CommandReceipt[]> {
+    return this.#getProjectRecords<CommandReceipt>("commandReceipts", projectId);
+  }
+
   async getProjectCheckRuns(projectId: string): Promise<readonly CheckRun[]> {
     return this.#getProjectRecords<CheckRun>("checkRuns", projectId);
   }
@@ -340,7 +350,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
     return this.#getProjectRecords<DeliveryDraft>("deliveries", projectId);
   }
 
-  async #getProjectRecords<T>(storeName: "artifactRequirementMatrices" | "artifacts" | "checkRuns" | "deliveryEvaluations" | "deliveries", projectId: string): Promise<readonly T[]> {
+  async #getProjectRecords<T>(storeName: "artifactRequirementMatrices" | "artifacts" | "checkRuns" | "deliveryEvaluations" | "deliveries" | "auditEvents" | "commandReceipts", projectId: string): Promise<readonly T[]> {
     const database = await this.#database;
     const transaction = database.transaction(storeName, "readonly");
     const done = transactionDone(transaction);
@@ -527,6 +537,7 @@ export class IndexedDbProjectRepository implements ProjectRepositoryPort, Projec
       revisionId,
       auditEventId,
       committedAt,
+      changedRefs: [...mutation.changedRefs],
     };
     transaction.objectStore("commandReceipts").add(receipt);
     for (const run of mutation.modelRunsToPut ?? []) transaction.objectStore("modelRuns").put(run);

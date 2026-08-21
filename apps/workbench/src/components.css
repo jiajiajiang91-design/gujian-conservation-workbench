@@ -244,3 +244,23 @@ button.gj-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
 
 /* 构件行上的状态标记：排除与遮挡要一眼看得出来，不能只有助手回复里提过 */
 .entity-flag { color: var(--warning); font: var(--text-label); }
+
+/* 修改历史（界面文档表 3）：时间、动作、对象、理由、操作人一行读完 */
+.history-list { display: grid; gap: var(--space-2); }
+.history-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 2fr minmax(120px, auto);
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-panel);
+  align-items: start;
+}
+.history-when { display: grid; gap: var(--space-1); }
+.history-when strong { font: var(--text-section); }
+.history-when small,
+.history-what small,
+.history-who small { color: var(--text-secondary); font: var(--text-note); }
+.history-what { display: grid; gap: var(--space-1); }
+.history-who { display: grid; gap: var(--space-1); justify-items: end; text-align: right; }
